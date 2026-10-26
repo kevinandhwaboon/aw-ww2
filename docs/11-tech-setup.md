@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 in progress.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestone 1 (engine skeleton) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -47,6 +47,17 @@
 - ESLint forbids `src/engine` from importing `phaser` or anything in `src/game` or `src/ui`.
 - The engine is deterministic: no `Math.random`, no `Date`. All randomness comes from the seeded RNG stored in `GameState`.
 - Engine API: `apply(state, command) → { state, events }` (or a typed rejection). State is plain serializable data and is never mutated in place.
+- Public API: `src/engine/index.ts`. Presentation and AI code import only from there.
+
+## 3a. Engine design notes (milestone 1)
+
+- **RNG:** mulberry32. Its whole state is one unsigned 32-bit integer in `GameState.rng`, so it serializes exactly.
+- **Modifier layer:** game logic reads unit and terrain numbers only through `src/engine/stats.ts`, never from the data tables. A modifier is data: `{ source, stat, op: add | multiply | set, value, scope? }`. For one stat, adds are summed onto the base, then multiplies apply, then a set overrides (last wins). The result is rounded down and never below 0.
+  - Scenario, commander and weather modifiers live in `GameState.modifiers`. Veterancy isn't stored; it's derived from each unit's kill count at lookup time.
+  - Scopes can limit a modifier to players, unit types, unit categories and the terrain the unit stands on.
+- **Damage chart:** stored as row strings that match the tables in 03-combat §5 cell for cell ("55", "55*", "—"), so the doc and the data can be compared side by side. It's parsed and validated when the module loads.
+- **Player ids** are indexes into `GameState.players`, which is also the turn order.
+- **Setup errors** (bad scenario data) throw. **Command errors** (illegal moves) return a typed rejection.
 
 ## 4. Data files
 
@@ -86,5 +97,6 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 ## 7. Debug aids
 
-- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log.
+- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
+- `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
 - A URL parameter to load a specific test map and seed.

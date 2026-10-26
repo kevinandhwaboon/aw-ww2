@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phase 0 (setup) in progress.
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phase 0 (setup) done; Phase 1 under way (see 11-tech-setup §6).
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -260,3 +260,4 @@ UI falls into four categories:
 | 2026-10-24 | Terrain, economy and land supply (02, 04, 05): original game's rules as v0. Hills replace mountains; Bocage, Bunker, Rubble and Obstacle added |
 | 2026-10-24 | Tech setup (11): Vitest + fast-check, Playwright later; engine boundary enforced by tsconfig (no DOM) and ESLint; typed TS data files; GitHub Actions CI + Pages deploy |
 | 2026-10-24 | Factory build menu is HTML |
+| 2026-10-26 | Modifier layer combines per stat as add → multiply → set, rounded down, never below 0; veterancy derived from kills at lookup (11-tech-setup §3a) |

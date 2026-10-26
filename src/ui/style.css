@@ -67,3 +67,103 @@ body {
 .stars {
   color: var(--accent);
 }
+
+.panel-subtitle {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.btn {
+  font: inherit;
+  font-weight: bold;
+  color: var(--panel-bg);
+  background: var(--panel-border);
+  border: 2px solid var(--panel-ink);
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--accent);
+}
+
+.turn-bar {
+  left: 16px;
+  top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.turn-day,
+.turn-player {
+  font-weight: bold;
+}
+
+.unit-panel {
+  left: 16px;
+  bottom: 16px;
+  width: 300px;
+  font-size: 13px;
+}
+
+.unit-owner {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.stat-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.stat-table th {
+  text-align: left;
+  font-weight: normal;
+  opacity: 0.7;
+  padding: 1px 12px 1px 0;
+  white-space: nowrap;
+}
+
+.stat-table td {
+  padding: 1px 0;
+}
+
+.modifier-list,
+.event-log {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.debug-panel {
+  right: 16px;
+  top: 16px;
+  width: 360px;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  font-size: 12px;
+}
+
+.debug-panel summary {
+  cursor: pointer;
+}
+
+.event-log {
+  max-height: 120px;
+  overflow: auto;
+}
+
+.state-json {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: pre;
+}
