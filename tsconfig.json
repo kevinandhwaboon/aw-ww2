@@ -1,0 +1,9 @@
+{
+  // Whole app: engine + Phaser presentation + HTML UI. Has the DOM.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"]
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}

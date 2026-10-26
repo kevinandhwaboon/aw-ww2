@@ -1,0 +1,10 @@
+{
+  // Rules engine + its tests, checked WITHOUT the DOM or any ambient types.
+  // Any use of window, document, Phaser etc. inside src/engine fails here.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src/engine", "tests"]
+}
