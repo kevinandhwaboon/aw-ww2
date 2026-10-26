@@ -1,0 +1,51 @@
+// A tiny 3×5 pixel font for map labels (unit codes, HP). Placeholder until the art pipeline exists.
+
+const GLYPHS: Record<string, readonly string[]> = {
+  A: [".#.", "#.#", "###", "#.#", "#.#"],
+  B: ["##.", "#.#", "##.", "#.#", "##."],
+  C: ["###", "#..", "#..", "#..", "###"],
+  D: ["##.", "#.#", "#.#", "#.#", "##."],
+  F: ["###", "#..", "##.", "#..", "#.."],
+  H: ["#.#", "#.#", "###", "#.#", "#.#"],
+  I: ["###", ".#.", ".#.", ".#.", "###"],
+  K: ["#.#", "#.#", "##.", "#.#", "#.#"],
+  L: ["#..", "#..", "#..", "#..", "###"],
+  M: ["#.#", "###", "###", "#.#", "#.#"],
+  N: ["##.", "#.#", "#.#", "#.#", "#.#"],
+  O: ["###", "#.#", "#.#", "#.#", "###"],
+  R: ["##.", "#.#", "##.", "#.#", "#.#"],
+  S: ["###", "#..", "###", "..#", "###"],
+  T: ["###", ".#.", ".#.", ".#.", ".#."],
+  V: ["#.#", "#.#", "#.#", "#.#", ".#."],
+  "0": ["###", "#.#", "#.#", "#.#", "###"],
+  "1": [".#.", "##.", ".#.", ".#.", "###"],
+  "2": ["###", "..#", "###", "#..", "###"],
+  "3": ["###", "..#", ".##", "..#", "###"],
+  "4": ["#.#", "#.#", "###", "..#", "..#"],
+  "5": ["###", "#..", "###", "..#", "###"],
+  "6": ["###", "#..", "###", "#.#", "###"],
+  "7": ["###", "..#", ".#.", ".#.", ".#."],
+  "8": ["###", "#.#", "###", "#.#", "###"],
+  "9": ["###", "#.#", "###", "..#", "###"],
+};
+
+export const GLYPH_WIDTH = 3;
+export const GLYPH_HEIGHT = 5;
+
+/** Width in pixels of a string drawn with 1px spacing. */
+export function textWidth(text: string): number {
+  return text.length * (GLYPH_WIDTH + 1) - 1;
+}
+
+/** Draws text with its top-left at (x, y) using the context's current fillStyle. */
+export function drawPixelText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+  text.split("").forEach((ch, i) => {
+    const glyph = GLYPHS[ch];
+    if (!glyph) throw new Error(`No pixel glyph for "${ch}"`);
+    glyph.forEach((row, gy) => {
+      row.split("").forEach((cell, gx) => {
+        if (cell === "#") ctx.fillRect(x + i * (GLYPH_WIDTH + 1) + gx, y + gy, 1, 1);
+      });
+    });
+  });
+}

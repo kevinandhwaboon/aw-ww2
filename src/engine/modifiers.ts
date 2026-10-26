@@ -49,6 +49,11 @@ export interface StatContext {
   readonly terrain?: TerrainId;
 }
 
+/** Whether a modifier's scope covers this lookup (ignores which stat it modifies). */
+export function modifierApplies(modifier: Modifier, ctx: StatContext): boolean {
+  return matches(modifier.scope, ctx);
+}
+
 function matches(scope: ModifierScope | undefined, ctx: StatContext): boolean {
   if (!scope) return true;
   const fieldMatches = <T>(allowed: readonly T[] | undefined, actual: T | undefined) =>

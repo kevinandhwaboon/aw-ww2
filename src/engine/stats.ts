@@ -4,7 +4,7 @@
 import { TERRAIN, type TerrainId } from "./data/terrain";
 import { UNITS, type UnitTypeId } from "./data/units";
 import { veterancyFor } from "./data/veterancy";
-import { applyModifiers, type ModifiableStat, type Modifier, type PlayerId, type StatContext } from "./modifiers";
+import { applyModifiers, modifierApplies, type ModifiableStat, type Modifier, type PlayerId, type StatContext } from "./modifiers";
 import type { GameState, Unit } from "./state";
 
 /** Modifiers that come from the unit itself rather than from GameState (currently veterancy). */
@@ -31,6 +31,12 @@ function terrainUnder(state: GameState, unit: Unit): TerrainId {
   const id = state.map.terrain[unit.pos.y * state.map.width + unit.pos.x];
   if (id === undefined) throw new Error(`Unit ${unit.id} is outside the map`);
   return id;
+}
+
+/** Every modifier currently affecting this unit (any stat), for UI and debugging. */
+export function modifiersAffecting(state: GameState, unit: Unit): Modifier[] {
+  const ctx = unitContext(state, unit);
+  return [...state.modifiers, ...unitModifiers(unit)].filter((m) => modifierApplies(m, ctx));
 }
 
 function unitStat(state: GameState, unit: Unit, stat: ModifiableStat, base: number): number {

@@ -36,6 +36,7 @@ The developer is an experienced software engineer, new to game development, and 
 - `npm run dev`: local dev server
 - `npm run check`: typecheck + lint + tests
 - `npm test`: tests only
+- `npm run test:ui`: browser test viewer (Vitest UI), lists every rule test by name
 - `npm run build`: production build into `dist/`
 
 ## Conventions

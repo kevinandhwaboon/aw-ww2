@@ -71,6 +71,17 @@ describe("modifier layer (00-master-design §7)", () => {
     expect(stats.movePoints(state, inf)).toBe(3); // in forest: no mud, not a tank
   });
 
+  it("lists the modifiers affecting a unit, including veterancy, for the UI", () => {
+    const state = makeGame([".."], [
+      { type: "mediumTank", owner: 0, pos: { x: 0, y: 0 }, kills: 3 },
+      { type: "mediumTank", owner: 1, pos: { x: 1, y: 0 } },
+    ], { modifiers: [{ source: "co", stat: "attack", op: "add", value: 10, scope: { players: [1] } }] });
+    const [mine, theirs] = state.units;
+    if (!mine || !theirs) throw new Error("missing units");
+    expect(stats.modifiersAffecting(state, mine).map((m) => m.source)).toEqual(["veterancy:veteran", "veterancy:veteran"]);
+    expect(stats.modifiersAffecting(state, theirs).map((m) => m.source)).toEqual(["co"]);
+  });
+
   it("cost modifiers can target one player (e.g. a cheap-units commander)", () => {
     const state = makeGame(["."], [], {
       modifiers: [{ source: "co", stat: "cost", op: "multiply", value: 0.8, scope: { players: [1] } }],

@@ -97,5 +97,6 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 ## 7. Debug aids
 
-- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log.
+- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
+- `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
 - A URL parameter to load a specific test map and seed.
