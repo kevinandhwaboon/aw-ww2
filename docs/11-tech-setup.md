@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestone 1 (engine skeleton) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton) and 2 (movement) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -58,6 +58,27 @@
 - **Damage chart:** stored as row strings that match the tables in 03-combat §5 cell for cell ("55", "55*", "—"), so the doc and the data can be compared side by side. It's parsed and validated when the module loads.
 - **Player ids** are indexes into `GameState.players`, which is also the turn order.
 - **Setup errors** (bad scenario data) throw. **Command errors** (illegal moves) return a typed rejection.
+
+## 3b. Engine and UI design notes (milestone 2)
+
+- **Move is one atomic command:** `{ type: "move", unitId, path, action }`. The path lists the tiles stepped onto (excluding the start; empty = act in place), and `action` is what the unit does at the end (`wait` for now; attack, capture, load, join, unload and supply plug in later). As in the original, a move isn't final until an action is chosen. The UI previews the move locally, and only the chosen action sends a command.
+- **Pathfinding** lives in `src/engine/movement.ts` and is shared by the engine (validation) and the UI (ranges, path arrow), so they can't disagree. A unit's budget is min(move points, fuel). Enemy units block; friendly units (same side) can be passed through but not stopped on.
+- **Terrain costs are a modifiable stat** (`moveCost`, scoped by the terrain being entered), so weather or commanders can change them later. Modifiers can't make impassable terrain passable, and a passable tile always costs at least 1.
+- **Path arrow** (`src/game/pathBuilder.ts`): follows the cursor tile by tile while affordable, cuts back when retraced, otherwise snaps to the cheapest path.
+- **Input** (`src/game/controller.ts`): a state machine (idle → selected → menu → busy) that talks to the map through a `MapView` interface, so input rules and drawing are separate.
+- **Event playback:** after the engine accepts a command, the UI animates its events with input locked, then shows the new state. At the start of each turn a banner names the player.
+- **Undo** is a playtesting convenience, not a game rule: it restores the state before the last move this turn. It's cleared at End Turn, and must also be cleared after anything that reveals new information (combat luck, in milestone 3).
+
+## 3c. Controls (current)
+
+| Action | Mouse | Keyboard |
+|---|---|---|
+| Move cursor | Move the mouse | Arrow keys |
+| Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
+| Cancel | Right click, or click outside the menu | X, Esc or Backspace |
+| Show an enemy's move range | Click the enemy | Z on the enemy |
+| Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
+| End turn | End Turn button | E |
 
 ## 4. Data files
 

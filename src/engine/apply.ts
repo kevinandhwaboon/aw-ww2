@@ -1,18 +1,57 @@
 // The single entry point for changing the game: apply(state, command) → new state + events,
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
-import type { ApplyResult, Command, GameEvent } from "./commands";
-import type { GameState, PlayerId } from "./state";
+import type { ApplyResult, Command, GameEvent, RejectionCode } from "./commands";
+import type { Point } from "./map";
+import { checkPath } from "./movement";
+import type { GameState, PlayerId, Unit } from "./state";
+
+const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
 export function apply(state: GameState, command: Command): ApplyResult {
   // Commands may come from untyped JavaScript (custom AIs), so check the shape at runtime too.
   const type = (command as { type?: unknown } | null)?.type;
   switch (type) {
+    case "move":
+      return move(state, command as Extract<Command, { type: "move" }>);
     case "endTurn":
       return endTurn(state);
     default:
-      return { ok: false, code: "invalidCommand", message: `Unknown command type: ${String(type)}` };
+      return reject("invalidCommand", `Unknown command type: ${String(type)}`);
   }
+}
+
+const isPoint = (p: unknown): p is Point =>
+  typeof p === "object" && p !== null && Number.isInteger((p as Point).x) && Number.isInteger((p as Point).y);
+
+function move(state: GameState, command: Extract<Command, { type: "move" }>): ApplyResult {
+  const { unitId, path, action } = command;
+  if (!Array.isArray(path) || !path.every(isPoint)) return reject("invalidCommand", "path must be a list of {x, y} points");
+  if ((action as { type?: unknown } | null)?.type !== "wait") {
+    return reject("invalidCommand", `Unknown action: ${JSON.stringify(action)}`);
+  }
+
+  const unit = state.units.find((u) => u.id === unitId);
+  if (!unit) return reject("unitNotFound", `No unit with id ${String(unitId)}`);
+  if (unit.owner !== state.currentPlayer) return reject("notYourUnit", `Unit ${unitId} belongs to player ${unit.owner}`);
+  if (unit.hasActed) return reject("unitAlreadyActed", `Unit ${unitId} has already acted this turn`);
+
+  const check = checkPath(state, unit, path);
+  if (!check.ok) return reject("invalidPath", check.reason);
+
+  const events: GameEvent[] = [];
+  const end = path[path.length - 1] ?? unit.pos;
+  if (path.length > 0) {
+    events.push({ type: "unitMoved", unitId, path: [unit.pos, ...path], fuelUsed: check.cost });
+  }
+  events.push({ type: "unitWaited", unitId });
+
+  const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - check.cost, hasActed: true };
+  return {
+    ok: true,
+    state: { ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) },
+    events,
+  };
 }
 
 function endTurn(state: GameState): ApplyResult {
@@ -38,7 +77,7 @@ function nextActivePlayer(state: GameState): PlayerId {
 }
 
 /**
- * Start-of-turn sequence for state.currentPlayer (04-economy §2). Milestone 1 only readies units;
+ * Start-of-turn sequence for state.currentPlayer (04-economy §2). So far it only readies units;
  * fuel burn, income, repair and resupply are added in later milestones, in the doc's order.
  */
 function startTurn(state: GameState): { state: GameState; events: GameEvent[] } {
