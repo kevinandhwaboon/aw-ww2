@@ -167,6 +167,38 @@
 | 7 | Fortifications | Bunker / Obstacle HP, attack-only-when-empty, broken states | Fortification HP display |
 | 8 | Game shell | Scenario format, 2–3 small test maps (one bocage-flavored), state serialization | Title, map select, hot-seat "pass the device" screen |
 
+### Phase 2: Systems
+
+Rules: 05-supply-transport §5–9, 04-economy §8, 09-ai. Each milestone ends playable.
+
+| # | Milestone | Engine | Presentation |
+|---|---|---|---|
+| 9 | Air | Air units, daily fuel and crashing, airfield build and repair, Flak Gun | Air markers, a map with an airfield |
+| 10 | Naval | Ships, daily fuel and sinking, port build and repair, Dive and Surface | Ship markers, submerged marker, a coastal map |
+| 11 | Landings and drops | Unload action takes one or two passengers; Landing Craft beach rules; Transport Aircraft drops | Multi-unload flow, drop tiles, a small amphibious map |
+| 12 | Victory conditions | `captureProperties`, `holdProperties`, `surviveDays` | Objectives shown in-game and on the results screen |
+| 13 | CO hooks | Modifier scopes that depend on the target (for example attack vs infantry); luck modifiers (03-combat §7) | Modifier list in the unit panel |
+| 14 | AI interface | `legalCommands`, `AiView`, session support for AI players, command limit | Human or AI choice per player, locked input during AI turns |
+| 15 | First AI | The Greedy AI (09-ai §4), AI vs AI tests, a performance benchmark | Playable single-player on every map |
+
+Air and naval rules come first because the AI has to handle them. The Normandy theater stays in phase 4.
+
+### Phase 2 decisions
+
+All accepted on 2026-10-31.
+
+| # | Decision | Answer | Note |
+|---|---|---|---|
+| D1 | Do air and naval units burn fuel on day 1? | No | I remember the original skipping day 1, but couldn't confirm it |
+| D2 | Can Transport Aircraft drop onto Hills, Bocage and River? | Yes, anywhere foot units can enter | The original has no equivalent. Bocage drops were historically real |
+| D3 | Can a transport unload both passengers in one action? | Yes | Not confirmed for the original, but one at a time would make a two-unit craft much weaker |
+| D4 | Can a loaded Halftrack board a Landing Craft? | No | Simpler rules. Not confirmed for the original |
+| D5 | Are submerged submarines hidden from the enemy? | No: shown to everyone with a marker | The original hides them, but both players share a screen and there's no fog of war. Real hiding belongs with fog of war |
+| D6 | Is the victory condition list right? | Yes: capture, hold, survive | Enough for "hold Bastogne for 10 turns" and Normandy |
+| D7 | Should the order stay air, naval, landings, then AI? | Yes | The alternative is AI first, on land only, so single-player arrives sooner but has to be extended twice |
+| D8 | Should the AI run in a Web Worker from the start? | No: main thread now, with an async interface | Workers matter once community AIs exist |
+| D9 | Should the first AI use Landing Craft and Transport Aircraft? | No | Amphibious planning is much harder and comes after a solid basic AI |
+
 A playable deathmatch exists after milestone 3: the first real playtest.
 
 ## 7. Debug aids

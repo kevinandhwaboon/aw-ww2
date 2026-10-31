@@ -1,7 +1,7 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) sketched; details to be confirmed when phase 2 starts.
-**Last updated:** 2026-10-24
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0, to be built in phase 2: sections 5 to 9.
+**Last updated:** 2026-10-31
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
 ---
@@ -44,18 +44,45 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 - Passengers use no fuel while carried and keep their HP, ammo, fuel and veterancy.
 - A transport carrying units can't join or be joined (04-economy section 6).
 
-## 5. Air and naval (phase 2 sketch)
+## 5. Air units (phase 2)
 
-To be confirmed at phase 2. Following 01-units and the original:
+- **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
+- **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit, and enemy units still block its path (02-terrain §5).
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter and Bomber 5, Transport Aircraft 4). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**.
+- **Service:** owned airfields repair and resupply air units (04-economy §5). A Halftrack also resupplies an adjacent aircraft, since the rule covers all friendly units.
+- **Defense:** air units always get 0 terrain stars (02-terrain §1).
 
-- **Transport Aircraft:** capacity 2 foot units. Loads only at an owned airfield. After moving, it **air-drops** passengers onto its own tile (if land) or adjacent land tiles that are empty. Dropped units can't act on the landing turn. It's reusable.
-- **Landing Craft:** capacity 2 land units of any type. Loads on a port or beach. Unloads onto an adjacent Beach tile or (from a Port) an adjacent land tile. It can't unload onto other coastal land.
-- **Submarine dive:** `Dive` / `Surface` actions. While submerged it is hidden from enemy targeting except by adjacent Destroyers and Submarines, and burns 5 fuel per day.
-- **Destroyer** has no supply role (the original's cruiser didn't either, apart from refuelling copters, which don't exist here).
-- Airfields and ports repair and resupply their own categories (04-economy section 1).
+## 6. Transport Aircraft (phase 2)
 
-## 6. Open questions
+- **Capacity:** 2 foot units. It's unarmed and reusable.
+- **Load:** foot units board only while the aircraft is on an owned airfield.
+- **Drop:** after moving, the aircraft drops one or both passengers onto its own tile or orthogonally adjacent tiles. A tile qualifies if it's empty and the passenger could enter it. That rules out sea, but allows Hills, Bocage and River **(D2)**. There's no scatter or landing risk.
+- Dropping both in one action is allowed **(D3)**. Dropped units can't act that turn, and the drop ends the aircraft's action.
+- **Shot down:** passengers are lost with it and don't count as kills.
 
-- Phase 2 specifics: can Transport Aircraft drop onto Bocage or Hills? Can Landing Craft use a Port to load heavy units only?
-- Should passenger fuel or ammo top up when a transport sits on a property?
-- Air drop deviation or risk (historically drops scattered): probably not, but undecided.
+## 7. Naval units (phase 2)
+
+- **Movement:** type `sea` covers Sea, Reef and Port. Landing Craft use `landingCraft`, which also allows Beach (02-terrain §3).
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn. At 0 fuel the ship sinks. A sinking isn't a kill. No burn on day 1 **(D1)**.
+- **Service:** owned ports repair and resupply naval units. Halftracks resupply adjacent ships as well.
+- **Capture:** ships can't capture. Ports are captured by infantry like any property.
+
+## 8. Landing Craft (phase 2)
+
+- **Capacity:** 2 land units of any type. Unarmed.
+- **Load and unload only on a Beach tile or an owned or neutral Port.** The craft itself must stand on that tile. Being on a Sea tile next to a beach isn't enough, as in the original. So a landing means driving the craft onto the beach, where it's exposed.
+- **Load:** a land unit moves onto the craft while it's on such a tile.
+- **Unload:** after moving, the craft unloads one or both passengers onto orthogonally adjacent tiles they could enter **(D3)**. Unloaded units can't act that turn.
+- A transport carrying units can't itself board another transport **(D4)**.
+
+## 9. Submarines (phase 2)
+
+- **`Dive` and `Surface`** are end actions, so a submarine can move and then change state. It starts surfaced.
+- **Submerged:** burns 5 fuel per day instead of 1, and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
+- **Hidden or not:** in the original a submerged submarine is hidden unless an enemy is adjacent. We have no fog of war and both players share one screen, so submerged submarines are shown to everyone with a marker **(D5)**.
+
+## 10. Open questions
+
+- Should passenger fuel or ammo top up when a transport sits on a property? Working answer: no.
+
+The decisions marked **D1 to D5** in this doc are recorded in 11-tech-setup §6.
