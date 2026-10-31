@@ -3,13 +3,15 @@ import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import { attackTargets } from "../src/engine/combat";
 import type { Command, GameEvent } from "../src/engine/commands";
+import { UNITS } from "../src/engine/data/units";
 import { buildOptions, buildProblem, captureProblem } from "../src/engine/economy";
 import type { Point } from "../src/engine/map";
-import { moveDestinations, reachableTiles, cheapestPath } from "../src/engine/movement";
+import { canEndOn, reachableTiles, cheapestPath } from "../src/engine/movement";
 import { createGame, type UnitSetup } from "../src/engine/setup";
 import { parseAsciiMap } from "../src/engine/map";
 import { CAPTURE_POINTS, MAX_HP, propertyAt, type GameState } from "../src/engine/state";
 import * as stats from "../src/engine/stats";
+import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../src/engine/transport";
 import { deepFreeze, makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -381,9 +383,23 @@ describe("random playthroughs", () => {
     for (const unit of state.units) {
       if (unit.owner !== state.currentPlayer || unit.hasActed) continue;
       const reach = reachableTiles(state, unit);
-      for (const dest of moveDestinations(state, unit)) {
+      for (const i of reach.keys()) {
+        const dest = P(i % state.map.width, Math.floor(i / state.map.width));
         const path = cheapestPath(state, reach, dest) ?? [];
         const moved = { ...unit, pos: dest };
+        if (!canEndOn(state, unit, dest)) {
+          const host = state.units.find((u) => u.pos.x === dest.x && u.pos.y === dest.y);
+          if (host && loadProblem(moved, host) === null) commands.push({ type: "move", unitId: unit.id, path, action: { type: "load" } });
+          if (host && joinProblem(moved, host) === null) commands.push({ type: "move", unitId: unit.id, path, action: { type: "join" } });
+          continue;
+        }
+        const afterMove = { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) };
+        if (supplyTargets(afterMove, moved).length > 0) commands.push({ type: "move", unitId: unit.id, path, action: { type: "supply" } });
+        for (const passenger of moved.cargo) {
+          for (const to of unloadTiles(afterMove, moved, passenger)) {
+            commands.push({ type: "move", unitId: unit.id, path, action: { type: "unload", passenger: passenger.id, to } });
+          }
+        }
         commands.push(wait(unit.id, path));
         if (captureProblem(state, moved) === null) commands.push(capture(unit.id, path));
         for (const target of attackTargets(state, moved, path.length > 0)) commands.push(attack(unit.id, target.id, path));
@@ -406,7 +422,11 @@ describe("random playthroughs", () => {
       { type: "infantry", owner: 0, pos: P(1, 0) },
       { type: "mediumTank", owner: 0, pos: P(0, 1) },
       { type: "artillery", owner: 0, pos: P(1, 1) },
+      { type: "halftrack", owner: 0, pos: P(2, 1) },
+      { type: "infantry", owner: 0, pos: P(2, 0), hp: 60 },
       { type: "infantry", owner: 1, pos: P(7, 3) },
+      { type: "infantry", owner: 1, pos: P(6, 3), hp: 40 },
+      { type: "halftrack", owner: 1, pos: P(6, 2) },
       { type: "lightTank", owner: 1, pos: P(8, 2) },
       { type: "recon", owner: 1, pos: P(7, 2) },
     ],
@@ -416,7 +436,11 @@ describe("random playthroughs", () => {
   function checkInvariants(state: GameState): void {
     const tiles = new Set(state.units.map((u) => `${u.pos.x},${u.pos.y}`));
     expect(tiles.size, "two units on one tile").toBe(state.units.length);
-    expect(new Set(state.units.map((u) => u.id)).size, "duplicate unit ids").toBe(state.units.length);
+    const everyone = state.units.flatMap((u) => [u, ...u.cargo]);
+    expect(new Set(everyone.map((u) => u.id)).size, "duplicate unit ids").toBe(everyone.length);
+    for (const unit of state.units) {
+      expect(unit.cargo.length, "over capacity").toBeLessThanOrEqual(UNITS[unit.type].transport?.capacity ?? 0);
+    }
     for (const player of state.players) {
       expect(player.funds).toBeGreaterThanOrEqual(0);
       expect(Number.isInteger(player.funds)).toBe(true);
@@ -477,12 +501,12 @@ describe("random playthroughs", () => {
     }), { numRuns: 10 });
   });
 
-  it("random play really does reach combat, captures, builds and repairs", () => {
+  it("random play really does reach combat, captures, builds, repairs, transport and joining", () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 12; seed++) {
       let state = start(seed);
       let dice = seed + 1;
-      for (let step = 0; step < 200; step++) {
+      for (let step = 0; step < 300; step++) {
         const commands = legalCommands(state);
         dice = (dice * 48271) % 2147483647; // simple repeatable dice, independent of the game's RNG
         const command = commands[dice % commands.length];
@@ -492,7 +516,10 @@ describe("random playthroughs", () => {
         for (const event of result.events) seen.add(event.type);
       }
     }
-    for (const type of ["combat", "captureProgress", "propertyCaptured", "unitBuilt", "unitRepaired", "incomeReceived"]) {
+    for (const type of [
+      "combat", "captureProgress", "propertyCaptured", "unitBuilt", "unitRepaired", "incomeReceived",
+      "unitLoaded", "unitUnloaded", "unitJoined", "unitResupplied",
+    ]) {
       expect(seen, type).toContain(type);
     }
   });

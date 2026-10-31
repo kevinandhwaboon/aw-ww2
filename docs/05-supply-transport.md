@@ -1,6 +1,6 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0, following the original game. Air and naval rules (phase 2) sketched; details to be confirmed when phase 2 starts.
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) sketched; details to be confirmed when phase 2 starts.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
@@ -31,11 +31,13 @@ A resupply restores fuel and ammo to maximum. It's free and doesn't heal.
 
 A carried passenger isn't resupplied by its transport.
 
+The `Supply` action is only available when at least one adjacent friendly unit is short of fuel or ammo. Automatic supply also reaches units of an allied player on the same side.
+
 ## 4. Transport (land, phase 1)
 
 **Halftrack:** capacity 1. Carries Infantry, Assault Infantry or Mortar Team.
 
-- **Load:** a foot unit moves onto a friendly Halftrack with free space. This ends the foot unit's action.
+- **Load:** a foot unit moves onto its own player's Halftrack with free space. This ends the foot unit's action.
 - **Unload:** the Halftrack (moving first, or not) unloads its passenger onto an orthogonally adjacent tile the passenger could legally enter (terrain passable for its movement type, not occupied). This ends the Halftrack's action. The passenger **can't act** on the turn it's unloaded.
 - A unit loaded this turn can be unloaded the same turn if the Halftrack hasn't acted yet (as in the original).
 - **Passengers are destroyed with the transport.** They don't count as kills (03-combat section 6).

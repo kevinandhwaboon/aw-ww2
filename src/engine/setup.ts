@@ -93,6 +93,7 @@ export function createGame(setup: GameSetup): GameState {
       ammo: u.ammo ?? def.primaryWeapon?.maxAmmo ?? 0,
       kills: u.kills ?? 0,
       hasActed: false,
+      cargo: [],
     });
   }
 

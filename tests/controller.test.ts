@@ -166,6 +166,122 @@ describe("capture and build", () => {
   });
 });
 
+describe("transport, supply and join", () => {
+  const onto = async (game: ReturnType<typeof setup>, from: Point, to: Point) => {
+    game.controller.onConfirm(from);
+    game.controller.onConfirm(to);
+    await game.settle();
+  };
+
+  it("moving onto your own Halftrack offers Load", async () => {
+    const game = setup(["=="], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "halftrack", owner: 0, pos: P(1, 0) }]);
+    await onto(game, P(0, 0), P(1, 0));
+    expect(game.labels()).toEqual(["load", "cancel"]);
+    game.controller.onMenuChoice("load");
+    await game.settle();
+    expect(game.seen.commands[0]).toMatchObject({ action: { type: "load" } });
+  });
+
+  it("moving onto a damaged unit of the same type offers Join", async () => {
+    const game = setup(["=="], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "infantry", owner: 0, pos: P(1, 0), hp: 50 }]);
+    await onto(game, P(0, 0), P(1, 0));
+    expect(game.labels()).toEqual(["join", "cancel"]);
+  });
+
+  it("other friendly units can be passed through but not stopped on", async () => {
+    const game = setup(["=="], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(1, 0) }]);
+    await onto(game, P(0, 0), P(1, 0));
+    expect(game.labels()).toBeUndefined();
+  });
+
+  it("Unload lets you pick a highlighted tile", async () => {
+    const game = setup(["==="], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "halftrack", owner: 0, pos: P(1, 0) }]);
+    await onto(game, P(0, 0), P(1, 0));
+    game.controller.onMenuChoice("load");
+    await game.settle();
+    await onto(game, P(1, 0), P(1, 0));
+    expect(game.labels()).toEqual(["unload", "wait", "cancel"]);
+    game.controller.onMenuChoice("unload");
+    expect(game.seen.menu).toBeNull();
+    expect(game.seen.ranges).toEqual([{ tiles: [P(2, 0), P(0, 0)], kind: "move" }]);
+    game.controller.onConfirm(P(1, 0)); // not a highlighted tile: nothing happens
+    expect(game.seen.commands).toHaveLength(1);
+    game.controller.onConfirm(P(2, 0));
+    await game.settle();
+    expect(game.seen.commands[1]).toMatchObject({ action: { type: "unload", passenger: 0, to: P(2, 0) } });
+  });
+
+  it("cancelling Unload goes back to the action menu", async () => {
+    const game = setup(["==="], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "halftrack", owner: 0, pos: P(1, 0) }]);
+    await onto(game, P(0, 0), P(1, 0));
+    game.controller.onMenuChoice("load");
+    await game.settle();
+    await onto(game, P(1, 0), P(1, 0));
+    game.controller.onMenuChoice("unload");
+    game.controller.onCancel();
+    expect(game.labels()).toEqual(["unload", "wait", "cancel"]);
+  });
+
+  it("offers Supply next to a friendly unit that needs it", async () => {
+    const game = setup(["===="], [{ type: "halftrack", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(2, 0), ammo: 1 }]);
+    await onto(game, P(0, 0), P(1, 0));
+    expect(game.labels()).toEqual(["supply", "wait", "cancel"]);
+  });
+});
+
+describe("hold X or right-click", () => {
+  const units: UnitSetup[] = [
+    { type: "infantry", owner: 0, pos: P(0, 0) },
+    { type: "mediumTank", owner: 1, pos: P(5, 0) },
+  ];
+
+  it("shows your own unit's range until released", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onPeekStart(P(0, 0));
+    expect(seen.ranges.map((r) => r.kind)).toEqual(["inspect", "attack"]);
+    expect(seen.ranges[1]?.tiles).toEqual([P(4, 0)]);
+    controller.onPeekEnd();
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("shows an enemy unit's range too", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onPeekStart(P(5, 0));
+    expect(seen.ranges[0]?.tiles.length).toBeGreaterThan(1);
+  });
+
+  it("does nothing on an empty tile", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onPeekStart(P(2, 0));
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("still cancels when a unit is selected, and doesn't then show a range", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    expect(seen.ranges).toHaveLength(1);
+    controller.onPeekStart(P(0, 0));
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("still backs out of the action menu", async () => {
+    const { controller, labels, seen, settle } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    controller.onPeekStart(P(1, 0));
+    expect(labels()).toBeUndefined();
+    expect(seen.ranges).toHaveLength(1); // back to the blue move range
+  });
+
+  it("releasing doesn't disturb a selection", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    controller.onPeekEnd();
+    expect(seen.ranges).toHaveLength(1);
+  });
+});
+
 describe("targeting", () => {
   const start = async () => {
     const game = setup(["===="], [
