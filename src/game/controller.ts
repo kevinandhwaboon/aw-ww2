@@ -1,14 +1,21 @@
 // Turns player input into engine commands: a small state machine over select → move preview →
-// action menu → command. Knows nothing about Phaser: it talks to the map through MapView, so the
-// rules for what a click means live here and the drawing lives in MapScene.
+// action menu → targeting → command. Knows nothing about Phaser: it talks to the map through
+// MapView, so the rules for what a click means live here and the drawing lives in MapScene.
 
-import type { Command } from "../engine/commands";
+import { attackTargets, forecast, threatTiles, type CombatForecast } from "../engine/combat";
+import type { Command, UnitAction } from "../engine/commands";
+import { UNITS } from "../engine/data/units";
 import type { Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
-import { unitAt, type GameState, type UnitId } from "../engine/state";
+import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
 import { extendPath } from "./pathBuilder";
 
-export type RangeKind = "move" | "inspect";
+export type RangeKind = "move" | "inspect" | "attack";
+
+export interface RangeLayer {
+  readonly tiles: readonly Point[];
+  readonly kind: RangeKind;
+}
 
 export interface MenuItem {
   readonly id: string;
@@ -17,7 +24,8 @@ export interface MenuItem {
 
 /** What the controller needs from the map view. */
 export interface MapView {
-  showRange(tiles: readonly Point[], kind: RangeKind): void;
+  /** Replaces the highlighted tiles; later layers draw over earlier ones. */
+  showRanges(layers: readonly RangeLayer[]): void;
   clearRange(): void;
   /** Draws the path arrow from start along path (path excludes start). */
   showPath(start: Point, path: readonly Point[]): void;
@@ -28,14 +36,25 @@ export interface MapView {
   resetPreview(): void;
   openMenu(at: Point, items: readonly MenuItem[]): void;
   closeMenu(): void;
+  setCursor(tile: Point): void;
+  /** Shows a small text panel next to a tile. */
+  showForecast(at: Point, lines: readonly string[]): void;
+  clearForecast(): void;
+}
+
+interface Chosen {
+  readonly unitId: UnitId;
+  readonly reach: ReadonlyMap<number, Reach>;
+  readonly path: Point[];
 }
 
 type Mode =
   | { readonly kind: "idle" }
-  /** Looking at an enemy unit's move range. */
+  /** Looking at an enemy unit's threat range. */
   | { readonly kind: "inspect" }
-  | { readonly kind: "selected"; readonly unitId: UnitId; readonly reach: ReadonlyMap<number, Reach>; readonly path: Point[] }
-  | { readonly kind: "menu"; readonly unitId: UnitId; readonly reach: ReadonlyMap<number, Reach>; readonly path: Point[] }
+  | ({ readonly kind: "selected" } & Chosen)
+  | ({ readonly kind: "menu"; readonly targets: readonly Unit[] } & Chosen)
+  | ({ readonly kind: "targeting"; readonly targets: readonly Unit[] } & Chosen)
   /** Animating or waiting for the engine: input is ignored. */
   | { readonly kind: "busy" };
 
@@ -46,10 +65,18 @@ export interface ControllerDeps {
   view: MapView;
 }
 
-const ACTION_MENU: readonly MenuItem[] = [
-  { id: "wait", label: "WAIT" },
-  { id: "cancel", label: "CANCEL" },
-];
+const FIRE: MenuItem = { id: "fire", label: "FIRE" };
+const WAIT: MenuItem = { id: "wait", label: "WAIT" };
+const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
+
+const percent = ({ min, max }: { min: number; max: number }) => (min === max ? `${min}%` : `${min}-${max}%`);
+
+/** The damage forecast as short lines for the map panel. */
+export function forecastLines(f: CombatForecast): string[] {
+  const kill = f.certainKill ? " KILL" : f.canKill ? " KILL?" : "";
+  const killed = f.counterCertainKill ? " KILL" : f.counterCanKill ? " KILL?" : "";
+  return [`DMG ${percent(f.attack)}${kill}`, f.counter ? `BACK ${percent(f.counter)}${killed}` : "NO COUNTER"];
+}
 
 export class InputController {
   private mode: Mode = { kind: "idle" };
@@ -66,12 +93,17 @@ export class InputController {
     view.closeMenu();
     view.clearRange();
     view.clearPath();
+    view.clearForecast();
     view.resetPreview();
     this.mode = { kind: "idle" };
   }
 
   onCursorMove(tile: Point): void {
     const mode = this.mode;
+    if (mode.kind === "targeting") {
+      this.showForecastAt(mode, tile);
+      return;
+    }
     if (mode.kind !== "selected") return;
     const state = this.deps.getState();
     const unit = state.units.find((u) => u.id === mode.unitId);
@@ -82,7 +114,8 @@ export class InputController {
   }
 
   onConfirm(tile: Point): void {
-    switch (this.mode.kind) {
+    const mode = this.mode;
+    switch (mode.kind) {
       case "idle":
         this.selectAt(tile);
         return;
@@ -93,6 +126,11 @@ export class InputController {
       case "selected":
         void this.chooseDestination(tile);
         return;
+      case "targeting": {
+        const target = mode.targets.find((t) => t.pos.x === tile.x && t.pos.y === tile.y);
+        if (target) void this.commit(mode, { type: "attack", target: target.id });
+        return;
+      }
       case "menu":
       case "busy":
         return;
@@ -100,13 +138,19 @@ export class InputController {
   }
 
   onCancel(): void {
-    switch (this.mode.kind) {
+    const mode = this.mode;
+    switch (mode.kind) {
       case "selected":
       case "inspect":
         this.reset();
         return;
       case "menu":
-        this.backToSelection(this.mode);
+        this.backToSelection(mode);
+        return;
+      case "targeting":
+        this.deps.view.clearRange();
+        this.deps.view.clearForecast();
+        this.openMenu(mode);
         return;
       case "idle":
       case "busy":
@@ -115,12 +159,11 @@ export class InputController {
   }
 
   onMenuChoice(id: string): void {
-    if (this.mode.kind !== "menu") return;
-    if (id === "cancel") {
-      this.backToSelection(this.mode);
-      return;
-    }
-    if (id === "wait") void this.commit(this.mode.unitId, this.mode.path);
+    const mode = this.mode;
+    if (mode.kind !== "menu") return;
+    if (id === "cancel") this.backToSelection(mode);
+    else if (id === "wait") void this.commit(mode, { type: "wait" });
+    else if (id === "fire") this.startTargeting(mode);
   }
 
   private selectAt(tile: Point): void {
@@ -132,12 +175,21 @@ export class InputController {
     if (unit.owner === state.currentPlayer) {
       if (unit.hasActed) return;
       this.mode = { kind: "selected", unitId: unit.id, reach, path: [] };
-      this.deps.view.showRange(tiles, "move");
+      this.deps.view.showRanges([{ tiles, kind: "move" }]);
       this.deps.view.showPath(unit.pos, []);
     } else {
       this.mode = { kind: "inspect" };
-      this.deps.view.showRange(tiles, "inspect");
+      this.deps.view.showRanges(this.threatLayers(state, unit, reach, tiles));
     }
+  }
+
+  /** Where an enemy can move, and in red what it can hit beyond that. */
+  private threatLayers(state: GameState, unit: Unit, reach: ReadonlyMap<number, Reach>, tiles: readonly Point[]): RangeLayer[] {
+    const threat = threatTiles(state, unit);
+    const beyondMove = UNITS[unit.type].canMoveAndFire
+      ? threat.filter((p) => !reach.has(p.y * state.map.width + p.x))
+      : threat;
+    return [{ tiles, kind: "inspect" }, { tiles: beyondMove, kind: "attack" }];
   }
 
   private async chooseDestination(tile: Point): Promise<void> {
@@ -165,13 +217,49 @@ export class InputController {
     this.deps.view.clearRange();
     this.deps.view.clearPath();
     await this.deps.view.previewMove(unitId, [unit.pos, ...path]);
-    this.mode = { kind: "menu", unitId, reach, path };
-    this.deps.view.openMenu(tile, ACTION_MENU);
+    const targets = attackTargets(state, { ...unit, pos: tile }, path.length > 0);
+    this.openMenu({ unitId, reach, path, targets });
+  }
+
+  private openMenu(chosen: Chosen & { readonly targets: readonly Unit[] }): void {
+    const { unitId, reach, path, targets } = chosen;
+    const unit = this.deps.getState().units.find((u) => u.id === unitId);
+    if (!unit) {
+      this.reset();
+      return;
+    }
+    this.mode = { kind: "menu", unitId, reach, path, targets };
+    const at = path[path.length - 1] ?? unit.pos;
+    this.deps.view.openMenu(at, targets.length > 0 ? [FIRE, WAIT, CANCEL] : [WAIT, CANCEL]);
+  }
+
+  private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {
+    const { view } = this.deps;
+    const first = mode.targets[0];
+    if (!first) return;
+    view.closeMenu();
+    const targeting = { ...mode, kind: "targeting" as const };
+    this.mode = targeting;
+    view.showRanges([{ tiles: mode.targets.map((t) => t.pos), kind: "attack" }]);
+    view.setCursor(first.pos);
+    this.showForecastAt(targeting, first.pos);
+  }
+
+  private showForecastAt(mode: Extract<Mode, { kind: "targeting" }>, tile: Point): void {
+    const { view } = this.deps;
+    const state = this.deps.getState();
+    const target = mode.targets.find((t) => t.pos.x === tile.x && t.pos.y === tile.y);
+    const unit = state.units.find((u) => u.id === mode.unitId);
+    const end = mode.path[mode.path.length - 1];
+    const result = target && unit ? forecast(state, end ? { ...unit, pos: end } : unit, target) : null;
+    if (target && result) view.showForecast(target.pos, forecastLines(result));
+    else view.clearForecast();
   }
 
   private backToSelection(mode: Extract<Mode, { kind: "menu" }>): void {
     const { view } = this.deps;
-    const unit = this.deps.getState().units.find((u) => u.id === mode.unitId);
+    const state = this.deps.getState();
+    const unit = state.units.find((u) => u.id === mode.unitId);
     view.closeMenu();
     view.resetPreview();
     if (!unit) {
@@ -179,14 +267,17 @@ export class InputController {
       return;
     }
     this.mode = { kind: "selected", unitId: mode.unitId, reach: mode.reach, path: mode.path };
-    view.showRange([...mode.reach.keys()].map((i) => tilePoint(this.deps.getState(), i)), "move");
+    view.showRanges([{ tiles: [...mode.reach.keys()].map((i) => tilePoint(state, i)), kind: "move" }]);
     view.showPath(unit.pos, mode.path);
   }
 
-  private async commit(unitId: UnitId, path: Point[]): Promise<void> {
-    this.deps.view.closeMenu();
+  private async commit(chosen: Chosen, action: UnitAction): Promise<void> {
+    const { view } = this.deps;
+    view.closeMenu();
+    view.clearRange();
+    view.clearForecast();
     this.mode = { kind: "busy" };
-    const ok = await this.deps.dispatch({ type: "move", unitId, path, action: { type: "wait" } });
+    const ok = await this.deps.dispatch({ type: "move", unitId: chosen.unitId, path: chosen.path, action });
     this.mode = { kind: "idle" };
     if (!ok) this.reset();
   }

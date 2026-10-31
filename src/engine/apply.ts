@@ -1,7 +1,8 @@
 // The single entry point for changing the game: apply(state, command) → new state + events,
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
-import type { ApplyResult, Command, GameEvent, RejectionCode } from "./commands";
+import { resolveCombat, targetProblem } from "./combat";
+import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
 import type { Point } from "./map";
 import { checkPath } from "./movement";
 import type { GameState, PlayerId, Unit } from "./state";
@@ -24,12 +25,15 @@ export function apply(state: GameState, command: Command): ApplyResult {
 const isPoint = (p: unknown): p is Point =>
   typeof p === "object" && p !== null && Number.isInteger((p as Point).x) && Number.isInteger((p as Point).y);
 
+function isAction(action: unknown): action is UnitAction {
+  const a = action as { type?: unknown; target?: unknown } | null;
+  return a?.type === "wait" || (a?.type === "attack" && Number.isInteger(a.target));
+}
+
 function move(state: GameState, command: Extract<Command, { type: "move" }>): ApplyResult {
   const { unitId, path, action } = command;
   if (!Array.isArray(path) || !path.every(isPoint)) return reject("invalidCommand", "path must be a list of {x, y} points");
-  if ((action as { type?: unknown } | null)?.type !== "wait") {
-    return reject("invalidCommand", `Unknown action: ${JSON.stringify(action)}`);
-  }
+  if (!isAction(action)) return reject("invalidCommand", `Unknown action: ${JSON.stringify(action)}`);
 
   const unit = state.units.find((u) => u.id === unitId);
   if (!unit) return reject("unitNotFound", `No unit with id ${String(unitId)}`);
@@ -44,14 +48,20 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   if (path.length > 0) {
     events.push({ type: "unitMoved", unitId, path: [unit.pos, ...path], fuelUsed: check.cost });
   }
-  events.push({ type: "unitWaited", unitId });
 
   const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - check.cost, hasActed: true };
-  return {
-    ok: true,
-    state: { ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) },
-    events,
-  };
+  const afterMove: GameState = { ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) };
+
+  if (action.type === "wait") {
+    return { ok: true, state: afterMove, events: [...events, { type: "unitWaited", unitId }] };
+  }
+
+  const defender = afterMove.units.find((u) => u.id === action.target);
+  if (!defender) return reject("invalidTarget", `No unit with id ${action.target}`);
+  const problem = targetProblem(afterMove, moved, defender, path.length > 0);
+  if (problem) return reject("invalidTarget", `Can't attack unit ${action.target}: ${problem}`);
+  const combat = resolveCombat(afterMove, moved, defender);
+  return { ok: true, state: combat.state, events: [...events, combat.event] };
 }
 
 function endTurn(state: GameState): ApplyResult {

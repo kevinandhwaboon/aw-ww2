@@ -1,7 +1,29 @@
 // Public API of the rules engine. Presentation and AI code import from here.
 
 export { apply } from "./apply";
-export type { ApplyResult, Command, CommandType, GameEvent, RejectionCode, UnitAction } from "./commands";
+export type {
+  ApplyResult,
+  Combatant,
+  CombatStrike,
+  Command,
+  CommandType,
+  GameEvent,
+  RejectionCode,
+  UnitAction,
+} from "./commands";
+export {
+  attackTargets,
+  canCounter,
+  chooseWeapon,
+  damageFormula,
+  distance,
+  forecast,
+  targetProblem,
+  threatTiles,
+  MAX_LUCK,
+  type CombatForecast,
+  type DamageInputs,
+} from "./combat";
 export {
   canEndOn,
   checkPath,

@@ -1,7 +1,7 @@
 import { terrainDef, type TerrainId } from "../engine/data/terrain";
 import { UNITS } from "../engine/data/units";
 import { veterancyFor } from "../engine/data/veterancy";
-import type { GameEvent } from "../engine/commands";
+import type { Combatant, GameEvent } from "../engine/commands";
 import type { Modifier } from "../engine/modifiers";
 import { displayHp, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
@@ -59,7 +59,7 @@ export function createTurnBar(
   const hint = el(
     "div",
     "turn-hint",
-    "Click a unit, then a blue tile, then Wait. Right-click / Esc cancels. Arrows + Z / X work too. Click an enemy to see its range.",
+    "Click a unit, then a blue tile, then Fire or Wait. Right-click / Esc cancels. Arrows + Z / X work too. Click an enemy to see its range.",
   );
   bar.append(row, hint);
   root.append(bar);
@@ -167,6 +167,12 @@ function describeEvent(state: GameState, e: GameEvent): string {
     }
     case "unitWaited":
       return `${unitName(e.unitId)} waits`;
+    case "combat": {
+      const who = (c: Combatant) => `${name(c.owner)} ${UNITS[c.type].name}`;
+      const tag = (c: Combatant) => (c.destroyed ? " (destroyed)" : c.promotedTo ? ` (now ${c.promotedTo})` : "");
+      const counter = e.counter ? `, counter ${e.counter.damage}% (luck ${e.counter.luck})` : ", no counter";
+      return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}${tag(e.defender)} for ${e.attack.damage}% (luck ${e.attack.luck})${counter}`;
+    }
     case "turnEnded":
       return `${name(e.player)} ended their turn`;
     case "dayStarted":

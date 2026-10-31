@@ -1,9 +1,9 @@
 import Phaser from "phaser";
-import type { GameEvent } from "../engine/commands";
+import type { Combatant, GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Point } from "../engine/map";
 import { displayHp, type GameState, type UnitId } from "../engine/state";
-import type { MapView, MenuItem, RangeKind } from "./controller";
+import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
 import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
@@ -23,8 +23,9 @@ export interface MapSceneOptions {
 }
 
 const MOVE_MS_PER_TILE = 70;
-const RANGE_COLORS: Record<RangeKind, number> = { move: 0x7ec8ff, inspect: 0xff7060 };
+const RANGE_COLORS: Record<RangeKind, number> = { move: 0x7ec8ff, inspect: 0xffc070, attack: 0xff4030 };
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4, ink: "#2a2418", bg: 0xf4ecd8, border: 0x4a3c28, highlight: 0xe8c070 };
+const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 
 const center = (p: Point) => ({ x: p.x * TILE_SIZE + TILE_SIZE / 2, y: p.y * TILE_SIZE + TILE_SIZE / 2 });
 
@@ -46,6 +47,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   private menu:
     | { container: Phaser.GameObjects.Container; items: readonly MenuItem[]; rect: Phaser.Geom.Rectangle; selected: number }
     | undefined;
+  private forecastPanel: Phaser.GameObjects.Container | undefined;
 
   constructor(private readonly options: MapSceneOptions) {
     super("map");
@@ -156,7 +158,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
   }
 
-  private setCursor(tile: Point): void {
+  setCursor(tile: Point): void {
     const { map } = this.state;
     const x = Phaser.Math.Clamp(tile.x, 0, map.width - 1);
     const y = Phaser.Math.Clamp(tile.y, 0, map.height - 1);
@@ -177,15 +179,17 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   // ---- MapView: ranges, path arrow, preview, menu ----
 
-  showRange(tiles: readonly Point[], kind: RangeKind): void {
+  showRanges(layers: readonly RangeLayer[]): void {
     const g = this.rangeLayer;
     if (!g) return;
     g.clear();
-    g.fillStyle(RANGE_COLORS[kind], 0.5);
-    for (const t of tiles) g.fillRect(t.x * TILE_SIZE, t.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    // Thin grid lines inside the range keep individual tiles readable.
-    g.lineStyle(1, 0xffffff, 0.35);
-    for (const t of tiles) g.strokeRect(t.x * TILE_SIZE + 0.5, t.y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    for (const { tiles, kind } of layers) {
+      g.fillStyle(RANGE_COLORS[kind], 0.5);
+      for (const t of tiles) g.fillRect(t.x * TILE_SIZE, t.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      // Thin grid lines inside the range keep individual tiles readable.
+      g.lineStyle(1, 0xffffff, 0.35);
+      for (const t of tiles) g.strokeRect(t.x * TILE_SIZE + 0.5, t.y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    }
   }
 
   clearRange(): void {
@@ -260,6 +264,34 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.menu = undefined;
   }
 
+  showForecast(at: Point, lines: readonly string[]): void {
+    this.clearForecast();
+    const lineHeight = GLYPH_HEIGHT + 2;
+    const width = Math.max(...lines.map(textWidth)) + 6;
+    const height = lines.length * lineHeight + 4;
+    const mapW = this.state.map.width * TILE_SIZE;
+    const x = Phaser.Math.Clamp(at.x * TILE_SIZE + (TILE_SIZE - width) / 2, 0, mapW - width);
+    const above = at.y * TILE_SIZE - height - 2;
+    const y = above >= 0 ? above : (at.y + 1) * TILE_SIZE + 2;
+
+    const panel = this.add.container(Math.round(x), y);
+    const g = this.add.graphics();
+    g.fillStyle(MENU.border, 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(MENU.bg, 1);
+    g.fillRect(1, 1, width - 2, height - 2);
+    panel.add(g);
+    lines.forEach((line, i) => {
+      panel.add(this.add.image(3, 3 + i * lineHeight, this.textTexture(line, MENU.ink)).setOrigin(0));
+    });
+    this.forecastPanel = panel;
+  }
+
+  clearForecast(): void {
+    this.forecastPanel?.destroy();
+    this.forecastPanel = undefined;
+  }
+
   private menuIndexAt(worldX: number, worldY: number): number | null {
     const menu = this.menu;
     if (!menu || !menu.rect.contains(worldX, worldY)) return null;
@@ -291,17 +323,26 @@ export class MapScene extends Phaser.Scene implements MapView {
     g.fillTriangle(2, py, 2, py + 4, 4, py + 2);
     container.add(g);
     items.forEach((item, i) => {
-      const key = this.texture(`menu-${item.label}`, () => {
-        const c = document.createElement("canvas");
-        c.width = textWidth(item.label);
-        c.height = GLYPH_HEIGHT;
-        const ctx = c.getContext("2d");
-        if (!ctx) throw new Error("2D canvas not available");
-        ctx.fillStyle = MENU.ink;
-        drawPixelText(ctx, item.label, 0, 0);
-        return c;
-      });
-      container.add(this.add.image(MENU.pad + 4, MENU.pad + 1 + i * MENU.itemHeight, key).setOrigin(0));
+      container.add(this.add.image(MENU.pad + 4, MENU.pad + 1 + i * MENU.itemHeight, this.textTexture(item.label, MENU.ink)).setOrigin(0));
+    });
+  }
+
+  /** A texture of pixel text, optionally with a 1px outline so it reads on any terrain. */
+  private textTexture(text: string, color: string, outline?: string): string {
+    return this.texture(`text-${color}-${outline ?? ""}-${text}`, () => {
+      const pad = outline ? 1 : 0;
+      const c = document.createElement("canvas");
+      c.width = textWidth(text) + pad * 2;
+      c.height = GLYPH_HEIGHT + pad * 2;
+      const ctx = c.getContext("2d");
+      if (!ctx) throw new Error("2D canvas not available");
+      if (outline) {
+        ctx.fillStyle = outline;
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) drawPixelText(ctx, text, pad + dx, pad + dy);
+      }
+      ctx.fillStyle = color;
+      drawPixelText(ctx, text, pad, pad);
+      return c;
     });
   }
 
@@ -311,7 +352,62 @@ export class MapScene extends Phaser.Scene implements MapView {
   async playEvents(events: readonly GameEvent[]): Promise<void> {
     for (const event of events) {
       if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
+      if (event.type === "combat") await this.playCombat(event);
     }
+  }
+
+  /** The attack, then the counter if there was one, then any promotions (00-master-design §13). */
+  private async playCombat(event: Extract<GameEvent, { type: "combat" }>): Promise<void> {
+    const { attacker, defender, attack, counter } = event;
+    await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
+    if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
+    for (const unit of [attacker, defender]) {
+      if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), "#f0d040");
+    }
+  }
+
+  /** The shooter nudges toward its target, which flashes and shows the damage. */
+  private async playStrike(shooter: Combatant, target: Combatant, damage: number, destroyed: boolean): Promise<void> {
+    const sprite = this.unitSprites.get(shooter.unitId);
+    if (sprite) {
+      const { x, y } = sprite;
+      const dx = Math.sign(target.pos.x - shooter.pos.x) * 3;
+      const dy = Math.sign(target.pos.y - shooter.pos.y) * 3;
+      await this.tween(sprite, { x: x + dx, y: y + dy }, COMBAT_MS.nudge);
+      await this.tween(sprite, { x, y }, COMBAT_MS.nudge);
+    }
+    const flash = this.add.rectangle(target.pos.x * TILE_SIZE, target.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, 0xffffff).setOrigin(0);
+    await this.tween(flash, { alpha: 0 }, COMBAT_MS.flash);
+    flash.destroy();
+    await Promise.all([
+      this.floatLabel(target.pos, `-${damage}`, "#ffffff"),
+      destroyed ? this.explode(target) : Promise.resolve(),
+    ]);
+  }
+
+  private async explode(target: Combatant): Promise<void> {
+    const { x, y } = center(target.pos);
+    const blast = this.add.rectangle(x, y, 8, 8, 0xffa030);
+    const sprite = this.unitSprites.get(target.unitId);
+    await Promise.all([
+      this.tween(blast, { scaleX: 2.5, scaleY: 2.5, alpha: 0 }, COMBAT_MS.explode),
+      sprite ? this.tween(sprite, { alpha: 0 }, COMBAT_MS.explode) : Promise.resolve(),
+    ]);
+    blast.destroy();
+  }
+
+  /** Text that rises from a tile and fades out. */
+  private async floatLabel(tile: Point, text: string, color: string): Promise<void> {
+    const { x, y } = center(tile);
+    const label = this.add.image(x, y, this.textTexture(text, color, "#101018"));
+    await this.tween(label, { y: y - 9, alpha: 0 }, COMBAT_MS.float);
+    label.destroy();
+  }
+
+  private tween(target: object, props: Record<string, number>, duration: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.tweens.add({ targets: target, ...props, duration, onComplete: () => resolve() });
+    });
   }
 
   /** Tweens a unit marker tile by tile along a path. Skips if it's already at the end (previewed). */
