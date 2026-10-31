@@ -1,0 +1,49 @@
+{
+  "id": "bocage-country",
+  "name": "Bocage Country",
+  "description": "Normandy hedgerows. The Americans have more men and money, but must dig the Germans out of bunkers along a single road through thick bocage.",
+  "map": [
+    "b.bb.=.bb..bbb",
+    "..C..=..b.C.Xb",
+    ".b.bb=bb..b.b.",
+    "Qf==========fQ",
+    ".b.b.b.b.bb.b.",
+    "..bb..Cbb..X.b",
+    "b..b.bb.b.bC..",
+    ".C.b....b..bbb",
+    "bb..bFF.b.Fb.."
+  ],
+  "players": [
+    {
+      "name": "US Army",
+      "nation": "us",
+      "funds": 8000,
+      "buildable": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
+        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA"
+      ]
+    },
+    { "name": "Wehrmacht", "nation": "germany", "funds": 4000 }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 0, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 7 }, "owner": 0 },
+    { "pos": { "x": 13, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 10, "y": 1 }, "owner": 1 },
+    { "pos": { "x": 11, "y": 6 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 2, "y": 3 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 3, "y": 3 } },
+    { "type": "assaultInfantry", "owner": 0, "pos": { "x": 2, "y": 2 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 4, "y": 3 } },
+    { "type": "recon", "owner": 0, "pos": { "x": 5, "y": 3 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 1, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 12, "y": 1 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 5 } },
+    { "type": "tankDestroyer", "owner": 1, "pos": { "x": 9, "y": 3 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 10, "y": 4 } }
+  ]
+}

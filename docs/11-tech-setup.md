@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), 5 (supply and transport), 6 (win conditions) and 7 (fortifications) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -125,10 +125,18 @@
 - **Attacking one** is the `attackFort` end action on Move, targeting a tile. Its rules are in `src/engine/combat.ts`, next to unit combat, and the menus and the forecast use the same code.
 - **The UI draws a damaged fortification's HP** like a unit's, and redraws any tile whose terrain changed.
 
+## 3i. Game shell (milestone 8)
+
+- **`src/main.ts`** shows the title screen or, with `?map=`, starts straight away. **`src/session.ts`** is one game in progress. **`src/ui/screens.ts`** has the title and map select.
+- **Hot-seat:** with the pass-the-device option on, a full screen waits between turns until the next player presses Ready. With it off, the turn banner shows instead.
+- **Luck seeds** are random for each new game unless `?seed=` fixes one. They're not part of a scenario file.
+- **Saving:** `saveGame` and `loadGame` in `src/engine/save.ts` work and are tested, but no screen uses them yet, since save/load isn't in the MVP (00-master-design §5).
+
 ## 4. Data files
 
 - Unit stats, terrain and the damage chart are **typed TypeScript data** (`as const satisfies UnitDef` etc.), not raw JSON. They're still pure data with no logic, but typos and missing fields fail the build.
-- Scenarios and maps are JSON (Tiled export plus a scenario file), validated when loaded.
+- Scenarios are JSON files in `src/scenarios/`, validated when loaded by `src/engine/scenario.ts`. A bad file fails with a message naming the scenario and the problem. To add one, write the file and list it in `src/scenarios/index.ts`.
+- Maps are currently written as text rows in the scenario file, using the legend in `src/engine/map.ts`. **Tiled is deferred** until real tile art exists (08-art-pipeline), because Tiled needs a tileset image and our tiles are still drawn in code.
 - Tests build maps from small ASCII grids for readability.
 
 ## 5. Testing approach
@@ -165,4 +173,4 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?seed=123` fixes the luck rolls, `?luck=off` turns luck off. (Choosing a test map comes with the game shell, milestone 8.)
+- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen.

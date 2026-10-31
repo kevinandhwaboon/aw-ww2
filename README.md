@@ -6,7 +6,7 @@ A turn-based, grid-based WW2 strategy game for the browser, inspired by the mech
 
 ## Status
 
-Phase 1 (core MVP), in progress. Currently playable: hot-seat turns on a test map, unit movement with terrain costs and fuel, combat with luck, counterattacks, indirect fire, a damage forecast and veterancy, an economy with capture, income, building and repair, Halftrack transport, supply and joining units, win conditions with a results screen, and bunkers and obstacles that can be destroyed. Test maps and the title screen come next. See [`docs/11-tech-setup.md`](docs/11-tech-setup.md) §6 for the milestone plan.
+Phase 1 (core MVP) is complete. Two players on one device can pick from three test maps and play to a finish: movement with terrain costs and fuel, combat with luck, counterattacks, indirect fire, a damage forecast and veterancy, an economy with capture, income, building and repair, Halftrack transport, supply and joining units, win conditions with a results screen, and bunkers and obstacles that can be destroyed. Phase 2 (air, naval and the first AI) comes next. See [`docs/11-tech-setup.md`](docs/11-tech-setup.md) §6 for the milestone plan.
 
 ## Controls
 

@@ -9,7 +9,7 @@ import * as stats from "../engine/stats";
 import type { BuildMenu } from "../game/controller";
 import { playerColors } from "../game/placeholderUnits";
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
+export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
@@ -206,6 +206,32 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       panel.replaceChildren(title, reason, table, buttons);
       panel.hidden = false;
       newGame.focus();
+    },
+  };
+}
+
+/** Hot-seat: a full screen between turns, so players can swap seats. Resolves when they're ready. */
+export function createHandoff(root: HTMLElement): { show: (title: string, detail: string, color: string) => Promise<void> } {
+  const screen = el("div", "screen");
+  screen.hidden = true;
+  root.append(screen);
+  return {
+    show(title, detail, color) {
+      return new Promise((resolve) => {
+        const heading = el("div", "results-title", title);
+        heading.style.color = color;
+        const ready = el("button", "btn btn-big", "Ready");
+        ready.addEventListener("click", () => {
+          ready.blur(); // so the keyboard goes back to the map
+          screen.hidden = true;
+          resolve();
+        });
+        const panel = el("div", "panel screen-panel");
+        panel.append(heading, el("div", "results-reason", detail || "Your turn"), ready);
+        screen.replaceChildren(panel);
+        screen.hidden = false;
+        ready.focus();
+      });
     },
   };
 }
