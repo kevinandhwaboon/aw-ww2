@@ -1,7 +1,7 @@
 # Topic Doc 01: Units
 
 **Status:** Roster and roles decided. Provisional v0 stats set (section 8); expect them to change after playtesting. Damage values live in 03-combat.
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-31
 **Depends on:** 00-master-design.md. **Feeds:** 02-terrain (movement types, fortifications), 03-combat (damage chart), 05-supply-transport (transport and resupply rules).
 
 ---
@@ -56,8 +56,8 @@
 |---|---|---|---|
 | Battleship | Shore bombardment | Long-range indirect fire vs. land and sea | HMS Warspite, USS Texas / (rare; scenario-dependent) |
 | Destroyer | Escort | Hunts submarines, anti-air, close bombardment | Fletcher, Tribal / Z-class |
-| Submarine | Anti-ship | Can dive (hidden while submerged). Attacks ships only | Allied subs / U-boat |
-| Landing Craft | Amphibious transport | Carries 2 land units of any type. Unloads onto beach tiles. Unarmed | LCT, LST / (rare) |
+| Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
+| Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / (rare) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
 
 Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is added.
@@ -68,7 +68,7 @@ Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is 
 |---|---|---|---|
 | Halftrack | 1 | Infantry, Assault Infantry, Mortar Team | Adjacent land tile |
 | Transport Aircraft | 2 | Infantry, Assault Infantry, Mortar Team | Airborne drop (below) |
-| Landing Craft | 2 | Any land unit | Adjacent beach tile (or land tile adjacent to its port/shoal position, TBD in 02-terrain) |
+| Landing Craft | 2 | Any land unit | Standing on a Beach or Port tile, onto adjacent land tiles (05-supply-transport §8) |
 
 **Airborne drops (Transport Aircraft):**
 - There is no separate Paratrooper unit. Any foot unit can be air-dropped.

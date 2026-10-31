@@ -1,7 +1,7 @@
 # Topic Doc 02: Terrain
 
 **Status:** v0 decided. Values follow the original game (default rule) except where marked **(new)**. Expect tuning after playtesting.
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-31
 **Depends on:** 00-master-design.md, 01-units.md, 03-combat.md. **Feeds:** 04-economy-production (properties), 05-supply-transport (unloading, beaches), map making.
 
 ---
@@ -39,7 +39,7 @@ Movement cost is movement points spent to **enter** the tile. `—` = impassable
 | River | 0 | 2 | 1 | — | — | 1 | — | — | |
 | Bocage **(new)** | 3 | 1 | 1 | — | 3 | 1 | — | — | Hedgerow country. Great cover, blocks wheels, slows tracks |
 | Sea | 0 | — | — | — | — | 1 | 1 | 1 | |
-| Beach | 0 | 1 | 1 | 1 | 1 | 1 | — | 1 | Original's shoal. Landing Craft unload here (phase 2) |
+| Beach | 0 | 1 | 1 | 1 | 1 | 1 | — | 1 | Original's shoal. Landing Craft must stand here, or on a Port, to load or unload (05-supply-transport §8) |
 | Reef | 1 | — | — | — | — | 1 | 2 | 2 | |
 | City | 3 | 1 | 1 | 1 | 1 | 1 | — | — | Property |
 | Factory | 3 | 1 | 1 | 1 | 1 | 1 | — | — | Property; builds land units |
@@ -74,6 +74,7 @@ Following the original:
 - **Enemy units block** movement: a unit can't enter or pass through an enemy-occupied tile.
 - **Friendly units** can be passed through, but a unit can't end its move on a friendly unit unless it is loading into a transport or joining (04-economy, 05-supply-transport).
 - A unit can always choose not to move (move 0) and still act.
+- **One unit per tile, of any category.** An aircraft over a tile blocks a ground unit from ending there, and the reverse. Load and Join are the only exceptions (05-supply-transport §5).
 - Movement is all-or-nothing within the turn: a unit moves once, then acts or waits. (Fog-of-war ambush interruptions are not relevant while fog of war is out.)
 
 ## 6. Map edges and data
