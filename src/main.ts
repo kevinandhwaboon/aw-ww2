@@ -9,7 +9,15 @@ import { MapScene } from "./game/MapScene";
 import { HELLO_SETUP } from "./game/maps/hello";
 import { TILE_SIZE } from "./game/placeholderTiles";
 import { playerColors } from "./game/placeholderUnits";
-import { createBanner, createBuildMenu, createDebugPanel, createTerrainPanel, createTurnBar, createUnitPanel } from "./ui/hud";
+import {
+  createBanner,
+  createBuildMenu,
+  createDebugPanel,
+  createResultsScreen,
+  createTerrainPanel,
+  createTurnBar,
+  createUnitPanel,
+} from "./ui/hud";
 import "./ui/style.css";
 
 // Debug URL options (11-tech-setup §7): ?seed=123 fixes the luck rolls, ?luck=off turns luck off.
@@ -36,12 +44,13 @@ const gameRoot = document.getElementById("game");
 const uiRoot = document.getElementById("ui");
 if (!gameRoot || !uiRoot) throw new Error("index.html is missing #game or #ui");
 
-const turnBar = createTurnBar(uiRoot, { onEndTurn: endTurn, onUndo: undo });
+const turnBar = createTurnBar(uiRoot, { onEndTurn: endTurn, onUndo: undo, onResign: resign });
 const unitPanel = createUnitPanel(uiRoot);
 const terrainPanel = createTerrainPanel(uiRoot);
 const debugPanel = createDebugPanel(uiRoot);
 const banner = createBanner(uiRoot);
 const buildMenu = createBuildMenu(uiRoot);
+const results = createResultsScreen(uiRoot);
 
 const scene = new MapScene({
   state,
@@ -78,7 +87,7 @@ async function dispatch(command: Command): Promise<boolean> {
     return false;
   }
   const revealsInformation = command.type === "endTurn" || (command.type === "move" && command.action.type === "attack");
-  history = revealsInformation ? [] : [...history, state];
+  history = revealsInformation || result.state.result ? [] : [...history, state];
   playing = true;
   turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview
   await scene.playEvents(result.events);
@@ -95,6 +104,10 @@ async function dispatch(command: Command): Promise<boolean> {
   }
   playing = false;
   render();
+  if (state.result) {
+    controller.finish();
+    results.show(state, () => window.location.reload());
+  }
   return true;
 }
 
@@ -102,6 +115,12 @@ function endTurn(): void {
   if (playing || controller.busy) return;
   controller.reset();
   void dispatch({ type: "endTurn" });
+}
+
+function resign(): void {
+  if (playing || controller.busy) return;
+  controller.reset();
+  void dispatch({ type: "resign" });
 }
 
 function undo(): void {

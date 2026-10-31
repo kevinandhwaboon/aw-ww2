@@ -229,6 +229,32 @@ describe("transport, supply and join", () => {
   });
 });
 
+describe("after the game ends", () => {
+  it("all input is ignored and the map is cleared", () => {
+    const { controller, seen } = setup(["======"], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    expect(seen.ranges).toHaveLength(1);
+    controller.finish();
+    expect(seen.ranges).toEqual([]);
+    expect(controller.busy).toBe(true);
+    controller.onConfirm(P(0, 0));
+    controller.onPeekStart(P(0, 0));
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("a command that ends the game leaves input locked", async () => {
+    const { controller, seen, settle } = setup([".C."], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    controller.onMenuChoice("wait");
+    controller.finish(); // as main.ts does while the command is finishing
+    await settle();
+    expect(controller.busy).toBe(true);
+    expect(seen.commands).toHaveLength(1);
+  });
+});
+
 describe("hold X or right-click", () => {
   const units: UnitSetup[] = [
     { type: "infantry", owner: 0, pos: P(0, 0) },

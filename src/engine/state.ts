@@ -14,6 +14,21 @@ export type UnitId = number;
 /** Internal HP of a full-health unit. Displayed HP is internal ÷ 10, rounded up (03-combat §1). */
 export const MAX_HP = 100;
 
+/** Something a scenario can be won by (00-master-design §8). Rules are in engine/victory.ts. */
+export type VictoryCondition = { readonly type: "hqCapture" } | { readonly type: "rout" };
+
+/** The default for a scenario that doesn't say otherwise (04-economy §8). */
+export const DEFAULT_VICTORY: readonly VictoryCondition[] = [{ type: "hqCapture" }, { type: "rout" }];
+
+/** Why a player lost. Resigning is always possible, whatever the scenario. */
+export type DefeatReason = VictoryCondition["type"] | "resign";
+
+export interface GameResult {
+  readonly winningSide: Side;
+  readonly winners: readonly PlayerId[];
+  readonly reason: DefeatReason;
+}
+
 /** Capture points of an untouched property (04-economy §3). */
 export const CAPTURE_POINTS = 20;
 
@@ -24,6 +39,8 @@ export interface Player {
   readonly nation: NationId;
   readonly funds: number;
   readonly defeated: boolean;
+  /** Has had at least one unit, so losing them all counts as a rout (04-economy §8). */
+  readonly hasFielded: boolean;
   /** Unit types this player may build, set per scenario (01-units availability rule). */
   readonly buildable: readonly UnitTypeId[];
 }
@@ -87,6 +104,9 @@ export interface GameState {
   /** Scenario, commander and weather modifiers. Veterancy is derived from units, not stored here. */
   readonly modifiers: readonly Modifier[];
   readonly settings: Settings;
+  readonly victoryConditions: readonly VictoryCondition[];
+  /** Set once the game is over; no more commands are accepted after that. */
+  readonly result: GameResult | null;
 }
 
 /** HP as shown to players, 0–10 (03-combat §1). */

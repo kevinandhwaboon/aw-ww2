@@ -4,7 +4,7 @@
 import type { UnitTypeId } from "./data/units";
 import type { VeterancyLevel } from "./data/veterancy";
 import type { Point } from "./map";
-import type { GameState, PlayerId, UnitId } from "./state";
+import type { DefeatReason, GameResult, GameState, PlayerId, UnitId } from "./state";
 
 /** What a unit does at the end of its move. */
 export type UnitAction =
@@ -49,7 +49,9 @@ export type Command =
   | { readonly type: "move"; readonly unitId: UnitId; readonly path: readonly Point[]; readonly action: UnitAction }
   /** Build a unit on an empty production property the current player owns. */
   | { readonly type: "build"; readonly unitType: UnitTypeId; readonly pos: Point }
-  | { readonly type: "endTurn" };
+  | { readonly type: "endTurn" }
+  /** The current player gives up (04-economy §8). */
+  | { readonly type: "resign" };
 
 export type CommandType = Command["type"];
 
@@ -91,6 +93,8 @@ export type GameEvent =
   /** `hp` is displayed HP restored. */
   | { readonly type: "unitRepaired"; readonly unitId: UnitId; readonly hp: number; readonly cost: number }
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
+  | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
+  | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }
   | { readonly type: "dayStarted"; readonly day: number }
   | { readonly type: "turnStarted"; readonly player: PlayerId; readonly day: number };
@@ -108,7 +112,9 @@ export type RejectionCode =
   | "cannotLoad"
   | "cannotUnload"
   | "cannotJoin"
-  | "cannotSupply";
+  | "cannotSupply"
+  /** The game has ended: nothing more can be done. */
+  | "gameOver";
 
 export type ApplyResult =
   | { readonly ok: true; readonly state: GameState; readonly events: readonly GameEvent[] }

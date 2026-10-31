@@ -256,3 +256,52 @@ body {
 .build-cost {
   font-weight: bold;
 }
+
+.results {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(340px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  text-align: center;
+  font-size: 14px;
+}
+
+.results-back {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.results-title {
+  font-size: 26px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.results-reason {
+  margin: 4px 0 12px;
+}
+
+.results-table th,
+.results-table td {
+  text-align: right;
+  padding: 2px 8px;
+}
+
+.results-table tr > th:first-child {
+  text-align: left;
+  font-weight: bold;
+  opacity: 1;
+}
+
+.results-buttons {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}

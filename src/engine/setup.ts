@@ -10,12 +10,14 @@ import { seedRng } from "./rng";
 import {
   CAPTURE_POINTS,
   DEFAULT_SETTINGS,
+  DEFAULT_VICTORY,
   MAX_HP,
   type GameState,
   type PlayerId,
   type PropertyState,
   type Settings,
   type Unit,
+  type VictoryCondition,
 } from "./state";
 import { startTurn } from "./turn";
 
@@ -51,6 +53,8 @@ export interface GameSetup {
   readonly seed: number;
   readonly settings?: Partial<Settings>;
   readonly modifiers?: readonly Modifier[];
+  /** How this scenario is won; defaults to HQ capture and rout. */
+  readonly victory?: readonly VictoryCondition[];
 }
 
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
@@ -106,6 +110,7 @@ export function createGame(setup: GameSetup): GameState {
       side: NATIONS[p.nation].side,
       funds: p.funds ?? 0,
       defeated: false,
+      hasFielded: units.some((u) => u.owner === id),
       buildable: p.buildable ?? DEFAULT_BUILDABLE,
     })),
     units,
@@ -116,6 +121,8 @@ export function createGame(setup: GameSetup): GameState {
     nextUnitId: units.length,
     modifiers: [...(setup.modifiers ?? [])],
     settings: { ...DEFAULT_SETTINGS, ...setup.settings },
+    victoryConditions: setup.victory ?? DEFAULT_VICTORY,
+    result: null,
   };
   // Day 1 is a normal turn: the first player collects income too, as in the original (04-economy §2).
   return startTurn(state).state;

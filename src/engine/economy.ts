@@ -116,7 +116,7 @@ export function applyBuild(state: GameState, unitType: UnitTypeId, pos: Point): 
       ...state,
       units: [...state.units, unit],
       nextUnitId: state.nextUnitId + 1,
-      players: state.players.map((p) => (p.id === player ? { ...p, funds: p.funds - cost } : p)),
+      players: state.players.map((p) => (p.id === player ? { ...p, funds: p.funds - cost, hasFielded: true } : p)),
     },
     event: { type: "unitBuilt", unitId: unit.id, unitType, owner: player, pos, cost },
   };

@@ -4,7 +4,7 @@ import { veterancyFor } from "../engine/data/veterancy";
 import type { Combatant, GameEvent } from "../engine/commands";
 import type { Modifier } from "../engine/modifiers";
 import { terrainAt, type Point } from "../engine/map";
-import { CAPTURE_POINTS, displayHp, propertyAt, type GameState, type Unit } from "../engine/state";
+import { CAPTURE_POINTS, displayHp, propertyAt, type DefeatReason, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
 import type { BuildMenu } from "../game/controller";
 import { playerColors } from "../game/placeholderUnits";
@@ -47,7 +47,7 @@ export function createTerrainPanel(root: HTMLElement): { show: (state: GameState
 /** Day, whose turn it is, funds, Undo and End Turn, and a one-line controls hint. */
 export function createTurnBar(
   root: HTMLElement,
-  actions: { onEndTurn: () => void; onUndo: () => void },
+  actions: { onEndTurn: () => void; onUndo: () => void; onResign: () => void },
 ): { update: (state: GameState, ui: { canUndo: boolean; busy: boolean }) => void } {
   const bar = el("div", "panel turn-bar");
   const row = el("div", "turn-row");
@@ -65,7 +65,24 @@ export function createTurnBar(
   };
   const undo = button("Undo", "Undo the last move this turn (U)", actions.onUndo);
   const endTurn = button("End Turn", "End your turn (E)", actions.onEndTurn);
-  row.append(day, player, funds, undo, endTurn);
+  // Resigning can't be undone, so it takes a second click to confirm.
+  const RESIGN_LABEL = "Resign";
+  let armed: ReturnType<typeof setTimeout> | undefined;
+  const disarm = () => {
+    clearTimeout(armed);
+    armed = undefined;
+    resign.textContent = RESIGN_LABEL;
+  };
+  const resign = button(RESIGN_LABEL, "Give up this game", () => {
+    if (armed !== undefined) {
+      disarm();
+      actions.onResign();
+      return;
+    }
+    resign.textContent = "Really?";
+    armed = setTimeout(disarm, 3000);
+  });
+  row.append(day, player, funds, undo, endTurn, resign);
   const hint = el(
     "div",
     "turn-hint",
@@ -83,7 +100,8 @@ export function createTurnBar(
       player.style.color = playerColors(current.id)[0];
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")} (+${stats.propertyIncome(state, current.id).toLocaleString("en-US")}/day)`;
       undo.disabled = !ui.canUndo || ui.busy;
-      endTurn.disabled = ui.busy;
+      endTurn.disabled = ui.busy || state.result !== null;
+      resign.disabled = ui.busy || state.result !== null;
     },
   };
 }
@@ -125,6 +143,64 @@ export function createBuildMenu(root: HTMLElement): BuildMenu {
     close() {
       panel.hidden = true;
       panel.replaceChildren();
+    },
+  };
+}
+
+const DEFEAT_TEXT: Record<DefeatReason, string> = {
+  hqCapture: "The enemy HQ was captured",
+  rout: "The enemy has no units left",
+  resign: "The enemy resigned",
+};
+
+/** The end-of-game screen: who won, why, and how each player finished. */
+export function createResultsScreen(root: HTMLElement): { show: (state: GameState, onNewGame: () => void) => void } {
+  const panel = el("div", "panel results");
+  panel.hidden = true;
+  // While viewing the final map, this is the way back to the results and New Game.
+  const back = el("button", "btn results-back", "Results");
+  back.hidden = true;
+  back.addEventListener("click", () => {
+    back.hidden = true;
+    panel.hidden = false;
+  });
+  root.append(panel, back);
+
+  return {
+    show(state, onNewGame) {
+      const { result } = state;
+      if (!result) return;
+      const winners = result.winners.flatMap((id) => state.players[id]?.name ?? []).join(" and ");
+      const title = el("div", "results-title", `Victory: ${winners}`);
+      title.style.color = playerColors(result.winners[0] ?? 0)[0];
+      const reason = el("div", "results-reason", `${DEFEAT_TEXT[result.reason]} on day ${state.day}.`);
+
+      const table = el("table", "stat-table results-table");
+      const header = el("tr");
+      for (const label of ["", "Units", "Properties", "Funds"]) header.append(el("th", undefined, label));
+      table.append(header);
+      for (const player of state.players) {
+        const units = state.units.filter((u) => u.owner === player.id).reduce((n, u) => n + 1 + u.cargo.length, 0);
+        const properties = state.properties.filter((p) => p.owner === player.id).length;
+        const tr = el("tr");
+        const name = el("th", undefined, player.name);
+        name.style.color = playerColors(player.id)[0];
+        tr.append(name, el("td", undefined, String(units)), el("td", undefined, String(properties)), el("td", undefined, player.funds.toLocaleString("en-US")));
+        table.append(tr);
+      }
+
+      const newGame = el("button", "btn", "New Game");
+      newGame.addEventListener("click", onNewGame);
+      const viewMap = el("button", "btn", "View Map");
+      viewMap.addEventListener("click", () => {
+        panel.hidden = true;
+        back.hidden = false;
+      });
+      const buttons = el("div", "results-buttons");
+      buttons.append(newGame, viewMap);
+      panel.replaceChildren(title, reason, table, buttons);
+      panel.hidden = false;
+      newGame.focus();
     },
   };
 }
@@ -248,6 +324,10 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
       return `${unitName(e.unitId)} repaired +${e.hp} HP for ${e.cost.toLocaleString("en-US")}`;
     case "unitResupplied":
       return `${unitName(e.unitId)} resupplied`;
+    case "playerDefeated":
+      return `${name(e.player)} is out (${e.reason === "hqCapture" ? "HQ captured" : e.reason === "rout" ? "no units left" : "resigned"})`;
+    case "gameOver":
+      return `Game over: ${e.result.winners.map(name).join(" and ")} won`;
     case "turnEnded":
       return `${name(e.player)} ended their turn`;
     case "dayStarted":
