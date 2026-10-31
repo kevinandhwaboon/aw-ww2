@@ -12,11 +12,19 @@ import { playerColors } from "./game/placeholderUnits";
 import { createBanner, createDebugPanel, createTerrainPanel, createTurnBar, createUnitPanel } from "./ui/hud";
 import "./ui/style.css";
 
-let state: GameState = createGame(HELLO_SETUP);
+// Debug URL options (11-tech-setup §7): ?seed=123 fixes the luck rolls, ?luck=off turns luck off.
+const params = new URLSearchParams(window.location.search);
+const seedParam = Number(params.get("seed") ?? NaN);
+
+let state: GameState = createGame({
+  ...HELLO_SETUP,
+  seed: Number.isFinite(seedParam) ? seedParam : HELLO_SETUP.seed,
+  settings: { luck: params.get("luck") !== "off" },
+});
 let cursor: Point = { x: 0, y: 0 };
 /**
- * States before each move this turn, for Undo. A playtesting convenience: cleared at End Turn, and
- * later milestones must clear it after anything that reveals new information (e.g. luck rolls).
+ * States before each Wait this turn, for Undo. A playtesting convenience: cleared at End Turn and by
+ * any attack, because luck reveals information that a redo could exploit.
  */
 let history: GameState[] = [];
 let playing = false;
@@ -66,7 +74,7 @@ async function dispatch(command: Command): Promise<boolean> {
     console.warn(`Command rejected (${result.code}): ${result.message}`);
     return false;
   }
-  history = command.type === "endTurn" ? [] : [...history, state];
+  history = command.type === "move" && command.action.type === "wait" ? [...history, state] : [];
   playing = true;
   turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview
   await scene.playEvents(result.events);

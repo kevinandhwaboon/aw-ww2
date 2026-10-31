@@ -17,7 +17,7 @@
 ## 2. Ammo
 
 - Primary weapons spend 1 ammo per attack or counterattack (03-combat section 2). Secondary weapons are unlimited.
-- At 0 primary ammo, the unit falls back to its secondary weapon if it has one; otherwise it can't attack or counter.
+- At 0 primary ammo, the unit uses its secondary weapon against targets the damage chart gives a secondary value for (03-combat §2, §5); it can't attack or counter anything else.
 
 ## 3. Resupply
 

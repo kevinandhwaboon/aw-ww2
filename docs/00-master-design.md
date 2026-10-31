@@ -263,3 +263,6 @@ UI falls into four categories:
 | 2026-10-26 | Modifier layer combines per stat as add → multiply → set, rounded down, never below 0; veterancy derived from kills at lookup (11-tech-setup §3a) |
 | 2026-10-26 | Move is one atomic command (path + end action), previewed locally in the UI until an action is chosen; terrain move cost is a modifiable stat; friendly (same-side) units can be passed through, not stopped on (11-tech-setup §3b) |
 | 2026-10-26 | Undo (last move this turn) exists as a playtesting convenience; cleared at End Turn and after anything that reveals information |
+| 2026-10-31 | Combat implemented (03-combat): attack is an end action on Move; damage computed in whole numbers; forecast and engine share one code path (11-tech-setup §3d) |
+| 2026-10-31 | A unit out of primary ammo can only attack targets with a secondary value in the chart (03-combat wins over the looser wording in 05-supply §2, now corrected) |
+| 2026-10-31 | Undo is cleared by any attack as well as End Turn; `?seed=` and `?luck=off` URL options for testing |

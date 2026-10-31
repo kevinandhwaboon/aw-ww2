@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton) and 2 (movement) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement) and 3 (combat) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -67,7 +67,7 @@
 - **Path arrow** (`src/game/pathBuilder.ts`): follows the cursor tile by tile while affordable, cuts back when retraced, otherwise snaps to the cheapest path.
 - **Input** (`src/game/controller.ts`): a state machine (idle → selected → menu → busy) that talks to the map through a `MapView` interface, so input rules and drawing are separate.
 - **Event playback:** after the engine accepts a command, the UI animates its events with input locked, then shows the new state. At the start of each turn a banner names the player.
-- **Undo** is a playtesting convenience, not a game rule: it restores the state before the last move this turn. It's cleared at End Turn, and must also be cleared after anything that reveals new information (combat luck, in milestone 3).
+- **Undo** is a playtesting convenience, not a game rule: it restores the state before the last move this turn. It's cleared at End Turn and by any attack, because luck reveals information a redo could exploit.
 
 ## 3c. Controls (current)
 
@@ -76,9 +76,19 @@
 | Move cursor | Move the mouse | Arrow keys |
 | Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
 | Cancel | Right click, or click outside the menu | X, Esc or Backspace |
-| Show an enemy's move range | Click the enemy | Z on the enemy |
+| Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys, Z on the target |
+| Show an enemy's move and threat range | Click the enemy | Z on the enemy |
 | Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
 | End turn | End Turn button | E |
+
+## 3d. Combat notes (milestone 3)
+
+- **`src/engine/combat.ts`** holds the combat rules and is shared by the engine and the UI, so the forecast, target highlights and real results can't disagree. A property test checks that actual damage always falls inside the forecast.
+- **Attack** is another end action on the Move command: `{ type: "attack", target }`. The attacker fires from its destination; indirect units need an empty path.
+- **Damage is computed in whole numbers** (the formula in 03-combat §1, multiplied out), so float error can't change a result.
+- **One weapon per chart cell:** a unit out of primary ammo can only attack targets the chart gives a secondary (`*`) value for. So a Medium Tank with no shells can still hit infantry but can't hit tanks at all.
+- **The combat event** carries the whole result (both strikes, luck, final HP, destruction, promotions). `damage` is the HP actually removed, so overkill is capped. The UI plays it back as a nudge, flash, floating number and explosion, then a promotion label.
+- **Threat range:** clicking an enemy shows where it can move (orange) and what it can hit beyond that (red). Indirect units show only their range from where they stand.
 
 ## 4. Data files
 
@@ -120,4 +130,4 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- A URL parameter to load a specific test map and seed.
+- URL parameters: `?seed=123` fixes the luck rolls, `?luck=off` turns luck off. (Choosing a test map comes with the game shell, milestone 8.)
