@@ -1,7 +1,17 @@
 // Public API of the rules engine. Presentation and AI code import from here.
 
 export { apply } from "./apply";
-export type { ApplyResult, Command, CommandType, GameEvent, RejectionCode } from "./commands";
+export type { ApplyResult, Command, CommandType, GameEvent, RejectionCode, UnitAction } from "./commands";
+export {
+  canEndOn,
+  checkPath,
+  cheapestPath,
+  moveDestinations,
+  movementBudget,
+  reachableTiles,
+  type PathCheck,
+  type Reach,
+} from "./movement";
 export { createGame, CAPTURE_POINTS, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
 export {
   displayHp,

@@ -261,3 +261,5 @@ UI falls into four categories:
 | 2026-10-24 | Tech setup (11): Vitest + fast-check, Playwright later; engine boundary enforced by tsconfig (no DOM) and ESLint; typed TS data files; GitHub Actions CI + Pages deploy |
 | 2026-10-24 | Factory build menu is HTML |
 | 2026-10-26 | Modifier layer combines per stat as add → multiply → set, rounded down, never below 0; veterancy derived from kills at lookup (11-tech-setup §3a) |
+| 2026-10-26 | Move is one atomic command (path + end action), previewed locally in the UI until an action is chosen; terrain move cost is a modifiable stat; friendly (same-side) units can be passed through, not stopped on (11-tech-setup §3b) |
+| 2026-10-26 | Undo (last move this turn) exists as a playtesting convenience; cleared at End Turn and after anything that reveals information |

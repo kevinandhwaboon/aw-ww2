@@ -87,6 +87,18 @@ export function terrainStars(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "terrainStars", TERRAIN[terrainUnder(state, unit)].defenseStars);
 }
 
+/**
+ * Movement points this unit spends to enter a tile of the given terrain, or null if it can't
+ * (02-terrain §3). Modifiers can change the cost but never make impassable terrain passable,
+ * and a passable tile always costs at least 1.
+ */
+export function moveCost(state: GameState, unit: Unit, terrain: TerrainId): number | null {
+  const base = TERRAIN[terrain].moveCost[UNITS[unit.type].movementType];
+  if (base === null) return null;
+  const ctx = typeContext(unit.owner, unit.type, terrain);
+  return Math.max(1, applyModifiers(base, "moveCost", ctx, [...state.modifiers, ...unitModifiers(unit)]));
+}
+
 /** What a player pays to build a unit type. */
 export function unitCost(state: GameState, player: PlayerId, type: UnitTypeId): number {
   return applyModifiers(UNITS[type].cost, "cost", typeContext(player, type), state.modifiers);

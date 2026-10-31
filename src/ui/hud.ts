@@ -34,25 +34,63 @@ export function createTerrainPanel(root: HTMLElement): { show: (id: TerrainId) =
   };
 }
 
-/** Day, whose turn it is, funds, and the End Turn button. */
-export function createTurnBar(root: HTMLElement, onEndTurn: () => void): { update: (state: GameState) => void } {
+/** Day, whose turn it is, funds, Undo and End Turn, and a one-line controls hint. */
+export function createTurnBar(
+  root: HTMLElement,
+  actions: { onEndTurn: () => void; onUndo: () => void },
+): { update: (state: GameState, ui: { canUndo: boolean; busy: boolean }) => void } {
   const bar = el("div", "panel turn-bar");
+  const row = el("div", "turn-row");
   const day = el("span", "turn-day");
   const player = el("span", "turn-player");
   const funds = el("span", "turn-funds");
-  const button = el("button", "btn", "End Turn");
-  button.addEventListener("click", onEndTurn);
-  bar.append(day, player, funds, button);
+  const button = (label: string, title: string, onClick: () => void) => {
+    const b = el("button", "btn", label);
+    b.title = title;
+    b.addEventListener("click", () => {
+      b.blur(); // so Space/Enter go to the map, not this button
+      onClick();
+    });
+    return b;
+  };
+  const undo = button("Undo", "Undo the last move this turn (U)", actions.onUndo);
+  const endTurn = button("End Turn", "End your turn (E)", actions.onEndTurn);
+  row.append(day, player, funds, undo, endTurn);
+  const hint = el(
+    "div",
+    "turn-hint",
+    "Click a unit, then a blue tile, then Wait. Right-click / Esc cancels. Arrows + Z / X work too. Click an enemy to see its range.",
+  );
+  bar.append(row, hint);
   root.append(bar);
 
   return {
-    update(state) {
+    update(state, ui) {
       const current = state.players[state.currentPlayer];
       if (!current) return;
       day.textContent = `Day ${state.day}`;
       player.textContent = `${current.name} (${current.nation.toUpperCase()})`;
       player.style.color = playerColors(current.id)[0];
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
+      undo.disabled = !ui.canUndo || ui.busy;
+      endTurn.disabled = ui.busy;
+    },
+  };
+}
+
+/** A big centered message shown briefly, e.g. at the start of each turn. */
+export function createBanner(root: HTMLElement): { show: (text: string, color: string) => Promise<void> } {
+  const banner = el("div", "banner");
+  banner.hidden = true;
+  root.append(banner);
+  return {
+    async show(text, color) {
+      banner.textContent = text;
+      banner.style.borderColor = color;
+      banner.style.color = color;
+      banner.hidden = false;
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      banner.hidden = true;
     },
   };
 }
@@ -118,7 +156,17 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
 
 function describeEvent(state: GameState, e: GameEvent): string {
   const name = (id: number) => state.players[id]?.name ?? `Player ${id}`;
+  const unitName = (id: number) => {
+    const unit = state.units.find((u) => u.id === id);
+    return unit ? `${name(unit.owner)} ${UNITS[unit.type].name} #${id}` : `unit #${id}`;
+  };
   switch (e.type) {
+    case "unitMoved": {
+      const end = e.path[e.path.length - 1];
+      return `${unitName(e.unitId)} moved ${e.path.length - 1} tiles to (${end?.x}, ${end?.y}), fuel −${e.fuelUsed}`;
+    }
+    case "unitWaited":
+      return `${unitName(e.unitId)} waits`;
     case "turnEnded":
       return `${name(e.player)} ended their turn`;
     case "dayStarted":
@@ -146,6 +194,7 @@ function stateJson(state: GameState): string {
 export function createDebugPanel(root: HTMLElement): {
   update: (state: GameState) => void;
   logEvents: (state: GameState, events: readonly GameEvent[]) => void;
+  logNote: (text: string) => void;
 } {
   const panel = el("details", "panel debug-panel");
   const summary = el("summary", "panel-title", "Debug");
@@ -163,6 +212,9 @@ export function createDebugPanel(root: HTMLElement): {
     logEvents(state, events) {
       for (const e of events) log.prepend(el("li", undefined, describeEvent(state, e)));
       while (log.children.length > 50) log.lastElementChild?.remove();
+    },
+    logNote(text) {
+      log.prepend(el("li", "muted", text));
     },
   };
 }
