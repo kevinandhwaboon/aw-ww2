@@ -9,17 +9,29 @@ export const HELLO_MAP = parseAsciiMap([
   "SS__=====#===Q.",
   "S__..X..o~..f..",
   "S_..FF..o~.FF.C",
-  "S_.C.F...~.HH..",
+  "S_.Q.F.C.~CHH..",
   "SS_..bb..~xbb..",
   "SSS_.bbb.~.bbF.",
   "rSSS_.bb.~..FFF",
 ]);
 
-/** Debug demo on the hello map: a few units per side, some damaged or veteran, and one modifier. */
+/**
+ * Debug demo on the hello map: a few units per side, some damaged or veteran, one modifier, and
+ * neutral cities to fight over. The US can't build Heavy Tanks or Rocket Artillery here, as an
+ * example of the availability rule (01-units §1).
+ */
 export const HELLO_SETUP: GameSetup = {
   map: HELLO_MAP,
   players: [
-    { name: "Allies", nation: "us", funds: 5000 },
+    {
+      name: "Allies",
+      nation: "us",
+      funds: 5000,
+      buildable: [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
+        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA",
+      ],
+    },
     { name: "Axis", nation: "germany", funds: 5000 },
   ],
   propertyOwners: [

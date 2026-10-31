@@ -6,13 +6,11 @@ import type { VeterancyLevel } from "./data/veterancy";
 import type { Point } from "./map";
 import type { GameState, PlayerId, UnitId } from "./state";
 
-/**
- * What a unit does at the end of its move. Capture, Load, Unload, Join and Supply arrive in later
- * milestones.
- */
+/** What a unit does at the end of its move. Load, Unload, Join and Supply arrive in milestone 5. */
 export type UnitAction =
   | { readonly type: "wait" }
-  | { readonly type: "attack"; readonly target: UnitId };
+  | { readonly type: "attack"; readonly target: UnitId }
+  | { readonly type: "capture" };
 
 /** One shot in a combat. `damage` is the internal HP actually removed. */
 export interface CombatStrike {
@@ -41,6 +39,8 @@ export type Command =
    * `path` lists the tiles stepped onto, excluding the start; empty = act without moving.
    */
   | { readonly type: "move"; readonly unitId: UnitId; readonly path: readonly Point[]; readonly action: UnitAction }
+  /** Build a unit on an empty production property the current player owns. */
+  | { readonly type: "build"; readonly unitType: UnitTypeId; readonly pos: Point }
   | { readonly type: "endTurn" };
 
 export type CommandType = Command["type"];
@@ -57,6 +57,28 @@ export type GameEvent =
       readonly attack: CombatStrike;
       readonly counter: CombatStrike | null;
     }
+  /** A capture that hasn't finished yet; `capturePoints` is what's left. */
+  | { readonly type: "captureProgress"; readonly pos: Point; readonly unitId: UnitId; readonly capturePoints: number }
+  | {
+      readonly type: "propertyCaptured";
+      readonly pos: Point;
+      readonly unitId: UnitId;
+      readonly player: PlayerId;
+      readonly previousOwner: PlayerId | null;
+    }
+  | {
+      readonly type: "unitBuilt";
+      readonly unitId: UnitId;
+      readonly unitType: UnitTypeId;
+      readonly owner: PlayerId;
+      readonly pos: Point;
+      readonly cost: number;
+    }
+  /** `funds` is the player's total afterwards. */
+  | { readonly type: "incomeReceived"; readonly player: PlayerId; readonly amount: number; readonly funds: number }
+  /** `hp` is displayed HP restored. */
+  | { readonly type: "unitRepaired"; readonly unitId: UnitId; readonly hp: number; readonly cost: number }
+  | { readonly type: "unitResupplied"; readonly unitId: UnitId }
   | { readonly type: "turnEnded"; readonly player: PlayerId }
   | { readonly type: "dayStarted"; readonly day: number }
   | { readonly type: "turnStarted"; readonly player: PlayerId; readonly day: number };
@@ -68,7 +90,9 @@ export type RejectionCode =
   | "notYourUnit"
   | "unitAlreadyActed"
   | "invalidPath"
-  | "invalidTarget";
+  | "invalidTarget"
+  | "cannotCapture"
+  | "cannotBuild";
 
 export type ApplyResult =
   | { readonly ok: true; readonly state: GameState; readonly events: readonly GameEvent[] }

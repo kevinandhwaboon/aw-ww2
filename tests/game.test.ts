@@ -40,9 +40,9 @@ describe("createGame", () => {
   it("every property tile becomes a property, neutral with 20 capture points unless given an owner (04-economy §1, §3)", () => {
     const state = makeGame(["C.f", "..Q"], [], { propertyOwners: [{ pos: { x: 2, y: 1 }, owner: 1 }] });
     expect(state.properties).toEqual([
-      { pos: { x: 0, y: 0 }, owner: null, capturePoints: 20 },
-      { pos: { x: 2, y: 0 }, owner: null, capturePoints: 20 },
-      { pos: { x: 2, y: 1 }, owner: 1, capturePoints: 20 },
+      { pos: { x: 0, y: 0 }, owner: null, capturePoints: 20, capturingUnit: null },
+      { pos: { x: 2, y: 0 }, owner: null, capturePoints: 20, capturingUnit: null },
+      { pos: { x: 2, y: 1 }, owner: 1, capturePoints: 20, capturingUnit: null },
     ]);
   });
 

@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement) and 3 (combat) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat) and 4 (economy) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -67,7 +67,7 @@
 - **Path arrow** (`src/game/pathBuilder.ts`): follows the cursor tile by tile while affordable, cuts back when retraced, otherwise snaps to the cheapest path.
 - **Input** (`src/game/controller.ts`): a state machine (idle → selected → menu → busy) that talks to the map through a `MapView` interface, so input rules and drawing are separate.
 - **Event playback:** after the engine accepts a command, the UI animates its events with input locked, then shows the new state. At the start of each turn a banner names the player.
-- **Undo** is a playtesting convenience, not a game rule: it restores the state before the last move this turn. It's cleared at End Turn and by any attack, because luck reveals information a redo could exploit.
+- **Undo** is a playtesting convenience, not a game rule: it restores the state before your last action this turn. It's cleared at End Turn and by any attack, because luck reveals information a redo could exploit.
 
 ## 3c. Controls (current)
 
@@ -77,6 +77,8 @@
 | Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
 | Cancel | Right click, or click outside the menu | X, Esc or Backspace |
 | Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys, Z on the target |
+| Capture a property | CAPTURE in the menu | Z on CAPTURE |
+| Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Enter |
 | Show an enemy's move and threat range | Click the enemy | Z on the enemy |
 | Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
 | End turn | End Turn button | E |
@@ -89,6 +91,14 @@
 - **One weapon per chart cell:** a unit out of primary ammo can only attack targets the chart gives a secondary (`*`) value for. So a Medium Tank with no shells can still hit infantry but can't hit tanks at all.
 - **The combat event** carries the whole result (both strikes, luck, final HP, destruction, promotions). `damage` is the HP actually removed, so overkill is capped. The UI plays it back as a nudge, flash, floating number and explosion, then a promotion label.
 - **Threat range:** clicking an enemy shows where it can move (orange) and what it can hit beyond that (red). Indirect units show only their range from where they stand.
+
+## 3e. Economy notes (milestone 4)
+
+- **`src/engine/turn.ts`** runs the start of every turn in 04-economy §2's order: income, then repair and resupply, then units become ready. `createGame` runs it too, so the first player collects income on day 1.
+- **`src/engine/economy.ts`** holds capture and build rules, shared by the engine and the menus, so a menu never offers something the engine would reject.
+- **Capture** is an end action on Move, and `build` is its own command. Properties record which unit is capturing them, so progress resets if that unit leaves or dies.
+- **Availability:** each player has a `buildable` list, set by the scenario. The default is every unit in the phases built so far. The demo map leaves Heavy Tank and Rocket Artillery out for the US.
+- **Not yet:** capturing an HQ only changes its owner until milestone 6 adds victory checks. Halftrack automatic resupply comes in milestone 5, and daily fuel for air and naval units in phase 2.
 
 ## 4. Data files
 

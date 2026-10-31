@@ -103,3 +103,9 @@ export function moveCost(state: GameState, unit: Unit, terrain: TerrainId): numb
 export function unitCost(state: GameState, player: PlayerId, type: UnitTypeId): number {
   return applyModifiers(UNITS[type].cost, "cost", typeContext(player, type), state.modifiers);
 }
+
+/** What a player earns at the start of each of their turns (04-economy §1). */
+export function propertyIncome(state: GameState, player: PlayerId): number {
+  const owned = state.properties.filter((p) => p.owner === player).length;
+  return applyModifiers(owned * state.settings.incomePerProperty, "income", { player }, state.modifiers);
+}

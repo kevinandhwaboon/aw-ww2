@@ -3,9 +3,12 @@
 
 import { resolveCombat, targetProblem } from "./combat";
 import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
-import type { Point } from "./map";
+import { UNIT_TYPE_IDS } from "./data/units";
+import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedCaptures } from "./economy";
+import { inBounds, type Point } from "./map";
 import { checkPath } from "./movement";
 import type { GameState, PlayerId, Unit } from "./state";
+import { startTurn } from "./turn";
 
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
@@ -15,6 +18,8 @@ export function apply(state: GameState, command: Command): ApplyResult {
   switch (type) {
     case "move":
       return move(state, command as Extract<Command, { type: "move" }>);
+    case "build":
+      return build(state, command as Extract<Command, { type: "build" }>);
     case "endTurn":
       return endTurn(state);
     default:
@@ -27,7 +32,7 @@ const isPoint = (p: unknown): p is Point =>
 
 function isAction(action: unknown): action is UnitAction {
   const a = action as { type?: unknown; target?: unknown } | null;
-  return a?.type === "wait" || (a?.type === "attack" && Number.isInteger(a.target));
+  return a?.type === "wait" || a?.type === "capture" || (a?.type === "attack" && Number.isInteger(a.target));
 }
 
 function move(state: GameState, command: Extract<Command, { type: "move" }>): ApplyResult {
@@ -50,10 +55,17 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   }
 
   const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - check.cost, hasActed: true };
-  const afterMove: GameState = { ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) };
+  const afterMove = clearAbandonedCaptures({ ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) });
 
   if (action.type === "wait") {
     return { ok: true, state: afterMove, events: [...events, { type: "unitWaited", unitId }] };
+  }
+
+  if (action.type === "capture") {
+    const problem = captureProblem(afterMove, moved);
+    if (problem) return reject("cannotCapture", `Can't capture: ${problem}`);
+    const capture = applyCapture(afterMove, moved);
+    return { ok: true, state: capture.state, events: [...events, capture.event] };
   }
 
   const defender = afterMove.units.find((u) => u.id === action.target);
@@ -61,7 +73,18 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   const problem = targetProblem(afterMove, moved, defender, path.length > 0);
   if (problem) return reject("invalidTarget", `Can't attack unit ${action.target}: ${problem}`);
   const combat = resolveCombat(afterMove, moved, defender);
-  return { ok: true, state: combat.state, events: [...events, combat.event] };
+  return { ok: true, state: clearAbandonedCaptures(combat.state), events: [...events, combat.event] };
+}
+
+function build(state: GameState, command: Extract<Command, { type: "build" }>): ApplyResult {
+  const { unitType, pos } = command;
+  if (!isPoint(pos) || !inBounds(state.map, pos) || !UNIT_TYPE_IDS.includes(unitType)) {
+    return reject("invalidCommand", "build needs a known unit type and a position on the map");
+  }
+  const problem = buildProblem(state, unitType, pos);
+  if (problem) return reject("cannotBuild", `Can't build: ${problem}`);
+  const built = applyBuild(state, unitType, pos);
+  return { ok: true, state: built.state, events: [built.event] };
 }
 
 function endTurn(state: GameState): ApplyResult {
@@ -84,17 +107,4 @@ function nextActivePlayer(state: GameState): PlayerId {
     if (!state.players[candidate]?.defeated) return candidate;
   }
   return state.currentPlayer;
-}
-
-/**
- * Start-of-turn sequence for state.currentPlayer (04-economy §2). So far it only readies units;
- * fuel burn, income, repair and resupply are added in later milestones, in the doc's order.
- */
-function startTurn(state: GameState): { state: GameState; events: GameEvent[] } {
-  const player = state.currentPlayer;
-  const units = state.units.map((u) => (u.owner === player && u.hasActed ? { ...u, hasActed: false } : u));
-  return {
-    state: { ...state, units },
-    events: [{ type: "turnStarted", player, day: state.day }],
-  };
 }

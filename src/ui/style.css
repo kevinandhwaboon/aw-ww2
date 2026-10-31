@@ -12,6 +12,11 @@
   box-sizing: border-box;
 }
 
+/* Panels set their own display, which would otherwise override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -198,4 +203,56 @@ body {
   font-size: 11px;
   line-height: 1.25;
   white-space: pre;
+}
+
+.terrain-owner {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.build-menu {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.build-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.build-row {
+  font: inherit;
+  font-size: 14px;
+  color: var(--panel-ink);
+  background: transparent;
+  border: 2px solid transparent;
+  padding: 3px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.build-row:hover:not(:disabled),
+.build-row:focus {
+  background: #e8c070;
+  border-color: var(--panel-border);
+  outline: none;
+}
+
+.build-row:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.build-cost {
+  font-weight: bold;
 }

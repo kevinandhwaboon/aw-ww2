@@ -14,6 +14,9 @@ export type UnitId = number;
 /** Internal HP of a full-health unit. Displayed HP is internal ÷ 10, rounded up (03-combat §1). */
 export const MAX_HP = 100;
 
+/** Capture points of an untouched property (04-economy §3). */
+export const CAPTURE_POINTS = 20;
+
 export interface Player {
   readonly id: PlayerId;
   readonly name: string;
@@ -21,6 +24,8 @@ export interface Player {
   readonly nation: NationId;
   readonly funds: number;
   readonly defeated: boolean;
+  /** Unit types this player may build, set per scenario (01-units availability rule). */
+  readonly buildable: readonly UnitTypeId[];
 }
 
 export interface Unit {
@@ -43,8 +48,10 @@ export interface PropertyState {
   readonly pos: Point;
   /** null = neutral. */
   readonly owner: PlayerId | null;
-  /** 20 when untouched (04-economy §3). */
+  /** CAPTURE_POINTS when untouched (04-economy §3). */
   readonly capturePoints: number;
+  /** The unit partway through capturing this property; progress resets if it leaves or dies. */
+  readonly capturingUnit: UnitId | null;
 }
 
 export interface Settings {
@@ -52,9 +59,11 @@ export interface Settings {
   readonly luck: boolean;
   /** Funds per owned property per day (04-economy §1). */
   readonly incomePerProperty: number;
+  /** Most units a player may have; null = no limit (04-economy §4). */
+  readonly unitCap: number | null;
 }
 
-export const DEFAULT_SETTINGS: Settings = { luck: true, incomePerProperty: 1000 };
+export const DEFAULT_SETTINGS: Settings = { luck: true, incomePerProperty: 1000, unitCap: null };
 
 export interface GameState {
   readonly map: {

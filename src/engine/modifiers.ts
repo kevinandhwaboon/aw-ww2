@@ -21,6 +21,8 @@ export const MODIFIABLE_STATS = [
   "defense",
   /** Defense stars the unit gets from the terrain it stands on. */
   "terrainStars",
+  /** A player's funds per day from all owned properties. */
+  "income",
 ] as const;
 export type ModifiableStat = (typeof MODIFIABLE_STATS)[number];
 

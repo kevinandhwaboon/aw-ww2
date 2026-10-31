@@ -4,7 +4,8 @@
 
 import { attackTargets, forecast, threatTiles, type CombatForecast } from "../engine/combat";
 import type { Command, UnitAction } from "../engine/commands";
-import { UNITS } from "../engine/data/units";
+import { UNITS, type UnitTypeId } from "../engine/data/units";
+import { buildOptions, captureProblem, type BuildOption } from "../engine/economy";
 import type { Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
 import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
@@ -42,6 +43,12 @@ export interface MapView {
   clearForecast(): void;
 }
 
+/** The factory's list of units to build (an HTML panel, 00-master-design §12). */
+export interface BuildMenu {
+  open(options: readonly BuildOption[], onPick: (type: UnitTypeId) => void, onCancel: () => void): void;
+  close(): void;
+}
+
 interface Chosen {
   readonly unitId: UnitId;
   readonly reach: ReadonlyMap<number, Reach>;
@@ -55,6 +62,8 @@ type Mode =
   | ({ readonly kind: "selected" } & Chosen)
   | ({ readonly kind: "menu"; readonly targets: readonly Unit[] } & Chosen)
   | ({ readonly kind: "targeting"; readonly targets: readonly Unit[] } & Chosen)
+  /** The factory build list is open. */
+  | { readonly kind: "building" }
   /** Animating or waiting for the engine: input is ignored. */
   | { readonly kind: "busy" };
 
@@ -63,9 +72,11 @@ export interface ControllerDeps {
   /** Applies a command and plays its events. Resolves to whether the engine accepted it. */
   dispatch(command: Command): Promise<boolean>;
   view: MapView;
+  buildMenu: BuildMenu;
 }
 
 const FIRE: MenuItem = { id: "fire", label: "FIRE" };
+const CAPTURE: MenuItem = { id: "capture", label: "CAPTURE" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
 
@@ -89,12 +100,13 @@ export class InputController {
 
   /** Drops any selection, e.g. before End Turn or after an undo. */
   reset(): void {
-    const { view } = this.deps;
+    const { view, buildMenu } = this.deps;
     view.closeMenu();
     view.clearRange();
     view.clearPath();
     view.clearForecast();
     view.resetPreview();
+    buildMenu.close();
     this.mode = { kind: "idle" };
   }
 
@@ -120,6 +132,7 @@ export class InputController {
         this.selectAt(tile);
         return;
       case "inspect":
+      case "building":
         this.reset();
         this.selectAt(tile);
         return;
@@ -142,6 +155,7 @@ export class InputController {
     switch (mode.kind) {
       case "selected":
       case "inspect":
+      case "building":
         this.reset();
         return;
       case "menu":
@@ -163,13 +177,17 @@ export class InputController {
     if (mode.kind !== "menu") return;
     if (id === "cancel") this.backToSelection(mode);
     else if (id === "wait") void this.commit(mode, { type: "wait" });
+    else if (id === "capture") void this.commit(mode, { type: "capture" });
     else if (id === "fire") this.startTargeting(mode);
   }
 
   private selectAt(tile: Point): void {
     const state = this.deps.getState();
     const unit = unitAt(state, tile);
-    if (!unit) return;
+    if (!unit) {
+      this.openBuildMenu(tile);
+      return;
+    }
     const reach = reachableTiles(state, unit);
     const tiles = [...reach.keys()].map((i) => tilePoint(state, i));
     if (unit.owner === state.currentPlayer) {
@@ -181,6 +199,25 @@ export class InputController {
       this.mode = { kind: "inspect" };
       this.deps.view.showRanges(this.threatLayers(state, unit, reach, tiles));
     }
+  }
+
+  /** Clicking your own empty factory opens its build list. */
+  private openBuildMenu(pos: Point): void {
+    const options = buildOptions(this.deps.getState(), pos);
+    if (options.length === 0) return;
+    this.mode = { kind: "building" };
+    this.deps.buildMenu.open(
+      options,
+      (unitType) => void this.commitBuild(unitType, pos),
+      () => this.reset(),
+    );
+  }
+
+  private async commitBuild(unitType: UnitTypeId, pos: Point): Promise<void> {
+    this.deps.buildMenu.close();
+    this.mode = { kind: "busy" };
+    await this.deps.dispatch({ type: "build", unitType, pos });
+    this.mode = { kind: "idle" };
   }
 
   /** Where an enemy can move, and in red what it can hit beyond that. */
@@ -230,7 +267,8 @@ export class InputController {
     }
     this.mode = { kind: "menu", unitId, reach, path, targets };
     const at = path[path.length - 1] ?? unit.pos;
-    this.deps.view.openMenu(at, targets.length > 0 ? [FIRE, WAIT, CANCEL] : [WAIT, CANCEL]);
+    const canCapture = captureProblem(this.deps.getState(), { ...unit, pos: at }) === null;
+    this.deps.view.openMenu(at, [...(targets.length > 0 ? [FIRE] : []), ...(canCapture ? [CAPTURE] : []), WAIT, CANCEL]);
   }
 
   private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {

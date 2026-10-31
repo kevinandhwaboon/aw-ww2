@@ -2,12 +2,13 @@
 // scenario-authoring mistakes, so they throw instead of returning a rejection.
 
 import { NATIONS, type NationId } from "./data/nations";
-import { TERRAIN } from "./data/terrain";
-import { UNITS, type UnitTypeId } from "./data/units";
+import { terrainDef } from "./data/terrain";
+import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { inBounds, type GameMap, type Point } from "./map";
 import type { Modifier } from "./modifiers";
 import { seedRng } from "./rng";
 import {
+  CAPTURE_POINTS,
   DEFAULT_SETTINGS,
   MAX_HP,
   type GameState,
@@ -16,13 +17,17 @@ import {
   type Settings,
   type Unit,
 } from "./state";
+import { startTurn } from "./turn";
 
-export const CAPTURE_POINTS = 20;
+/** What a player can build unless the scenario says otherwise: the units in play so far. */
+const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 export interface PlayerSetup {
   readonly name: string;
   readonly nation: NationId;
   readonly funds?: number;
+  /** Unit types offered to this player (01-units availability rule). */
+  readonly buildable?: readonly UnitTypeId[];
 }
 
 export interface UnitSetup {
@@ -57,9 +62,9 @@ export function createGame(setup: GameSetup): GameState {
 
   const properties: PropertyState[] = [];
   map.terrain.forEach((terrain, i) => {
-    if (!TERRAIN[terrain].isProperty) return;
+    if (!terrainDef(terrain).property) return;
     const pos = { x: i % map.width, y: Math.floor(i / map.width) };
-    properties.push({ pos, owner: null, capturePoints: CAPTURE_POINTS });
+    properties.push({ pos, owner: null, capturePoints: CAPTURE_POINTS, capturingUnit: null });
   });
   for (const { pos, owner } of setup.propertyOwners ?? []) {
     const index = properties.findIndex((p) => samePoint(p.pos, pos));
@@ -91,7 +96,7 @@ export function createGame(setup: GameSetup): GameState {
     });
   }
 
-  return {
+  const state: GameState = {
     map: { width: map.width, height: map.height, terrain: [...map.terrain] },
     players: setup.players.map((p, id) => ({
       id,
@@ -100,6 +105,7 @@ export function createGame(setup: GameSetup): GameState {
       side: NATIONS[p.nation].side,
       funds: p.funds ?? 0,
       defeated: false,
+      buildable: p.buildable ?? DEFAULT_BUILDABLE,
     })),
     units,
     properties,
@@ -110,4 +116,6 @@ export function createGame(setup: GameSetup): GameState {
     modifiers: [...(setup.modifiers ?? [])],
     settings: { ...DEFAULT_SETTINGS, ...setup.settings },
   };
+  // Day 1 is a normal turn: the first player collects income too, as in the original (04-economy §2).
+  return startTurn(state).state;
 }
