@@ -69,7 +69,7 @@ export function createTurnBar(
   const hint = el(
     "div",
     "turn-hint",
-    "Click a unit, then a blue tile, then choose an action. Click your empty factory to build. Right-click / Esc cancels. Arrows + Z / X work too.",
+    "Click a unit, then a blue tile, then choose an action. Click your empty factory to build. Hold X or right-click on a unit to see its range; they cancel too.",
   );
   bar.append(row, hint);
   root.append(bar);
@@ -186,6 +186,9 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       row("Rank", `${vet.level} (${unit.kills} kills)`);
       row("Cost", stats.unitCost(state, unit.owner, unit.type), def.cost);
       row("Acted", unit.hasActed ? "yes" : "no");
+      if (unit.cargo.length > 0) {
+        row("Carrying", unit.cargo.map((c) => `${UNITS[c.type].name} (${displayHp(c.hp)} HP)`).join(", "));
+      }
 
       const title = el("div", "panel-title", def.name);
       const ownerLine = el("div", "unit-owner", `${owner?.name ?? "?"} · unit #${unit.id}`);
@@ -205,16 +208,19 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
   };
 }
 
-function describeEvent(state: GameState, e: GameEvent): string {
+function describeEvent(state: GameState, previous: GameState, e: GameEvent): string {
   const name = (id: number) => state.players[id]?.name ?? `Player ${id}`;
   const unitName = (id: number) => {
-    const unit = state.units.find((u) => u.id === id);
+    // Boarded and merged units are gone from the map by now, so look in cargo and the previous state too.
+    const everyone = [...state.units, ...state.units.flatMap((u) => u.cargo), ...previous.units];
+    const unit = everyone.find((u) => u.id === id);
     return unit ? `${name(unit.owner)} ${UNITS[unit.type].name} #${id}` : `unit #${id}`;
   };
   switch (e.type) {
     case "unitMoved": {
       const end = e.path[e.path.length - 1];
-      return `${unitName(e.unitId)} moved ${e.path.length - 1} tiles to (${end?.x}, ${end?.y}), fuel −${e.fuelUsed}`;
+      const tiles = e.path.length - 1;
+      return `${unitName(e.unitId)} moved ${tiles} tile${tiles === 1 ? "" : "s"} to (${end?.x}, ${end?.y}), fuel −${e.fuelUsed}`;
     }
     case "unitWaited":
       return `${unitName(e.unitId)} waits`;
@@ -224,6 +230,12 @@ function describeEvent(state: GameState, e: GameEvent): string {
       const counter = e.counter ? `, counter ${e.counter.damage}% (luck ${e.counter.luck})` : ", no counter";
       return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}${tag(e.defender)} for ${e.attack.damage}% (luck ${e.attack.luck})${counter}`;
     }
+    case "unitLoaded":
+      return `${unitName(e.unitId)} boarded ${unitName(e.transportId)}`;
+    case "unitUnloaded":
+      return `${unitName(e.unitId)} unloaded at (${e.pos.x}, ${e.pos.y})`;
+    case "unitJoined":
+      return `${unitName(e.targetId)} absorbed a unit, now ${displayHp(e.hp)} HP${e.refund > 0 ? `, refund ${e.refund.toLocaleString("en-US")}` : ""}`;
     case "captureProgress":
       return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
     case "propertyCaptured":
@@ -262,7 +274,7 @@ function stateJson(state: GameState): string {
 /** Collapsible debug panel: full game state as JSON and the event log (11-tech-setup §7). */
 export function createDebugPanel(root: HTMLElement): {
   update: (state: GameState) => void;
-  logEvents: (state: GameState, events: readonly GameEvent[]) => void;
+  logEvents: (state: GameState, previous: GameState, events: readonly GameEvent[]) => void;
   logNote: (text: string) => void;
 } {
   const panel = el("details", "panel debug-panel");
@@ -278,8 +290,8 @@ export function createDebugPanel(root: HTMLElement): {
     update(state) {
       json.textContent = stateJson(state);
     },
-    logEvents(state, events) {
-      for (const e of events) log.prepend(el("li", undefined, describeEvent(state, e)));
+    logEvents(state, previous, events) {
+      for (const e of events) log.prepend(el("li", undefined, describeEvent(state, previous, e)));
       while (log.children.length > 50) log.lastElementChild?.remove();
     },
     logNote(text) {

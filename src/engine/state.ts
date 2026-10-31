@@ -42,6 +42,8 @@ export interface Unit {
   readonly kills: number;
   /** True once the unit has acted this turn. Reset at the start of its owner's turn. */
   readonly hasActed: boolean;
+  /** Passengers. They aren't in GameState.units until unloaded (05-supply-transport §4). */
+  readonly cargo: readonly Unit[];
 }
 
 export interface PropertyState {

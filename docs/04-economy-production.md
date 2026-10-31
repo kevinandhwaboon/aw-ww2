@@ -65,7 +65,7 @@ Each event in this sequence is emitted as an engine event so the UI can show it 
 
 Follows the original (veterancy rule from 03-combat section 6):
 
-- A unit can move onto a friendly unit of the **same type** if the target has fewer than 10 displayed HP. This is the `Join` action and ends the moving unit's action.
+- A unit can move onto another unit of its own player and the **same type** if the target has fewer than 10 displayed HP. This is the `Join` action and ends the moving unit's action.
 - HP is added (displayed values), capped at 10. **Excess displayed HP is refunded** at 10% of the unit's cost per HP.
 - Fuel and ammo are added, capped at maximum.
 - Veterancy: the kill count of the unit that contributed more HP; on a tie, the higher kill count (03-combat).

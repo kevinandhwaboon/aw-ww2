@@ -7,7 +7,17 @@ import { UNIT_TYPE_IDS } from "./data/units";
 import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedCaptures } from "./economy";
 import { inBounds, type Point } from "./map";
 import { checkPath } from "./movement";
-import type { GameState, PlayerId, Unit } from "./state";
+import { unitAt, type GameState, type PlayerId, type Unit } from "./state";
+import {
+  applyJoin,
+  applyLoad,
+  applySupply,
+  applyUnload,
+  joinProblem,
+  loadProblem,
+  supplyTargets,
+  unloadTiles,
+} from "./transport";
 import { startTurn } from "./turn";
 
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
@@ -31,8 +41,21 @@ const isPoint = (p: unknown): p is Point =>
   typeof p === "object" && p !== null && Number.isInteger((p as Point).x) && Number.isInteger((p as Point).y);
 
 function isAction(action: unknown): action is UnitAction {
-  const a = action as { type?: unknown; target?: unknown } | null;
-  return a?.type === "wait" || a?.type === "capture" || (a?.type === "attack" && Number.isInteger(a.target));
+  const a = action as { type?: unknown; target?: unknown; passenger?: unknown; to?: unknown } | null;
+  switch (a?.type) {
+    case "wait":
+    case "capture":
+    case "load":
+    case "join":
+    case "supply":
+      return true;
+    case "attack":
+      return Number.isInteger(a.target);
+    case "unload":
+      return Number.isInteger(a.passenger) && isPoint(a.to);
+    default:
+      return false;
+  }
 }
 
 function move(state: GameState, command: Extract<Command, { type: "move" }>): ApplyResult {
@@ -45,7 +68,9 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   if (unit.owner !== state.currentPlayer) return reject("notYourUnit", `Unit ${unitId} belongs to player ${unit.owner}`);
   if (unit.hasActed) return reject("unitAlreadyActed", `Unit ${unitId} has already acted this turn`);
 
-  const check = checkPath(state, unit, path);
+  // Load and Join end on a friendly unit; every other action needs an empty tile.
+  const boarding = action.type === "load" || action.type === "join";
+  const check = checkPath(state, unit, path, { throughOnly: boarding });
   if (!check.ok) return reject("invalidPath", check.reason);
 
   const events: GameEvent[] = [];
@@ -55,6 +80,17 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   }
 
   const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - check.cost, hasActed: true };
+
+  if (boarding) {
+    const host = path.length > 0 ? unitAt(state, end) : undefined;
+    const code = action.type === "load" ? "cannotLoad" : "cannotJoin";
+    if (!host) return reject(code, "move onto the unit first");
+    const problem = action.type === "load" ? loadProblem(moved, host) : joinProblem(moved, host);
+    if (problem) return reject(code, problem);
+    const result = action.type === "load" ? applyLoad(state, moved, host) : applyJoin(state, moved, host);
+    return { ok: true, state: clearAbandonedCaptures(result.state), events: [...events, result.event] };
+  }
+
   const afterMove = clearAbandonedCaptures({ ...state, units: state.units.map((u) => (u.id === unitId ? moved : u)) });
 
   if (action.type === "wait") {
@@ -66,6 +102,24 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     if (problem) return reject("cannotCapture", `Can't capture: ${problem}`);
     const capture = applyCapture(afterMove, moved);
     return { ok: true, state: capture.state, events: [...events, capture.event] };
+  }
+
+  if (action.type === "unload") {
+    const passenger = moved.cargo.find((c) => c.id === action.passenger);
+    if (!passenger) return reject("cannotUnload", `Unit ${action.passenger} isn't aboard`);
+    const { to } = action;
+    if (!unloadTiles(afterMove, moved, passenger).some((p) => p.x === to.x && p.y === to.y)) {
+      return reject("cannotUnload", `Can't unload onto (${to.x}, ${to.y})`);
+    }
+    const unloaded = applyUnload(afterMove, moved, passenger, to);
+    return { ok: true, state: unloaded.state, events: [...events, unloaded.event] };
+  }
+
+  if (action.type === "supply") {
+    const targets = supplyTargets(afterMove, moved);
+    if (targets.length === 0) return reject("cannotSupply", "no adjacent unit needs supplying");
+    const supplied = applySupply(afterMove, targets);
+    return { ok: true, state: supplied.state, events: [...events, ...supplied.events] };
   }
 
   const defender = afterMove.units.find((u) => u.id === action.target);

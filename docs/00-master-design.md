@@ -269,3 +269,6 @@ UI falls into four categories:
 | 2026-10-31 | Economy implemented (04-economy): turn start runs income, then repair and resupply, then readies units, including day 1 for the first player; capture is an end action on Move; build is its own command (11-tech-setup §3e) |
 | 2026-10-31 | A unit showing 10 HP is not repaired or charged, even at 91–99 internal HP; only neutral and enemy-side properties can be captured; each player has a scenario-set buildable list |
 | 2026-10-31 | Undo now covers any action this turn except attacks, since capture and build reveal nothing |
+| 2026-10-31 | Transport, supply and joining implemented (05, 04-economy §6): passengers live inside the transport; Load and Join are the only end actions that stop on an occupied tile (11-tech-setup §3f) |
+| 2026-10-31 | Joining and boarding are limited to your own player's units; Supply needs a unit that actually needs it; automatic supply reaches same-side allies |
+| 2026-10-31 | Hold X or right-click with nothing selected shows any unit's move and threat range, as in the original; they still cancel when something is selected |

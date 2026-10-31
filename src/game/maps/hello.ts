@@ -46,7 +46,7 @@ export const HELLO_SETUP: GameSetup = {
     { type: "infantry", owner: 0, pos: { x: 5, y: 3 } },
     { type: "assaultInfantry", owner: 0, pos: { x: 5, y: 4 }, kills: 4 }, // veteran, in the bunker
     { type: "mediumTank", owner: 0, pos: { x: 7, y: 3 } },
-    { type: "artillery", owner: 0, pos: { x: 4, y: 5 } },
+    { type: "artillery", owner: 0, pos: { x: 4, y: 5 }, ammo: 4 }, // low on shells, for the Halftrack to resupply
     { type: "recon", owner: 0, pos: { x: 6, y: 1 }, hp: 64 },
     { type: "halftrack", owner: 0, pos: { x: 2, y: 5 } },
     { type: "infantry", owner: 1, pos: { x: 10, y: 3 } },

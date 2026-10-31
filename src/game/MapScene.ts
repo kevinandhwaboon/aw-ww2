@@ -14,6 +14,10 @@ export interface MapInputHandlers {
   onConfirm(tile: Point): void;
   onCancel(): void;
   onMenuChoice(id: string): void;
+  /** X or the right mouse button went down. */
+  onPeekStart(tile: Point): void;
+  /** X or the right mouse button was released. */
+  onPeekEnd(): void;
 }
 
 export interface MapSceneOptions {
@@ -82,7 +86,13 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.onPointerMove(pointer));
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
+    this.input.on("pointerup", () => this.handlers?.onPeekEnd());
+    this.input.on("pointerupoutside", () => this.handlers?.onPeekEnd());
+    this.game.events.on("blur", () => this.handlers?.onPeekEnd()); // a release we'd otherwise never see
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.onKey(event));
+    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => {
+      if (event.key === "x" || event.key === "X") this.handlers?.onPeekEnd();
+    });
   }
 
   /** Shows a new game state. Safe to call before the scene has been created. */
@@ -113,7 +123,9 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     if (pointer.rightButtonDown()) {
-      this.handlers?.onCancel();
+      const tile = this.tileAt(pointer.worldX, pointer.worldY);
+      if (!this.menu) this.setCursor(tile);
+      this.handlers?.onPeekStart(tile);
       return;
     }
     if (this.menu) {
@@ -154,7 +166,12 @@ export class MapScene extends Phaser.Scene implements MapView {
       else this.handlers?.onConfirm(this.cursorTile);
       return;
     }
-    if (["x", "X", "Escape", "Backspace"].includes(event.key)) {
+    if (event.key === "x" || event.key === "X") {
+      event.preventDefault();
+      if (!event.repeat) this.handlers?.onPeekStart(this.cursorTile);
+      return;
+    }
+    if (event.key === "Escape" || event.key === "Backspace") {
       event.preventDefault();
       this.handlers?.onCancel();
     }
@@ -357,6 +374,10 @@ export class MapScene extends Phaser.Scene implements MapView {
       if (event.type === "combat") await this.playCombat(event);
       if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, "#ffffff");
       if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", "#f0d040");
+      if (event.type === "unitJoined") {
+        const target = this.state.units.find((u) => u.id === event.targetId);
+        if (target) await this.floatLabel(target.pos, "JOINED", "#ffffff");
+      }
     }
     await Promise.all(this.repairLabels(events));
   }
@@ -489,6 +510,8 @@ export class MapScene extends Phaser.Scene implements MapView {
       if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
         sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", "#ffffff", "#101018")).setOrigin(0, 1));
       }
+      // A transport carrying units shows a small marker.
+      if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", "#ffffff", "#101018")).setOrigin(0));
       const { level } = veterancyFor(unit.kills);
       if (level !== "rookie") {
         sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));

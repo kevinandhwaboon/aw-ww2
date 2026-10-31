@@ -1,11 +1,12 @@
 // The start-of-turn sequence (04-economy §2), in the doc's order. Daily fuel burn for air and naval
-// units arrives with them in phase 2; Halftrack automatic resupply arrives in milestone 5.
+// units arrives with them in phase 2.
 
 import type { GameEvent } from "./commands";
 import { UNITS } from "./data/units";
 import { propertyDefAt } from "./economy";
 import { displayHp, MAX_HP, propertyAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
+import { applySupply, supplyTargets } from "./transport";
 
 /** Displayed HP repaired per turn on a property (04-economy §5). */
 export const REPAIR_HP = 2;
@@ -15,11 +16,23 @@ export function startTurn(state: GameState): { state: GameState; events: GameEve
   const events: GameEvent[] = [{ type: "turnStarted", player: state.currentPlayer, day: state.day }];
   const afterIncome = collectIncome(state, events);
   const afterRepairs = repairAndResupply(afterIncome, events);
+  const afterSupply = halftrackResupply(afterRepairs, events);
   const player = state.currentPlayer;
   return {
-    state: { ...afterRepairs, units: afterRepairs.units.map((u) => (u.owner === player && u.hasActed ? { ...u, hasActed: false } : u)) },
+    state: { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player && u.hasActed ? { ...u, hasActed: false } : u)) },
     events,
   };
+}
+
+/** Each of the player's supply units refills adjacent friendly units (05-supply-transport §3). */
+function halftrackResupply(state: GameState, events: GameEvent[]): GameState {
+  let current = state;
+  for (const supplier of state.units.filter((u) => u.owner === state.currentPlayer)) {
+    const supplied = applySupply(current, supplyTargets(current, supplier));
+    current = supplied.state;
+    events.push(...supplied.events);
+  }
+  return current;
 }
 
 function setFunds(state: GameState, funds: number): GameState {

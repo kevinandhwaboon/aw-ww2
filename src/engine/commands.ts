@@ -6,11 +6,19 @@ import type { VeterancyLevel } from "./data/veterancy";
 import type { Point } from "./map";
 import type { GameState, PlayerId, UnitId } from "./state";
 
-/** What a unit does at the end of its move. Load, Unload, Join and Supply arrive in milestone 5. */
+/** What a unit does at the end of its move. */
 export type UnitAction =
   | { readonly type: "wait" }
   | { readonly type: "attack"; readonly target: UnitId }
-  | { readonly type: "capture" };
+  | { readonly type: "capture" }
+  /** Board the transport on the destination tile. */
+  | { readonly type: "load" }
+  /** Merge into the damaged unit of the same type on the destination tile. */
+  | { readonly type: "join" }
+  /** Unload a passenger onto a tile next to the transport's destination. */
+  | { readonly type: "unload"; readonly passenger: UnitId; readonly to: Point }
+  /** Refill the fuel and ammo of adjacent friendly units. */
+  | { readonly type: "supply" };
 
 /** One shot in a combat. `damage` is the internal HP actually removed. */
 export interface CombatStrike {
@@ -74,6 +82,10 @@ export type GameEvent =
       readonly pos: Point;
       readonly cost: number;
     }
+  | { readonly type: "unitLoaded"; readonly unitId: UnitId; readonly transportId: UnitId }
+  | { readonly type: "unitUnloaded"; readonly unitId: UnitId; readonly transportId: UnitId; readonly pos: Point }
+  /** `hp` is the merged unit's internal HP; `refund` is funds returned for excess HP. */
+  | { readonly type: "unitJoined"; readonly unitId: UnitId; readonly targetId: UnitId; readonly hp: number; readonly refund: number }
   /** `funds` is the player's total afterwards. */
   | { readonly type: "incomeReceived"; readonly player: PlayerId; readonly amount: number; readonly funds: number }
   /** `hp` is displayed HP restored. */
@@ -92,7 +104,11 @@ export type RejectionCode =
   | "invalidPath"
   | "invalidTarget"
   | "cannotCapture"
-  | "cannotBuild";
+  | "cannotBuild"
+  | "cannotLoad"
+  | "cannotUnload"
+  | "cannotJoin"
+  | "cannotSupply";
 
 export type ApplyResult =
   | { readonly ok: true; readonly state: GameState; readonly events: readonly GameEvent[] }

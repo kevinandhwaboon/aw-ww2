@@ -9,6 +9,7 @@ import { buildOptions, captureProblem, type BuildOption } from "../engine/econom
 import type { Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
 import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
+import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
 import { extendPath } from "./pathBuilder";
 
 export type RangeKind = "move" | "inspect" | "attack";
@@ -62,8 +63,17 @@ type Mode =
   | ({ readonly kind: "selected" } & Chosen)
   | ({ readonly kind: "menu"; readonly targets: readonly Unit[] } & Chosen)
   | ({ readonly kind: "targeting"; readonly targets: readonly Unit[] } & Chosen)
+  /** Choosing where to unload a passenger. */
+  | ({
+      readonly kind: "unloading";
+      readonly targets: readonly Unit[];
+      readonly passenger: UnitId;
+      readonly tiles: readonly Point[];
+    } & Chosen)
   /** The factory build list is open. */
   | { readonly kind: "building" }
+  /** Hold X or right-click: showing a unit's range until released. */
+  | { readonly kind: "peeking" }
   /** Animating or waiting for the engine: input is ignored. */
   | { readonly kind: "busy" };
 
@@ -77,6 +87,10 @@ export interface ControllerDeps {
 
 const FIRE: MenuItem = { id: "fire", label: "FIRE" };
 const CAPTURE: MenuItem = { id: "capture", label: "CAPTURE" };
+const LOAD: MenuItem = { id: "load", label: "LOAD" };
+const JOIN: MenuItem = { id: "join", label: "JOIN" };
+const UNLOAD: MenuItem = { id: "unload", label: "UNLOAD" };
+const SUPPLY: MenuItem = { id: "supply", label: "SUPPLY" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
 
@@ -133,6 +147,7 @@ export class InputController {
         return;
       case "inspect":
       case "building":
+      case "peeking":
         this.reset();
         this.selectAt(tile);
         return;
@@ -144,6 +159,11 @@ export class InputController {
         if (target) void this.commit(mode, { type: "attack", target: target.id });
         return;
       }
+      case "unloading":
+        if (mode.tiles.some((t) => t.x === tile.x && t.y === tile.y)) {
+          void this.commit(mode, { type: "unload", passenger: mode.passenger, to: tile });
+        }
+        return;
       case "menu":
       case "busy":
         return;
@@ -156,12 +176,14 @@ export class InputController {
       case "selected":
       case "inspect":
       case "building":
+      case "peeking":
         this.reset();
         return;
       case "menu":
         this.backToSelection(mode);
         return;
       case "targeting":
+      case "unloading":
         this.deps.view.clearRange();
         this.deps.view.clearForecast();
         this.openMenu(mode);
@@ -172,12 +194,38 @@ export class InputController {
     }
   }
 
+  /**
+   * X or the right mouse button went down. With nothing selected it shows the range of the unit
+   * under the cursor, yours or the enemy's, until released; otherwise it cancels as usual.
+   */
+  onPeekStart(tile: Point): void {
+    if (this.mode.kind !== "idle") {
+      this.onCancel();
+      return;
+    }
+    const state = this.deps.getState();
+    const unit = unitAt(state, tile);
+    if (!unit) return;
+    const reach = reachableTiles(state, unit);
+    const tiles = [...reach.keys()].map((i) => tilePoint(state, i));
+    this.mode = { kind: "peeking" };
+    this.deps.view.showRanges(this.threatLayers(state, unit, reach, tiles));
+  }
+
+  onPeekEnd(): void {
+    if (this.mode.kind === "peeking") this.reset();
+  }
+
   onMenuChoice(id: string): void {
     const mode = this.mode;
     if (mode.kind !== "menu") return;
     if (id === "cancel") this.backToSelection(mode);
     else if (id === "wait") void this.commit(mode, { type: "wait" });
     else if (id === "capture") void this.commit(mode, { type: "capture" });
+    else if (id === "load") void this.commit(mode, { type: "load" });
+    else if (id === "join") void this.commit(mode, { type: "join" });
+    else if (id === "supply") void this.commit(mode, { type: "supply" });
+    else if (id === "unload") this.startUnloading(mode);
     else if (id === "fire") this.startTargeting(mode);
   }
 
@@ -245,7 +293,8 @@ export class InputController {
       this.selectAt(tile);
       return;
     }
-    if (!canEndOn(state, unit, tile)) return; // e.g. a friendly unit's tile: can pass, can't stop
+    // A friendly unit's tile: you can pass through it, but only stop to board or join it.
+    if (!canEndOn(state, unit, tile) && this.boardingItems(unit, tile).length === 0) return;
 
     const end = this.mode.path[this.mode.path.length - 1] ?? unit.pos;
     const path = end.x === tile.x && end.y === tile.y ? this.mode.path : (cheapestPath(state, reach, tile) ?? []);
@@ -267,8 +316,51 @@ export class InputController {
     }
     this.mode = { kind: "menu", unitId, reach, path, targets };
     const at = path[path.length - 1] ?? unit.pos;
-    const canCapture = captureProblem(this.deps.getState(), { ...unit, pos: at }) === null;
-    this.deps.view.openMenu(at, [...(targets.length > 0 ? [FIRE] : []), ...(canCapture ? [CAPTURE] : []), WAIT, CANCEL]);
+    const boarding = this.boardingItems(unit, at);
+    const items = boarding.length > 0 ? [...boarding, CANCEL] : [...this.actionItems(unit, at, targets), WAIT, CANCEL];
+    this.deps.view.openMenu(at, items);
+  }
+
+  /** LOAD and/or JOIN, if `tile` holds a friendly unit this one can board or merge with. */
+  private boardingItems(unit: Unit, tile: Point): MenuItem[] {
+    const host = unitAt(this.deps.getState(), tile);
+    if (!host || host.id === unit.id) return [];
+    return [...(loadProblem(unit, host) === null ? [LOAD] : []), ...(joinProblem(unit, host) === null ? [JOIN] : [])];
+  }
+
+  /** What the unit could do on an empty tile, besides Wait. */
+  private actionItems(unit: Unit, at: Point, targets: readonly Unit[]): MenuItem[] {
+    const { state, moved } = this.afterMove(unit, at);
+    const passenger = moved.cargo[0];
+    return [
+      ...(targets.length > 0 ? [FIRE] : []),
+      ...(captureProblem(state, moved) === null ? [CAPTURE] : []),
+      ...(passenger && unloadTiles(state, moved, passenger).length > 0 ? [UNLOAD] : []),
+      ...(supplyTargets(state, moved).length > 0 ? [SUPPLY] : []),
+    ];
+  }
+
+  /** The game as it would be with the unit at its destination, for checking what it can do there. */
+  private afterMove(unit: Unit, at: Point): { state: GameState; moved: Unit } {
+    const state = this.deps.getState();
+    const moved = { ...unit, pos: at };
+    return { state: { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) }, moved };
+  }
+
+  private startUnloading(mode: Extract<Mode, { kind: "menu" }>): void {
+    const { view } = this.deps;
+    const unit = this.deps.getState().units.find((u) => u.id === mode.unitId);
+    if (!unit) return;
+    const { state, moved } = this.afterMove(unit, mode.path[mode.path.length - 1] ?? unit.pos);
+    const passenger = moved.cargo[0];
+    if (!passenger) return;
+    const tiles = unloadTiles(state, moved, passenger);
+    const first = tiles[0];
+    if (!first) return;
+    view.closeMenu();
+    this.mode = { ...mode, kind: "unloading", passenger: passenger.id, tiles };
+    view.showRanges([{ tiles, kind: "move" }]);
+    view.setCursor(first);
   }
 
   private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {

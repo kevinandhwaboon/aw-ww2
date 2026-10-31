@@ -57,6 +57,8 @@ scene.setHandlers({
   onConfirm: (tile) => controller.onConfirm(tile),
   onCancel: () => controller.onCancel(),
   onMenuChoice: (id) => controller.onMenuChoice(id),
+  onPeekStart: (tile) => controller.onPeekStart(tile),
+  onPeekEnd: () => controller.onPeekEnd(),
 });
 
 function showCursorInfo(): void {
@@ -80,8 +82,9 @@ async function dispatch(command: Command): Promise<boolean> {
   playing = true;
   turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview
   await scene.playEvents(result.events);
+  const previous = state;
   state = result.state;
-  debugPanel.logEvents(state, result.events);
+  debugPanel.logEvents(state, previous, result.events);
   render();
   for (const event of result.events) {
     if (event.type !== "turnStarted") continue;

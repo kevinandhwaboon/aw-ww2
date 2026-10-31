@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat) and 4 (economy) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy) and 5 (supply and transport) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -76,9 +76,12 @@
 | Move cursor | Move the mouse | Arrow keys |
 | Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
 | Cancel | Right click, or click outside the menu | X, Esc or Backspace |
+| Show any unit's move and threat range | Hold right click on it, with nothing selected | Hold X on it, with nothing selected |
 | Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys, Z on the target |
 | Capture a property | CAPTURE in the menu | Z on CAPTURE |
 | Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Enter |
+| Load or join | Move onto your Halftrack or a damaged unit of the same type, then LOAD or JOIN | The same with arrow keys and Z |
+| Unload | UNLOAD in the menu, then click a blue tile | Z on UNLOAD, arrow keys, Z on the tile |
 | Show an enemy's move and threat range | Click the enemy | Z on the enemy |
 | Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
 | End turn | End Turn button | E |
@@ -99,6 +102,13 @@
 - **Capture** is an end action on Move, and `build` is its own command. Properties record which unit is capturing them, so progress resets if that unit leaves or dies.
 - **Availability:** each player has a `buildable` list, set by the scenario. The default is every unit in the phases built so far. The demo map leaves Heavy Tank and Rocket Artillery out for the US.
 - **Not yet:** capturing an HQ only changes its owner until milestone 6 adds victory checks. Halftrack automatic resupply comes in milestone 5, and daily fuel for air and naval units in phase 2.
+
+## 3f. Transport notes (milestone 5)
+
+- **`src/engine/transport.ts`** holds load, unload, supply and join, shared by the engine and the menus.
+- **Passengers live inside their transport** (`unit.cargo`), not in `GameState.units`. So they can't be targeted, aren't repaired, and die with the transport without counting as kills. A unit that boards also counts as leaving any property it was capturing.
+- **Load and Join** are the only end actions that stop on an occupied tile; every other action still needs an empty one.
+- **Hold to see a range:** with nothing selected, holding X or the right mouse button on any unit shows where it can move and what it can hit. With something selected, they cancel as before. Clicking an enemy still shows its range until the next click.
 
 ## 4. Data files
 

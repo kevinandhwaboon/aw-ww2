@@ -74,7 +74,8 @@ export function buildProblem(state: GameState, unitType: UnitTypeId, pos: Point)
   if (!player.buildable.includes(unitType)) return "this unit isn't available to your nation here";
   if (unitAt(state, pos)) return "the tile is occupied";
   const cap = state.settings.unitCap;
-  if (cap !== null && state.units.filter((u) => u.owner === player.id).length >= cap) return `you're at the ${cap}-unit limit`;
+  const fielded = state.units.filter((u) => u.owner === player.id).reduce((n, u) => n + 1 + u.cargo.length, 0);
+  if (cap !== null && fielded >= cap) return `you're at the ${cap}-unit limit`;
   if (player.funds < stats.unitCost(state, player.id, unitType)) return "you can't afford it";
   return null;
 }
@@ -107,6 +108,7 @@ export function applyBuild(state: GameState, unitType: UnitTypeId, pos: Point): 
     ammo: 0,
     kills: 0,
     hasActed: true,
+    cargo: [],
   };
   const unit = { ...draft, fuel: stats.maxFuel(state, draft), ammo: stats.maxAmmo(state, draft) };
   return {
