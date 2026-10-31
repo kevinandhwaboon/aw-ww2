@@ -1,0 +1,40 @@
+{
+  "id": "twin-bridges",
+  "name": "Twin Bridges",
+  "description": "A fair fight: both sides mirror each other across a river with two bridges. Take the neutral cities and force a crossing.",
+  "map": [
+    "C...F.~.H....",
+    ".Qf...~...C..",
+    ".==.==#==..F.",
+    ".F.C..~..X...",
+    "....H.~.H....",
+    "...X..~..C.F.",
+    ".F..==#==.==.",
+    "..C...~...fQ.",
+    "....H.~.F...C"
+  ],
+  "players": [
+    { "name": "Allies", "nation": "us", "funds": 5000 },
+    { "name": "Axis", "nation": "germany", "funds": 5000 }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 0, "y": 0 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 2, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 3, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 12, "y": 8 }, "owner": 1 },
+    { "pos": { "x": 11, "y": 7 }, "owner": 1 },
+    { "pos": { "x": 10, "y": 7 }, "owner": 1 },
+    { "pos": { "x": 9, "y": 5 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 3, "y": 2 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 1, "y": 3 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 2, "y": 2 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 0, "y": 1 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 9, "y": 6 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 5 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 10, "y": 6 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 12, "y": 7 } }
+  ]
+}

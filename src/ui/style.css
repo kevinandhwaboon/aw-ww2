@@ -305,3 +305,80 @@ body {
   justify-content: center;
   gap: 8px;
 }
+
+/* Full screens cover the map and sit above every panel. */
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: auto;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.screen-panel {
+  position: static;
+  width: min(420px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  text-align: center;
+}
+
+.title-name {
+  margin: 8px 0 0;
+  font-size: 36px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.title-sub {
+  margin-bottom: 12px;
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.btn-big {
+  font-size: 18px;
+  padding: 8px 24px;
+}
+
+.map-panel {
+  text-align: left;
+}
+
+.map-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.build-row.selected {
+  background: #e8c070;
+  border-color: var(--panel-border);
+}
+
+.map-details {
+  font-size: 13px;
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+.map-description {
+  font-size: 13px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}

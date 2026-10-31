@@ -38,6 +38,8 @@ export {
   type Reach,
 } from "./movement";
 export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOption } from "./economy";
+export { loadGame, saveGame } from "./save";
+export { parseScenario, type Scenario } from "./scenario";
 export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
 export { joinProblem, loadProblem, supplyTargets, unloadTiles } from "./transport";
 export { REPAIR_HP } from "./turn";
