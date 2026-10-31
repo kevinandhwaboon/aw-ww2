@@ -129,6 +129,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   }
 
   private onKey(event: KeyboardEvent): void {
+    // While an HTML menu has focus, the keyboard belongs to it (Esc still cancels).
+    if (document.activeElement instanceof HTMLButtonElement && event.key !== "Escape") return;
     const arrows: Record<string, Point> = {
       ArrowUp: { x: 0, y: -1 },
       ArrowDown: { x: 0, y: 1 },
@@ -353,7 +355,29 @@ export class MapScene extends Phaser.Scene implements MapView {
     for (const event of events) {
       if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
       if (event.type === "combat") await this.playCombat(event);
+      if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, "#ffffff");
+      if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", "#f0d040");
     }
+    await Promise.all(this.repairLabels(events));
+  }
+
+  /** "+2" over repaired units and "SUPPLY" over units only resupplied, all at once. */
+  private repairLabels(events: readonly GameEvent[]): Promise<void>[] {
+    const repaired = new Set<UnitId>();
+    const labels: Promise<void>[] = [];
+    const over = (unitId: UnitId, text: string, color: string) => {
+      const unit = this.state.units.find((u) => u.id === unitId);
+      if (unit) labels.push(this.floatLabel(unit.pos, text, color));
+    };
+    for (const event of events) {
+      if (event.type !== "unitRepaired") continue;
+      repaired.add(event.unitId);
+      over(event.unitId, `+${event.hp}`, "#80f080");
+    }
+    for (const event of events) {
+      if (event.type === "unitResupplied" && !repaired.has(event.unitId)) over(event.unitId, "SUPPLY", "#a0d8ff");
+    }
+    return labels;
   }
 
   /** The attack, then the counter if there was one, then any promotions (00-master-design §13). */
@@ -462,6 +486,9 @@ export class MapScene extends Phaser.Scene implements MapView {
 
       const hp = displayHp(unit.hp);
       if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
+      if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
+        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", "#ffffff", "#101018")).setOrigin(0, 1));
+      }
       const { level } = veterancyFor(unit.kills);
       if (level !== "rookie") {
         sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));

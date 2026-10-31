@@ -34,11 +34,14 @@ export {
   type PathCheck,
   type Reach,
 } from "./movement";
-export { createGame, CAPTURE_POINTS, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
+export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOption } from "./economy";
+export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
+export { REPAIR_HP } from "./turn";
 export {
   displayHp,
   propertyAt,
   unitAt,
+  CAPTURE_POINTS,
   DEFAULT_SETTINGS,
   MAX_HP,
   type GameState,

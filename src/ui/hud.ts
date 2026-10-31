@@ -1,10 +1,12 @@
-import { terrainDef, type TerrainId } from "../engine/data/terrain";
+import { terrainDef } from "../engine/data/terrain";
 import { UNITS } from "../engine/data/units";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Combatant, GameEvent } from "../engine/commands";
 import type { Modifier } from "../engine/modifiers";
-import { displayHp, type GameState, type Unit } from "../engine/state";
+import { terrainAt, type Point } from "../engine/map";
+import { CAPTURE_POINTS, displayHp, propertyAt, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
+import type { BuildMenu } from "../game/controller";
 import { playerColors } from "../game/placeholderUnits";
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -16,20 +18,28 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 
 const stars = (n: number) => (n > 0 ? "★".repeat(n) : "–");
 
-/** HTML overlay panel showing the terrain under the cursor (00-master-design §12, HUD panels). */
-export function createTerrainPanel(root: HTMLElement): { show: (id: TerrainId) => void } {
+/** HTML overlay panel showing the terrain under the cursor, with its owner and capture progress. */
+export function createTerrainPanel(root: HTMLElement): { show: (state: GameState, tile: Point) => void } {
   const panel = el("div", "panel terrain-panel");
   const name = el("div", "panel-title");
   const starRow = el("div", "stars");
-  panel.append(name, starRow);
+  const owner = el("div", "terrain-owner");
+  panel.append(name, starRow, owner);
   root.append(panel);
 
   return {
-    show(id) {
-      const def = terrainDef(id);
+    show(state, tile) {
+      const def = terrainDef(terrainAt(state.map, tile));
       name.textContent = def.name;
       starRow.textContent = stars(def.defenseStars);
       starRow.title = `Defense: ${def.defenseStars}`;
+      const property = propertyAt(state, tile);
+      owner.hidden = !property;
+      if (!property) return;
+      const holder = property.owner === null ? undefined : state.players[property.owner];
+      const capture = property.capturePoints < CAPTURE_POINTS ? ` · capture ${property.capturePoints}/${CAPTURE_POINTS}` : "";
+      owner.textContent = `${holder?.name ?? "Neutral"}${capture}`;
+      owner.style.color = holder ? playerColors(holder.id)[0] : "";
     },
   };
 }
@@ -59,7 +69,7 @@ export function createTurnBar(
   const hint = el(
     "div",
     "turn-hint",
-    "Click a unit, then a blue tile, then Fire or Wait. Right-click / Esc cancels. Arrows + Z / X work too. Click an enemy to see its range.",
+    "Click a unit, then a blue tile, then choose an action. Click your empty factory to build. Right-click / Esc cancels. Arrows + Z / X work too.",
   );
   bar.append(row, hint);
   root.append(bar);
@@ -71,9 +81,50 @@ export function createTurnBar(
       day.textContent = `Day ${state.day}`;
       player.textContent = `${current.name} (${current.nation.toUpperCase()})`;
       player.style.color = playerColors(current.id)[0];
-      funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
+      funds.textContent = `Funds ${current.funds.toLocaleString("en-US")} (+${stats.propertyIncome(state, current.id).toLocaleString("en-US")}/day)`;
       undo.disabled = !ui.canUndo || ui.busy;
       endTurn.disabled = ui.busy;
+    },
+  };
+}
+
+/** The factory's list of units: a scrolling HTML list, as decided in 00-master-design §12. */
+export function createBuildMenu(root: HTMLElement): BuildMenu {
+  const panel = el("div", "panel build-menu");
+  panel.hidden = true;
+  root.append(panel);
+
+  return {
+    open(options, onPick, onCancel) {
+      const title = el("div", "panel-title", "Build");
+      const list = el("div", "build-list");
+      const buttons = options.map((option) => {
+        const row = el("button", "build-row");
+        row.disabled = !option.affordable;
+        row.append(el("span", undefined, UNITS[option.type].name), el("span", "build-cost", option.cost.toLocaleString("en-US")));
+        row.addEventListener("click", () => onPick(option.type));
+        list.append(row);
+        return row;
+      });
+      const cancel = el("button", "btn", "Cancel");
+      cancel.addEventListener("click", onCancel);
+      panel.replaceChildren(title, list, cancel);
+      panel.hidden = false;
+
+      // Arrow keys walk the affordable rows and Cancel; Enter and Space activate as usual.
+      const focusable = [...buttons.filter((b) => !b.disabled), cancel];
+      focusable[0]?.focus();
+      panel.onkeydown = (event) => {
+        const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
+        if (step === 0) return;
+        event.preventDefault();
+        const current = focusable.indexOf(document.activeElement as HTMLButtonElement);
+        focusable[(current + step + focusable.length) % focusable.length]?.focus();
+      };
+    },
+    close() {
+      panel.hidden = true;
+      panel.replaceChildren();
     },
   };
 }
@@ -173,6 +224,18 @@ function describeEvent(state: GameState, e: GameEvent): string {
       const counter = e.counter ? `, counter ${e.counter.damage}% (luck ${e.counter.luck})` : ", no counter";
       return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}${tag(e.defender)} for ${e.attack.damage}% (luck ${e.attack.luck})${counter}`;
     }
+    case "captureProgress":
+      return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
+    case "propertyCaptured":
+      return `${name(e.player)} captured (${e.pos.x}, ${e.pos.y})${e.previousOwner === null ? "" : ` from ${name(e.previousOwner)}`}`;
+    case "unitBuilt":
+      return `${name(e.owner)} built ${UNITS[e.unitType].name} for ${e.cost.toLocaleString("en-US")}`;
+    case "incomeReceived":
+      return `${name(e.player)} earned ${e.amount.toLocaleString("en-US")} (funds ${e.funds.toLocaleString("en-US")})`;
+    case "unitRepaired":
+      return `${unitName(e.unitId)} repaired +${e.hp} HP for ${e.cost.toLocaleString("en-US")}`;
+    case "unitResupplied":
+      return `${unitName(e.unitId)} resupplied`;
     case "turnEnded":
       return `${name(e.player)} ended their turn`;
     case "dayStarted":

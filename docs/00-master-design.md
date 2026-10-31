@@ -266,3 +266,6 @@ UI falls into four categories:
 | 2026-10-31 | Combat implemented (03-combat): attack is an end action on Move; damage computed in whole numbers; forecast and engine share one code path (11-tech-setup §3d) |
 | 2026-10-31 | A unit out of primary ammo can only attack targets with a secondary value in the chart (03-combat wins over the looser wording in 05-supply §2, now corrected) |
 | 2026-10-31 | Undo is cleared by any attack as well as End Turn; `?seed=` and `?luck=off` URL options for testing |
+| 2026-10-31 | Economy implemented (04-economy): turn start runs income, then repair and resupply, then readies units, including day 1 for the first player; capture is an end action on Move; build is its own command (11-tech-setup §3e) |
+| 2026-10-31 | A unit showing 10 HP is not repaired or charged, even at 91–99 internal HP; only neutral and enemy-side properties can be captured; each player has a scenario-set buildable list |
+| 2026-10-31 | Undo now covers any action this turn except attacks, since capture and build reveal nothing |

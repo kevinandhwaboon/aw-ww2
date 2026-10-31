@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
-import { inBounds, terrainAt, type Point } from "./engine/map";
+import { inBounds, type Point } from "./engine/map";
 import { createGame } from "./engine/setup";
 import { unitAt, type GameState } from "./engine/state";
 import { InputController } from "./game/controller";
@@ -9,7 +9,7 @@ import { MapScene } from "./game/MapScene";
 import { HELLO_SETUP } from "./game/maps/hello";
 import { TILE_SIZE } from "./game/placeholderTiles";
 import { playerColors } from "./game/placeholderUnits";
-import { createBanner, createDebugPanel, createTerrainPanel, createTurnBar, createUnitPanel } from "./ui/hud";
+import { createBanner, createBuildMenu, createDebugPanel, createTerrainPanel, createTurnBar, createUnitPanel } from "./ui/hud";
 import "./ui/style.css";
 
 // Debug URL options (11-tech-setup §7): ?seed=123 fixes the luck rolls, ?luck=off turns luck off.
@@ -23,8 +23,8 @@ let state: GameState = createGame({
 });
 let cursor: Point = { x: 0, y: 0 };
 /**
- * States before each Wait this turn, for Undo. A playtesting convenience: cleared at End Turn and by
- * any attack, because luck reveals information that a redo could exploit.
+ * States before each action this turn, for Undo. A playtesting convenience: cleared at End Turn and
+ * by any attack, because luck reveals information that a redo could exploit.
  */
 let history: GameState[] = [];
 let playing = false;
@@ -41,6 +41,7 @@ const unitPanel = createUnitPanel(uiRoot);
 const terrainPanel = createTerrainPanel(uiRoot);
 const debugPanel = createDebugPanel(uiRoot);
 const banner = createBanner(uiRoot);
+const buildMenu = createBuildMenu(uiRoot);
 
 const scene = new MapScene({
   state,
@@ -50,7 +51,7 @@ const scene = new MapScene({
   },
 });
 
-const controller = new InputController({ getState: () => state, dispatch, view: scene });
+const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
 scene.setHandlers({
   onCursorMove: (tile) => controller.onCursorMove(tile),
   onConfirm: (tile) => controller.onConfirm(tile),
@@ -60,7 +61,7 @@ scene.setHandlers({
 
 function showCursorInfo(): void {
   if (!inBounds(state.map, cursor)) return;
-  terrainPanel.show(terrainAt(state.map, cursor));
+  terrainPanel.show(state, cursor);
   unitPanel.show(state, unitAt(state, cursor));
 }
 
@@ -74,7 +75,8 @@ async function dispatch(command: Command): Promise<boolean> {
     console.warn(`Command rejected (${result.code}): ${result.message}`);
     return false;
   }
-  history = command.type === "move" && command.action.type === "wait" ? [...history, state] : [];
+  const revealsInformation = command.type === "endTurn" || (command.type === "move" && command.action.type === "attack");
+  history = revealsInformation ? [] : [...history, state];
   playing = true;
   turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview
   await scene.playEvents(result.events);
@@ -84,7 +86,9 @@ async function dispatch(command: Command): Promise<boolean> {
   for (const event of result.events) {
     if (event.type !== "turnStarted") continue;
     const player = state.players[event.player];
-    if (player) await banner.show(`Day ${event.day} · ${player.name}`, playerColors(player.id)[0]);
+    const income = result.events.find((e) => e.type === "incomeReceived");
+    const earned = income ? ` +${income.amount.toLocaleString("en-US")}` : "";
+    if (player) await banner.show(`Day ${event.day} · ${player.name}${earned}`, playerColors(player.id)[0]);
   }
   playing = false;
   render();

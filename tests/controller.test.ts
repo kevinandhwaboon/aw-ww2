@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
+import type { UnitTypeId } from "../src/engine/data/units";
+import type { BuildOption } from "../src/engine/economy";
 import type { Point } from "../src/engine/map";
 import type { UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
-import { forecastLines, InputController, type MapView, type MenuItem, type RangeLayer } from "../src/game/controller";
+import { forecastLines, InputController, type BuildMenu, type MapView, type MenuItem, type RangeLayer } from "../src/game/controller";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
 
 /** A MapView that records what it was told to show, plus a controller driving a real engine. */
-function setup(rows: string[], units: UnitSetup[]) {
-  let state: GameState = makeGame(rows, units, { settings: { luck: false } });
+function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: number }[] = []) {
+  let state: GameState = makeGame(rows, units, {
+    settings: { luck: false },
+    players: [{ name: "A", nation: "us", funds: 5000 }, { name: "B", nation: "germany" }],
+    propertyOwners: owners,
+  });
   const seen = {
     ranges: [] as readonly RangeLayer[],
     menu: null as readonly MenuItem[] | null,
@@ -19,6 +25,7 @@ function setup(rows: string[], units: UnitSetup[]) {
     cursor: null as Point | null,
     commands: [] as Command[],
   };
+  const built = { options: null as readonly BuildOption[] | null, pick: null as ((type: UnitTypeId) => void) | null };
   const view: MapView = {
     showRanges: (layers) => { seen.ranges = layers; },
     clearRange: () => { seen.ranges = []; },
@@ -32,6 +39,10 @@ function setup(rows: string[], units: UnitSetup[]) {
     showForecast: (_, lines) => { seen.forecast = lines; },
     clearForecast: () => { seen.forecast = null; },
   };
+  const buildMenu: BuildMenu = {
+    open: (options, onPick) => { built.options = options; built.pick = onPick; },
+    close: () => { built.options = null; built.pick = null; },
+  };
   const controller = new InputController({
     getState: () => state,
     dispatch: (command) => {
@@ -41,13 +52,14 @@ function setup(rows: string[], units: UnitSetup[]) {
       return Promise.resolve(result.ok);
     },
     view,
+    buildMenu,
   });
   const labels = () => seen.menu?.map((i) => i.id);
   /** Lets the controller's awaited preview finish. */
   const settle = async () => {
     for (let i = 0; i < 10; i++) await Promise.resolve();
   };
-  return { controller, seen, labels, settle, getState: () => state };
+  return { controller, seen, built, labels, settle, getState: () => state };
 }
 
 describe("action menu", () => {
@@ -89,6 +101,68 @@ describe("action menu", () => {
     stayed.controller.onConfirm(P(0, 0));
     await stayed.settle();
     expect(stayed.labels()).toEqual(["fire", "wait", "cancel"]);
+  });
+});
+
+describe("capture and build", () => {
+  it("offers Capture to infantry on a property that isn't theirs", async () => {
+    const { controller, labels, settle } = setup([".C."], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    expect(labels()).toEqual(["capture", "wait", "cancel"]);
+  });
+
+  it("doesn't offer Capture to vehicles or on your own property", async () => {
+    const tank = setup([".C."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
+    tank.controller.onConfirm(P(0, 0));
+    tank.controller.onConfirm(P(1, 0));
+    await tank.settle();
+    expect(tank.labels()).toEqual(["wait", "cancel"]);
+
+    const own = setup([".C."], [{ type: "infantry", owner: 0, pos: P(0, 0) }], [{ pos: P(1, 0), owner: 0 }]);
+    own.controller.onConfirm(P(0, 0));
+    own.controller.onConfirm(P(1, 0));
+    await own.settle();
+    expect(own.labels()).toEqual(["wait", "cancel"]);
+  });
+
+  it("choosing Capture sends one capture command", async () => {
+    const { controller, seen, settle } = setup([".C."], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    controller.onMenuChoice("capture");
+    await settle();
+    expect(seen.commands).toEqual([{ type: "move", unitId: 0, path: [P(1, 0)], action: { type: "capture" } }]);
+  });
+
+  it("clicking your own empty factory opens the build list", () => {
+    const { controller, built } = setup(["f."], [], [{ pos: P(0, 0), owner: 0 }]);
+    controller.onConfirm(P(0, 0));
+    expect(built.options?.[0]).toMatchObject({ type: "infantry", cost: 1000 });
+  });
+
+  it("clicking an enemy factory, a city or open ground doesn't", () => {
+    const { controller, built } = setup(["fC."], [], [{ pos: P(0, 0), owner: 1 }, { pos: P(1, 0), owner: 0 }]);
+    for (const tile of [P(0, 0), P(1, 0), P(2, 0)]) controller.onConfirm(tile);
+    expect(built.options).toBeNull();
+  });
+
+  it("picking a unit closes the list and sends one build command", async () => {
+    const { controller, built, seen, settle } = setup(["f."], [], [{ pos: P(0, 0), owner: 0 }]);
+    controller.onConfirm(P(0, 0));
+    built.pick?.("infantry");
+    await settle();
+    expect(built.options).toBeNull();
+    expect(seen.commands).toEqual([{ type: "build", unitType: "infantry", pos: P(0, 0) }]);
+  });
+
+  it("cancel closes the build list", () => {
+    const { controller, built } = setup(["f."], [], [{ pos: P(0, 0), owner: 0 }]);
+    controller.onConfirm(P(0, 0));
+    controller.onCancel();
+    expect(built.options).toBeNull();
   });
 });
 

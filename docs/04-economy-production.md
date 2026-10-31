@@ -23,6 +23,8 @@
 
 At the start of each player's turn, in this order (as in the original):
 
+This includes the first player's first turn, so they collect income on day 1, as in the original.
+
 1. **Daily fuel use** for that player's air and naval units; units that run out crash or sink (05-supply-transport). Phase 2.
 2. **Income:** add income for every property the player owns.
 3. **Repair and resupply** on owned properties (section 5), then Halftrack automatic resupply (05-supply-transport).
@@ -38,6 +40,7 @@ Each event in this sequence is emitted as an engine event so the UI can show it 
 - At 0 or below, the property changes owner and its capture points reset to 20.
 - **Progress resets to 20** if the capturing unit leaves the tile or is destroyed. Progress is kept across turns while the unit stays, and is also kept if another friendly unit joins it (same type, see section 6).
 - So a full-HP Infantry captures in 2 turns; a damaged one takes longer.
+- **Allied properties can't be captured:** only neutral properties and those of the other side.
 - **Capturing an enemy HQ** defeats that player immediately (see 00-master-design section 8; scenarios may define other conditions). A captured HQ does not change hands as an HQ; the game ends.
 
 ## 4. Production
@@ -52,6 +55,7 @@ Each event in this sequence is emitted as an engine event so the UI can show it 
 ## 5. Repair
 
 - At turn start, each of the player's units on an owned property that serves its category (section 1) is **repaired 2 displayed HP** (20 internal), capped at 10.
+- A unit already showing 10 HP isn't repaired or charged, even if its internal HP is a little below 100.
 - Repair costs **10% of the unit's cost per displayed HP** restored. If the player can't afford 2 HP, the unit gets 1 HP if affordable, otherwise none.
 - Units are repaired in a deterministic order (row-major by position) so funds run out the same way every time.
 - The same property also fully restores fuel and ammo, free of charge, even if no HP is repaired.
