@@ -12,6 +12,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_VICTORY,
   MAX_HP,
+  type FortificationState,
   type GameState,
   type PlayerId,
   type PropertyState,
@@ -65,10 +66,12 @@ export function createGame(setup: GameSetup): GameState {
   const isPlayer = (id: PlayerId) => Number.isInteger(id) && id >= 0 && id < setup.players.length;
 
   const properties: PropertyState[] = [];
+  const fortifications: FortificationState[] = [];
   map.terrain.forEach((terrain, i) => {
-    if (!terrainDef(terrain).property) return;
+    const { property, breakable } = terrainDef(terrain);
     const pos = { x: i % map.width, y: Math.floor(i / map.width) };
-    properties.push({ pos, owner: null, capturePoints: CAPTURE_POINTS, capturingUnit: null });
+    if (property) properties.push({ pos, owner: null, capturePoints: CAPTURE_POINTS, capturingUnit: null });
+    if (breakable) fortifications.push({ pos, hp: breakable.hp });
   });
   for (const { pos, owner } of setup.propertyOwners ?? []) {
     const index = properties.findIndex((p) => samePoint(p.pos, pos));
@@ -115,6 +118,7 @@ export function createGame(setup: GameSetup): GameState {
     })),
     units,
     properties,
+    fortifications,
     day: 1,
     currentPlayer: 0,
     rng: seedRng(setup.seed),

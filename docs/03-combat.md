@@ -63,6 +63,7 @@ damage% = (base × attackMod/100 + luck) × (attackerHP / 10) × ((200 − defen
 ## 4. Fortifications and obstacles
 
 - Fortifications and obstacles have HP (10 displayed / 100 internal) and are attacked like units (similar to the original's breakable pipe seams).
+- They belong to nobody: any unit with a `Fort` value in the chart can attack any empty one, on either side of the front.
 - **A fortification can only be attacked when it's empty.** If a unit occupies it, attacks target the unit, which receives the fortification's terrain defense. To take a bunker: dislodge the defender, then demolish the bunker so it can't be reoccupied.
 - When attacked, a fortification gets no terrain defense, never counterattacks, and has no veterancy. Luck applies.
 - At 0 HP it becomes its broken or cleared terrain (defined in 02-terrain).

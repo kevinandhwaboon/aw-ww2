@@ -86,7 +86,8 @@ async function dispatch(command: Command): Promise<boolean> {
     console.warn(`Command rejected (${result.code}): ${result.message}`);
     return false;
   }
-  const revealsInformation = command.type === "endTurn" || (command.type === "move" && command.action.type === "attack");
+  const attacked = command.type === "move" && (command.action.type === "attack" || command.action.type === "attackFort");
+  const revealsInformation = command.type === "endTurn" || attacked;
   history = revealsInformation || result.state.result ? [] : [...history, state];
   playing = true;
   turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview

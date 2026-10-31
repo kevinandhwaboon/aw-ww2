@@ -73,6 +73,13 @@ export interface PropertyState {
   readonly capturingUnit: UnitId | null;
 }
 
+/** A fortification or obstacle still standing; it leaves this list when broken (02-terrain §4). */
+export interface FortificationState {
+  readonly pos: Point;
+  /** Internal HP. Displayed like unit HP. */
+  readonly hp: number;
+}
+
 export interface Settings {
   /** false = luck always 0 (03-combat §3). */
   readonly luck: boolean;
@@ -96,6 +103,8 @@ export interface GameState {
   readonly units: readonly Unit[];
   /** One entry per property tile, in row-major order. */
   readonly properties: readonly PropertyState[];
+  /** One entry per standing fortification or obstacle, in row-major order. */
+  readonly fortifications: readonly FortificationState[];
   readonly day: number;
   /** Index into players of whose turn it is. */
   readonly currentPlayer: PlayerId;
@@ -116,6 +125,10 @@ export function displayHp(hp: number): number {
 
 export function unitAt(state: GameState, p: Point): Unit | undefined {
   return state.units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+}
+
+export function fortAt(state: GameState, p: Point): FortificationState | undefined {
+  return state.fortifications.find((f) => f.pos.x === p.x && f.pos.y === p.y);
 }
 
 export function propertyAt(state: GameState, p: Point): PropertyState | undefined {

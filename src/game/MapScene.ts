@@ -31,6 +31,12 @@ const RANGE_COLORS: Record<RangeKind, number> = { move: 0x7ec8ff, inspect: 0xffc
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4, ink: "#2a2418", bg: 0xf4ecd8, border: 0x4a3c28, highlight: 0xe8c070 };
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 
+/** What a shot lands on: a unit, or just a tile for a fortification. */
+interface StrikeTarget {
+  readonly pos: Point;
+  readonly unitId?: UnitId;
+}
+
 const center = (p: Point) => ({ x: p.x * TILE_SIZE + TILE_SIZE / 2, y: p.y * TILE_SIZE + TILE_SIZE / 2 });
 
 /**
@@ -42,6 +48,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   private handlers?: MapInputHandlers;
   private cursorTile: Point = { x: 0, y: 0 };
 
+  private tilemap?: Phaser.Tilemaps.Tilemap;
+  private drawnTerrain: GameState["map"]["terrain"] = [];
   private cursor?: Phaser.GameObjects.Graphics;
   private rangeLayer?: Phaser.GameObjects.Graphics;
   private stateLayer?: Phaser.GameObjects.Container;
@@ -73,6 +81,8 @@ export class MapScene extends Phaser.Scene implements MapView {
     const tileset = tilemap.addTilesetImage("terrain");
     if (!tileset) throw new Error("Failed to create terrain tileset");
     tilemap.createLayer(0, tileset, 0, 0);
+    this.tilemap = tilemap;
+    this.drawnTerrain = map.terrain;
 
     // Draw order, bottom to top: terrain, range, flags + units, path arrow, cursor, menu.
     this.rangeLayer = this.add.graphics();
@@ -372,6 +382,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     for (const event of events) {
       if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
       if (event.type === "combat") await this.playCombat(event);
+      if (event.type === "fortAttacked") {
+        const shooter = { unitId: event.attackerId, pos: event.attackerPos };
+        await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
+      }
       if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, "#ffffff");
       if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", "#f0d040");
       if (event.type === "unitJoined") {
@@ -412,7 +426,12 @@ export class MapScene extends Phaser.Scene implements MapView {
   }
 
   /** The shooter nudges toward its target, which flashes and shows the damage. */
-  private async playStrike(shooter: Combatant, target: Combatant, damage: number, destroyed: boolean): Promise<void> {
+  private async playStrike(
+    shooter: Pick<Combatant, "unitId" | "pos">,
+    target: StrikeTarget,
+    damage: number,
+    destroyed: boolean,
+  ): Promise<void> {
     const sprite = this.unitSprites.get(shooter.unitId);
     if (sprite) {
       const { x, y } = sprite;
@@ -430,10 +449,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     ]);
   }
 
-  private async explode(target: Combatant): Promise<void> {
+  private async explode(target: StrikeTarget): Promise<void> {
     const { x, y } = center(target.pos);
     const blast = this.add.rectangle(x, y, 8, 8, 0xffa030);
-    const sprite = this.unitSprites.get(target.unitId);
+    const sprite = target.unitId === undefined ? undefined : this.unitSprites.get(target.unitId);
     await Promise.all([
       this.tween(blast, { scaleX: 2.5, scaleY: 2.5, alpha: 0 }, COMBAT_MS.explode),
       sprite ? this.tween(sprite, { alpha: 0 }, COMBAT_MS.explode) : Promise.resolve(),
@@ -481,6 +500,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!layer) return;
     layer.removeAll(true);
     this.unitSprites.clear();
+    this.redrawChangedTerrain();
 
     // Property ownership: a small team-colored flag in the tile's top-left corner.
     const flags = this.add.graphics();
@@ -496,6 +516,14 @@ export class MapScene extends Phaser.Scene implements MapView {
       flags.fillRect(x + 2, y + 2, 4, 2);
     }
     layer.add(flags);
+
+    // Damaged fortifications show their HP like units do, in the tile's bottom-left corner.
+    for (const fort of this.state.fortifications) {
+      const hp = displayHp(fort.hp);
+      if (hp >= 10) continue;
+      const badge = this.texture(`hp-${hp}`, () => drawHpBadge(hp));
+      layer.add(this.add.image(fort.pos.x * TILE_SIZE, (fort.pos.y + 1) * TILE_SIZE, badge).setOrigin(0, 1));
+    }
 
     for (const unit of this.state.units) {
       const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
@@ -519,6 +547,15 @@ export class MapScene extends Phaser.Scene implements MapView {
       layer.add(sprite);
       this.unitSprites.set(unit.id, sprite);
     }
+  }
+
+  /** Terrain can change in play: a destroyed bunker becomes rubble (02-terrain §4). */
+  private redrawChangedTerrain(): void {
+    const { width, terrain } = this.state.map;
+    terrain.forEach((id, i) => {
+      if (id !== this.drawnTerrain[i]) this.tilemap?.putTileAt(tileIndex(id), i % width, Math.floor(i / width));
+    });
+    this.drawnTerrain = terrain;
   }
 
   /** Returns a texture key, generating the texture the first time it's needed. */

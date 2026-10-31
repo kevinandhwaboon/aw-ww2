@@ -359,6 +359,52 @@ describe("targeting", () => {
   });
 });
 
+describe("attacking fortifications", () => {
+  const nextToBunker = async (units: UnitSetup[] = [{ type: "assaultInfantry", owner: 0, pos: P(0, 0) }]) => {
+    const game = setup(["==X"], units);
+    game.controller.onConfirm(P(0, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    return game;
+  };
+
+  it("offers Fire next to an empty bunker, even with no enemy around", async () => {
+    expect((await nextToBunker()).labels()).toEqual(["fire", "wait", "cancel"]);
+  });
+
+  it("doesn't offer Fire to a unit with no weapon for it", async () => {
+    expect((await nextToBunker([{ type: "recon", owner: 0, pos: P(0, 0) }])).labels()).toEqual(["wait", "cancel"]);
+  });
+
+  it("highlights the bunker and forecasts the damage, calling a kill a BREAK", async () => {
+    const { controller, seen } = await nextToBunker();
+    controller.onMenuChoice("fire");
+    expect(seen.ranges).toEqual([{ tiles: [P(2, 0)], kind: "attack" }]);
+    expect(seen.forecast).toEqual(["DMG 65%", "NO COUNTER"]);
+  });
+
+  it("confirming sends an attackFort command", async () => {
+    const { controller, seen, settle } = await nextToBunker();
+    controller.onMenuChoice("fire");
+    controller.onConfirm(P(2, 0));
+    await settle();
+    expect(seen.commands).toEqual([{ type: "move", unitId: 0, path: [P(1, 0)], action: { type: "attackFort", target: P(2, 0) } }]);
+  });
+
+  it("a unit stepping off a bunker can fire back at it", async () => {
+    const game = setup(["=X"], [{ type: "assaultInfantry", owner: 0, pos: P(1, 0) }]);
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(0, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["fire", "wait", "cancel"]);
+  });
+
+  it("uses BREAK in place of KILL when the hit could destroy it", () => {
+    const f = { weapon: "primary" as const, attack: { min: 65, max: 74 }, counter: null, canKill: true, certainKill: false, counterCanKill: false, counterCertainKill: false };
+    expect(forecastLines(f, "BREAK")[0]).toBe("DMG 65-74% BREAK?");
+  });
+});
+
 describe("enemy threat range", () => {
   it("shows where an enemy can move and, in red, what it can hit beyond that", () => {
     const { controller, seen } = setup(["======"], [

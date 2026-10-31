@@ -18,6 +18,9 @@ export {
   damageFormula,
   distance,
   forecast,
+  fortForecast,
+  fortTargetProblem,
+  fortTargets,
   targetProblem,
   threatTiles,
   MAX_LUCK,
@@ -40,6 +43,7 @@ export { joinProblem, loadProblem, supplyTargets, unloadTiles } from "./transpor
 export { REPAIR_HP } from "./turn";
 export {
   displayHp,
+  fortAt,
   propertyAt,
   unitAt,
   CAPTURE_POINTS,
@@ -47,6 +51,7 @@ export {
   DEFAULT_VICTORY,
   MAX_HP,
   type DefeatReason,
+  type FortificationState,
   type GameResult,
   type GameState,
   type Player,

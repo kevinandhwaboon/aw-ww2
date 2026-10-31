@@ -4,7 +4,7 @@ import { veterancyFor } from "../engine/data/veterancy";
 import type { Combatant, GameEvent } from "../engine/commands";
 import type { Modifier } from "../engine/modifiers";
 import { terrainAt, type Point } from "../engine/map";
-import { CAPTURE_POINTS, displayHp, propertyAt, type DefeatReason, type GameState, type Unit } from "../engine/state";
+import { CAPTURE_POINTS, displayHp, fortAt, propertyAt, type DefeatReason, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
 import type { BuildMenu } from "../game/controller";
 import { playerColors } from "../game/placeholderUnits";
@@ -34,7 +34,12 @@ export function createTerrainPanel(root: HTMLElement): { show: (state: GameState
       starRow.textContent = stars(def.defenseStars);
       starRow.title = `Defense: ${def.defenseStars}`;
       const property = propertyAt(state, tile);
-      owner.hidden = !property;
+      const fort = fortAt(state, tile);
+      owner.hidden = !property && !fort;
+      if (fort) {
+        owner.textContent = `HP ${displayHp(fort.hp)} / 10`;
+        owner.style.color = "";
+      }
       if (!property) return;
       const holder = property.owner === null ? undefined : state.players[property.owner];
       const capture = property.capturePoints < CAPTURE_POINTS ? ` · capture ${property.capturePoints}/${CAPTURE_POINTS}` : "";
@@ -312,6 +317,10 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
       return `${unitName(e.unitId)} unloaded at (${e.pos.x}, ${e.pos.y})`;
     case "unitJoined":
       return `${unitName(e.targetId)} absorbed a unit, now ${displayHp(e.hp)} HP${e.refund > 0 ? `, refund ${e.refund.toLocaleString("en-US")}` : ""}`;
+    case "fortAttacked": {
+      const outcome = e.becomes ? `destroyed, now ${terrainDef(e.becomes).name}` : `${displayHp(e.hp)} HP left`;
+      return `${unitName(e.attackerId)} hit the fortification at (${e.pos.x}, ${e.pos.y}) for ${e.attack.damage}% (luck ${e.attack.luck}): ${outcome}`;
+    }
     case "captureProgress":
       return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
     case "propertyCaptured":

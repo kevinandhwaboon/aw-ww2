@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), 5 (supply and transport) and 6 (win conditions) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), 5 (supply and transport), 6 (win conditions) and 7 (fortifications) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -118,6 +118,12 @@
 - **Resign** is a command for the current player, available in every scenario.
 - **Once `state.result` is set**, `apply` rejects every command with `gameOver`, and the UI locks input and shows the results screen.
 - **New Game** reloads the page for now. Choosing a map comes with the game shell in milestone 8.
+
+## 3h. Fortifications (milestone 7)
+
+- **`GameState.fortifications`** lists each standing Bunker and Obstacle with its HP. Terrain lives in state, so breaking one replaces the tile.
+- **Attacking one** is the `attackFort` end action on Move, targeting a tile. Its rules are in `src/engine/combat.ts`, next to unit combat, and the menus and the forecast use the same code.
+- **The UI draws a damaged fortification's HP** like a unit's, and redraws any tile whose terrain changed.
 
 ## 4. Data files
 

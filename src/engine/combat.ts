@@ -4,13 +4,14 @@
 // Functions take the attacker as it will be when it fires: at its destination, after moving.
 
 import type { CombatStrike, GameEvent } from "./commands";
-import { baseDamage, type DamageEntry } from "./data/damage";
-import { UNITS, type UnitTypeId } from "./data/units";
+import { baseDamage, type DamageEntry, type DamageTarget } from "./data/damage";
+import { terrainDef } from "./data/terrain";
+import { UNITS } from "./data/units";
 import { veterancyFor } from "./data/veterancy";
 import { inBounds, type Point } from "./map";
 import { moveDestinations, tileIndex, tilePoint } from "./movement";
 import { nextInt, type RngState } from "./rng";
-import { displayHp, type GameState, type Unit } from "./state";
+import { displayHp, fortAt, unitAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
 
 export const MAX_LUCK = 9;
@@ -24,7 +25,7 @@ export function distance(a: Point, b: Point): number {
  * The chart gives one weapon per pairing, so a unit out of primary ammo can only attack targets the
  * chart lists a secondary-weapon value for.
  */
-export function chooseWeapon(unit: Unit, targetType: UnitTypeId): DamageEntry | null {
+export function chooseWeapon(unit: Unit, targetType: DamageTarget): DamageEntry | null {
   const entry = baseDamage(unit.type, targetType);
   if (!entry) return null;
   return entry.weapon === "primary" && unit.ammo <= 0 ? null : entry;
@@ -69,16 +70,41 @@ function sameSide(state: GameState, a: Unit, b: Unit): boolean {
   return state.players[a.owner]?.side === state.players[b.owner]?.side;
 }
 
-/** Why the attacker can't hit this defender from where it stands, or null if it can. */
-export function targetProblem(state: GameState, attacker: Unit, defender: Unit, moved: boolean): string | null {
-  if (sameSide(state, attacker, defender)) return "the target is on your side";
+/** Why the attacker can't fire on this tile from where it stands, or null if it can. */
+function rangeProblem(state: GameState, attacker: Unit, target: Point, moved: boolean): string | null {
   if (moved && !UNITS[attacker.type].canMoveAndFire) return "indirect units can't move and fire";
   const range = stats.attackRange(state, attacker);
   if (!range) return "the unit is unarmed";
-  const d = distance(attacker.pos, defender.pos);
+  const d = distance(attacker.pos, target);
   if (d < range.min || d > range.max) return `the target is ${d} tiles away, outside range ${range.min}–${range.max}`;
+  return null;
+}
+
+/** Why the attacker can't hit this defender from where it stands, or null if it can. */
+export function targetProblem(state: GameState, attacker: Unit, defender: Unit, moved: boolean): string | null {
+  if (sameSide(state, attacker, defender)) return "the target is on your side";
+  const problem = rangeProblem(state, attacker, defender.pos, moved);
+  if (problem) return problem;
   if (!chooseWeapon(attacker, defender.type)) return "no usable weapon against that target";
   return null;
+}
+
+/**
+ * Why the attacker can't hit a fortification on this tile, or null if it can. Pass the state with
+ * the attacker already moved, since a unit can step off a bunker and then shell it (03-combat §4).
+ */
+export function fortTargetProblem(state: GameState, attacker: Unit, pos: Point, moved: boolean): string | null {
+  if (!fortAt(state, pos)) return "there is no fortification there";
+  if (unitAt(state, pos)) return "it's occupied, so attack the unit instead";
+  const problem = rangeProblem(state, attacker, pos, moved);
+  if (problem) return problem;
+  if (!chooseWeapon(attacker, "fort")) return "no usable weapon against fortifications";
+  return null;
+}
+
+/** Empty fortifications and obstacles this attacker can hit. Pass the state with the attacker moved. */
+export function fortTargets(state: GameState, attacker: Unit, moved: boolean): Point[] {
+  return state.fortifications.map((f) => f.pos).filter((pos) => fortTargetProblem(state, attacker, pos, moved) === null);
 }
 
 /** Enemy units this attacker can hit from where it stands. */
@@ -162,6 +188,80 @@ export function forecast(state: GameState, attacker: Unit, defender: Unit): Comb
     certainKill,
     counterCanKill: counter !== null && counter.max >= attacker.hp,
     counterCertainKill: counter !== null && counter.min >= attacker.hp,
+  };
+}
+
+function fortDamage(state: GameState, attacker: Unit, pos: Point, entry: DamageEntry, luck: number): number {
+  const terrain = state.map.terrain[tileIndex(state, pos)];
+  if (terrain === undefined) throw new Error(`(${pos.x}, ${pos.y}) is outside the map`);
+  return damageFormula({
+    base: entry.base,
+    attackMod: stats.attackMod(state, attacker),
+    luck,
+    attackerHp: displayHp(attacker.hp),
+    defenseMod: stats.fortDefenseMod(state, terrain),
+    terrainStars: 0,
+    defenderHp: displayHp(fortAt(state, pos)?.hp ?? 0),
+  });
+}
+
+/** Expected result of attacking a fortification. They never counter (03-combat §4). */
+export function fortForecast(state: GameState, attacker: Unit, pos: Point): CombatForecast | null {
+  const entry = chooseWeapon(attacker, "fort");
+  const fort = fortAt(state, pos);
+  if (!entry || !fort) return null;
+  const min = fortDamage(state, attacker, pos, entry, 0);
+  const max = fortDamage(state, attacker, pos, entry, state.settings.luck ? MAX_LUCK : 0);
+  return {
+    weapon: entry.weapon,
+    attack: { min, max },
+    counter: null,
+    canKill: max >= fort.hp,
+    certainKill: min >= fort.hp,
+    counterCanKill: false,
+    counterCertainKill: false,
+  };
+}
+
+/**
+ * Resolves an attack on a fortification (03-combat §4). `attacker` is the moved unit, already in
+ * state; validity has been checked by the caller. Breaking one replaces the tile's terrain and
+ * doesn't count as a kill.
+ */
+export function resolveFortAttack(
+  state: GameState,
+  attacker: Unit,
+  pos: Point,
+): { state: GameState; event: Extract<GameEvent, { type: "fortAttacked" }> } {
+  const entry = chooseWeapon(attacker, "fort");
+  const fort = fortAt(state, pos);
+  const index = tileIndex(state, pos);
+  const terrain = state.map.terrain[index];
+  if (!entry || !fort || terrain === undefined) throw new Error(`Can't attack a fortification at (${pos.x}, ${pos.y})`);
+
+  const roll = state.settings.luck ? nextInt(state.rng, 0, MAX_LUCK) : { value: 0, rng: state.rng };
+  const damage = Math.min(fort.hp, fortDamage(state, attacker, pos, entry, roll.value));
+  const hp = fort.hp - damage;
+  const fired = fire(attacker, entry);
+  const becomes = hp === 0 ? (terrainDef(terrain).breakable?.becomes ?? null) : null;
+
+  return {
+    state: {
+      ...state,
+      rng: roll.rng,
+      units: state.units.map((u) => (u.id === fired.id ? fired : u)),
+      map: becomes ? { ...state.map, terrain: state.map.terrain.map((t, i) => (i === index ? becomes : t)) } : state.map,
+      fortifications: state.fortifications.flatMap((f) => (f !== fort ? [f] : hp > 0 ? [{ ...f, hp }] : [])),
+    },
+    event: {
+      type: "fortAttacked",
+      attackerId: attacker.id,
+      attackerPos: attacker.pos,
+      pos,
+      attack: { weapon: entry.weapon, luck: roll.value, damage },
+      hp,
+      becomes,
+    },
   };
 }
 
