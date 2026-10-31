@@ -1,7 +1,7 @@
 // The single entry point for changing the game: apply(state, command) → new state + events,
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
-import { resolveCombat, targetProblem } from "./combat";
+import { fortTargetProblem, resolveCombat, resolveFortAttack, targetProblem } from "./combat";
 import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
 import { UNIT_TYPE_IDS } from "./data/units";
 import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedCaptures } from "./economy";
@@ -55,6 +55,8 @@ function isAction(action: unknown): action is UnitAction {
       return true;
     case "attack":
       return Number.isInteger(a.target);
+    case "attackFort":
+      return isPoint(a.target);
     case "unload":
       return Number.isInteger(a.passenger) && isPoint(a.to);
     default:
@@ -128,6 +130,13 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     if (targets.length === 0) return reject("cannotSupply", "no adjacent unit needs supplying");
     const supplied = applySupply(afterMove, targets);
     return { ok: true, state: supplied.state, events: [...events, ...supplied.events] };
+  }
+
+  if (action.type === "attackFort") {
+    const problem = fortTargetProblem(afterMove, moved, action.target, path.length > 0);
+    if (problem) return reject("invalidTarget", `Can't attack there: ${problem}`);
+    const attacked = resolveFortAttack(afterMove, moved, action.target);
+    return { ok: true, state: attacked.state, events: [...events, attacked.event] };
   }
 
   const defender = afterMove.units.find((u) => u.id === action.target);

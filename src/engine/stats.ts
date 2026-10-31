@@ -81,6 +81,11 @@ export function defenseMod(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "defense", 100);
 }
 
+/** defenseMod for a fortification being attacked, base 100. It gets no terrain stars (03-combat §4). */
+export function fortDefenseMod(state: GameState, terrain: TerrainId): number {
+  return applyModifiers(100, "defense", { terrain }, state.modifiers);
+}
+
 /** Defense stars the unit gets where it stands. Air units always get 0 (02-terrain §1). */
 export function terrainStars(state: GameState, unit: Unit): number {
   if (UNITS[unit.type].category === "air") return 0;

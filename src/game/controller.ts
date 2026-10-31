@@ -2,7 +2,7 @@
 // action menu → targeting → command. Knows nothing about Phaser: it talks to the map through
 // MapView, so the rules for what a click means live here and the drawing lives in MapScene.
 
-import { attackTargets, forecast, threatTiles, type CombatForecast } from "../engine/combat";
+import { attackTargets, forecast, fortForecast, fortTargets, threatTiles, type CombatForecast } from "../engine/combat";
 import type { Command, UnitAction } from "../engine/commands";
 import { UNITS, type UnitTypeId } from "../engine/data/units";
 import { buildOptions, captureProblem, type BuildOption } from "../engine/economy";
@@ -56,20 +56,21 @@ interface Chosen {
   readonly path: Point[];
 }
 
+/** A chosen move plus what the unit could fire on from there. */
+interface Aimed extends Chosen {
+  readonly targets: readonly Unit[];
+  readonly forts: readonly Point[];
+}
+
 type Mode =
   | { readonly kind: "idle" }
   /** Looking at an enemy unit's threat range. */
   | { readonly kind: "inspect" }
   | ({ readonly kind: "selected" } & Chosen)
-  | ({ readonly kind: "menu"; readonly targets: readonly Unit[] } & Chosen)
-  | ({ readonly kind: "targeting"; readonly targets: readonly Unit[] } & Chosen)
+  | ({ readonly kind: "menu" } & Aimed)
+  | ({ readonly kind: "targeting" } & Aimed)
   /** Choosing where to unload a passenger. */
-  | ({
-      readonly kind: "unloading";
-      readonly targets: readonly Unit[];
-      readonly passenger: UnitId;
-      readonly tiles: readonly Point[];
-    } & Chosen)
+  | ({ readonly kind: "unloading"; readonly passenger: UnitId; readonly tiles: readonly Point[] } & Aimed)
   /** The factory build list is open. */
   | { readonly kind: "building" }
   /** Hold X or right-click: showing a unit's range until released. */
@@ -98,9 +99,9 @@ const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
 
 const percent = ({ min, max }: { min: number; max: number }) => (min === max ? `${min}%` : `${min}-${max}%`);
 
-/** The damage forecast as short lines for the map panel. */
-export function forecastLines(f: CombatForecast): string[] {
-  const kill = f.certainKill ? " KILL" : f.canKill ? " KILL?" : "";
+/** The damage forecast as short lines for the map panel. `killWord` is what destroying the target is called. */
+export function forecastLines(f: CombatForecast, killWord = "KILL"): string[] {
+  const kill = f.certainKill ? ` ${killWord}` : f.canKill ? ` ${killWord}?` : "";
   const killed = f.counterCertainKill ? " KILL" : f.counterCanKill ? " KILL?" : "";
   return [`DMG ${percent(f.attack)}${kill}`, f.counter ? `BACK ${percent(f.counter)}${killed}` : "NO COUNTER"];
 }
@@ -165,6 +166,7 @@ export class InputController {
       case "targeting": {
         const target = mode.targets.find((t) => t.pos.x === tile.x && t.pos.y === tile.y);
         if (target) void this.commit(mode, { type: "attack", target: target.id });
+        else if (mode.forts.some((f) => f.x === tile.x && f.y === tile.y)) void this.commit(mode, { type: "attackFort", target: tile });
         return;
       }
       case "unloading":
@@ -313,21 +315,22 @@ export class InputController {
     this.deps.view.clearRange();
     this.deps.view.clearPath();
     await this.deps.view.previewMove(unitId, [unit.pos, ...path]);
-    const targets = attackTargets(state, { ...unit, pos: tile }, path.length > 0);
-    this.openMenu({ unitId, reach, path, targets });
+    const { state: moved, moved: at } = this.afterMove(unit, tile);
+    const targets = attackTargets(state, at, path.length > 0);
+    this.openMenu({ unitId, reach, path, targets, forts: fortTargets(moved, at, path.length > 0) });
   }
 
-  private openMenu(chosen: Chosen & { readonly targets: readonly Unit[] }): void {
-    const { unitId, reach, path, targets } = chosen;
+  private openMenu(aimed: Aimed): void {
+    const { unitId, reach, path, targets, forts } = aimed;
     const unit = this.deps.getState().units.find((u) => u.id === unitId);
     if (!unit) {
       this.reset();
       return;
     }
-    this.mode = { kind: "menu", unitId, reach, path, targets };
+    this.mode = { kind: "menu", unitId, reach, path, targets, forts };
     const at = path[path.length - 1] ?? unit.pos;
     const boarding = this.boardingItems(unit, at);
-    const items = boarding.length > 0 ? [...boarding, CANCEL] : [...this.actionItems(unit, at, targets), WAIT, CANCEL];
+    const items = boarding.length > 0 ? [...boarding, CANCEL] : [...this.actionItems(unit, at, targets.length + forts.length > 0), WAIT, CANCEL];
     this.deps.view.openMenu(at, items);
   }
 
@@ -339,11 +342,11 @@ export class InputController {
   }
 
   /** What the unit could do on an empty tile, besides Wait. */
-  private actionItems(unit: Unit, at: Point, targets: readonly Unit[]): MenuItem[] {
+  private actionItems(unit: Unit, at: Point, canFire: boolean): MenuItem[] {
     const { state, moved } = this.afterMove(unit, at);
     const passenger = moved.cargo[0];
     return [
-      ...(targets.length > 0 ? [FIRE] : []),
+      ...(canFire ? [FIRE] : []),
       ...(captureProblem(state, moved) === null ? [CAPTURE] : []),
       ...(passenger && unloadTiles(state, moved, passenger).length > 0 ? [UNLOAD] : []),
       ...(supplyTargets(state, moved).length > 0 ? [SUPPLY] : []),
@@ -375,14 +378,15 @@ export class InputController {
 
   private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {
     const { view } = this.deps;
-    const first = mode.targets[0];
+    const tiles = [...mode.targets.map((t) => t.pos), ...mode.forts];
+    const first = tiles[0];
     if (!first) return;
     view.closeMenu();
     const targeting = { ...mode, kind: "targeting" as const };
     this.mode = targeting;
-    view.showRanges([{ tiles: mode.targets.map((t) => t.pos), kind: "attack" }]);
-    view.setCursor(first.pos);
-    this.showForecastAt(targeting, first.pos);
+    view.showRanges([{ tiles, kind: "attack" }]);
+    view.setCursor(first);
+    this.showForecastAt(targeting, first);
   }
 
   private showForecastAt(mode: Extract<Mode, { kind: "targeting" }>, tile: Point): void {
@@ -391,9 +395,17 @@ export class InputController {
     const target = mode.targets.find((t) => t.pos.x === tile.x && t.pos.y === tile.y);
     const unit = state.units.find((u) => u.id === mode.unitId);
     const end = mode.path[mode.path.length - 1];
-    const result = target && unit ? forecast(state, end ? { ...unit, pos: end } : unit, target) : null;
-    if (target && result) view.showForecast(target.pos, forecastLines(result));
-    else view.clearForecast();
+    const attacker = unit && end ? { ...unit, pos: end } : unit;
+    const isFort = mode.forts.some((f) => f.x === tile.x && f.y === tile.y);
+    if (attacker && target) {
+      const result = forecast(state, attacker, target);
+      if (result) view.showForecast(tile, forecastLines(result));
+    } else if (attacker && isFort) {
+      const result = fortForecast(state, attacker, tile);
+      if (result) view.showForecast(tile, forecastLines(result, "BREAK"));
+    } else {
+      view.clearForecast();
+    }
   }
 
   private backToSelection(mode: Extract<Mode, { kind: "menu" }>): void {

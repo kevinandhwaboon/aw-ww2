@@ -1,14 +1,14 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
-import { attackTargets } from "../src/engine/combat";
+import { attackTargets, fortTargets } from "../src/engine/combat";
 import type { Command, GameEvent } from "../src/engine/commands";
 import { UNITS } from "../src/engine/data/units";
 import { buildOptions, buildProblem, captureProblem } from "../src/engine/economy";
 import type { Point } from "../src/engine/map";
 import { canEndOn, reachableTiles, cheapestPath } from "../src/engine/movement";
 import { createGame, type UnitSetup } from "../src/engine/setup";
-import { parseAsciiMap } from "../src/engine/map";
+import { parseAsciiMap, terrainAt } from "../src/engine/map";
 import { CAPTURE_POINTS, MAX_HP, propertyAt, type GameState } from "../src/engine/state";
 import * as stats from "../src/engine/stats";
 import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../src/engine/transport";
@@ -395,6 +395,9 @@ describe("random playthroughs", () => {
         }
         const afterMove = { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) };
         if (supplyTargets(afterMove, moved).length > 0) commands.push({ type: "move", unitId: unit.id, path, action: { type: "supply" } });
+        for (const target of fortTargets(afterMove, moved, path.length > 0)) {
+          commands.push({ type: "move", unitId: unit.id, path, action: { type: "attackFort", target } });
+        }
         for (const passenger of moved.cargo) {
           for (const to of unloadTiles(afterMove, moved, passenger)) {
             commands.push({ type: "move", unitId: unit.id, path, action: { type: "unload", passenger: passenger.id, to } });
@@ -413,7 +416,7 @@ describe("random playthroughs", () => {
     return commands;
   }
 
-  const MAP = parseAsciiMap(["f.C.F.=.C", ".F..b..C.", "C..H.=.F.", ".=.C..F.f"]);
+  const MAP = parseAsciiMap(["f.C.F.=.C", ".F.ob..C.", "C..HX=.F.", ".=.C..F.f"]);
   const start = (seed: number) => createGame({
     map: MAP,
     players: [{ name: "A", nation: "us", funds: 6000 }, { name: "B", nation: "germany", funds: 6000 }],
@@ -454,6 +457,11 @@ describe("random playthroughs", () => {
       expect(unit.ammo).toBeGreaterThanOrEqual(0);
       expect(unit.ammo).toBeLessThanOrEqual(stats.maxAmmo(state, unit));
       expect(unit.id).toBeLessThan(state.nextUnitId);
+    }
+    for (const fort of state.fortifications) {
+      expect(fort.hp).toBeGreaterThan(0);
+      expect(fort.hp).toBeLessThanOrEqual(MAX_HP);
+      expect(terrainAt(state.map, fort.pos), "a fortification on broken ground").toMatch(/bunker|obstacle/);
     }
     for (const property of state.properties) {
       expect(property.capturePoints).toBeGreaterThan(0);
@@ -520,7 +528,7 @@ describe("random playthroughs", () => {
     }
     for (const type of [
       "combat", "captureProgress", "propertyCaptured", "unitBuilt", "unitRepaired", "incomeReceived",
-      "unitLoaded", "unitUnloaded", "unitJoined", "unitResupplied",
+      "unitLoaded", "unitUnloaded", "unitJoined", "unitResupplied", "fortAttacked",
     ]) {
       expect(seen, type).toContain(type);
     }

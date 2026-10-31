@@ -1,6 +1,7 @@
 // Commands describe what a player wants to do; events describe what happened (00-master-design §11).
 // Humans (via the UI) and AIs send the same commands. More command types arrive milestone by milestone.
 
+import type { TerrainId } from "./data/terrain";
 import type { UnitTypeId } from "./data/units";
 import type { VeterancyLevel } from "./data/veterancy";
 import type { Point } from "./map";
@@ -10,6 +11,8 @@ import type { DefeatReason, GameResult, GameState, PlayerId, UnitId } from "./st
 export type UnitAction =
   | { readonly type: "wait" }
   | { readonly type: "attack"; readonly target: UnitId }
+  /** Attack the empty fortification or obstacle on this tile (03-combat §4). */
+  | { readonly type: "attackFort"; readonly target: Point }
   | { readonly type: "capture" }
   /** Board the transport on the destination tile. */
   | { readonly type: "load" }
@@ -66,6 +69,16 @@ export type GameEvent =
       readonly defender: Combatant;
       readonly attack: CombatStrike;
       readonly counter: CombatStrike | null;
+    }
+  /** `hp` is what the fortification has left; `becomes` is the terrain left behind if it broke. */
+  | {
+      readonly type: "fortAttacked";
+      readonly attackerId: UnitId;
+      readonly attackerPos: Point;
+      readonly pos: Point;
+      readonly attack: CombatStrike;
+      readonly hp: number;
+      readonly becomes: TerrainId | null;
     }
   /** A capture that hasn't finished yet; `capturePoints` is what's left. */
   | { readonly type: "captureProgress"; readonly pos: Point; readonly unitId: UnitId; readonly capturePoints: number }

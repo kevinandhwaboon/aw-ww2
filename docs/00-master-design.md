@@ -274,3 +274,4 @@ UI falls into four categories:
 | 2026-10-31 | Hold X or right-click with nothing selected shows any unit's move and threat range, as in the original; they still cancel when something is selected |
 | 2026-10-31 | Win conditions implemented (04-economy §8): scenarios list conditions, default HQ capture and rout; HQ capture ends the game at once, rout is checked at the end of each turn; resign is always available (11-tech-setup §3g) |
 | 2026-10-31 | Defeated players' units are removed and their properties go neutral, as in the original; the game ends when one side remains and all its surviving players win |
+| 2026-10-31 | Fortifications implemented (03-combat §4, 02-terrain §4): attacking one is an end action on Move; they belong to nobody, so either side can attack any empty one (11-tech-setup §3h) |
