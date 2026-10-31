@@ -44,7 +44,10 @@ export {
   unitAt,
   CAPTURE_POINTS,
   DEFAULT_SETTINGS,
+  DEFAULT_VICTORY,
   MAX_HP,
+  type DefeatReason,
+  type GameResult,
   type GameState,
   type Player,
   type PlayerId,
@@ -52,6 +55,7 @@ export {
   type Settings,
   type Unit,
   type UnitId,
+  type VictoryCondition,
 } from "./state";
 export * as stats from "./stats";
 export type { Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";

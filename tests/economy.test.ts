@@ -476,6 +476,7 @@ describe("random playthroughs", () => {
     fc.assert(fc.property(playthrough, ({ seed, choices }) => {
       let state = start(seed);
       for (const choice of choices) {
+        if (state.result) break;
         const commands = legalCommands(state);
         const command = commands[choice % commands.length];
         if (!command) throw new Error("no command");
@@ -490,6 +491,7 @@ describe("random playthroughs", () => {
       let state = deepFreeze(start(seed));
       const log: Command[] = [];
       for (const choice of choices) {
+        if (state.result) break;
         const commands = legalCommands(state);
         const command = commands[choice % commands.length];
         if (!command) throw new Error("no command");
@@ -506,7 +508,7 @@ describe("random playthroughs", () => {
     for (let seed = 0; seed < 12; seed++) {
       let state = start(seed);
       let dice = seed + 1;
-      for (let step = 0; step < 300; step++) {
+      for (let step = 0; step < 300 && !state.result; step++) {
         const commands = legalCommands(state);
         dice = (dice * 48271) % 2147483647; // simple repeatable dice, independent of the game's RNG
         const command = commands[dice % commands.length];

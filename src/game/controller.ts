@@ -75,7 +75,9 @@ type Mode =
   /** Hold X or right-click: showing a unit's range until released. */
   | { readonly kind: "peeking" }
   /** Animating or waiting for the engine: input is ignored. */
-  | { readonly kind: "busy" };
+  | { readonly kind: "busy" }
+  /** The game has ended: input is ignored for good. */
+  | { readonly kind: "over" };
 
 export interface ControllerDeps {
   getState(): GameState;
@@ -109,7 +111,13 @@ export class InputController {
   constructor(private readonly deps: ControllerDeps) {}
 
   get busy(): boolean {
-    return this.mode.kind === "busy";
+    return this.mode.kind === "busy" || this.mode.kind === "over";
+  }
+
+  /** The game has ended: clears the map and ignores all further input. */
+  finish(): void {
+    this.reset();
+    this.mode = { kind: "over" };
   }
 
   /** Drops any selection, e.g. before End Turn or after an undo. */
@@ -166,6 +174,7 @@ export class InputController {
         return;
       case "menu":
       case "busy":
+      case "over":
         return;
     }
   }
@@ -190,6 +199,7 @@ export class InputController {
         return;
       case "idle":
       case "busy":
+      case "over":
         return;
     }
   }
@@ -265,7 +275,7 @@ export class InputController {
     this.deps.buildMenu.close();
     this.mode = { kind: "busy" };
     await this.deps.dispatch({ type: "build", unitType, pos });
-    this.mode = { kind: "idle" };
+    this.release();
   }
 
   /** Where an enemy can move, and in red what it can hit beyond that. */
@@ -408,7 +418,12 @@ export class InputController {
     view.clearForecast();
     this.mode = { kind: "busy" };
     const ok = await this.deps.dispatch({ type: "move", unitId: chosen.unitId, path: chosen.path, action });
-    this.mode = { kind: "idle" };
+    this.release();
     if (!ok) this.reset();
+  }
+
+  /** Back to idle after a command, unless that command ended the game. */
+  private release(): void {
+    if (this.mode.kind === "busy") this.mode = { kind: "idle" };
   }
 }

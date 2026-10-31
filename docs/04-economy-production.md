@@ -85,6 +85,8 @@ Scenarios define their own victory conditions (00-master-design section 8). The 
 - **Rout:** a player who has no units left at the end of any turn loses, but only once they have had at least one unit (so empty-start maps still work).
 - **Resign:** a player may resign at any time.
 
+As in the original, a defeated player's units are removed and their properties become neutral. If they have an ally still in the game, play continues and their turns are skipped. The game ends when only one side has players left, and everyone remaining on that side wins.
+
 ## 9. Open questions
 
 - Tuning income vs. unit costs for small test maps.

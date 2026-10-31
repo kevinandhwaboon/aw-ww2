@@ -19,10 +19,12 @@ import {
   unloadTiles,
 } from "./transport";
 import { startTurn } from "./turn";
+import { checkAfterCapture, checkAtTurnEnd, defeatPlayers } from "./victory";
 
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
 export function apply(state: GameState, command: Command): ApplyResult {
+  if (state.result) return reject("gameOver", "The game is over");
   // Commands may come from untyped JavaScript (custom AIs), so check the shape at runtime too.
   const type = (command as { type?: unknown } | null)?.type;
   switch (type) {
@@ -32,6 +34,8 @@ export function apply(state: GameState, command: Command): ApplyResult {
       return build(state, command as Extract<Command, { type: "build" }>);
     case "endTurn":
       return endTurn(state);
+    case "resign":
+      return resign(state);
     default:
       return reject("invalidCommand", `Unknown command type: ${String(type)}`);
   }
@@ -101,7 +105,11 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     const problem = captureProblem(afterMove, moved);
     if (problem) return reject("cannotCapture", `Can't capture: ${problem}`);
     const capture = applyCapture(afterMove, moved);
-    return { ok: true, state: capture.state, events: [...events, capture.event] };
+    if (capture.event.type !== "propertyCaptured") {
+      return { ok: true, state: capture.state, events: [...events, capture.event] };
+    }
+    const after = checkAfterCapture(capture.state, capture.event);
+    return { ok: true, state: after.state, events: [...events, capture.event, ...after.events] };
   }
 
   if (action.type === "unload") {
@@ -142,12 +150,24 @@ function build(state: GameState, command: Extract<Command, { type: "build" }>): 
 }
 
 function endTurn(state: GameState): ApplyResult {
-  const events: GameEvent[] = [{ type: "turnEnded", player: state.currentPlayer }];
+  const checked = checkAtTurnEnd(state);
+  const events: GameEvent[] = [{ type: "turnEnded", player: state.currentPlayer }, ...checked.events];
+  return checked.state.result ? { ok: true, state: checked.state, events } : passTurn(checked.state, events);
+}
+
+function resign(state: GameState): ApplyResult {
+  const defeated = defeatPlayers(state, [state.currentPlayer], "resign");
+  return defeated.state.result
+    ? { ok: true, state: defeated.state, events: defeated.events }
+    : passTurn(defeated.state, defeated.events);
+}
+
+function passTurn(state: GameState, events: GameEvent[]): ApplyResult {
   const next = nextActivePlayer(state);
   let day = state.day;
   if (next <= state.currentPlayer) {
     day += 1;
-    events.push({ type: "dayStarted", day });
+    events = [...events, { type: "dayStarted", day }];
   }
   const started = startTurn({ ...state, day, currentPlayer: next });
   return { ok: true, state: started.state, events: [...events, ...started.events] };

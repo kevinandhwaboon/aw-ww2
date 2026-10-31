@@ -272,3 +272,5 @@ UI falls into four categories:
 | 2026-10-31 | Transport, supply and joining implemented (05, 04-economy §6): passengers live inside the transport; Load and Join are the only end actions that stop on an occupied tile (11-tech-setup §3f) |
 | 2026-10-31 | Joining and boarding are limited to your own player's units; Supply needs a unit that actually needs it; automatic supply reaches same-side allies |
 | 2026-10-31 | Hold X or right-click with nothing selected shows any unit's move and threat range, as in the original; they still cancel when something is selected |
+| 2026-10-31 | Win conditions implemented (04-economy §8): scenarios list conditions, default HQ capture and rout; HQ capture ends the game at once, rout is checked at the end of each turn; resign is always available (11-tech-setup §3g) |
+| 2026-10-31 | Defeated players' units are removed and their properties go neutral, as in the original; the game ends when one side remains and all its surviving players win |

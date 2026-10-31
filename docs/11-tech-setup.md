@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy) and 5 (supply and transport) done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), 5 (supply and transport) and 6 (win conditions) done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -85,6 +85,7 @@
 | Show an enemy's move and threat range | Click the enemy | Z on the enemy |
 | Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
 | End turn | End Turn button | E |
+| Resign | Resign button, then click again to confirm | None |
 
 ## 3d. Combat notes (milestone 3)
 
@@ -109,6 +110,14 @@
 - **Passengers live inside their transport** (`unit.cargo`), not in `GameState.units`. So they can't be targeted, aren't repaired, and die with the transport without counting as kills. A unit that boards also counts as leaving any property it was capturing.
 - **Load and Join** are the only end actions that stop on an occupied tile; every other action still needs an empty one.
 - **Hold to see a range:** with nothing selected, holding X or the right mouse button on any unit shows where it can move and what it can hit. With something selected, they cancel as before. Clicking an enemy still shows its range until the next click.
+
+## 3g. Win conditions (milestone 6)
+
+- **`src/engine/victory.ts`** holds them. A scenario lists its `victory` conditions (default: `hqCapture` and `rout`). Each condition is a rule saying when it's checked and who it defeats, so new kinds such as hold objectives or survive N turns are new entries.
+- **When they're checked:** HQ capture straight after the capture; rout at the end of each turn, as 04-economy §8 says. So a player whose last unit dies still finishes that turn.
+- **Resign** is a command for the current player, available in every scenario.
+- **Once `state.result` is set**, `apply` rejects every command with `gameOver`, and the UI locks input and shows the results screen.
+- **New Game** reloads the page for now. Choosing a map comes with the game shell in milestone 8.
 
 ## 4. Data files
 
