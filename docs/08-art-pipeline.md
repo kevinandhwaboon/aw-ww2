@@ -207,7 +207,7 @@ Make a small test set before committing to a method: Plains, Road, Forest, Sea, 
 Answers so far to section 9. Questions not listed here are still open.
 
 - **Method (Q1):** pixel grids written as data, rendered to PNG by `npm run art`. The grids are the source; don't hand-edit the PNGs.
-- **Facing (Q7):** all units face right. Whether they flip by side is still open.
+- **Facing (Q7):** all sprites are drawn facing right, and each map decides which way each player's units face. Set `"facing": "left"` on a player in the scenario file to mirror that player's sprites; the default is right. On the built-in maps, a side that starts on the left faces right and a side that starts on the right faces left, so the armies face each other, and a test checks this against the starting units' average column. Facing doesn't change while a unit moves, and no rule reads it. Mirroring means no second set of art, but it also means unit art can't carry lettering, which would read backwards. Badges and placeholder markers are never mirrored, for the same reason.
 - **Animation (Q8):** every unit has 2 idle frames that alternate, so it looks alive while the game is idle. There are no separate movement frames. What moves depends on the unit:
 
 | Unit | Idle animation |
@@ -253,7 +253,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `terrainNames` | Display names by terrain id |
 
-**Unit sheets** use 16×16 frames, with one row per unit and idle frames running across. `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.
+**Unit sheets** use 16×16 frames, with one row per unit and idle frames running across. Draw units facing right: maps mirror them when a side faces left (section 12). `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.
 
 **Paths** are relative to the pack's folder. Web addresses and absolute paths are refused.
 

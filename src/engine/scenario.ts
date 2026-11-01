@@ -63,11 +63,14 @@ function parsePlayer(raw: unknown, index: number): PlayerSetup {
   const buildable = raw.buildable === undefined ? undefined : list(raw, "buildable", where);
   const bad = buildable?.find((type) => !isUnitType(type));
   if (bad !== undefined) return fail(`${where}: unknown unit type ${JSON.stringify(bad)}`);
+  const { facing } = raw;
+  if (facing !== undefined && facing !== "left" && facing !== "right") return fail(`${where}: "facing" must be left or right`);
   return {
     name: text(raw, "name", where),
     nation,
     ...optionalCounts(raw, ["funds"], where),
     ...(buildable ? { buildable: buildable as UnitTypeId[] } : {}),
+    ...(facing ? { facing } : {}),
   };
 }
 

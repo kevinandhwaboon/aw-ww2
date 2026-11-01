@@ -135,7 +135,7 @@
 ## 4. Data files
 
 - Unit stats, terrain and the damage chart are **typed TypeScript data** (`as const satisfies UnitDef` etc.), not raw JSON. They're still pure data with no logic, but typos and missing fields fail the build.
-- Scenarios are JSON files in `src/scenarios/`, validated when loaded by `src/engine/scenario.ts`. A bad file fails with a message naming the scenario and the problem. To add one, write the file and list it in `src/scenarios/index.ts`.
+- Scenarios are JSON files in `src/scenarios/`, validated when loaded by `src/engine/scenario.ts`. A bad file fails with a message naming the scenario and the problem. To add one, write the file and list it in `src/scenarios/index.ts`. A player on the right of the map also needs `"facing": "left"` (08-art-pipeline §12).
 - Maps are currently written as text rows in the scenario file, using the legend in `src/engine/map.ts`. **Tiled is deferred** until real tile art exists (08-art-pipeline), because Tiled needs a tileset image and our tiles are still drawn in code.
 - Tests build maps from small ASCII grids for readability.
 
