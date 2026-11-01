@@ -1,6 +1,6 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete; how to make the art is undecided (section 9). Game mechanics are paused at milestone 10 while visuals are worked on.
+**Status:** Asset list complete. US land unit sprites are approved and exported (section 12), but not drawn in the game yet. Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
 **Last updated:** 2026-11-01
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
@@ -65,7 +65,7 @@ Owned properties use team color, which today is a small flag in the tile's corne
 | IN | Infantry | GI, Tommy | Wehrmacht rifleman |
 | AI | Assault Infantry | Bazooka team, assault engineers | Panzerschreck team, Pioniere |
 | MO | Mortar Team | US/UK mortar team | Granatwerfer team |
-| RC | Recon | M8 Greyhound, Daimler | Sd.Kfz. 234 |
+| RC | Recon | Willys jeep, Daimler | Sd.Kfz. 234 |
 | HT | Halftrack | M3 | Sd.Kfz. 251 |
 | LT | Light Tank | M5 Stuart | Panzer II |
 | MT | Medium Tank | Sherman | Panzer IV |
@@ -199,4 +199,33 @@ Make a small test set before committing to a method: Plains, Road, Forest, Sea, 
 - Pixel font: `src/game/pixelFont.ts`
 - Drawing and effects: `src/game/MapScene.ts`
 - HTML panels and screens: `src/ui/`
-- Finished art: `public/assets/`, which doesn't exist yet
+- Finished art: `public/assets/`
+- Unit pixel grids and the script that renders them: `tools/art/`
+
+## 12. Unit sprites as built
+
+Answers so far to section 9. Questions not listed here are still open.
+
+- **Method (Q1):** pixel grids written as data, rendered to PNG by `npm run art`. The grids are the source; don't hand-edit the PNGs.
+- **Facing (Q7):** all units face right. Whether they flip by side is still open.
+- **Animation (Q8):** every unit has 2 idle frames that alternate, so it looks alive while the game is idle. There are no separate movement frames. What moves depends on the unit:
+
+| Unit | Idle animation |
+|---|---|
+| Vehicles | Hull bobs 1 pixel; treads or wheels shift |
+| Infantry, Assault Infantry | Step in place |
+| Mortar Team | Crew aims, then ducks |
+| Artillery | Barrel recoils 1 pixel |
+| Flak Gun | Barrel lifts 1 pixel |
+| Mobile AA | Turret swings from forward to back |
+
+- **Sheet layout (Q13):** `public/assets/units/{nation}-land-{team}.png`, 32 pixels wide, with 2 frames across and one row per unit in section 4 order: IN, AI, MO, RC, HT, LT, MT, HV, TD, AR, RK, AA, FK. A nation with no art for a unit leaves that row empty, so the US HV row is blank.
+- **Team colors:** only the 3 body colors change per team. Wheels, tracks, skin and the star stay the same. The olive, blue and red sheets are placeholders until Q4 is decided, including whether a red unit keeps a white US star.
+- **Preview:** `docs/art/us-land-units.png` shows every approved unit.
+
+**Art choices that differ from the rules (art only, stats don't change):**
+- The US Recon is a Willys jeep, chosen because it can't be mistaken for a tank.
+- The Halftrack shows a .50 cal, though the unit is unarmed in the rules (01-units).
+- The US Rocket Artillery is the tracked T34 Calliope, though the unit moves on wheels in the rules.
+
+**Not done yet:** the game still draws placeholders, so loading these sheets is the next step. US air and naval units are first drafts in `tools/art/us-units.mjs`, not exported.
