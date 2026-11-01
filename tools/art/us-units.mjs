@@ -1,46 +1,16 @@
-// US unit roster as 16x16 pixel grids, two idle frames each, all facing right.
-// Land units are approved. Air and naval units are first drafts, not yet exported to sheets.
-// K outline, L/M/D team ramp, t/r tread, W/h metal, S star, o skin, b/B wood, c glass, f foam, P prop.
+// US unit roster. Land units are approved. Air and naval units are first drafts, not yet exported to sheets.
+import {
+  blank, compose, halfTracks, howitzerTrail, howitzerWheel, mortarTube, shortTracks, stack, swaying,
+  tankTracks, validate, vehicle,
+} from "./sprite-kit.mjs";
 
 const SIZE = 16;
-const blank = ".".repeat(SIZE);
-
-// Stacks rows so the sprite's bottom edge sits on the tile's bottom edge.
-const stack = (rows) => [...Array(SIZE - rows.length).fill(blank), ...rows];
 const pad = (rows, n) => [...Array(n - rows.length).fill(blank), ...rows];
 
-// Draws layers on top of each other, each moved by dx, dy.
-function compose(...layers) {
-  const out = Array.from({ length: SIZE }, () => Array(SIZE).fill("."));
-  for (const { grid, dx = 0, dy = 0 } of layers) {
-    grid.forEach((row, y) => [...row].forEach((ch, x) => {
-      if (ch !== "." && out[y + dy]?.[x + dx] !== undefined) out[y + dy][x + dx] = ch;
-    }));
-  }
-  return out.map((r) => r.join(""));
-}
-
-const tankTracks = [
-  [".KrtrtrtrtrtrtK.", "KtWWtWWtWWtWWttK", "KtWhtWhtWhtWhttK", ".KrtrtrtrtrtrtK.", "..KKKKKKKKKKKK.."],
-  [".KtrtrtrtrtrtrK.", "KtWhtWhtWhtWhttK", "KtWWtWWtWWtWWttK", ".KtrtrtrtrtrtrK.", "..KKKKKKKKKKKK.."],
-];
-const shortTracks = [
-  [".KrtrtrtrtrK....", "KtWWtWWtWWtK....", "KtWhtWhtWhtK....", ".KKKKKKKKKK....."],
-  [".KtrtrtrtrtK....", "KtWhtWhtWhtK....", "KtWWtWWtWWtK....", ".KKKKKKKKKK....."],
-];
-const halfTracks = [
-  [".KrtrtrtrtKKKKKK", "KtWWtWWttK...KK.", "KtWhtWhttK..KWWK", ".KrtrtrtrK..KWhK", "..KKKKKKK....KK."],
-  [".KtrtrtrtrKKKKKK", "KtWhtWhttK...KK.", "KtWWtWWttK..KWhK", ".KtrtrtrtK..KWWK", "..KKKKKKK....KK."],
-];
 const jeepWheels = [
   [".KDDSDSKKKKDDDK.", "..KKK......KKK..", ".KWWWK....KWWWK.", ".KWhWK....KWhWK.", "..KKK......KKK.."],
   [".KDDSDSKKKKDDDK.", "..KKK......KKK..", ".KhWWK....KhWWK.", ".KWWhK....KWWhK.", "..KKK......KKK.."],
 ];
-
-// A vehicle: hull rests on its running gear and bobs 1px between frames.
-function vehicle(body, gear, gap = "..KKKKKKKKKKKK..") {
-  return [stack([...body, ...gear[0]]), stack([...body, gap, ...gear[1]])];
-}
 
 // The turret traverses: its guns point up and forward, then up and back.
 const aaGunsRight = ["............K.K.", "...........K.K..", "..........K.K..."];
@@ -58,12 +28,6 @@ function onFoot(upper) {
   return [stack([...upper, ...walkA]), stack([...upper, ...walkB])];
 }
 
-const mortarTube = [
-  "...........KKKK.", "...........KWhK.", "..........KWhK..", "..........KWhK..",
-  ".........KWhK...", ".........KWhK...", "........KWhK....", "........KWhK....",
-  ".......KWhKK....", ".......KWhK.K...", "......KWhK...K..", "......KWhK....K.",
-  "....KKKKKKKK...K", "....KKKKKKKK...K",
-];
 const mortarAim = [
   ".KKKK...........", "KLLLLK..........", "KMMMMLK.........", "KKKKKKKK........",
   "..KooKoK........", "..KoooK.........", ".KLMMMooK.......", ".KMMDMKK........",
@@ -83,22 +47,6 @@ const howitzerShield = [
   "...........K....", "..........KMK...", "..........KMK...", "..........KDK...",
   "..........KDK...", "..........KDK...", blank, blank, blank, blank, blank, blank,
 ];
-const howitzerTrail = [
-  ".....KKKK.......", "....KMMMMK......", "...KMMMMDK......", "..KMMDDKK.......",
-  ".KDDDKK.........", "KKKKK...........",
-];
-const howitzerWheel = [
-  ".........KKK....", "........KtttK...", ".......KttWttK..", ".......KtWhWtK..",
-  ".......KttWttK..", "........KtttK...", ".........KKK....",
-];
-
-// Parts that sway: the moving layer lifts 1px in the second frame over a fixed base.
-function swaying(base, moving, shift = { dy: -1 }) {
-  const m = stack(moving);
-  const under = typeof base[0] === "string" ? [{ grid: stack(base) }] : base;
-  return [compose(...under, { grid: m }), compose(...under, { grid: m, ...shift })];
-}
-
 // An aircraft: whole plane bobs, propeller blur swaps between long and short.
 function aircraft(body, propA, propB) {
   const plane = pad(body, 13);
@@ -334,13 +282,4 @@ export const units = [
   },
 ];
 
-const allowed = new Set([...".KLMDtrWhSobBcfP"]);
-for (const u of units) {
-  for (const f of u.frames) {
-    if (f.length !== SIZE) throw new Error(`${u.code}: ${f.length} rows`);
-    f.forEach((r, i) => {
-      if (r.length !== SIZE) throw new Error(`${u.code} row ${i}: "${r}" is ${r.length} wide`);
-      for (const ch of r) if (!allowed.has(ch)) throw new Error(`${u.code}: bad "${ch}"`);
-    });
-  }
-}
+validate(units);

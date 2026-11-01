@@ -20,6 +20,26 @@
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
         null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
       ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-land-blue.png",
+      "frames": 2,
+      "rows": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+        "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "red",
+      "path": "../../units/de-land-red.png",
+      "frames": 2,
+      "rows": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+        "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+      ]
     }
   ]
 }
