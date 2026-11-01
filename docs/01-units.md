@@ -21,7 +21,7 @@
 | Infantry | Cheap, captures, holds terrain | Foot | Can capture. Can be carried by Halftrack, Transport Aircraft, Landing Craft | GI, Tommy / Wehrmacht rifleman |
 | Assault Infantry | Anti-armor and engineering infantry | Heavy foot (slower) | Can capture. Strong vs. armor and vs. fortifications/obstacles (see section 6). Costs more than Infantry | Bazooka team, assault engineers / Panzerschreck team, Pioniere |
 | Mortar Team | Short-range indirect fire | Heavy foot (slower than Infantry) | Indirect, range exactly 2. Low ammo (~3). Cannot capture. Fits in all infantry transports, including Transport Aircraft | US/UK mortar team / Granatwerfer team |
-| Recon | Fast scout, kills infantry | Wheels | High movement and vision. Weak vs. armor | M8 Greyhound, Daimler / Sd.Kfz. 234 |
+| Recon | Fast scout, kills infantry | Wheels | High movement and vision. Weak vs. armor | Willys jeep, Daimler / Sd.Kfz. 234 |
 | Halftrack | Infantry transport and resupply | Tracks | Carries 1 foot unit. Resupplies fuel/ammo to adjacent units. Unarmed | M3 / Sd.Kfz. 251 |
 | Light Tank | Cheap, fast armor | Tracks | Good vs. infantry and light vehicles | M5 Stuart / Panzer II |
 | Medium Tank | Main battle unit | Tracks | Balanced attack and defense | Sherman / Panzer IV |
