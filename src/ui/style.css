@@ -4,6 +4,7 @@
   --panel-ink: #2a2418;
   --panel-border: #4a3c28;
   --accent: #c84030;
+  --highlight: #e8c070;
   --pixel: 4px; /* overlay pixel unit; matches typical integer zoom */
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -243,7 +244,7 @@ body {
 
 .build-row:hover:not(:disabled),
 .build-row:focus {
-  background: #e8c070;
+  background: var(--highlight);
   border-color: var(--panel-border);
   outline: none;
 }
@@ -361,7 +362,7 @@ body {
 }
 
 .build-row.selected {
-  background: #e8c070;
+  background: var(--highlight);
   border-color: var(--panel-border);
 }
 

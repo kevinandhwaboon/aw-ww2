@@ -205,4 +205,4 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen.
+- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack.

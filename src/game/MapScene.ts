@@ -1,10 +1,13 @@
 import Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
+import type { TerrainId } from "../engine/data/terrain";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Point } from "../engine/map";
-import { displayHp, type GameState, type UnitId } from "../engine/state";
+import { displayHp, type GameState, type Unit, type UnitId } from "../engine/state";
 import * as stats from "../engine/stats";
+import { activePack, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
+import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
 import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
@@ -28,8 +31,11 @@ export interface MapSceneOptions {
 }
 
 const MOVE_MS_PER_TILE = 70;
-const RANGE_COLORS: Record<RangeKind, number> = { move: 0x7ec8ff, inspect: 0xffc070, attack: 0xff4030 };
-const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4, ink: "#2a2418", bg: 0xf4ecd8, border: 0x4a3c28, highlight: 0xe8c070 };
+const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack" };
+const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
+const IDLE_FRAMES_PER_SECOND = 3;
+const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
+const TERRAIN_SHEET_KEY = "pack-terrain";
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 
 /** What a shot lands on: a unit, or just a tile for a fortification. */
@@ -71,9 +77,38 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.handlers = handlers;
   }
 
+  preload(): void {
+    // A file that fails to load just isn't in the texture cache, so that art falls back to placeholders.
+    this.load.on("loaderror", (file: { key: string }) => console.warn(`Art pack file failed to load: ${file.key}`));
+    const pack = activePack();
+    pack.unitSheets.forEach((sheet, i) => {
+      this.load.spritesheet(unitSheetKey(i), packFileUrl(sheet.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    });
+    if (pack.terrain) {
+      this.load.spritesheet(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    }
+  }
+
+  /** The placeholder tiles, with whichever tiles the pack supplies drawn over them. */
+  private buildTileset(): HTMLCanvasElement {
+    const canvas = drawPlaceholderTileset();
+    const terrain = activePack().terrain;
+    const ctx = canvas.getContext("2d");
+    if (!terrain || !ctx || !this.textures.exists(TERRAIN_SHEET_KEY)) return canvas;
+    const source = this.textures.get(TERRAIN_SHEET_KEY).getSourceImage() as CanvasImageSource & { width: number };
+    const across = Math.floor(source.width / TILE_SIZE);
+    for (const [id, tile] of Object.entries(terrain.tiles) as [TerrainId, number][]) {
+      const sx = (tile % across) * TILE_SIZE;
+      const sy = Math.floor(tile / across) * TILE_SIZE;
+      ctx.clearRect(tileIndex(id) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+      ctx.drawImage(source, sx, sy, TILE_SIZE, TILE_SIZE, tileIndex(id) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+    }
+    return canvas;
+  }
+
   create(): void {
     const { map } = this.state;
-    this.textures.addCanvas("terrain", drawPlaceholderTileset());
+    this.textures.addCanvas("terrain", this.buildTileset());
     const data: number[][] = [];
     for (let y = 0; y < map.height; y++) {
       data.push(map.terrain.slice(y * map.width, (y + 1) * map.width).map(tileIndex));
@@ -203,7 +238,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!this.cursor) return;
     const { x, y } = this.cursorTile;
     this.cursor.clear();
-    this.cursor.lineStyle(1, 0xffffff, 1);
+    this.cursor.lineStyle(1, packColorNumber("cursor"), 1);
     this.cursor.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
   }
 
@@ -214,10 +249,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!g) return;
     g.clear();
     for (const { tiles, kind } of layers) {
-      g.fillStyle(RANGE_COLORS[kind], 0.5);
+      g.fillStyle(packColorNumber(RANGE_COLORS[kind]), 0.5);
       for (const t of tiles) g.fillRect(t.x * TILE_SIZE, t.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       // Thin grid lines inside the range keep individual tiles readable.
-      g.lineStyle(1, 0xffffff, 0.35);
+      g.lineStyle(1, packColorNumber("rangeGrid"), 0.35);
       for (const t of tiles) g.strokeRect(t.x * TILE_SIZE + 0.5, t.y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
     }
   }
@@ -233,7 +268,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (path.length === 0) return;
     const points = [start, ...path].map(center);
     // Outline pass, then fill pass, so the arrow reads on any terrain.
-    for (const [color, thickness, headGrow] of [[0x1a2438, 6, 1.5], [0xf8f0d0, 4, 0]] as const) {
+    for (const [color, thickness, headGrow] of [[packColorNumber("pathOutline"), 6, 1.5], [packColorNumber("pathFill"), 4, 0]] as const) {
       g.fillStyle(color, 1);
       for (let i = 1; i < points.length; i++) {
         const a = points[i - 1];
@@ -306,13 +341,13 @@ export class MapScene extends Phaser.Scene implements MapView {
 
     const panel = this.add.container(Math.round(x), y);
     const g = this.add.graphics();
-    g.fillStyle(MENU.border, 1);
+    g.fillStyle(packColorNumber("menuBorder"), 1);
     g.fillRect(0, 0, width, height);
-    g.fillStyle(MENU.bg, 1);
+    g.fillStyle(packColorNumber("menuBg"), 1);
     g.fillRect(1, 1, width - 2, height - 2);
     panel.add(g);
     lines.forEach((line, i) => {
-      panel.add(this.add.image(3, 3 + i * lineHeight, this.textTexture(line, MENU.ink)).setOrigin(0));
+      panel.add(this.add.image(3, 3 + i * lineHeight, this.textTexture(line, packColor("menuInk"))).setOrigin(0));
     });
     this.forecastPanel = panel;
   }
@@ -341,19 +376,19 @@ export class MapScene extends Phaser.Scene implements MapView {
     const { container, items, rect, selected } = menu;
     container.removeAll(true);
     const g = this.add.graphics();
-    g.fillStyle(MENU.border, 1);
+    g.fillStyle(packColorNumber("menuBorder"), 1);
     g.fillRect(0, 0, rect.width, rect.height);
-    g.fillStyle(MENU.bg, 1);
+    g.fillStyle(packColorNumber("menuBg"), 1);
     g.fillRect(1, 1, rect.width - 2, rect.height - 2);
-    g.fillStyle(MENU.highlight, 1);
+    g.fillStyle(packColorNumber("menuHighlight"), 1);
     g.fillRect(1, MENU.pad - 1 + selected * MENU.itemHeight, rect.width - 2, MENU.itemHeight);
     // A small pointer next to the highlighted item.
-    g.fillStyle(MENU.border, 1);
+    g.fillStyle(packColorNumber("menuBorder"), 1);
     const py = MENU.pad + 1 + selected * MENU.itemHeight;
     g.fillTriangle(2, py, 2, py + 4, 4, py + 2);
     container.add(g);
     items.forEach((item, i) => {
-      container.add(this.add.image(MENU.pad + 4, MENU.pad + 1 + i * MENU.itemHeight, this.textTexture(item.label, MENU.ink)).setOrigin(0));
+      container.add(this.add.image(MENU.pad + 4, MENU.pad + 1 + i * MENU.itemHeight, this.textTexture(item.label, packColor("menuInk"))).setOrigin(0));
     });
   }
 
@@ -387,15 +422,15 @@ export class MapScene extends Phaser.Scene implements MapView {
         const shooter = { unitId: event.attackerId, pos: event.attackerPos };
         await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
       }
-      if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, "#ffffff");
-      if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", "#f0d040");
+      if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
+      if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
       if (event.type === "unitOutOfFuel") {
         const lost = { pos: event.pos, unitId: event.unitId };
-        await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", "#ffa030")]);
+        await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"))]);
       }
       if (event.type === "unitJoined") {
         const target = this.state.units.find((u) => u.id === event.targetId);
-        if (target) await this.floatLabel(target.pos, "JOINED", "#ffffff");
+        if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
       }
     }
     await Promise.all(this.repairLabels(events));
@@ -412,10 +447,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     for (const event of events) {
       if (event.type !== "unitRepaired") continue;
       repaired.add(event.unitId);
-      over(event.unitId, `+${event.hp}`, "#80f080");
+      over(event.unitId, `+${event.hp}`, packColor("labelGreen"));
     }
     for (const event of events) {
-      if (event.type === "unitResupplied" && !repaired.has(event.unitId)) over(event.unitId, "SUPPLY", "#a0d8ff");
+      if (event.type === "unitResupplied" && !repaired.has(event.unitId)) over(event.unitId, "SUPPLY", packColor("labelBlue"));
     }
     return labels;
   }
@@ -426,7 +461,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
     if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
     for (const unit of [attacker, defender]) {
-      if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), "#f0d040");
+      if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), packColor("labelGold"));
     }
   }
 
@@ -445,18 +480,18 @@ export class MapScene extends Phaser.Scene implements MapView {
       await this.tween(sprite, { x: x + dx, y: y + dy }, COMBAT_MS.nudge);
       await this.tween(sprite, { x, y }, COMBAT_MS.nudge);
     }
-    const flash = this.add.rectangle(target.pos.x * TILE_SIZE, target.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, 0xffffff).setOrigin(0);
+    const flash = this.add.rectangle(target.pos.x * TILE_SIZE, target.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, packColorNumber("flash")).setOrigin(0);
     await this.tween(flash, { alpha: 0 }, COMBAT_MS.flash);
     flash.destroy();
     await Promise.all([
-      this.floatLabel(target.pos, `-${damage}`, "#ffffff"),
+      this.floatLabel(target.pos, `-${damage}`, packColor("labelText")),
       destroyed ? this.explode(target) : Promise.resolve(),
     ]);
   }
 
   private async explode(target: StrikeTarget): Promise<void> {
     const { x, y } = center(target.pos);
-    const blast = this.add.rectangle(x, y, 8, 8, 0xffa030);
+    const blast = this.add.rectangle(x, y, 8, 8, packColorNumber("blast"));
     const sprite = target.unitId === undefined ? undefined : this.unitSprites.get(target.unitId);
     await Promise.all([
       this.tween(blast, { scaleX: 2.5, scaleY: 2.5, alpha: 0 }, COMBAT_MS.explode),
@@ -468,7 +503,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   /** Text that rises from a tile and fades out. */
   private async floatLabel(tile: Point, text: string, color: string): Promise<void> {
     const { x, y } = center(tile);
-    const label = this.add.image(x, y, this.textTexture(text, color, "#101018"));
+    const label = this.add.image(x, y, this.textTexture(text, color, packColor("labelOutline")));
     await this.tween(label, { y: y - 9, alpha: 0 }, COMBAT_MS.float);
     label.destroy();
   }
@@ -532,24 +567,20 @@ export class MapScene extends Phaser.Scene implements MapView {
 
     for (const unit of this.state.units) {
       const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
-      const marker = this.add
-        .image(0, 0, this.texture(`unit-${unit.type}-${unit.owner}`, () => drawUnitMarker(unit.type, unit.owner)))
-        .setOrigin(0);
-      if (unit.hasActed) marker.setAlpha(0.5);
-      sprite.add(marker);
+      sprite.add(this.unitImage(unit));
 
       const hp = displayHp(unit.hp);
       if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
       if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
-        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", "#ffffff", "#101018")).setOrigin(0, 1));
+        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", packColor("labelText"), packColor("labelOutline"))).setOrigin(0, 1));
       }
       // Aircraft and ships within two turns of running dry show a warning.
       const burn = stats.fuelPerDay(this.state, unit);
       if (burn > 0 && unit.fuel <= burn * 2) {
-        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", "#ffa030", "#101018")).setOrigin(0, 1));
+        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", packColor("labelWarning"), packColor("labelOutline"))).setOrigin(0, 1));
       }
       // A transport carrying units shows a small marker.
-      if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", "#ffffff", "#101018")).setOrigin(0));
+      if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));
       const { level } = veterancyFor(unit.kills);
       if (level !== "rookie") {
         sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));
@@ -557,6 +588,26 @@ export class MapScene extends Phaser.Scene implements MapView {
       layer.add(sprite);
       this.unitSprites.set(unit.id, sprite);
     }
+  }
+
+  /** The unit's sprite from the art pack, animated until it has acted, or its placeholder marker. */
+  private unitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
+    const nation = this.state.players[unit.owner]?.nation;
+    const art = nation ? findUnitArt(activePack(), nation, unit.owner, unit.type) : null;
+    if (!art || !this.textures.exists(unitSheetKey(art.sheet))) {
+      const marker = this.add.image(0, 0, this.texture(`unit-${unit.type}-${unit.owner}`, () => drawUnitMarker(unit.type, unit.owner)));
+      return marker.setOrigin(0).setAlpha(unit.hasActed ? 0.5 : 1);
+    }
+    const key = unitSheetKey(art.sheet);
+    const firstFrame = art.row * art.frames;
+    const sprite = this.add.sprite(0, 0, key, firstFrame).setOrigin(0);
+    if (unit.hasActed) return sprite.setAlpha(0.5);
+    const animation = `${key}-row-${art.row}`;
+    if (!this.anims.exists(animation)) {
+      const frames = this.anims.generateFrameNumbers(key, { start: firstFrame, end: firstFrame + art.frames - 1 });
+      this.anims.create({ key: animation, frames, frameRate: IDLE_FRAMES_PER_SECOND, repeat: -1 });
+    }
+    return sprite.play(animation);
   }
 
   /** Terrain can change in play: a destroyed bunker becomes rubble (02-terrain §4). */

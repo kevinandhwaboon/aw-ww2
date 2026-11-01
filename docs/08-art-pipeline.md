@@ -1,6 +1,6 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US land unit sprites are approved and exported (section 12), but not drawn in the game yet. Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
+**Status:** Asset list complete. US land unit sprites are approved and drawn in the game (section 12), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
 **Last updated:** 2026-11-01
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
@@ -228,4 +228,30 @@ Answers so far to section 9. Questions not listed here are still open.
 - The Halftrack shows a .50 cal, though the unit is unarmed in the rules (01-units).
 - The US Rocket Artillery is the tracked T34 Calliope, though the unit moves on wheels in the rules.
 
-**Not done yet:** the game still draws placeholders, so loading these sheets is the next step. US air and naval units are first drafts in `tools/art/us-units.mjs`, not exported.
+**Not done yet:** US air and naval units are first drafts in `tools/art/us-units.mjs`, not exported.
+
+## 13. Art packs
+
+All art, colors and display names come from an **art pack**, so the game's look can be swapped without touching code or rebuilding. Art never affects the rules.
+
+**To make a pack:** create `public/assets/packs/{your-pack}/pack.json`, using lowercase letters, numbers and hyphens for the folder name, and open the game with `?pack=your-pack`. `public/assets/packs/night-ops/` is a small working example.
+
+Only `name` is required. Anything else you leave out keeps the built-in look, so a pack can change one color or everything. A file that won't load, or a pack with a mistake in it, logs a warning in the browser console and the game carries on.
+
+| Field | What it does |
+|---|---|
+| `name` | The pack's name |
+| `players` | One entry per player: `team`, `fill` and `outline`. `team` picks that player's unit sheets |
+| `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: panels, ranges, path arrow, menus, effects |
+| `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows` |
+| `terrain` | One sheet: `path`, and `tiles` giving a tile number per terrain. Tiles are numbered left to right, top to bottom |
+| `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
+| `terrainNames` | Display names by terrain id |
+
+**Unit sheets** use 16×16 frames, with one row per unit and idle frames running across. `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.
+
+**Paths** are relative to the pack's folder. Web addresses and absolute paths are refused.
+
+**The default pack** (`public/assets/packs/default/`) is the game's normal look. It points at the sheets `npm run art` writes to `public/assets/units/`. If the art tool's row order changes, `rows` in the pack has to change with it.
+
+**Not in packs yet:** the 3×5 map font, the HP and veterancy badges, property flags, and menu words like FIRE. They can follow as that art gets made.
