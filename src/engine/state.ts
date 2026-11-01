@@ -32,6 +32,9 @@ export interface GameResult {
 /** Capture points of an untouched property (04-economy §3). */
 export const CAPTURE_POINTS = 20;
 
+/** Which way units are drawn on screen. Art faces right, so "left" mirrors it. */
+export type Facing = "left" | "right";
+
 export interface Player {
   readonly id: PlayerId;
   readonly name: string;
@@ -43,6 +46,8 @@ export interface Player {
   readonly hasFielded: boolean;
   /** Unit types this player may build, set per scenario (01-units availability rule). */
   readonly buildable: readonly UnitTypeId[];
+  /** Set per scenario (08-art-pipeline §12). Only drawing reads this; no rule does. */
+  readonly facing: Facing;
 }
 
 export interface Unit {

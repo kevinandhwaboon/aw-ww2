@@ -53,6 +53,7 @@ export {
   DEFAULT_VICTORY,
   MAX_HP,
   type DefeatReason,
+  type Facing,
   type FortificationState,
   type GameResult,
   type GameState,

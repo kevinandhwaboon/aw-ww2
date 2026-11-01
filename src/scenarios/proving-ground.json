@@ -25,7 +25,7 @@
         "flakGun", "fighter", "bomber"
       ]
     },
-    { "name": "Axis", "nation": "germany", "funds": 5000 }
+    { "name": "Axis", "nation": "germany", "funds": 5000, "facing": "left" }
   ],
   "propertyOwners": [
     { "pos": { "x": 5, "y": 1 }, "owner": 0 },

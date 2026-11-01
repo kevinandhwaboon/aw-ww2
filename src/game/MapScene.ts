@@ -590,17 +590,20 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
   }
 
-  /** The unit's sprite from the art pack, animated until it has acted, or its placeholder marker. */
+  /**
+   * The unit's sprite from the art pack, animated until it has acted, or its placeholder marker.
+   * Sprites are mirrored for a player the map faces left. Markers aren't: their letters would read backwards.
+   */
   private unitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
-    const nation = this.state.players[unit.owner]?.nation;
-    const art = nation ? findUnitArt(activePack(), nation, unit.owner, unit.type) : null;
+    const player = this.state.players[unit.owner];
+    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type) : null;
     if (!art || !this.textures.exists(unitSheetKey(art.sheet))) {
       const marker = this.add.image(0, 0, this.texture(`unit-${unit.type}-${unit.owner}`, () => drawUnitMarker(unit.type, unit.owner)));
       return marker.setOrigin(0).setAlpha(unit.hasActed ? 0.5 : 1);
     }
     const key = unitSheetKey(art.sheet);
     const firstFrame = art.row * art.frames;
-    const sprite = this.add.sprite(0, 0, key, firstFrame).setOrigin(0);
+    const sprite = this.add.sprite(0, 0, key, firstFrame).setOrigin(0).setFlipX(player?.facing === "left");
     if (unit.hasActed) return sprite.setAlpha(0.5);
     const animation = `${key}-row-${art.row}`;
     if (!this.anims.exists(animation)) {

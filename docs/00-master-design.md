@@ -287,3 +287,4 @@ UI falls into four categories:
 | 2026-11-01 | Unit art is pixel grids rendered to PNG by script. Units face right and alternate 2 idle frames. US land sprites approved; the US Recon is a Willys jeep (08-art-pipeline §12) |
 | 2026-11-01 | Art packs: art, colors and display names load from a pack.json at startup, every field optional, with placeholders for anything missing; `?pack=` picks one (08-art-pipeline §13) |
 | 2026-11-01 | Allies and Axis name the sides; Germany and German name the nation; Wehrmacht is never a label. German land sprites carry no national insignia until that decision is made (08-art-pipeline §12) |
+| 2026-11-01 | Unit facing belongs to the map, not the nation or art pack: each scenario sets `facing` per player (default right), so a side starting on the left faces right and a side starting on the right faces left. Sprites are mirrored; facing is fixed while moving and is never read by a rule (08-art-pipeline §12) |

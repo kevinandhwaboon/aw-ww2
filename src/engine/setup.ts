@@ -12,6 +12,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_VICTORY,
   MAX_HP,
+  type Facing,
   type FortificationState,
   type GameState,
   type PlayerId,
@@ -34,6 +35,8 @@ export interface PlayerSetup {
   readonly funds?: number;
   /** Unit types offered to this player (01-units availability rule). */
   readonly buildable?: readonly UnitTypeId[];
+  /** Which way this player's units are drawn; defaults to right (08-art-pipeline §12). */
+  readonly facing?: Facing;
 }
 
 export interface UnitSetup {
@@ -118,6 +121,7 @@ export function createGame(setup: GameSetup): GameState {
       defeated: false,
       hasFielded: units.some((u) => u.owner === id),
       buildable: p.buildable ?? DEFAULT_BUILDABLE,
+      facing: p.facing ?? "right",
     })),
     units,
     properties,

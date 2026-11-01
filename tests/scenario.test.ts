@@ -80,6 +80,18 @@ describe("built-in scenarios (00-master-design §8)", () => {
       const after = apply(state, { type: "endTurn" });
       expect(after.ok).toBe(true);
     });
+
+    it("the side starting on the left faces right, and the side starting on the right faces left (08-art-pipeline §12)", () => {
+      const units = scenario.setup.units ?? [];
+      const averageColumn = (owner: number) => {
+        const columns = units.filter((u) => u.owner === owner).map((u) => u.pos.x);
+        return columns.reduce((sum, x) => sum + x, 0) / columns.length;
+      };
+      const [left, right] = averageColumn(0) < averageColumn(1) ? [0, 1] : [1, 0];
+      const facing = createGame({ ...scenario.setup, seed: 1 }).players.map((p) => p.facing);
+      expect(facing[left]).toBe("right");
+      expect(facing[right]).toBe("left");
+    });
   });
 
   it.each(["twin-bridges", "contested-skies"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
@@ -121,6 +133,29 @@ describe("the scenario file format", () => {
     expect(setup.modifiers).toHaveLength(1);
   });
 
+  it("units face right unless the map says otherwise (08-art-pipeline §12)", () => {
+    const { setup } = parseScenario(valid());
+    expect(createGame({ ...setup, seed: 1 }).players.map((p) => p.facing)).toEqual(["right", "right"]);
+  });
+
+  it("a map can set which way each player's units face (08-art-pipeline §12)", () => {
+    const players = [{ name: "A", nation: "us" }, { name: "B", nation: "germany", facing: "left" }];
+    const { setup } = parseScenario({ ...valid(), players });
+    expect(createGame({ ...setup, seed: 1 }).players.map((p) => p.facing)).toEqual(["right", "left"]);
+  });
+
+  it("facing is only drawn: a battle plays out the same whichever way units face (08-art-pipeline §12)", () => {
+    const battle = (facing: string) => {
+      const units = [{ type: "mediumTank", owner: 0, pos: P(0, 1) }, { type: "mediumTank", owner: 1, pos: P(1, 1) }];
+      const players = [{ name: "A", nation: "us", facing }, { name: "B", nation: "germany", facing }];
+      const { setup } = parseScenario({ ...valid(), players, units });
+      const result = apply(createGame({ ...setup, seed: 7 }), { type: "move", unitId: 0, path: [], action: { type: "attack", target: 1 } });
+      if (!result.ok) throw new Error(result.message);
+      return { units: result.state.units, events: result.events };
+    };
+    expect(battle("left")).toEqual(battle("right"));
+  });
+
   it.each([
     ["no id", { id: "" }, /"id" must be text/],
     ["a bad map", { map: ["..", "."] }, /Row 1/],
@@ -137,6 +172,7 @@ describe("the scenario file format", () => {
     ["negative funds", { players: [{ name: "A", nation: "us", funds: -1 }, { name: "B", nation: "uk" }] }, /whole number/],
     ["a bad modifier", { modifiers: [{ source: "x", stat: "charisma", op: "add", value: 1 }] }, /unknown stat/],
     ["a bad build list", { players: [{ name: "A", nation: "us", buildable: ["dragon"] }, { name: "B", nation: "germany" }] }, /unknown unit type/],
+    ["a bad facing", { players: [{ name: "A", nation: "us", facing: "up" }, { name: "B", nation: "germany" }] }, /"facing" must be left or right/],
   ])("rejects %s, naming the scenario and the problem", (_, change, message) => {
     const attempt = () => parseScenario({ ...valid(), ...change });
     expect(attempt).toThrow(message);
