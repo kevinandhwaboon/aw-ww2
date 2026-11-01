@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done; Phase 2 is designed and next (see 11-tech-setup §6).
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestone 9 done; mechanics are paused at milestone 10 while visuals are worked on (08-art-pipeline).
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -207,7 +207,7 @@ UI falls into four categories:
 | 05-supply-transport.md | **v0 decided**: land rules built; air, naval, landings and submarines for phase 2 |
 | 06-commanders.md | TBD |
 | 07-ui-ux.md | TBD: screen flows, controls, mobile |
-| 08-art-pipeline.md | TBD |
+| 08-art-pipeline.md | **Asset list done**; how to make the art is undecided |
 | 09-ai.md | **v0 decided**: AI interface, rules for AIs, the first Greedy AI |
 | 10-scenarios-normandy.md | TBD (phase 4) |
 | 11-tech-setup.md | **Decided**: tooling, repo layout, engine boundary, testing, phased build plan |
@@ -283,3 +283,4 @@ UI falls into four categories:
 | 2026-10-31 | Submerged submarines stay visible with a marker until fog of war exists, a deliberate change from the original |
 | 2026-10-31 | Phase 2 order: air, naval, landings, victory conditions, CO hooks, then the AI. AI runs on the main thread behind an async interface; the first AI doesn't use Landing Craft or Transport Aircraft |
 | 2026-11-01 | Air units implemented (milestone 9). Air and naval units on a property that services them burn no daily fuel, so an aircraft can't crash while parked on its own airfield |
+| 2026-11-01 | Mechanics paused at milestone 10 to work on visuals; the full art asset list is in 08-art-pipeline |
