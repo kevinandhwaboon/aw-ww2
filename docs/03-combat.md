@@ -1,7 +1,7 @@
 # Topic Doc 03: Combat
 
 **Status:** Rules decided. Provisional v0 damage chart and veterancy values set; expect tuning after playtesting.
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-31
 **Depends on:** 00-master-design.md, 01-units.md. **Feeds:** 02-terrain (defense stars, fortification HP), 06-commanders (modifiers).
 
 **Guiding rule:** when a design choice is open, follow the original game's mechanism unless there's a clear reason not to.
@@ -134,7 +134,8 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft) have no attack rows
 - **Heavy Tank** wins most fights but is slow and expensive; its answers are Tank Destroyers, Bombers, Battleships and massed indirect fire.
 - **Fighter** strafing is deliberately weak (≤15) and uses the same ammo as its air-to-air guns.
 - **Assault Infantry** is the best ground unit vs. fortifications (65).
-- **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport).
+- **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
+- **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
 
 ## 6. Veterancy (combat experience)

@@ -1,7 +1,7 @@
 # Topic Doc 04: Economy, Production and Capture
 
 **Status:** v0 decided. Follows the original game (default rule). Expect tuning after playtesting.
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-31
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md. **Feeds:** 05-supply-transport (repair and resupply on properties), scenarios.
 
 ---
@@ -25,7 +25,7 @@ At the start of each player's turn, in this order (as in the original):
 
 This includes the first player's first turn, so they collect income on day 1, as in the original.
 
-1. **Daily fuel use** for that player's air and naval units; units that run out crash or sink (05-supply-transport). Phase 2.
+1. **Daily fuel use** for that player's air and naval units; units that run out crash or sink (05-supply-transport). None on day 1. Phase 2.
 2. **Income:** add income for every property the player owns.
 3. **Repair and resupply** on owned properties (section 5), then Halftrack automatic resupply (05-supply-transport).
 4. All of the player's units become ready to act.
@@ -87,8 +87,19 @@ Scenarios define their own victory conditions (00-master-design section 8). The 
 
 As in the original, a defeated player's units are removed and their properties become neutral. If they have an ally still in the game, play continues and their turns are skipped. The game ends when only one side has players left, and everyone remaining on that side wins.
 
+### Scenario victory conditions (phase 2)
+
+Scenarios list their conditions (00-master-design §8). HQ capture and rout already exist. Phase 2 adds three, which between them cover what's planned for historical battles:
+
+| Condition | Meaning | Checked |
+|---|---|---|
+| `captureProperties` | A named side wins by owning all the listed properties, such as a town or a bridgehead | After each capture |
+| `holdProperties` | A named side wins by owning all the listed properties for N consecutive days | At the start of each day |
+| `surviveDays` | A named side wins if the game reaches day N with that side still in it | At the start of each day |
+
+Scenarios without an HQ just leave out `hqCapture`. That answers the open question below.
+
 ## 9. Open questions
 
 - Tuning income vs. unit costs for small test maps.
-- Whether HQ-less scenarios (common in historical setups) default to rout-only.
 - Phase 2: airfield and port income, and whether some properties (for example a railhead) give income only.

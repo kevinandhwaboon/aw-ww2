@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phase 0 (setup) done; Phase 1 under way (see 11-tech-setup §6).
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done; Phase 2 is designed and next (see 11-tech-setup §6).
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -204,11 +204,11 @@ UI falls into four categories:
 | 02-terrain.md | **v0 decided** (original game's values; Hills, Bocage, Bunker, Rubble, Obstacle added) |
 | 03-combat.md | **Rules decided; v0 damage chart and veterancy set.** Tune after playtesting |
 | 04-economy-production.md | **v0 decided** (original game's income, capture, build, repair, join) |
-| 05-supply-transport.md | **Land rules v0 decided**; air and naval sketched for phase 2 |
+| 05-supply-transport.md | **v0 decided**: land rules built; air, naval, landings and submarines for phase 2 |
 | 06-commanders.md | TBD |
 | 07-ui-ux.md | TBD: screen flows, controls, mobile |
 | 08-art-pipeline.md | TBD |
-| 09-ai.md | TBD |
+| 09-ai.md | **v0 decided**: AI interface, rules for AIs, the first Greedy AI |
 | 10-scenarios-normandy.md | TBD (phase 4) |
 | 11-tech-setup.md | **Decided**: tooling, repo layout, engine boundary, testing, phased build plan |
 
@@ -277,3 +277,8 @@ UI falls into four categories:
 | 2026-10-31 | Fortifications implemented (03-combat §4, 02-terrain §4): attacking one is an end action on Move; they belong to nobody, so either side can attack any empty one (11-tech-setup §3h) |
 | 2026-10-31 | Game shell implemented: title, map select, pass-the-device screen; three scenarios (Twin Bridges, Bocage Country, Proving Ground). Phase 1 complete (11-tech-setup §3i) |
 | 2026-10-31 | Scenarios are validated JSON with maps as text rows; Tiled is deferred until real tile art exists, since it needs a tileset image |
+| 2026-10-31 | Phase 2 design accepted: air, naval, landings and submarines (05 §5–9), three new victory conditions (04 §8), the AI (09), and milestones 9–15 (11-tech-setup §6) |
+| 2026-10-31 | Landing Craft must stand on a Beach or Port tile to load or unload, as in the original; one unit per tile of any category |
+| 2026-10-31 | No daily fuel burn on day 1; Transport Aircraft drop anywhere foot units can enter; a transport can unload both passengers in one action; no transports inside transports |
+| 2026-10-31 | Submerged submarines stay visible with a marker until fog of war exists, a deliberate change from the original |
+| 2026-10-31 | Phase 2 order: air, naval, landings, victory conditions, CO hooks, then the AI. AI runs on the main thread behind an async interface; the first AI doesn't use Landing Craft or Transport Aircraft |
