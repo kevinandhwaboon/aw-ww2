@@ -282,3 +282,4 @@ UI falls into four categories:
 | 2026-10-31 | No daily fuel burn on day 1; Transport Aircraft drop anywhere foot units can enter; a transport can unload both passengers in one action; no transports inside transports |
 | 2026-10-31 | Submerged submarines stay visible with a marker until fog of war exists, a deliberate change from the original |
 | 2026-10-31 | Phase 2 order: air, naval, landings, victory conditions, CO hooks, then the AI. AI runs on the main thread behind an async interface; the first AI doesn't use Landing Craft or Transport Aircraft |
+| 2026-11-01 | Air units implemented (milestone 9). Air and naval units on a property that services them burn no daily fuel, so an aircraft can't crash while parked on its own airfield |

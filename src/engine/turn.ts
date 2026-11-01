@@ -1,9 +1,8 @@
-// The start-of-turn sequence (04-economy §2), in the doc's order. Daily fuel burn for air and naval
-// units arrives with them in phase 2.
+// The start-of-turn sequence (04-economy §2), in the doc's order.
 
 import type { GameEvent } from "./commands";
 import { UNITS } from "./data/units";
-import { propertyDefAt } from "./economy";
+import { clearAbandonedCaptures, propertyDefAt } from "./economy";
 import { displayHp, MAX_HP, propertyAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
 import { applySupply, supplyTargets } from "./transport";
@@ -14,7 +13,8 @@ export const REPAIR_HP = 2;
 /** Runs the start of state.currentPlayer's turn. */
 export function startTurn(state: GameState): { state: GameState; events: GameEvent[] } {
   const events: GameEvent[] = [{ type: "turnStarted", player: state.currentPlayer, day: state.day }];
-  const afterIncome = collectIncome(state, events);
+  const afterFuel = burnFuel(state, events);
+  const afterIncome = collectIncome(afterFuel, events);
   const afterRepairs = repairAndResupply(afterIncome, events);
   const afterSupply = halftrackResupply(afterRepairs, events);
   const player = state.currentPlayer;
@@ -22,6 +22,30 @@ export function startTurn(state: GameState): { state: GameState; events: GameEve
     state: { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player && u.hasActed ? { ...u, hasActed: false } : u)) },
     events,
   };
+}
+
+/** Whether a unit stands on an owned property that repairs and resupplies its category. */
+function isServiced(state: GameState, unit: Unit): boolean {
+  return propertyAt(state, unit.pos)?.owner === unit.owner && propertyDefAt(state, unit.pos)?.repairs === UNITS[unit.type].category;
+}
+
+/**
+ * Air and naval units burn fuel every turn, and are lost if it runs out (05-supply-transport §5, §7).
+ * Not on day 1, and not on a property that services them, which refuels them anyway.
+ */
+function burnFuel(state: GameState, events: GameEvent[]): GameState {
+  if (state.day === 1) return state;
+  const units: Unit[] = [];
+  for (const unit of state.units) {
+    const burn = unit.owner === state.currentPlayer && !isServiced(state, unit) ? stats.fuelPerDay(state, unit) : 0;
+    const fuel = Math.max(0, unit.fuel - burn);
+    if (burn > 0 && fuel === 0) {
+      events.push({ type: "unitOutOfFuel", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos });
+    } else {
+      units.push(burn > 0 ? { ...unit, fuel } : unit);
+    }
+  }
+  return clearAbandonedCaptures({ ...state, units });
 }
 
 /** Each of the player's supply units refills adjacent friendly units (05-supply-transport §3). */
@@ -59,8 +83,7 @@ function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
   const updated = new Map<number, Unit>();
 
   const served = state.units
-    .filter((u) => u.owner === player.id && propertyAt(state, u.pos)?.owner === player.id)
-    .filter((u) => propertyDefAt(state, u.pos)?.repairs === UNITS[u.type].category)
+    .filter((u) => u.owner === player.id && isServiced(state, u))
     .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
 
   for (const unit of served) {

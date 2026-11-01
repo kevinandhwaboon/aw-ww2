@@ -280,7 +280,8 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
         rows.push([label, changed ? `${value} (base ${base})` : String(value)]);
       };
       row("HP", `${displayHp(unit.hp)} / 10  (internal ${unit.hp})`);
-      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}`);
+      const burn = stats.fuelPerDay(state, unit);
+      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${burn > 0 ? `  (−${burn} per turn)` : ""}`);
       row("Ammo", def.primaryWeapon ? `${unit.ammo} / ${ammo}  (${def.primaryWeapon.name})` : "—");
       if (def.secondaryWeapon) row("Secondary", def.secondaryWeapon.name);
       row("Move", stats.movePoints(state, unit), def.movePoints);
@@ -347,6 +348,8 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
       const outcome = e.becomes ? `destroyed, now ${terrainDef(e.becomes).name}` : `${displayHp(e.hp)} HP left`;
       return `${unitName(e.attackerId)} hit the fortification at (${e.pos.x}, ${e.pos.y}) for ${e.attack.damage}% (luck ${e.attack.luck}): ${outcome}`;
     }
+    case "unitOutOfFuel":
+      return `${name(e.owner)} ${UNITS[e.unitType].name} ran out of fuel and was lost`;
     case "captureProgress":
       return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
     case "propertyCaptured":

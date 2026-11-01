@@ -22,8 +22,11 @@ import {
 } from "./state";
 import { startTurn } from "./turn";
 
-/** What a player can build unless the scenario says otherwise: the units in play so far. */
-const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
+/**
+ * What a player can build unless the scenario says otherwise: the units in play so far. Transport
+ * Aircraft have no use until drops arrive in milestone 11, and ships arrive in milestone 10.
+ */
+const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((id) => UNITS[id].category !== "naval" && id !== "transportAircraft");
 
 export interface PlayerSetup {
   readonly name: string;

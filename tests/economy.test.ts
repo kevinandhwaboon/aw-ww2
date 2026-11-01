@@ -227,8 +227,15 @@ describe("build (04-economy §4)", () => {
     expect(apply(state, build("mediumTank", P(0, 0))).ok).toBe(true);
   });
 
-  it("by default players can only build units from the phases in play", () => {
-    expect(buildProblem(factory(50_000), "flakGun", P(0, 0))).toMatch(/available/);
+  it("by default players can build land and air units, but not units that aren't finished yet", () => {
+    const state = makeGame(["fAP"], [], {
+      players: [{ name: "A", nation: "us", funds: 50_000 }, { name: "B", nation: "germany" }],
+      propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(1, 0), owner: 0 }, { pos: P(2, 0), owner: 0 }],
+    });
+    expect(buildProblem(state, "flakGun", P(0, 0))).toBeNull();
+    expect(buildProblem(state, "fighter", P(1, 0))).toBeNull();
+    expect(buildProblem(state, "transportAircraft", P(1, 0))).toMatch(/available/);
+    expect(buildProblem(state, "destroyer", P(2, 0))).toMatch(/available/);
   });
 
   it("a scenario's unit cap stops further builds", () => {
@@ -262,7 +269,7 @@ describe("build (04-economy §4)", () => {
     expect(options[0]).toEqual({ type: "infantry", cost: 1000, affordable: true });
     expect(options.find((o) => o.type === "mediumTank")).toEqual({ type: "mediumTank", cost: 8000, affordable: false });
     expect(options.map((o) => o.cost)).toEqual([...options.map((o) => o.cost)].sort((a, b) => a - b));
-    expect(options).toHaveLength(12);
+    expect(options).toHaveLength(13);
   });
 
   it("the build menu is empty where nothing can be built", () => {

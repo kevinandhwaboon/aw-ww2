@@ -48,7 +48,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
 - **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit, and enemy units still block its path (02-terrain §5).
-- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter and Bomber 5, Transport Aircraft 4). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**.
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter and Bomber 5, Transport Aircraft 4). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
 - **Service:** owned airfields repair and resupply air units (04-economy §5). A Halftrack also resupplies an adjacent aircraft, since the rule covers all friendly units.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
 
@@ -63,7 +63,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 ## 7. Naval units (phase 2)
 
 - **Movement:** type `sea` covers Sea, Reef and Port. Landing Craft use `landingCraft`, which also allows Beach (02-terrain §3).
-- **Daily fuel:** `fuelPerDay` at the start of the owner's turn. At 0 fuel the ship sinks. A sinking isn't a kill. No burn on day 1 **(D1)**.
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn. At 0 fuel the ship sinks. A sinking isn't a kill. No burn on day 1 **(D1)**, and none for a ship in an owned port.
 - **Service:** owned ports repair and resupply naval units. Halftracks resupply adjacent ships as well.
 - **Capture:** ships can't capture. Ports are captured by infantry like any property.
 

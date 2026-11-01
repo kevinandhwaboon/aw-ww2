@@ -82,8 +82,8 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
-  it("Twin Bridges is a fair mirror: the map and starting units rotate onto each other", () => {
-    const scenario = SCENARIOS.find((s) => s.id === "twin-bridges");
+  it.each(["twin-bridges", "contested-skies"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
+    const scenario = SCENARIOS.find((s) => s.id === id);
     if (!scenario) throw new Error("missing scenario");
     const { map, units, propertyOwners } = scenario.setup;
     expect(map.terrain).toEqual([...map.terrain].reverse());
