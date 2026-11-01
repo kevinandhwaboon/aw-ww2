@@ -1,0 +1,40 @@
+{
+  "name": "Night Ops",
+  "players": [
+    { "team": "olive", "fill": "#73793f", "outline": "#2e331c" },
+    { "team": "red", "fill": "#c4482f", "outline": "#5e1a14" }
+  ],
+  "colors": {
+    "uiBg": "#06080c",
+    "uiPanel": "#1c2430",
+    "uiInk": "#d8e0e8",
+    "uiBorder": "#4a5a70",
+    "uiAccent": "#e8a040",
+    "uiHighlight": "#34506e",
+    "rangeMove": "#40c0a0",
+    "rangeInspect": "#c0a040",
+    "pathFill": "#a0f0d0",
+    "menuBg": "#1c2430",
+    "menuBorder": "#4a5a70",
+    "menuInk": "#d8e0e8",
+    "menuHighlight": "#34506e"
+  },
+  "unitSheets": [
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-land-olive.png",
+      "frames": 2,
+      "rows": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+        null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+      ]
+    }
+  ],
+  "terrain": {
+    "path": "terrain.png",
+    "tiles": { "plains": 0, "road": 1, "sea": 2, "forest": 3 }
+  },
+  "unitNames": { "mediumTank": "Sherman", "recon": "Willys Jeep" },
+  "terrainNames": { "bocage": "Hedgerows" }
+}

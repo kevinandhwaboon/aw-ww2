@@ -24,6 +24,7 @@ The developer is an experienced software engineer, new to game development, and 
 - Every stat lookup (move, attack, defense, cost, vision, …) goes through the modifier layer, even while no modifiers exist.
 - Game data (units, terrain, damage chart) lives in `src/engine/data/` as typed data with no logic. Balancing is a data edit.
 - The presentation layer (`src/game/` Phaser, `src/ui/` HTML overlay) only draws state, plays events and turns input into commands. It never decides outcomes.
+- Art, colors and display names come from the active art pack (`src/game/artPack.ts`, 08-art-pipeline §13). Don't hardcode them in drawing code.
 
 ## Testing
 

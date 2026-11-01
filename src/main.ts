@@ -1,4 +1,5 @@
 import type { Scenario } from "./engine/scenario";
+import { loadArtPack } from "./game/loadArtPack";
 import { SCENARIOS } from "./scenarios";
 import { startSession } from "./session";
 import { showTitleScreen, type GameOptions } from "./ui/screens";
@@ -9,6 +10,7 @@ import "./ui/style.css";
 //   ?seed=123            fixes the luck rolls
 //   ?luck=off            turns luck off
 //   ?handoff=off         skips the pass-the-device screen
+//   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 const params = new URLSearchParams(window.location.search);
 const seedParam = Number(params.get("seed") ?? NaN);
 
@@ -31,6 +33,8 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     onNewGame: () => window.location.reload(),
   });
 }
+
+await loadArtPack(params.get("pack") ?? "default");
 
 const direct = SCENARIOS.find((s) => s.id === params.get("map"));
 if (direct) start(gameRoot, uiRoot, direct, defaults);

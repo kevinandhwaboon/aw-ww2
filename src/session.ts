@@ -7,6 +7,7 @@ import type { Command } from "./engine/commands";
 import { inBounds, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
 import { unitAt, type GameState } from "./engine/state";
+import { packColor } from "./game/artPack";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
@@ -166,7 +167,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
     width,
     height,
     pixelArt: true,
-    backgroundColor: "#101018",
+    backgroundColor: packColor("uiBg"),
     scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
     scene,
   });

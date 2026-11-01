@@ -3,6 +3,7 @@
 
 import { UNITS, type UnitTypeId } from "../engine/data/units";
 import type { VeterancyLevel } from "../engine/data/veterancy";
+import { activePack } from "./artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { TILE_SIZE } from "./placeholderTiles";
 
@@ -14,13 +15,6 @@ export const UNIT_CODES: Record<UnitTypeId, string> = {
   battleship: "BB", destroyer: "DD", submarine: "SS", landingCraft: "LC", torpedoBoat: "TB",
 };
 
-/** Team colors by player index: [fill, outline]. */
-export const PLAYER_COLORS: readonly (readonly [string, string])[] = [
-  ["#3a6fd8", "#1a3270"],
-  ["#c8463a", "#5e1a14"],
-  ["#4a9a40", "#1e4418"],
-  ["#d8a030", "#6a4a10"],
-];
 
 function canvas(width: number, height: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement("canvas");
@@ -32,9 +26,10 @@ function canvas(width: number, height: number): [HTMLCanvasElement, CanvasRender
 }
 
 export function playerColors(player: number): readonly [string, string] {
-  const colors = PLAYER_COLORS[player % PLAYER_COLORS.length];
-  if (!colors) throw new Error("No player colors defined");
-  return colors;
+  const { players } = activePack();
+  const art = players[player % players.length];
+  if (!art) throw new Error("No player colors defined");
+  return [art.fill, art.outline];
 }
 
 /** 16×16 marker: outlined team-colored badge with the unit code in white. */

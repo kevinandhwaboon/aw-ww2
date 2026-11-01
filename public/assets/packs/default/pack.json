@@ -1,0 +1,25 @@
+{
+  "name": "Default",
+  "unitSheets": [
+    {
+      "nation": "us",
+      "team": "blue",
+      "path": "../../units/us-land-blue.png",
+      "frames": 2,
+      "rows": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+        null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-land-red.png",
+      "frames": 2,
+      "rows": [
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+        null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+      ]
+    }
+  ]
+}

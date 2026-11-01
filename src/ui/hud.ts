@@ -6,6 +6,7 @@ import type { Modifier } from "../engine/modifiers";
 import { terrainAt, type Point } from "../engine/map";
 import { CAPTURE_POINTS, displayHp, fortAt, propertyAt, type DefeatReason, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
+import { terrainName, unitName as unitTypeName } from "../game/artPack";
 import type { BuildMenu } from "../game/controller";
 import { playerColors } from "../game/placeholderUnits";
 
@@ -30,7 +31,7 @@ export function createTerrainPanel(root: HTMLElement): { show: (state: GameState
   return {
     show(state, tile) {
       const def = terrainDef(terrainAt(state.map, tile));
-      name.textContent = def.name;
+      name.textContent = terrainName(terrainAt(state.map, tile));
       starRow.textContent = stars(def.defenseStars);
       starRow.title = `Defense: ${def.defenseStars}`;
       const property = propertyAt(state, tile);
@@ -124,7 +125,7 @@ export function createBuildMenu(root: HTMLElement): BuildMenu {
       const buttons = options.map((option) => {
         const row = el("button", "build-row");
         row.disabled = !option.affordable;
-        row.append(el("span", undefined, UNITS[option.type].name), el("span", "build-cost", option.cost.toLocaleString("en-US")));
+        row.append(el("span", undefined, unitTypeName(option.type)), el("span", "build-cost", option.cost.toLocaleString("en-US")));
         row.addEventListener("click", () => onPick(option.type));
         list.append(row);
         return row;
@@ -295,10 +296,10 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       row("Cost", stats.unitCost(state, unit.owner, unit.type), def.cost);
       row("Acted", unit.hasActed ? "yes" : "no");
       if (unit.cargo.length > 0) {
-        row("Carrying", unit.cargo.map((c) => `${UNITS[c.type].name} (${displayHp(c.hp)} HP)`).join(", "));
+        row("Carrying", unit.cargo.map((c) => `${unitTypeName(c.type)} (${displayHp(c.hp)} HP)`).join(", "));
       }
 
-      const title = el("div", "panel-title", def.name);
+      const title = el("div", "panel-title", unitTypeName(unit.type));
       const ownerLine = el("div", "unit-owner", `${owner?.name ?? "?"} · unit #${unit.id}`);
       ownerLine.style.color = playerColors(unit.owner)[0];
       const table = el("table", "stat-table");
@@ -322,7 +323,7 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
     // Boarded and merged units are gone from the map by now, so look in cargo and the previous state too.
     const everyone = [...state.units, ...state.units.flatMap((u) => u.cargo), ...previous.units];
     const unit = everyone.find((u) => u.id === id);
-    return unit ? `${name(unit.owner)} ${UNITS[unit.type].name} #${id}` : `unit #${id}`;
+    return unit ? `${name(unit.owner)} ${unitTypeName(unit.type)} #${id}` : `unit #${id}`;
   };
   switch (e.type) {
     case "unitMoved": {
@@ -333,7 +334,7 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
     case "unitWaited":
       return `${unitName(e.unitId)} waits`;
     case "combat": {
-      const who = (c: Combatant) => `${name(c.owner)} ${UNITS[c.type].name}`;
+      const who = (c: Combatant) => `${name(c.owner)} ${unitTypeName(c.type)}`;
       const tag = (c: Combatant) => (c.destroyed ? " (destroyed)" : c.promotedTo ? ` (now ${c.promotedTo})` : "");
       const counter = e.counter ? `, counter ${e.counter.damage}% (luck ${e.counter.luck})` : ", no counter";
       return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}${tag(e.defender)} for ${e.attack.damage}% (luck ${e.attack.luck})${counter}`;
@@ -345,17 +346,17 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
     case "unitJoined":
       return `${unitName(e.targetId)} absorbed a unit, now ${displayHp(e.hp)} HP${e.refund > 0 ? `, refund ${e.refund.toLocaleString("en-US")}` : ""}`;
     case "fortAttacked": {
-      const outcome = e.becomes ? `destroyed, now ${terrainDef(e.becomes).name}` : `${displayHp(e.hp)} HP left`;
+      const outcome = e.becomes ? `destroyed, now ${terrainName(e.becomes)}` : `${displayHp(e.hp)} HP left`;
       return `${unitName(e.attackerId)} hit the fortification at (${e.pos.x}, ${e.pos.y}) for ${e.attack.damage}% (luck ${e.attack.luck}): ${outcome}`;
     }
     case "unitOutOfFuel":
-      return `${name(e.owner)} ${UNITS[e.unitType].name} ran out of fuel and was lost`;
+      return `${name(e.owner)} ${unitTypeName(e.unitType)} ran out of fuel and was lost`;
     case "captureProgress":
       return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
     case "propertyCaptured":
       return `${name(e.player)} captured (${e.pos.x}, ${e.pos.y})${e.previousOwner === null ? "" : ` from ${name(e.previousOwner)}`}`;
     case "unitBuilt":
-      return `${name(e.owner)} built ${UNITS[e.unitType].name} for ${e.cost.toLocaleString("en-US")}`;
+      return `${name(e.owner)} built ${unitTypeName(e.unitType)} for ${e.cost.toLocaleString("en-US")}`;
     case "incomeReceived":
       return `${name(e.player)} earned ${e.amount.toLocaleString("en-US")} (funds ${e.funds.toLocaleString("en-US")})`;
     case "unitRepaired":

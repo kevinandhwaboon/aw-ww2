@@ -26,6 +26,10 @@ Phase 1 (core MVP) is complete. Two players on one device can pick from four tes
 | End turn | End Turn button | E |
 | Resign | Resign button, then click again to confirm | None |
 
+## Art packs
+
+The game's art, colors and unit names can be swapped without changing code: add `?pack=night-ops` to the URL to see the example, or see [`docs/08-art-pipeline.md`](docs/08-art-pipeline.md) §13 to make your own.
+
 ## Development
 
 Requires Node.js 24+.
