@@ -106,6 +106,14 @@ export type GameEvent =
   /** `hp` is displayed HP restored. */
   | { readonly type: "unitRepaired"; readonly unitId: UnitId; readonly hp: number; readonly cost: number }
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
+  /** An air unit crashed or a ship sank at turn start (05-supply-transport §5, §7). */
+  | {
+      readonly type: "unitOutOfFuel";
+      readonly unitId: UnitId;
+      readonly unitType: UnitTypeId;
+      readonly owner: PlayerId;
+      readonly pos: Point;
+    }
   | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
   | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }

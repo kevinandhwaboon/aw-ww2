@@ -21,7 +21,8 @@
       "funds": 5000,
       "buildable": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
-        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA"
+        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA",
+        "flakGun", "fighter", "bomber"
       ]
     },
     { "name": "Axis", "nation": "germany", "funds": 5000 }

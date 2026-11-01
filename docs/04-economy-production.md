@@ -25,7 +25,7 @@ At the start of each player's turn, in this order (as in the original):
 
 This includes the first player's first turn, so they collect income on day 1, as in the original.
 
-1. **Daily fuel use** for that player's air and naval units; units that run out crash or sink (05-supply-transport). None on day 1. Phase 2.
+1. **Daily fuel use** for that player's air and naval units; units that run out crash or sink (05-supply-transport). None on day 1, or for units on a property that services them.
 2. **Income:** add income for every property the player owns.
 3. **Repair and resupply** on owned properties (section 5), then Halftrack automatic resupply (05-supply-transport).
 4. All of the player's units become ready to act.

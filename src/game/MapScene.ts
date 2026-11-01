@@ -3,6 +3,7 @@ import type { Combatant, GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Point } from "../engine/map";
 import { displayHp, type GameState, type UnitId } from "../engine/state";
+import * as stats from "../engine/stats";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
@@ -388,6 +389,10 @@ export class MapScene extends Phaser.Scene implements MapView {
       }
       if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, "#ffffff");
       if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", "#f0d040");
+      if (event.type === "unitOutOfFuel") {
+        const lost = { pos: event.pos, unitId: event.unitId };
+        await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", "#ffa030")]);
+      }
       if (event.type === "unitJoined") {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", "#ffffff");
@@ -537,6 +542,11 @@ export class MapScene extends Phaser.Scene implements MapView {
       if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
       if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
         sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", "#ffffff", "#101018")).setOrigin(0, 1));
+      }
+      // Aircraft and ships within two turns of running dry show a warning.
+      const burn = stats.fuelPerDay(this.state, unit);
+      if (burn > 0 && unit.fuel <= burn * 2) {
+        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", "#ffa030", "#101018")).setOrigin(0, 1));
       }
       // A transport carrying units shows a small marker.
       if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", "#ffffff", "#101018")).setOrigin(0));

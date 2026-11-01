@@ -20,7 +20,8 @@
       "funds": 8000,
       "buildable": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
-        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA"
+        "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA",
+        "flakGun", "fighter", "bomber"
       ]
     },
     { "name": "Wehrmacht", "nation": "germany", "funds": 4000 }

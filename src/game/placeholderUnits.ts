@@ -1,7 +1,7 @@
 // Placeholder unit markers until real sprites exist (08-art-pipeline): a team-colored badge with a
 // 2-letter code, plus small HP and veterancy overlays.
 
-import type { UnitTypeId } from "../engine/data/units";
+import { UNITS, type UnitTypeId } from "../engine/data/units";
 import type { VeterancyLevel } from "../engine/data/veterancy";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { TILE_SIZE } from "./placeholderTiles";
@@ -41,15 +41,28 @@ export function playerColors(player: number): readonly [string, string] {
 export function drawUnitMarker(type: UnitTypeId, player: number): HTMLCanvasElement {
   const [c, ctx] = canvas(TILE_SIZE, TILE_SIZE);
   const [fill, outline] = playerColors(player);
-  ctx.fillStyle = outline;
-  ctx.fillRect(1, 3, 14, 11);
-  ctx.fillRect(2, 2, 12, 13);
-  ctx.fillStyle = fill;
-  ctx.fillRect(2, 4, 12, 9);
-  ctx.fillRect(3, 3, 10, 11);
+  const air = UNITS[type].category === "air";
+  if (air) {
+    // A shadow on the ground and a winged outline, so aircraft read as flying over the tile.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.fillRect(3, 13, 10, 2);
+    ctx.fillStyle = outline;
+    ctx.fillRect(0, 4, 16, 6);
+    ctx.fillRect(3, 1, 10, 12);
+    ctx.fillStyle = fill;
+    ctx.fillRect(1, 5, 14, 4);
+    ctx.fillRect(4, 2, 8, 10);
+  } else {
+    ctx.fillStyle = outline;
+    ctx.fillRect(1, 3, 14, 11);
+    ctx.fillRect(2, 2, 12, 13);
+    ctx.fillStyle = fill;
+    ctx.fillRect(2, 4, 12, 9);
+    ctx.fillRect(3, 3, 10, 11);
+  }
   ctx.fillStyle = "#ffffff";
   const code = UNIT_CODES[type];
-  drawPixelText(ctx, code, Math.floor((TILE_SIZE - textWidth(code)) / 2), 6);
+  drawPixelText(ctx, code, Math.floor((TILE_SIZE - textWidth(code)) / 2), air ? 4 : 6);
   return c;
 }
 

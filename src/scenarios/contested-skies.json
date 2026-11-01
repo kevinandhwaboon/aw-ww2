@@ -1,0 +1,40 @@
+{
+  "id": "contested-skies",
+  "name": "Contested Skies",
+  "description": "A fair fight across two bays, joined by a single narrow road. Fighters and Bombers fly straight over the water while ground forces funnel through the gap. Keep an eye on fuel.",
+  "map": [
+    "C.A..HHH.....",
+    ".Qf..SSS..C..",
+    ".==..SSS.....",
+    "..=..SSS...F.",
+    "..====.====..",
+    ".F...SSS..=..",
+    ".....SSS..==.",
+    "..C..SSS..fQ.",
+    ".....HHH..A.C"
+  ],
+  "players": [
+    { "name": "Allies", "nation": "us", "funds": 10000 },
+    { "name": "Axis", "nation": "germany", "funds": 10000 }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 0, "y": 0 }, "owner": 0 },
+    { "pos": { "x": 2, "y": 0 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 2, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 12, "y": 8 }, "owner": 1 },
+    { "pos": { "x": 10, "y": 8 }, "owner": 1 },
+    { "pos": { "x": 11, "y": 7 }, "owner": 1 },
+    { "pos": { "x": 10, "y": 7 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "fighter", "owner": 0, "pos": { "x": 3, "y": 1 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 2, "y": 3 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 3, "y": 4 } },
+    { "type": "mobileAA", "owner": 0, "pos": { "x": 1, "y": 3 } },
+    { "type": "fighter", "owner": 1, "pos": { "x": 9, "y": 7 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 10, "y": 5 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 9, "y": 4 } },
+    { "type": "mobileAA", "owner": 1, "pos": { "x": 11, "y": 5 } }
+  ]
+}
