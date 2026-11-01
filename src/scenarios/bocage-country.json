@@ -24,7 +24,7 @@
         "flakGun", "fighter", "bomber"
       ]
     },
-    { "name": "Wehrmacht", "nation": "germany", "funds": 4000 }
+    { "name": "Axis", "nation": "germany", "funds": 4000 }
   ],
   "propertyOwners": [
     { "pos": { "x": 0, "y": 3 }, "owner": 0 },

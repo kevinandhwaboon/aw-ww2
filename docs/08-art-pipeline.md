@@ -1,6 +1,6 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US land unit sprites are approved and drawn in the game (section 12), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
+**Status:** Asset list complete. US land unit sprites are approved and drawn in the game, German land sprites are drawn in the game and awaiting approval (section 12), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
 **Last updated:** 2026-11-01
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
@@ -65,7 +65,7 @@ Owned properties use team color, which today is a small flag in the tile's corne
 | IN | Infantry | GI, Tommy | Wehrmacht rifleman |
 | AI | Assault Infantry | Bazooka team, assault engineers | Panzerschreck team, Pioniere |
 | MO | Mortar Team | US/UK mortar team | Granatwerfer team |
-| RC | Recon | Willys jeep, Daimler | Sd.Kfz. 234 |
+| RC | Recon | Willys jeep, Daimler | Zündapp KS 750 with sidecar, Sd.Kfz. 234 |
 | HT | Halftrack | M3 | Sd.Kfz. 251 |
 | LT | Light Tank | M5 Stuart | Panzer II |
 | MT | Medium Tank | Sherman | Panzer IV |
@@ -219,16 +219,21 @@ Answers so far to section 9. Questions not listed here are still open.
 | Flak Gun | Barrel lifts 1 pixel |
 | Mobile AA | Turret swings from forward to back |
 
-- **Sheet layout (Q13):** `public/assets/units/{nation}-land-{team}.png`, 32 pixels wide, with 2 frames across and one row per unit in section 4 order: IN, AI, MO, RC, HT, LT, MT, HV, TD, AR, RK, AA, FK. A nation with no art for a unit leaves that row empty, so the US HV row is blank.
-- **Team colors:** only the 3 body colors change per team. Wheels, tracks, skin and the star stay the same. The olive, blue and red sheets are placeholders until Q4 is decided, including whether a red unit keeps a white US star.
-- **Preview:** `docs/art/us-land-units.png` shows every approved unit.
+- **Sheet layout (Q13):** `public/assets/units/{nation}-land-{team}.png`, 32 pixels wide, with 2 frames across and one row per unit in section 4 order: IN, AI, MO, RC, HT, LT, MT, HV, TD, AR, RK, AA, FK. A nation with no art for a unit leaves that row empty, so the US HV row is blank. `{nation}` is a two-letter code: `us` or `de`.
+- **Team colors:** only the 3 body colors change per team. Wheels, tracks, skin and the star stay the same. All team sheets are placeholders until Q4 is decided, including whether a red unit keeps a white US star. The blue and red sheets are used in the game; `us-land-olive.png` and `de-land-grey.png` show each nation's natural color and aren't used yet.
+- **Naming:** Allies and Axis are the sides. Germany and German are the nation. Wehrmacht is only a description of equipment or uniforms, not a label.
+- **German insignia (Q11):** German sprites carry no national insignia until Q11 is decided. Camouflage patches fill the space the US star takes, and the sides differ by silhouette.
+- **Preview:** `docs/art/us-land-units.png` and `docs/art/de-land-units.png` show every unit.
 
 **Art choices that differ from the rules (art only, stats don't change):**
 - The US Recon is a Willys jeep, chosen because it can't be mistaken for a tank.
 - The Halftrack shows a .50 cal, though the unit is unarmed in the rules (01-units).
 - The US Rocket Artillery is the tracked T34 Calliope, though the unit moves on wheels in the rules.
+- The German Recon is a Zündapp motorcycle with sidecar, chosen so it can't be mistaken for a tank or the jeep.
+- The German Halftrack shows an MG 34, though the unit is unarmed in the rules.
+- The German Rocket Artillery, a Nebelwerfer 41, is a towed launcher with no engine, though the unit moves on its own in the rules.
 
-**Not done yet:** US air and naval units are first drafts in `tools/art/us-units.mjs`, not exported.
+**Not done yet:** US air and naval units are first drafts in `tools/art/us-units.mjs`, not exported. German air and naval units aren't drawn.
 
 ## 13. Art packs
 

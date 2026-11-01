@@ -286,3 +286,4 @@ UI falls into four categories:
 | 2026-11-01 | Mechanics paused at milestone 10 to work on visuals; the full art asset list is in 08-art-pipeline |
 | 2026-11-01 | Unit art is pixel grids rendered to PNG by script. Units face right and alternate 2 idle frames. US land sprites approved; the US Recon is a Willys jeep (08-art-pipeline §12) |
 | 2026-11-01 | Art packs: art, colors and display names load from a pack.json at startup, every field optional, with placeholders for anything missing; `?pack=` picks one (08-art-pipeline §13) |
+| 2026-11-01 | Allies and Axis name the sides; Germany and German name the nation; Wehrmacht is never a label. German land sprites carry no national insignia until that decision is made (08-art-pipeline §12) |
