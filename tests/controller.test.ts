@@ -21,6 +21,7 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
   const seen = {
     ranges: [] as readonly RangeLayer[],
     menu: null as readonly MenuItem[] | null,
+    menuSelected: 0,
     forecast: null as readonly string[] | null,
     cursor: null as Point | null,
     commands: [] as Command[],
@@ -33,7 +34,7 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
     clearPath: () => undefined,
     previewMove: () => Promise.resolve(),
     resetPreview: () => undefined,
-    openMenu: (_, items) => { seen.menu = items; },
+    openMenu: (_, items, selected = 0) => { seen.menu = items; seen.menuSelected = selected; },
     closeMenu: () => { seen.menu = null; },
     setCursor: (tile) => { seen.cursor = tile; },
     showForecast: (_, lines) => { seen.forecast = lines; },
@@ -145,7 +146,10 @@ describe("capture and build", () => {
 
   it("clicking an enemy factory, a city or open ground doesn't", () => {
     const { controller, built } = setup(["fC."], [], [{ pos: P(0, 0), owner: 1 }, { pos: P(1, 0), owner: 0 }]);
-    for (const tile of [P(0, 0), P(1, 0), P(2, 0)]) controller.onConfirm(tile);
+    for (const tile of [P(0, 0), P(1, 0), P(2, 0)]) {
+      controller.onConfirm(tile);
+      controller.onCancel();
+    }
     expect(built.options).toBeNull();
   });
 
@@ -405,13 +409,158 @@ describe("attacking fortifications", () => {
   });
 });
 
+describe("turn menu (11-tech-setup §3c)", () => {
+  const units: UnitSetup[] = [
+    { type: "infantry", owner: 0, pos: P(0, 0) },
+    { type: "infantry", owner: 1, pos: P(5, 0) },
+  ];
+
+  it("Z on an empty tile opens the menu with Resign, then End Turn highlighted last", () => {
+    const { controller, seen, labels } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    expect(labels()).toEqual(["resign", "endTurn"]);
+    expect(seen.menuSelected).toBe(1);
+  });
+
+  it("Z on an enemy unit opens the menu too", () => {
+    const { controller, labels } = setup(["======"], units);
+    controller.onConfirm(P(5, 0));
+    expect(labels()).toEqual(["resign", "endTurn"]);
+  });
+
+  it("Z on your unit that has already moved opens the menu instead of selecting it", async () => {
+    const { controller, seen, labels, settle } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    controller.onMenuChoice("wait");
+    await settle();
+    controller.onConfirm(P(1, 0));
+    expect(labels()).toEqual(["resign", "endTurn"]);
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("Z on your ready unit still selects it, with no menu", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    expect(seen.menu).toBeNull();
+    expect(seen.ranges[0]?.kind).toBe("move");
+  });
+
+  it("Z on your empty factory still opens the build list, with no menu", () => {
+    const { controller, seen, built } = setup(["f."], [], [{ pos: P(0, 0), owner: 0 }]);
+    controller.onConfirm(P(0, 0));
+    expect(built.options).not.toBeNull();
+    expect(seen.menu).toBeNull();
+  });
+
+  it("Z on your factory with a spent unit on it opens the menu", async () => {
+    const { controller, built, labels, settle } = setup(["f."], [{ type: "infantry", owner: 0, pos: P(1, 0) }], [{ pos: P(0, 0), owner: 0 }]);
+    controller.onConfirm(P(1, 0));
+    controller.onConfirm(P(0, 0));
+    await settle();
+    controller.onMenuChoice("wait");
+    await settle();
+    controller.onConfirm(P(0, 0));
+    expect(built.options).toBeNull();
+    expect(labels()).toEqual(["resign", "endTurn"]);
+  });
+
+  it("End Turn sends one endTurn command and closes the menu", async () => {
+    const { controller, seen, settle, getState } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("endTurn");
+    await settle();
+    expect(seen.commands).toEqual([{ type: "endTurn" }]);
+    expect(seen.menu).toBeNull();
+    expect(getState().currentPlayer).toBe(1);
+  });
+
+  it("input is held until End Turn has finished playing", async () => {
+    const { controller, seen, settle } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("endTurn");
+    expect(controller.busy).toBe(true);
+    controller.onConfirm(P(2, 0));
+    expect(seen.menu).toBeNull();
+    await settle();
+    expect(controller.busy).toBe(false);
+  });
+
+  it("cancel closes the menu without ending the turn", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onCancel();
+    expect(seen.menu).toBeNull();
+    expect(seen.commands).toEqual([]);
+  });
+
+  it("Resign asks first, with Keep Playing highlighted", () => {
+    const { controller, seen, labels } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("resign");
+    expect(labels()).toEqual(["keepPlaying", "resignNow"]);
+    expect(seen.menuSelected).toBe(0);
+    expect(seen.commands).toEqual([]);
+  });
+
+  it("Resign Now sends one resign command", async () => {
+    const { controller, seen, settle, getState } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("resign");
+    controller.onMenuChoice("resignNow");
+    await settle();
+    expect(seen.commands).toEqual([{ type: "resign" }]);
+    expect(getState().result?.reason).toBe("resign");
+  });
+
+  it("Keep Playing and cancel both go back to the menu, End Turn highlighted", () => {
+    const { controller, seen, labels } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    for (const back of [() => controller.onMenuChoice("keepPlaying"), () => controller.onCancel()]) {
+      controller.onMenuChoice("resign");
+      back();
+      expect(labels()).toEqual(["resign", "endTurn"]);
+      expect(seen.menuSelected).toBe(1);
+    }
+  });
+
+  it("Z outside a selected unit's range drops the selection without opening the menu", () => {
+    const { controller, seen } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(4, 0));
+    expect(seen.menu).toBeNull();
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("Z on another ready unit outside the range switches to it", () => {
+    const { controller, seen } = setup(["======"], [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "infantry", owner: 0, pos: P(5, 0) },
+    ]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(5, 0));
+    expect(seen.ranges[0]?.tiles).toContainEqual(P(5, 0));
+    expect(seen.ranges[0]?.tiles).not.toContainEqual(P(0, 0));
+  });
+
+  it("the E shortcut ends the turn from any state, dropping a selection", async () => {
+    const { controller, seen, settle } = setup(["======"], units);
+    controller.onConfirm(P(0, 0));
+    controller.endTurn();
+    await settle();
+    expect(seen.commands).toEqual([{ type: "endTurn" }]);
+    expect(seen.ranges).toEqual([]);
+  });
+});
+
 describe("enemy threat range", () => {
-  it("shows where an enemy can move and, in red, what it can hit beyond that", () => {
+  it("holding X shows where an enemy can move and, in red, what it can hit beyond that", () => {
     const { controller, seen } = setup(["======"], [
       { type: "infantry", owner: 1, pos: P(0, 0) },
       { type: "mediumTank", owner: 0, pos: P(5, 0) },
     ]);
-    controller.onConfirm(P(0, 0));
+    controller.onPeekStart(P(0, 0));
     const [move, attack] = seen.ranges;
     expect(move?.kind).toBe("inspect");
     expect(move?.tiles).toHaveLength(4); // its own tile + 3 tiles of movement

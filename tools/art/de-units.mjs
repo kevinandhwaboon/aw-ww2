@@ -100,8 +100,8 @@ export const units = [
     code: "IN", name: "Infantry", real: "Rifleman with Kar98k", ground: "plains",
     frames: onFoot([
       ...stahlhelm,
-      "....KKooKoK.....", ".....KoooK......", "....KLLMMK.....K", ".KbbbKWKoobbbKK.",
-      ".KbbKMMDoobbK...", "..KKMDDDKKKK....", "...KKMMMKK......",
+      "....KKooKoK.....", ".....KoooK......", "....KLLMMK....K.", ".KbbbKWKoobbWWWK",
+      ".KbbKMMDoobKKKKK", "..KKMDDDKKKK....", "...KKMMMKK......",
     ]),
   },
   {
