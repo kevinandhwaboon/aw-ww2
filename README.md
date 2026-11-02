@@ -15,17 +15,17 @@ Phase 1 (core MVP) is complete. Two players on one device can pick from four tes
 | Move cursor | Move the mouse | Arrow keys |
 | Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
 | Open the turn menu (Resign, End Turn) | Click any tile with no unit ready to move | Z on any tile with no unit ready to move |
-| Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys, Z on the target |
+| Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys step between targets, Z on one, X to go back |
 | Capture a property | CAPTURE in the menu | Z on CAPTURE |
 | Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Z |
 | Load or join | Move onto your Halftrack or a damaged unit of the same type, then LOAD or JOIN | The same with arrow keys and Z |
-| Unload | UNLOAD in the menu, then click a blue tile | Z on UNLOAD, arrow keys, Z on the tile |
+| Unload | UNLOAD in the menu, then click a blue tile | Z on UNLOAD, arrow keys step between tiles, Z on one, X to go back |
 | Cancel | Right click, or click outside the menu | X, Esc or Backspace |
 | Show any unit's move and threat range | Hold right click on it, with nothing selected | Hold X on it, with nothing selected |
 | Undo last move this turn | None | U or Cmd/Ctrl+Z |
 | End turn | END TURN in the turn menu | Z twice on any tile with no unit ready to move, or E |
 | Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |
-| Menus and screens | Click | Arrow keys, Z to choose, X to go back |
+| Menus and screens | Click | Arrow keys, Z to choose, X to go back. On map select, arrows pick a map, Z moves to Start, and Up from there reaches the options |
 
 ## Art packs
 

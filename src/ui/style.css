@@ -58,10 +58,26 @@ body {
   user-select: none;
 }
 
-.terrain-panel {
-  right: 16px;
+.tile-info {
+  left: 16px;
   bottom: 16px;
-  min-width: 120px;
+  z-index: 1;
+  min-width: 170px;
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.tile-info-right {
+  left: auto;
+  right: 16px;
+}
+
+.tile-defense {
+  color: var(--accent);
+}
+
+.tile-unit {
+  font-weight: bold;
 }
 
 .panel-title {
@@ -219,7 +235,7 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 280px;
+  width: min(440px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
@@ -260,6 +276,48 @@ body {
 
 .build-cost {
   font-weight: bold;
+}
+
+.build-menu .build-row {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.build-sprite {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.build-sprite canvas {
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+.build-details {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.build-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.build-name {
+  font-weight: bold;
+}
+
+.build-role {
+  opacity: 0.8;
 }
 
 .results {

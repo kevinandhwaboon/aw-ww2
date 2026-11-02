@@ -155,12 +155,13 @@ UI falls into four categories:
 | Map-anchored | Cursor, movement/attack range highlights, path arrow, unit HP numbers, damage popups | **Canvas (Phaser)** |
 | In-battle contextual menus | Fire / Capture / Wait / Load, turn menu (Resign / End Turn), damage forecast | **Canvas (Phaser)**, pixel style |
 | HUD | Current player's flag, day counter, funds, on the side of the map away from the cursor | **HTML overlay** |
+| Tile info | Terrain name, defense stars, and the name of any unit on the tile, in a bottom corner away from the cursor | **HTML overlay** |
 | Full screens | Title, scenario select, briefing, results, settings | **HTML overlay** |
 
 - HTML UI is styled retro: a shared pixel font (open-licensed), pixel-art panel frames via CSS `border-image`, crisp image scaling, and a shared palette with the canvas UI.
 - Input between layers must be handled so taps on menus don't also hit the map.
 - Mobile and touch considerations (for later): no hover (info follows selection), menus placed away from the finger, tap targets around 44px on screen, pan/pinch-zoom coexisting with tap-to-select, top/bottom layout in portrait.
-- Factory build menu: **HTML** (it's a scrolling list).
+- Factory build menu: **HTML** (it's a scrolling list). Each row shows the unit's sprite, cost, role, and what it's strong and weak against. The guide is written by hand in `src/game/unitGuide.ts`, and a test checks it against the damage chart.
 - The whole game plays from the keyboard, title screen to results (11-tech-setup §3c). The mouse still works but is never required.
 
 ## 13. Combat presentation (staged)
@@ -292,3 +293,6 @@ UI falls into four categories:
 | 2026-11-01 | Full keyboard play. Following the original game, Z on any tile with no unit ready to move opens a turn menu: Resign, then End Turn, highlighted by default. Your own empty factory still opens the build list. Z or a click on an enemy no longer shows its range; hold X or right-click instead (11-tech-setup §3c) |
 | 2026-11-01 | The HUD is only the current player's flag, the day and their funds. The unit, terrain and debug panels moved behind `?debug=on`; the Undo, End Turn and Resign buttons are gone, with U and E kept as shortcuts (11-tech-setup §3c, §7) |
 | 2026-11-01 | HUD flags are placeholders with no political symbols. Germany shows a black Balkenkreuz on grey, its wartime military marking, since the real 1935–45 flag is banned here and black, white and red has far-right associations today. The Soviet flag is a plain star. German sprites still carry no insignia (08-art-pipeline §12) |
+| 2026-11-01 | The attack forecast shows only the damage you'd deal, not the counter (03-combat §1) |
+| 2026-11-01 | A tile info box shows the terrain, its defense stars and any unit's name, with no percentages. Air units show no stars. It replaces the debug-only terrain panel, so property owners and capture progress are no longer listed there |
+| 2026-11-01 | Arrow keys are limited to the move range while a unit is selected, and to the choices while firing or unloading (11-tech-setup §3c) |

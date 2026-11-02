@@ -58,20 +58,20 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
   let chosen = scenarios[0];
   const rows = scenarios.map((scenario) => {
     const row = el("button", "build-row", scenario.name);
-    row.addEventListener("click", () => choose(scenario));
+    row.addEventListener("focus", () => choose(scenario));
+    row.addEventListener("click", () => {
+      choose(scenario);
+      start.focus();
+    });
     list.append(row);
     return { scenario, row };
   });
+  const chosenRow = () => rows.find(({ scenario }) => scenario === chosen)?.row;
 
   /** Z picks a map and moves on to Start, so walking down to the options doesn't change it. */
   function choose(scenario: Scenario): void {
     chosen = scenario;
     for (const { scenario: s, row } of rows) row.classList.toggle("selected", s === scenario);
-    describe(scenario);
-    start.focus();
-  }
-
-  function describe(scenario: Scenario): void {
     const { map, units } = scenario.setup;
     name.textContent = scenario.name;
     details.textContent = `${matchup(scenario)} · ${map.width}×${map.height} · ${units?.length ?? 0} units`;
@@ -100,14 +100,18 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
   );
   node.append(panel);
   if (chosen) choose(chosen);
-  rows.find(({ scenario }) => scenario === chosen)?.row.focus();
-  // Moving over a map previews it; moving off the list shows the chosen one again.
-  panel.addEventListener("focusin", ({ target }) => {
-    const shown = rows.find(({ row }) => row === target)?.scenario ?? chosen;
-    if (shown) describe(shown);
-  });
-  menuKeys(panel, [...rows.map(({ row }) => row), luck.input, passDevice.input, start], () => {
-    close();
-    showTitleScreen(root, scenarios, defaults, onStart);
-  });
+  chosenRow()?.focus();
+  // Arrows pick a map straight away; Z moves on to Start, and Up from there reaches the options.
+  menuKeys(
+    panel,
+    () => {
+      const mapRows = rows.map(({ row }) => row);
+      const onList = mapRows.some((row) => row === document.activeElement);
+      return onList ? mapRows : [chosenRow(), luck.input, passDevice.input, start].flatMap((item) => item ?? []);
+    },
+    () => {
+      close();
+      showTitleScreen(root, scenarios, defaults, onStart);
+    },
+  );
 }

@@ -11,7 +11,7 @@ import "./ui/style.css";
 //   ?luck=off            turns luck off
 //   ?handoff=off         skips the pass-the-device screen
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
-//   ?debug=on            shows the unit, terrain and debug panels
+//   ?debug=on            shows the unit and debug panels
 const params = new URLSearchParams(window.location.search);
 const seedParam = Number(params.get("seed") ?? NaN);
 

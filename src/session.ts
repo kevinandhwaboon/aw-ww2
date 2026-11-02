@@ -19,7 +19,7 @@ import {
   createHandoff,
   createHud,
   createResultsScreen,
-  createTerrainPanel,
+  createTileInfo,
   createUnitPanel,
 } from "./ui/hud";
 
@@ -29,7 +29,7 @@ export interface SessionOptions {
   readonly setup: GameSetup;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
-  /** Also shows the unit, terrain and debug panels (11-tech-setup §7). */
+  /** Also shows the unit and debug panels (11-tech-setup §7). */
   readonly debug: boolean;
   readonly onNewGame: () => void;
 }
@@ -47,12 +47,12 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
   const height = state.map.height * TILE_SIZE;
 
   const hud = createHud(uiRoot);
+  const tileInfoPanel = createTileInfo(uiRoot);
   const unitPanel = debug ? createUnitPanel(uiRoot) : null;
-  const terrainPanel = debug ? createTerrainPanel(uiRoot) : null;
   const debugPanel = debug ? createDebugPanel(uiRoot) : null;
   const banner = createBanner(uiRoot);
   const handoff = createHandoff(uiRoot);
-  const buildMenu = createBuildMenu(uiRoot);
+  const buildMenu = createBuildMenu(uiRoot, () => state);
   const results = createResultsScreen(uiRoot);
 
   const scene = new MapScene({
@@ -66,6 +66,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
   const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
   scene.setHandlers({
     onCursorMove: (tile) => controller.onCursorMove(tile),
+    nextCursor: (from, step) => controller.nextCursor(from, step),
     onConfirm: (tile) => controller.onConfirm(tile),
     onCancel: () => controller.onCancel(),
     onMenuChoice: (id) => controller.onMenuChoice(id),
@@ -76,7 +77,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
     hud.update(state, cursor);
-    terrainPanel?.show(state, cursor);
+    tileInfoPanel.show(state, cursor);
     unitPanel?.show(state, unitAt(state, cursor));
   }
 

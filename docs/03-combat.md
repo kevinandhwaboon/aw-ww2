@@ -50,7 +50,7 @@ damage% = (base × attackMod/100 + luck) × (attackerHP / 10) × ((200 − defen
 5. Indirect units never counterattack, and are never countered when they fire.
 6. The engine emits a single combat result event (damage dealt, counter damage, destroyed units, ammo spent, veterancy changes) for the presentation layer to play back.
 
-**Damage forecast:** before confirming, the player sees the expected damage range (minimum and maximum luck) for the attack and the likely counter.
+**Damage forecast:** before confirming, the player sees the expected damage range (minimum and maximum luck) for the attack. The counter isn't shown.
 
 ## 3. Luck
 

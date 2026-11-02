@@ -330,7 +330,7 @@ describe("targeting", () => {
     expect(seen.menu).toBeNull();
     expect(seen.ranges).toEqual([{ tiles: [P(2, 0)], kind: "attack" }]);
     expect(seen.cursor).toEqual(P(2, 0));
-    expect(seen.forecast).toEqual(["DMG 55%", "BACK 27%"]);
+    expect(seen.forecast).toEqual(["DMG 55%"]);
   });
 
   it("the forecast clears away from a target", async () => {
@@ -384,7 +384,7 @@ describe("attacking fortifications", () => {
     const { controller, seen } = await nextToBunker();
     controller.onMenuChoice("fire");
     expect(seen.ranges).toEqual([{ tiles: [P(2, 0)], kind: "attack" }]);
-    expect(seen.forecast).toEqual(["DMG 65%", "NO COUNTER"]);
+    expect(seen.forecast).toEqual(["DMG 65%"]);
   });
 
   it("confirming sends an attackFort command", async () => {
@@ -579,17 +579,86 @@ describe("forecast text", () => {
     counterCertainKill: false,
   };
 
-  it("shows damage ranges", () => {
-    expect(forecastLines(base)).toEqual(["DMG 55-64%", "BACK 20-27%"]);
+  it("shows only the damage you'd deal, never the counter (03-combat §1)", () => {
+    expect(forecastLines(base)).toEqual(["DMG 55-64%"]);
+    expect(forecastLines({ ...base, counterCanKill: true, counterCertainKill: true })).toEqual(["DMG 55-64%"]);
   });
 
   it("flags a possible kill and a certain kill", () => {
-    expect(forecastLines({ ...base, canKill: true })[0]).toBe("DMG 55-64% KILL?");
-    expect(forecastLines({ ...base, canKill: true, certainKill: true, counter: null })).toEqual(["DMG 55-64% KILL", "NO COUNTER"]);
+    expect(forecastLines({ ...base, canKill: true })).toEqual(["DMG 55-64% KILL?"]);
+    expect(forecastLines({ ...base, canKill: true, certainKill: true, counter: null })).toEqual(["DMG 55-64% KILL"]);
+  });
+});
+
+describe("cursor limits (11-tech-setup §3c)", () => {
+  const RIGHT = P(1, 0);
+  const LEFT = P(-1, 0);
+  const DOWN = P(0, 1);
+
+  it("moves freely with nothing selected", () => {
+    const { controller } = setup(["====="], []);
+    expect(controller.nextCursor(P(1, 0), RIGHT)).toEqual(P(2, 0));
   });
 
-  it("warns when the counter could destroy your own unit", () => {
-    expect(forecastLines({ ...base, counterCanKill: true })[1]).toBe("BACK 20-27% KILL?");
-    expect(forecastLines({ ...base, counterCanKill: true, counterCertainKill: true })[1]).toBe("BACK 20-27% KILL");
+  it("stops at the edge of a selected unit's move range", () => {
+    const { controller } = setup(["========"], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    expect(controller.nextCursor(P(2, 0), RIGHT)).toEqual(P(3, 0));
+    expect(controller.nextCursor(P(3, 0), RIGHT)).toEqual(P(3, 0)); // 3 move points
+  });
+
+  it("can't leave the map at the end of a row and wrap onto the next one", () => {
+    const { controller } = setup(["==", "=="], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    expect(controller.nextCursor(P(1, 0), RIGHT)).toEqual(P(1, 0));
+  });
+
+  it("is held still while a unit walks", async () => {
+    const { controller, settle } = setup(["===="], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    expect(controller.nextCursor(P(1, 0), RIGHT)).toEqual(P(1, 0));
+    await settle();
+  });
+
+  const twoTargets = async () => {
+    const game = setup(["===", "===", "==="], [
+      { type: "mediumTank", owner: 0, pos: P(1, 1) },
+      { type: "infantry", owner: 1, pos: P(1, 0) },
+      { type: "infantry", owner: 1, pos: P(2, 1) },
+    ]);
+    game.controller.onConfirm(P(1, 1));
+    game.controller.onConfirm(P(1, 1));
+    await game.settle();
+    game.controller.onMenuChoice("fire");
+    return game;
+  };
+
+  it("while firing, arrows only step between the targets, in both directions", async () => {
+    const { controller, seen } = await twoTargets();
+    const first = seen.cursor ?? P(0, 0);
+    const second = controller.nextCursor(first, RIGHT);
+    expect(second).not.toEqual(first);
+    expect(controller.nextCursor(second, DOWN)).toEqual(first);
+    expect(controller.nextCursor(first, LEFT)).toEqual(second);
+  });
+
+  it("with one target, arrows leave the cursor on it", async () => {
+    const { controller, seen, settle } = setup(["===="], [
+      { type: "mediumTank", owner: 0, pos: P(0, 0) },
+      { type: "infantry", owner: 1, pos: P(1, 0) },
+    ]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(0, 0));
+    await settle();
+    controller.onMenuChoice("fire");
+    expect(seen.cursor).toEqual(P(1, 0));
+    expect(controller.nextCursor(P(1, 0), DOWN)).toEqual(P(1, 0));
+  });
+
+  it("cancelling Fire puts the cursor back on the unit, so it's inside the range again", async () => {
+    const { controller, seen } = await twoTargets();
+    controller.onCancel();
+    expect(seen.cursor).toEqual(P(1, 1));
   });
 });
