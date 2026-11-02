@@ -6,7 +6,7 @@ import { attackTargets, forecast, fortForecast, fortTargets, threatTiles, type C
 import type { Command, UnitAction } from "../engine/commands";
 import { UNITS, type UnitTypeId } from "../engine/data/units";
 import { buildOptions, captureProblem, type BuildOption } from "../engine/economy";
-import type { Point } from "../engine/map";
+import { inBounds, type Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
 import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
 import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
@@ -109,8 +109,16 @@ const percent = ({ min, max }: { min: number; max: number }) => (min === max ? `
 /** The damage forecast as short lines for the map panel. `killWord` is what destroying the target is called. */
 export function forecastLines(f: CombatForecast, killWord = "KILL"): string[] {
   const kill = f.certainKill ? ` ${killWord}` : f.canKill ? ` ${killWord}?` : "";
-  const killed = f.counterCertainKill ? " KILL" : f.counterCanKill ? " KILL?" : "";
-  return [`DMG ${percent(f.attack)}${kill}`, f.counter ? `BACK ${percent(f.counter)}${killed}` : "NO COUNTER"];
+  return [`DMG ${percent(f.attack)}${kill}`];
+}
+
+const targetTiles = ({ targets, forts }: Aimed): Point[] => [...targets.map((t) => t.pos), ...forts];
+
+/** The next tile in the list, or the previous one for up and left, wrapping around. */
+function stepThrough(tiles: readonly Point[], from: Point, step: Point): Point {
+  const current = tiles.findIndex((t) => t.x === from.x && t.y === from.y);
+  const next = (current + step.x + step.y + tiles.length) % tiles.length;
+  return tiles[next] ?? from;
 }
 
 export class InputController {
@@ -143,6 +151,29 @@ export class InputController {
     view.resetPreview();
     buildMenu.close();
     this.mode = { kind: "idle" };
+  }
+
+  /**
+   * Where an arrow key takes the cursor. While choosing a destination it stays inside the move
+   * range. While choosing a target or an unload tile it only steps between the choices.
+   */
+  nextCursor(from: Point, step: Point): Point {
+    const mode = this.mode;
+    const { map } = this.deps.getState();
+    const to = { x: from.x + step.x, y: from.y + step.y };
+    switch (mode.kind) {
+      case "selected":
+        return inBounds(map, to) && mode.reach.has(to.y * map.width + to.x) ? to : from;
+      case "targeting":
+        return stepThrough(targetTiles(mode), from, step);
+      case "unloading":
+        return stepThrough(mode.tiles, from, step);
+      case "busy":
+      case "over":
+        return from;
+      default:
+        return to;
+    }
   }
 
   onCursorMove(tile: Point): void {
@@ -214,6 +245,7 @@ export class InputController {
         this.deps.view.clearRange();
         this.deps.view.clearForecast();
         this.openMenu(mode);
+        this.cursorToDestination(mode);
         return;
       case "idle":
       case "busy":
@@ -426,7 +458,7 @@ export class InputController {
 
   private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {
     const { view } = this.deps;
-    const tiles = [...mode.targets.map((t) => t.pos), ...mode.forts];
+    const tiles = targetTiles(mode);
     const first = tiles[0];
     if (!first) return;
     view.closeMenu();
@@ -435,6 +467,12 @@ export class InputController {
     view.showRanges([{ tiles, kind: "attack" }]);
     view.setCursor(first);
     this.showForecastAt(targeting, first);
+  }
+
+  /** Back from a target or unload tile to where the unit is about to act. */
+  private cursorToDestination(chosen: Chosen): void {
+    const unit = this.deps.getState().units.find((u) => u.id === chosen.unitId);
+    if (unit) this.deps.view.setCursor(chosen.path[chosen.path.length - 1] ?? unit.pos);
   }
 
   private showForecastAt(mode: Extract<Mode, { kind: "targeting" }>, tile: Point): void {

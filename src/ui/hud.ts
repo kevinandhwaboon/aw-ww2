@@ -1,16 +1,19 @@
 import type { NationId } from "../engine/data/nations";
-import { terrainDef } from "../engine/data/terrain";
-import { UNITS } from "../engine/data/units";
+import { UNITS, type UnitTypeId } from "../engine/data/units";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Combatant, GameEvent } from "../engine/commands";
 import type { Modifier } from "../engine/modifiers";
-import { terrainAt, type Point } from "../engine/map";
-import { CAPTURE_POINTS, displayHp, fortAt, propertyAt, type DefeatReason, type GameState, type Unit } from "../engine/state";
+import type { Point } from "../engine/map";
+import { displayHp, type DefeatReason, type GameState, type Player, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
-import { terrainName, unitName as unitTypeName } from "../game/artPack";
+import { activePack, findUnitArt, terrainName, unitName as unitTypeName } from "../game/artPack";
 import type { BuildMenu } from "../game/controller";
+import { packFileUrl } from "../game/loadArtPack";
 import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
-import { playerColors } from "../game/placeholderUnits";
+import { drawUnitMarker, playerColors } from "../game/placeholderUnits";
+import { TILE_SIZE } from "../game/placeholderTiles";
+import { tileInfo } from "../game/tileInfo";
+import { UNIT_GUIDE } from "../game/unitGuide";
 import { menuKeys } from "./menuKeys";
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -22,33 +25,24 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: st
 
 const stars = (n: number) => (n > 0 ? "★".repeat(n) : "–");
 
-/** HTML overlay panel showing the terrain under the cursor, with its owner and capture progress. */
-export function createTerrainPanel(root: HTMLElement): { show: (state: GameState, tile: Point) => void } {
-  const panel = el("div", "panel terrain-panel");
+/** The terrain under the cursor and its defense, and the unit there if any. Stays away from the cursor. */
+export function createTileInfo(root: HTMLElement): { show: (state: GameState, tile: Point) => void } {
+  const panel = el("div", "panel tile-info");
   const name = el("div", "panel-title");
-  const starRow = el("div", "stars");
-  const owner = el("div", "terrain-owner");
-  panel.append(name, starRow, owner);
+  const defense = el("div", "tile-defense");
+  const unitLine = el("div", "tile-unit");
+  panel.append(name, defense, unitLine);
   root.append(panel);
 
   return {
     show(state, tile) {
-      const def = terrainDef(terrainAt(state.map, tile));
-      name.textContent = terrainName(terrainAt(state.map, tile));
-      starRow.textContent = stars(def.defenseStars);
-      starRow.title = `Defense: ${def.defenseStars}`;
-      const property = propertyAt(state, tile);
-      const fort = fortAt(state, tile);
-      owner.hidden = !property && !fort;
-      if (fort) {
-        owner.textContent = `HP ${displayHp(fort.hp)} / 10`;
-        owner.style.color = "";
-      }
-      if (!property) return;
-      const holder = property.owner === null ? undefined : state.players[property.owner];
-      const capture = property.capturePoints < CAPTURE_POINTS ? ` · capture ${property.capturePoints}/${CAPTURE_POINTS}` : "";
-      owner.textContent = `${holder?.name ?? "Neutral"}${capture}`;
-      owner.style.color = holder ? playerColors(holder.id)[0] : "";
+      const info = tileInfo(state, tile);
+      name.textContent = info.terrain;
+      defense.textContent = info.stars > 0 ? `Defense ${stars(info.stars)}` : "No defense";
+      unitLine.hidden = !info.unit;
+      unitLine.textContent = info.unit?.name ?? "";
+      unitLine.style.color = info.unit ? playerColors(info.unit.owner)[0] : "";
+      panel.classList.toggle("tile-info-right", tile.x < state.map.width / 2);
     },
   };
 }
@@ -94,20 +88,57 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
   };
 }
 
+const SPRITE_SCALE = 2;
+
+/** The unit's sprite from the art pack, facing the way it does on the map, or its placeholder marker. */
+function unitPicture(player: Player | undefined, type: UnitTypeId): HTMLElement {
+  const picture = el("div", "build-sprite");
+  const pack = activePack();
+  const art = player ? findUnitArt(pack, player.nation, player.id, type) : null;
+  const sheet = art ? pack.unitSheets[art.sheet] : undefined;
+  if (art && sheet) {
+    const tile = TILE_SIZE * SPRITE_SCALE;
+    picture.style.backgroundImage = `url("${packFileUrl(sheet.path)}")`;
+    picture.style.backgroundSize = `${art.frames * tile}px auto`;
+    picture.style.backgroundPosition = `0 ${-art.row * tile}px`;
+    if (player?.facing === "left") picture.style.transform = "scaleX(-1)";
+  } else if (player) {
+    picture.append(drawUnitMarker(type, player.id));
+  }
+  return picture;
+}
+
+/** What the unit is for and what it beats and fears, as short lines for the build list. */
+function guideLines(type: UnitTypeId): HTMLElement[] {
+  const { role, strongVs, weakVs } = UNIT_GUIDE[type];
+  const names = (types: readonly UnitTypeId[]) => types.map(unitTypeName).join(", ");
+  return [
+    el("div", "build-role", role),
+    ...(strongVs.length > 0 ? [el("div", "build-strong", `Strong vs ${names(strongVs)}`)] : []),
+    el("div", "build-weak", `Weak vs ${names(weakVs)}`),
+  ];
+}
+
 /** The factory's list of units: a scrolling HTML list, as decided in 00-master-design §12. */
-export function createBuildMenu(root: HTMLElement): BuildMenu {
+export function createBuildMenu(root: HTMLElement, getState: () => GameState): BuildMenu {
   const panel = el("div", "panel build-menu");
   panel.hidden = true;
   root.append(panel);
 
   return {
     open(options, onPick, onCancel) {
+      const state = getState();
+      const player = state.players[state.currentPlayer];
       const title = el("div", "panel-title", "Build");
       const list = el("div", "build-list");
       const buttons = options.map((option) => {
         const row = el("button", "build-row");
         row.disabled = !option.affordable;
-        row.append(el("span", undefined, unitTypeName(option.type)), el("span", "build-cost", option.cost.toLocaleString("en-US")));
+        const heading = el("div", "build-heading");
+        heading.append(el("span", "build-name", unitTypeName(option.type)), el("span", "build-cost", option.cost.toLocaleString("en-US")));
+        const details = el("div", "build-details");
+        details.append(heading, ...guideLines(option.type));
+        row.append(unitPicture(player, option.type), details);
         row.addEventListener("click", () => onPick(option.type));
         list.append(row);
         return row;

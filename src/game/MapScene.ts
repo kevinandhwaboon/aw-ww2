@@ -15,6 +15,8 @@ import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from ".
 /** What the scene reports to whoever handles input (the InputController, wired up in main.ts). */
 export interface MapInputHandlers {
   onCursorMove(tile: Point): void;
+  /** Where an arrow key takes the cursor from `from`. */
+  nextCursor(from: Point, step: Point): Point;
   onConfirm(tile: Point): void;
   onCancel(): void;
   onMenuChoice(id: string): void;
@@ -201,8 +203,8 @@ export class MapScene extends Phaser.Scene implements MapView {
       event.preventDefault();
       if (this.menu) {
         if (step.y !== 0) this.highlightMenuItem((this.menu.selected + step.y + this.menu.items.length) % this.menu.items.length);
-      } else {
-        this.setCursor({ x: this.cursorTile.x + step.x, y: this.cursorTile.y + step.y });
+      } else if (this.handlers) {
+        this.setCursor(this.handlers.nextCursor(this.cursorTile, step));
       }
       return;
     }
