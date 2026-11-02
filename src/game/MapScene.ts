@@ -135,8 +135,9 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.input.on("pointerup", () => this.handlers?.onPeekEnd());
     this.input.on("pointerupoutside", () => this.handlers?.onPeekEnd());
     this.game.events.on("blur", () => this.handlers?.onPeekEnd()); // a release we'd otherwise never see
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.onKey(event));
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => {
+    // Not Phaser's keyboard events: they replay earlier keys when several land in one frame.
+    window.addEventListener("keydown", (event) => this.onKey(event));
+    window.addEventListener("keyup", (event) => {
       if (event.key === "x" || event.key === "X") this.handlers?.onPeekEnd();
     });
   }
@@ -187,8 +188,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   }
 
   private onKey(event: KeyboardEvent): void {
-    // While an HTML menu has focus, the keyboard belongs to it (Esc still cancels).
-    if (document.activeElement instanceof HTMLButtonElement && event.key !== "Escape") return;
+    // While an HTML menu has focus, the keyboard belongs to it. Cmd/Ctrl+Z is Undo, not Z.
+    if (document.activeElement instanceof HTMLButtonElement || event.metaKey || event.ctrlKey) return;
     const arrows: Record<string, Point> = {
       ArrowUp: { x: 0, y: -1 },
       ArrowDown: { x: 0, y: 1 },
@@ -207,6 +208,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
     if (["z", "Z", "Enter", " "].includes(event.key)) {
       event.preventDefault();
+      if (event.repeat) return; // holding Z must not open a menu and then pick from it
       const item = this.menu?.items[this.menu.selected];
       if (item) this.handlers?.onMenuChoice(item.id);
       else this.handlers?.onConfirm(this.cursorTile);
@@ -309,7 +311,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.previewed = undefined;
   }
 
-  openMenu(at: Point, items: readonly MenuItem[]): void {
+  openMenu(at: Point, items: readonly MenuItem[], selected = 0): void {
     this.closeMenu();
     const width = Math.max(...items.map((i) => textWidth(i.label))) + MENU.pad * 2 + 5;
     const height = items.length * MENU.itemHeight + MENU.pad * 2 - 2;
@@ -320,7 +322,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     const y = Phaser.Math.Clamp(at.y * TILE_SIZE, 0, mapH - height);
 
     const container = this.add.container(x, y);
-    this.menu = { container, items, rect: new Phaser.Geom.Rectangle(x, y, width, height), selected: 0 };
+    this.menu = { container, items, rect: new Phaser.Geom.Rectangle(x, y, width, height), selected };
     this.drawMenu();
   }
 

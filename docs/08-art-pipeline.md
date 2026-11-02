@@ -119,7 +119,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Move range | Tile tint | Blue overlay today |
 | Threat range | Tile tints | Orange for move, red for attack today |
 | Path arrow | About 10 pieces | Straights, corners and 4 arrowheads |
-| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, WAIT, CANCEL |
+| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
 | Forecast panel | Panel frame | "DMG 71-80%" style text |
 | Pixel font | 1 full font | Open-licensed, with letters, digits and % - + ? |
 | Floating numbers | Uses the pixel font | Damage, capture and repair labels |
@@ -196,6 +196,7 @@ Make a small test set before committing to a method: Plains, Road, Forest, Sea, 
 
 - Placeholder terrain: `src/game/placeholderTiles.ts`
 - Placeholder units and overlays: `src/game/placeholderUnits.ts`
+- Placeholder HUD flags: `src/game/placeholderFlags.ts`
 - Pixel font: `src/game/pixelFont.ts`
 - Drawing and effects: `src/game/MapScene.ts`
 - HTML panels and screens: `src/ui/`
@@ -222,7 +223,7 @@ Answers so far to section 9. Questions not listed here are still open.
 - **Sheet layout (Q13):** `public/assets/units/{nation}-land-{team}.png`, 32 pixels wide, with 2 frames across and one row per unit in section 4 order: IN, AI, MO, RC, HT, LT, MT, HV, TD, AR, RK, AA, FK. A nation with no art for a unit leaves that row empty, so the US HV row is blank. `{nation}` is a two-letter code: `us` or `de`.
 - **Team colors:** only the 3 body colors change per team. Wheels, tracks, skin and the star stay the same. All team sheets are placeholders until Q4 is decided, including whether a red unit keeps a white US star. The blue and red sheets are used in the game; `us-land-olive.png` and `de-land-grey.png` show each nation's natural color and aren't used yet.
 - **Naming:** Allies and Axis are the sides. Germany and German are the nation. Wehrmacht is only a description of equipment or uniforms, not a label.
-- **German insignia (Q11):** German sprites carry no national insignia until Q11 is decided. Camouflage patches fill the space the US star takes, and the sides differ by silhouette.
+- **German insignia (Q11):** the HUD shows a black Balkenkreuz on grey as Germany's flag. German sprites still carry no national insignia until the rest of Q11 is decided. Camouflage patches fill the space the US star takes, and the sides differ by silhouette.
 - **Preview:** `docs/art/us-land-units.png` and `docs/art/de-land-units.png` show every unit.
 
 **Art choices that differ from the rules (art only, stats don't change):**
@@ -259,4 +260,4 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 
 **The default pack** (`public/assets/packs/default/`) is the game's normal look. It points at the sheets `npm run art` writes to `public/assets/units/`. If the art tool's row order changes, `rows` in the pack has to change with it.
 
-**Not in packs yet:** the 3×5 map font, the HP and veterancy badges, property flags, and menu words like FIRE. They can follow as that art gets made.
+**Not in packs yet:** the 3×5 map font, the HP and veterancy badges, property flags, HUD national flags, and menu words like FIRE. They can follow as that art gets made.

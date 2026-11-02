@@ -75,17 +75,18 @@
 |---|---|---|
 | Move cursor | Move the mouse | Arrow keys |
 | Select unit / choose destination / choose menu item | Left click | Z, Enter or Space |
+| Open the turn menu (Resign, End Turn) | Click any tile with no unit ready to move | Z on any tile with no unit ready to move |
 | Cancel | Right click, or click outside the menu | X, Esc or Backspace |
 | Show any unit's move and threat range | Hold right click on it, with nothing selected | Hold X on it, with nothing selected |
 | Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys, Z on the target |
 | Capture a property | CAPTURE in the menu | Z on CAPTURE |
-| Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Enter |
+| Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Z |
 | Load or join | Move onto your Halftrack or a damaged unit of the same type, then LOAD or JOIN | The same with arrow keys and Z |
 | Unload | UNLOAD in the menu, then click a blue tile | Z on UNLOAD, arrow keys, Z on the tile |
-| Show an enemy's move and threat range | Click the enemy | Z on the enemy |
-| Undo last move this turn | Undo button | U or Cmd/Ctrl+Z |
-| End turn | End Turn button | E |
-| Resign | Resign button, then click again to confirm | None |
+| Undo last move this turn | None | U or Cmd/Ctrl+Z |
+| End turn | END TURN in the turn menu | Z twice on any tile with no unit ready to move, or E |
+| Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |
+| Menus and screens | Click | Arrow keys, Z to choose, X to go back |
 
 ## 3d. Combat notes (milestone 3)
 
@@ -109,7 +110,9 @@
 - **`src/engine/transport.ts`** holds load, unload, supply and join, shared by the engine and the menus.
 - **Passengers live inside their transport** (`unit.cargo`), not in `GameState.units`. So they can't be targeted, aren't repaired, and die with the transport without counting as kills. A unit that boards also counts as leaving any property it was capturing.
 - **Load and Join** are the only end actions that stop on an occupied tile; every other action still needs an empty one.
-- **Hold to see a range:** with nothing selected, holding X or the right mouse button on any unit shows where it can move and what it can hit. With something selected, they cancel as before. Clicking an enemy still shows its range until the next click.
+- **Keyboard input** comes straight from the browser, not from Phaser's keyboard events, which run a key again if several land in one frame.
+- **Turn menu:** Z on any tile with no unit ready to move opens it: empty ground, an enemy, or your own unit that has already acted. The exception is your own empty factory, which opens the build list. It lists RESIGN then END TURN, with END TURN highlighted, so Z twice ends the turn. RESIGN asks first, with KEEP PLAYING highlighted. Holding Z only counts once, so it can't open the menu and pick from it. Z outside a selected unit's range drops the selection and doesn't open the menu, unless another ready unit is there, which it then selects.
+- **Hold to see a range:** with nothing selected, holding X or the right mouse button on any unit shows where it can move and what it can hit. With something selected, they cancel as before. Z or a click on an enemy opens the turn menu, as on any tile with no unit ready to move.
 
 ## 3g. Win conditions (milestone 6)
 
@@ -203,6 +206,6 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 ## 7. Debug aids
 
-- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a turn bar and End Turn button, a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON).
+- A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON). Since 2026-11-01 these, and the terrain panel, only appear with `?debug=on`.
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack.
+- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit, terrain and debug panels.

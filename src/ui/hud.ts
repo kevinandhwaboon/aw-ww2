@@ -1,3 +1,4 @@
+import type { NationId } from "../engine/data/nations";
 import { terrainDef } from "../engine/data/terrain";
 import { UNITS } from "../engine/data/units";
 import { veterancyFor } from "../engine/data/veterancy";
@@ -8,7 +9,9 @@ import { CAPTURE_POINTS, displayHp, fortAt, propertyAt, type DefeatReason, type 
 import * as stats from "../engine/stats";
 import { terrainName, unitName as unitTypeName } from "../game/artPack";
 import type { BuildMenu } from "../game/controller";
+import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
 import { playerColors } from "../game/placeholderUnits";
+import { menuKeys } from "./menuKeys";
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -50,64 +53,43 @@ export function createTerrainPanel(root: HTMLElement): { show: (state: GameState
   };
 }
 
-/** Day, whose turn it is, funds, Undo and End Turn, and a one-line controls hint. */
-export function createTurnBar(
-  root: HTMLElement,
-  actions: { onEndTurn: () => void; onUndo: () => void; onResign: () => void },
-): { update: (state: GameState, ui: { canUndo: boolean; busy: boolean }) => void } {
-  const bar = el("div", "panel turn-bar");
-  const row = el("div", "turn-row");
-  const day = el("span", "turn-day");
-  const player = el("span", "turn-player");
-  const funds = el("span", "turn-funds");
-  const button = (label: string, title: string, onClick: () => void) => {
-    const b = el("button", "btn", label);
-    b.title = title;
-    b.addEventListener("click", () => {
-      b.blur(); // so Space/Enter go to the map, not this button
-      onClick();
-    });
-    return b;
-  };
-  const undo = button("Undo", "Undo the last move this turn (U)", actions.onUndo);
-  const endTurn = button("End Turn", "End your turn (E)", actions.onEndTurn);
-  // Resigning can't be undone, so it takes a second click to confirm.
-  const RESIGN_LABEL = "Resign";
-  let armed: ReturnType<typeof setTimeout> | undefined;
-  const disarm = () => {
-    clearTimeout(armed);
-    armed = undefined;
-    resign.textContent = RESIGN_LABEL;
-  };
-  const resign = button(RESIGN_LABEL, "Give up this game", () => {
-    if (armed !== undefined) {
-      disarm();
-      actions.onResign();
-      return;
+function drawFlag(nation: NationId): HTMLCanvasElement {
+  const rows = FLAGS[nation];
+  const canvas = el("canvas");
+  canvas.width = rows[0]?.length ?? 0;
+  canvas.height = rows.length;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2D canvas not available");
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      ctx.fillStyle = FLAG_COLORS[row.charAt(x)] ?? "";
+      ctx.fillRect(x, y, 1, 1);
     }
-    resign.textContent = "Really?";
-    armed = setTimeout(disarm, 3000);
   });
-  row.append(day, player, funds, undo, endTurn, resign);
-  const hint = el(
-    "div",
-    "turn-hint",
-    "Click a unit, then a blue tile, then choose an action. Click your empty factory to build. Hold X or right-click on a unit to see its range; they cancel too.",
-  );
-  bar.append(row, hint);
-  root.append(bar);
+  return canvas;
+}
+
+/** The current player's flag, the day and their funds. Sits on the side of the map away from the cursor. */
+export function createHud(root: HTMLElement): { update: (state: GameState, cursor: Point) => void } {
+  const hud = el("div", "panel hud");
+  const flag = el("span", "hud-flag");
+  const day = el("span", "hud-day");
+  const funds = el("span", "hud-funds");
+  hud.append(flag, day, funds);
+  root.append(hud);
+  let shownNation: NationId | undefined;
 
   return {
-    update(state, ui) {
+    update(state, cursor) {
       const current = state.players[state.currentPlayer];
       if (!current) return;
+      if (current.nation !== shownNation) {
+        shownNation = current.nation;
+        flag.replaceChildren(drawFlag(current.nation));
+      }
       day.textContent = `Day ${state.day}`;
-      player.textContent = `${current.name} (${current.nation.toUpperCase()})`;
-      player.style.color = playerColors(current.id)[0];
-      funds.textContent = `Funds ${current.funds.toLocaleString("en-US")} (+${stats.propertyIncome(state, current.id).toLocaleString("en-US")}/day)`;
-      undo.disabled = !ui.canUndo || ui.busy;
-      endTurn.disabled = ui.busy || state.result !== null;
-      resign.disabled = ui.busy || state.result !== null;
+      funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
+      hud.classList.toggle("hud-right", cursor.x < state.map.width / 2);
     },
   };
 }
@@ -135,16 +117,9 @@ export function createBuildMenu(root: HTMLElement): BuildMenu {
       panel.replaceChildren(title, list, cancel);
       panel.hidden = false;
 
-      // Arrow keys walk the affordable rows and Cancel; Enter and Space activate as usual.
       const focusable = [...buttons.filter((b) => !b.disabled), cancel];
       focusable[0]?.focus();
-      panel.onkeydown = (event) => {
-        const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
-        if (step === 0) return;
-        event.preventDefault();
-        const current = focusable.indexOf(document.activeElement as HTMLButtonElement);
-        focusable[(current + step + focusable.length) % focusable.length]?.focus();
-      };
+      menuKeys(panel, focusable, onCancel);
     },
     close() {
       panel.hidden = true;
@@ -166,10 +141,7 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
   // While viewing the final map, this is the way back to the results and New Game.
   const back = el("button", "btn results-back", "Results");
   back.hidden = true;
-  back.addEventListener("click", () => {
-    back.hidden = true;
-    panel.hidden = false;
-  });
+  menuKeys(back, [back]);
   root.append(panel, back);
 
   return {
@@ -201,12 +173,19 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       viewMap.addEventListener("click", () => {
         panel.hidden = true;
         back.hidden = false;
+        back.focus();
       });
+      back.onclick = () => {
+        back.hidden = true;
+        panel.hidden = false;
+        newGame.focus();
+      };
       const buttons = el("div", "results-buttons");
       buttons.append(newGame, viewMap);
       panel.replaceChildren(title, reason, table, buttons);
       panel.hidden = false;
       newGame.focus();
+      menuKeys(panel, [newGame, viewMap]);
     },
   };
 }
@@ -232,6 +211,7 @@ export function createHandoff(root: HTMLElement): { show: (title: string, detail
         screen.replaceChildren(panel);
         screen.hidden = false;
         ready.focus();
+        menuKeys(panel, [ready]);
       });
     },
   };

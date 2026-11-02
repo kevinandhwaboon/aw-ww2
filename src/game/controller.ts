@@ -36,7 +36,8 @@ export interface MapView {
   previewMove(unitId: UnitId, fullPath: readonly Point[]): Promise<void>;
   /** Puts any previewed unit back where the game state says it is. */
   resetPreview(): void;
-  openMenu(at: Point, items: readonly MenuItem[]): void;
+  /** Opens the menu with the item at index `selected` highlighted (the first item by default). */
+  openMenu(at: Point, items: readonly MenuItem[], selected?: number): void;
   closeMenu(): void;
   setCursor(tile: Point): void;
   /** Shows a small text panel next to a tile. */
@@ -64,8 +65,6 @@ interface Aimed extends Chosen {
 
 type Mode =
   | { readonly kind: "idle" }
-  /** Looking at an enemy unit's threat range. */
-  | { readonly kind: "inspect" }
   | ({ readonly kind: "selected" } & Chosen)
   | ({ readonly kind: "menu" } & Aimed)
   | ({ readonly kind: "targeting" } & Aimed)
@@ -73,6 +72,10 @@ type Mode =
   | ({ readonly kind: "unloading"; readonly passenger: UnitId; readonly tiles: readonly Point[] } & Aimed)
   /** The factory build list is open. */
   | { readonly kind: "building" }
+  /** The End Turn and Resign menu, opened on any tile with no unit ready to move. */
+  | { readonly kind: "turnMenu"; readonly at: Point }
+  /** Resigning can't be undone, so it asks first. */
+  | { readonly kind: "confirmResign"; readonly at: Point }
   /** Hold X or right-click: showing a unit's range until released. */
   | { readonly kind: "peeking" }
   /** Animating or waiting for the engine: input is ignored. */
@@ -96,6 +99,10 @@ const UNLOAD: MenuItem = { id: "unload", label: "UNLOAD" };
 const SUPPLY: MenuItem = { id: "supply", label: "SUPPLY" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
+const RESIGN: MenuItem = { id: "resign", label: "RESIGN" };
+const END_TURN: MenuItem = { id: "endTurn", label: "END TURN" };
+const KEEP_PLAYING: MenuItem = { id: "keepPlaying", label: "KEEP PLAYING" };
+const RESIGN_NOW: MenuItem = { id: "resignNow", label: "RESIGN NOW" };
 
 const percent = ({ min, max }: { min: number; max: number }) => (min === max ? `${min}%` : `${min}-${max}%`);
 
@@ -121,7 +128,12 @@ export class InputController {
     this.mode = { kind: "over" };
   }
 
-  /** Drops any selection, e.g. before End Turn or after an undo. */
+  /** Ends the turn, dropping any selection. Ignored while something is playing. */
+  endTurn(): void {
+    if (!this.busy) void this.issue({ type: "endTurn" });
+  }
+
+  /** Drops any selection, e.g. after an undo. */
   reset(): void {
     const { view, buildMenu } = this.deps;
     view.closeMenu();
@@ -154,7 +166,6 @@ export class InputController {
       case "idle":
         this.selectAt(tile);
         return;
-      case "inspect":
       case "building":
       case "peeking":
         this.reset();
@@ -175,6 +186,8 @@ export class InputController {
         }
         return;
       case "menu":
+      case "turnMenu":
+      case "confirmResign":
       case "busy":
       case "over":
         return;
@@ -185,10 +198,13 @@ export class InputController {
     const mode = this.mode;
     switch (mode.kind) {
       case "selected":
-      case "inspect":
       case "building":
       case "peeking":
+      case "turnMenu":
         this.reset();
+        return;
+      case "confirmResign":
+        this.openTurnMenu(mode.at);
         return;
       case "menu":
         this.backToSelection(mode);
@@ -230,6 +246,16 @@ export class InputController {
 
   onMenuChoice(id: string): void {
     const mode = this.mode;
+    if (mode.kind === "turnMenu") {
+      if (id === "endTurn") this.endTurn();
+      else if (id === "resign") this.openConfirmResign(mode.at);
+      return;
+    }
+    if (mode.kind === "confirmResign") {
+      if (id === "resignNow") void this.issue({ type: "resign" });
+      else if (id === "keepPlaying") this.openTurnMenu(mode.at);
+      return;
+    }
     if (mode.kind !== "menu") return;
     if (id === "cancel") this.backToSelection(mode);
     else if (id === "wait") void this.commit(mode, { type: "wait" });
@@ -241,36 +267,58 @@ export class InputController {
     else if (id === "fire") this.startTargeting(mode);
   }
 
-  private selectAt(tile: Point): void {
+  /** Your unit on this tile, if it can still act this turn. */
+  private readyUnitAt(tile: Point): Unit | undefined {
     const state = this.deps.getState();
     const unit = unitAt(state, tile);
-    if (!unit) {
-      this.openBuildMenu(tile);
-      return;
-    }
-    const reach = reachableTiles(state, unit);
-    const tiles = [...reach.keys()].map((i) => tilePoint(state, i));
-    if (unit.owner === state.currentPlayer) {
-      if (unit.hasActed) return;
+    return unit && unit.owner === state.currentPlayer && !unit.hasActed ? unit : undefined;
+  }
+
+  private selectAt(tile: Point): void {
+    const unit = this.readyUnitAt(tile);
+    if (unit) {
+      const state = this.deps.getState();
+      const reach = reachableTiles(state, unit);
       this.mode = { kind: "selected", unitId: unit.id, reach, path: [] };
-      this.deps.view.showRanges([{ tiles, kind: "move" }]);
+      this.deps.view.showRanges([{ tiles: [...reach.keys()].map((i) => tilePoint(state, i)), kind: "move" }]);
       this.deps.view.showPath(unit.pos, []);
-    } else {
-      this.mode = { kind: "inspect" };
-      this.deps.view.showRanges(this.threatLayers(state, unit, reach, tiles));
+    } else if (!this.openBuildMenu(tile)) {
+      this.openTurnMenu(tile);
     }
   }
 
-  /** Clicking your own empty factory opens its build list. */
-  private openBuildMenu(pos: Point): void {
-    const options = buildOptions(this.deps.getState(), pos);
-    if (options.length === 0) return;
+  /** Opens the build list if this is your own empty factory. Returns whether it did. */
+  private openBuildMenu(pos: Point): boolean {
+    const state = this.deps.getState();
+    const options = unitAt(state, pos) ? [] : buildOptions(state, pos);
+    if (options.length === 0) return false;
     this.mode = { kind: "building" };
     this.deps.buildMenu.open(
       options,
       (unitType) => void this.commitBuild(unitType, pos),
       () => this.reset(),
     );
+    return true;
+  }
+
+  /** End Turn comes last and is highlighted, so it's one press away. */
+  private openTurnMenu(at: Point): void {
+    const items = [RESIGN, END_TURN];
+    this.mode = { kind: "turnMenu", at };
+    this.deps.view.openMenu(at, items, items.length - 1);
+  }
+
+  private openConfirmResign(at: Point): void {
+    this.mode = { kind: "confirmResign", at };
+    this.deps.view.openMenu(at, [KEEP_PLAYING, RESIGN_NOW]);
+  }
+
+  /** Sends a command that isn't about one unit, holding input until it has played out. */
+  private async issue(command: Command): Promise<void> {
+    this.reset();
+    this.mode = { kind: "busy" };
+    await this.deps.dispatch(command);
+    this.release();
   }
 
   private async commitBuild(unitType: UnitTypeId, pos: Point): Promise<void> {
@@ -280,7 +328,7 @@ export class InputController {
     this.release();
   }
 
-  /** Where an enemy can move, and in red what it can hit beyond that. */
+  /** Where a unit can move, and in red what it can hit beyond that. */
   private threatLayers(state: GameState, unit: Unit, reach: ReadonlyMap<number, Reach>, tiles: readonly Point[]): RangeLayer[] {
     const threat = threatTiles(state, unit);
     const beyondMove = UNITS[unit.type].canMoveAndFire
@@ -299,10 +347,10 @@ export class InputController {
       return;
     }
 
-    // Clicking outside the range drops the selection and treats the click as a fresh one.
+    // Outside the range: drops the selection, picking up another ready unit if there's one there.
     if (!reach.has(tile.y * state.map.width + tile.x)) {
       this.reset();
-      this.selectAt(tile);
+      if (this.readyUnitAt(tile)) this.selectAt(tile);
       return;
     }
     // A friendly unit's tile: you can pass through it, but only stop to board or join it.

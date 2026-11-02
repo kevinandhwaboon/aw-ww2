@@ -17,9 +17,9 @@ import {
   createBuildMenu,
   createDebugPanel,
   createHandoff,
+  createHud,
   createResultsScreen,
   createTerrainPanel,
-  createTurnBar,
   createUnitPanel,
 } from "./ui/hud";
 
@@ -29,10 +29,12 @@ export interface SessionOptions {
   readonly setup: GameSetup;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
+  /** Also shows the unit, terrain and debug panels (11-tech-setup §7). */
+  readonly debug: boolean;
   readonly onNewGame: () => void;
 }
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }: SessionOptions): void {
+export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNewGame }: SessionOptions): void {
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -40,15 +42,14 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
    * by any attack, because luck reveals information that a redo could exploit.
    */
   let history: GameState[] = [];
-  let playing = false;
 
   const width = state.map.width * TILE_SIZE;
   const height = state.map.height * TILE_SIZE;
 
-  const turnBar = createTurnBar(uiRoot, { onEndTurn: endTurn, onUndo: undo, onResign: resign });
-  const unitPanel = createUnitPanel(uiRoot);
-  const terrainPanel = createTerrainPanel(uiRoot);
-  const debugPanel = createDebugPanel(uiRoot);
+  const hud = createHud(uiRoot);
+  const unitPanel = debug ? createUnitPanel(uiRoot) : null;
+  const terrainPanel = debug ? createTerrainPanel(uiRoot) : null;
+  const debugPanel = debug ? createDebugPanel(uiRoot) : null;
   const banner = createBanner(uiRoot);
   const handoff = createHandoff(uiRoot);
   const buildMenu = createBuildMenu(uiRoot);
@@ -74,8 +75,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
 
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
-    terrainPanel.show(state, cursor);
-    unitPanel.show(state, unitAt(state, cursor));
+    hud.update(state, cursor);
+    terrainPanel?.show(state, cursor);
+    unitPanel?.show(state, unitAt(state, cursor));
   }
 
   /**
@@ -91,12 +93,10 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
     const attacked = command.type === "move" && (command.action.type === "attack" || command.action.type === "attackFort");
     const revealsInformation = command.type === "endTurn" || attacked;
     history = revealsInformation || result.state.result ? [] : [...history, state];
-    playing = true;
-    turnBar.update(state, { canUndo: false, busy: true }); // don't re-render the map: it would undo the move preview
     await scene.playEvents(result.events);
     const previous = state;
     state = result.state;
-    debugPanel.logEvents(state, previous, result.events);
+    debugPanel?.logEvents(state, previous, result.events);
     render();
     for (const event of result.events) {
       if (event.type !== "turnStarted") continue;
@@ -108,7 +108,6 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
       if (passDevice) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
-    playing = false;
     render();
     if (state.result) {
       controller.finish();
@@ -117,32 +116,19 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
     return true;
   }
 
-  function endTurn(): void {
-    if (playing || controller.busy) return;
-    controller.reset();
-    void dispatch({ type: "endTurn" });
-  }
-
-  function resign(): void {
-    if (playing || controller.busy) return;
-    controller.reset();
-    void dispatch({ type: "resign" });
-  }
-
   function undo(): void {
     const previous = history[history.length - 1];
-    if (!previous || playing || controller.busy) return;
+    if (!previous || controller.busy) return;
     controller.reset();
     history = history.slice(0, -1);
     state = previous;
-    debugPanel.logNote("Undo: last move taken back");
+    debugPanel?.logNote("Undo: last move taken back");
     render();
   }
 
   function render(): void {
     scene.setState(state);
-    turnBar.update(state, { canUndo: history.length > 0, busy: playing });
-    debugPanel.update(state);
+    debugPanel?.update(state);
     showCursorInfo();
   }
 
@@ -152,7 +138,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, onNewGame }:
       event.preventDefault();
       undo();
     } else if (event.key === "e" || event.key === "E") {
-      endTurn();
+      controller.endTurn();
     }
   });
 

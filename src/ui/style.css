@@ -97,8 +97,10 @@ body {
   cursor: pointer;
 }
 
-.btn:hover:not(:disabled) {
+.btn:hover:not(:disabled),
+.btn:focus {
   background: var(--accent);
+  outline: none;
 }
 
 .btn:disabled {
@@ -106,23 +108,30 @@ body {
   cursor: default;
 }
 
-.turn-bar {
+.hud {
   left: 16px;
   top: 16px;
-  max-width: calc(100vw - 32px);
-}
-
-.turn-row {
+  z-index: 1;
+  pointer-events: none;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  font-weight: bold;
 }
 
-.turn-hint {
-  margin-top: 6px;
-  font-size: 11px;
-  opacity: 0.7;
-  max-width: 440px;
+.hud-right {
+  left: auto;
+  right: 16px;
+}
+
+.hud-flag {
+  display: flex;
+  border: 2px solid var(--panel-ink);
+}
+
+.hud-flag canvas {
+  width: 48px;
+  image-rendering: pixelated;
 }
 
 .banner {
@@ -139,11 +148,6 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
-}
-
-.turn-day,
-.turn-player {
-  font-weight: bold;
 }
 
 .unit-panel {
@@ -183,9 +187,9 @@ body {
 
 .debug-panel {
   right: 16px;
-  top: 16px;
+  top: 72px;
   width: 360px;
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 196px);
   overflow: auto;
   font-size: 12px;
 }
@@ -374,6 +378,10 @@ body {
 
 .map-description {
   font-size: 13px;
+}
+
+.option:focus-within {
+  background: var(--highlight);
 }
 
 .option {

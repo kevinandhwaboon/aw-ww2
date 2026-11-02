@@ -71,8 +71,8 @@ export const units = [
     code: "IN", name: "Infantry", real: "GI with M1 Garand", ground: "plains",
     frames: onFoot([
       ...helmet,
-      ".....KooKoK.....", ".....KoooK......", "....KLLMMK.....K", ".KBBbKKKooBBBbKK",
-      ".KbbKMMDoobbbK..", "..KKMMMDKKKK....", "...KKMMMKK......",
+      ".....KooKoK.....", ".....KoooK......", "....KLLMMK....K.", ".KBBbKKKooBbWWWK",
+      ".KbbKMMDoobKKKKK", "..KKMMMDKKKK....", "...KKMMMKK......",
     ]),
   },
   {
