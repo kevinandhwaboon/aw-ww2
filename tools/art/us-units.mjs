@@ -282,4 +282,21 @@ export const units = [
   },
 ];
 
+// Rounds the body: the team-colored edge facing the light (top) is lit, the edge turned away (right)
+// is shaded, matching the terrain's light from the top left (08-art-pipeline §16).
+const BODY = new Set(["L", "M", "D"]);
+function shade(frame) {
+  return frame.map((row, y) => [...row].map((ch, x) => {
+    if (!BODY.has(ch)) return ch;
+    const right = row[x + 1] ?? ".";
+    const above = frame[y - 1]?.[x] ?? ".";
+    if (!BODY.has(right) && (right === "K" || right === ".")) return "D";
+    if (ch === "M" && (above === "K" || above === ".")) return "L";
+    return ch;
+  }).join(""));
+}
+for (const unit of units) {
+  if (unit.ground === "plains") unit.frames = unit.frames.map(shade);
+}
+
 validate(units);

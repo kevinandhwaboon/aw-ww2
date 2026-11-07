@@ -32,6 +32,8 @@ const BUILT_IN_COLORS = {
   blast: "#ffa030",
   labelText: "#ffffff",
   labelOutline: "#101018",
+  // Shadow under unit sprites
+  unitShadow: "#1c3412",
   labelGold: "#f0d040",
   labelGreen: "#80f080",
   labelBlue: "#a0d8ff",

@@ -214,7 +214,7 @@ const touches = (on, x, y, want) =>
 
 function road(mask) {
   const g = grass(40 + mask);
-  const on = channel(mask, 5, 10);
+  const on = channel(mask, 3, 12);
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
       if (!on[y][x]) continue;
