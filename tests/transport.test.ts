@@ -292,3 +292,18 @@ describe("joining units (04-economy §6, 03-combat §6)", () => {
     expect(propertyAt(after, P(0, 0))).toMatchObject({ capturePoints: CAPTURE_POINTS, capturingUnit: null });
   });
 });
+
+describe("air-dropped units are remembered for their art (01-units §5, 08-art-pipeline §17)", () => {
+  const game = () => makeGame(["A.."], [u("transportAircraft", 0, 0), u("infantry", 0, 1)]);
+
+  it("a unit dropped by a Transport Aircraft is marked as air-dropped", () => {
+    const state = run(game(), load(1, [P(0, 0)]), unload(0, 1, P(1, 0)));
+    expect(byId(state, 1)?.airDropped).toBe(true);
+  });
+
+  it("a unit unloaded from a Halftrack isn't marked", () => {
+    const state = run(makeGame(["==="], [u("infantry", 0, 0), u("halftrack", 0, 1)]), load(0, [P(1, 0)]), unload(1, 0, P(2, 0)));
+    expect(byId(state, 0)?.airDropped).toBeUndefined();
+  });
+
+});

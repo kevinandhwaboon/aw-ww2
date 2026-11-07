@@ -67,3 +67,34 @@ for (const { id, units, natural } of nations) {
 
   console.log(`${id}: ${shown.length} land units rendered`);
 }
+
+// ---- 32x32 units (08-art-pipeline §17). Not used by the game until the map moves to a 32-pixel grid.
+const { fixedColors, teamRamps } = await import("./kit32.mjs");
+const { units: us32, paratroopers } = await import("./us-units32.mjs");
+const { units: de32 } = await import("./de-units32.mjs");
+const big = [
+  { id: "us", units: us32, extra: paratroopers, teams: ["olive", "blue", "red"] },
+  { id: "de", units: de32, extra: [], teams: ["grey", "blue", "red"] },
+];
+for (const { id, units, extra, teams: names } of big) {
+  // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits).
+  const rows = [...landRows.map((code) => units.find((u) => u.code === code)), ...extra];
+  for (const team of names) {
+    const sheet = canvas(64, 32 * rows.length);
+    rows.forEach((u, row) => u?.frames.forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
+    savePng(sheet, join(sheetDir, `${id}-land-32-${team}.png`));
+  }
+  const shown = rows.filter((u) => u !== undefined);
+  const scale = 3, cell = 32 * scale, gap = 6, across = 4;
+  const preview = canvas(across * (cell * 2 + 2 + gap) - gap, Math.ceil(shown.length / across) * (cell + gap) - gap);
+  preview.px.fill(255);
+  shown.forEach((u, i) => {
+    const x = (i % across) * (cell * 2 + 2 + gap), y = Math.floor(i / across) * (cell + gap);
+    u.frames.forEach((f, col) => {
+      stamp(preview, Array(32).fill("G".repeat(32)), { G: grass }, x + col * (cell + 2), y, scale);
+      stamp(preview, f, { ...fixedColors, ...teamRamps[names[0]] }, x + col * (cell + 2), y, scale);
+    });
+  });
+  savePng(preview, join(previewDir, `${id}-land-units-32.png`));
+  console.log(`${id}: ${shown.length} land units rendered at 32x32`);
+}

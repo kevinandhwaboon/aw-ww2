@@ -364,3 +364,24 @@ Terrain and buildings are drawn so the map looks solid rather than flat, using t
 
 The helpers for this are in `tools/art/depth.mjs`.
 
+## 17. Units at 32×32
+
+Every land unit is also drawn at 32×32 in a top-down 3/4 view, with five shades per team color. **These are art only for now:** the game still uses the 16×16 sheets until the map moves to a 32-pixel grid, which is a separate change.
+
+- **Source:** `tools/art/kit32.mjs` (shared shapes, helmets, rifles and running gear), `us-units32.mjs` and `de-units32.mjs`. Sprites are built from shapes, then outlined and lit from the top left automatically.
+- **Wheels** on the jeep, sidecar and halftracks sit in wheel wells: the body wraps round their top half.
+- **View:** you look down on the vehicle: the whole hull top, the turret from above, the near side as a band, and the near track along the bottom. The far track isn't drawn, so it doesn't read as straight top-down.
+- **Sheets:** `public/assets/units/{nation}-land-32-{team}.png`, 64 pixels wide, 2 frames across, one row per unit in section 4 order. The US sheet adds four rows after the Flak Gun: the paratrooper with a spade, heart, diamond and club.
+- **Previews:** `docs/art/us-land-units-32.png` and `docs/art/de-land-units-32.png`.
+
+**Infantry** is the unit that matters most, so it's drawn to be unmistakable:
+
+| Side | Helmet | Rifle |
+|---|---|---|
+| US | The M1: a rounded dome, widest at the rim, with chinstraps | M1 Garand: deep wooden stock, receiver with the clip on top, gas cylinder under the barrel |
+| Germany | The Stahlhelm: a taller crown and a skirt flaring over the ears and neck | Kar98k: dark stock, bolt handle, long barrel |
+
+**Paratroopers:** a US Infantry unit dropped by a Transport Aircraft is drawn as a 101st Airborne paratrooper: an M1 carbine instead of the Garand, and a card suit on the helmet, as the 101st's regiments marked theirs. It acts exactly like any other Infantry. The rules engine records that the unit was air-dropped (01-units §5); the art picks the suit from the unit's id, so each paratrooper keeps his suit all game. The suit is always white; only its shape changes. Only the US has this look.
+
+**Not done yet:** air and naval units at 32, and showing any of this in the game.
+
