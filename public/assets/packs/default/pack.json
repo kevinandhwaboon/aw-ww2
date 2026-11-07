@@ -47,10 +47,16 @@
     "frames": 2,
     "tiles": {
       "plains": [0, 1, 2], "forest": [3, 4], "hills": [5, 6], "bocage": [7, 8],
-      "sea": [9], "reef": [10], "beach": [11, 12]
+      "sea": [9], "reef": [10], "beach": [11, 12],
+      "bunker": [13], "rubble": [14], "obstacle": [15]
     },
     "connected": { "road": 16, "river": 32 },
     "bridges": { "horizontal": 48, "vertical": 49 },
     "shore": 50
+  },
+  "properties": {
+    "path": "../../terrain/buildings.png",
+    "columns": ["neutral", "blue", "red", "green", "gold"],
+    "rows": ["city", "factory", "airfield", "port", "hq"]
   }
 }

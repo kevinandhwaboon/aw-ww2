@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
-import type { Point } from "../engine/map";
+import { terrainAt, type Point } from "../engine/map";
 import { displayHp, type GameState, type Unit, type UnitId } from "../engine/state";
 import * as stats from "../engine/stats";
-import { activePack, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
+import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
@@ -38,6 +38,7 @@ const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
 const TERRAIN_SHEET_KEY = "pack-terrain";
+const PROPERTY_SHEET_KEY = "pack-properties";
 /** How long each frame of moving water shows. */
 const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
@@ -68,6 +69,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   private cursor?: Phaser.GameObjects.Graphics;
   private rangeLayer?: Phaser.GameObjects.Graphics;
   private stateLayer?: Phaser.GameObjects.Container;
+  private propertyLayer?: Phaser.GameObjects.Container;
   private pathLayer?: Phaser.GameObjects.Graphics;
   private unitSprites = new Map<UnitId, Phaser.GameObjects.Container>();
   private previewed: UnitId | undefined;
@@ -94,6 +96,9 @@ export class MapScene extends Phaser.Scene implements MapView {
     });
     if (pack.terrain) {
       this.load.spritesheet(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    }
+    if (pack.properties) {
+      this.load.spritesheet(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
     }
   }
 
@@ -153,7 +158,8 @@ export class MapScene extends Phaser.Scene implements MapView {
       });
     }
 
-    // Draw order, bottom to top: terrain, range, flags + units, path arrow, cursor, menu.
+    // Draw order, bottom to top: terrain, buildings, range, flags + units, path arrow, cursor, menu.
+    this.propertyLayer = this.add.container(0, 0);
     this.rangeLayer = this.add.graphics();
     this.stateLayer = this.add.container(0, 0);
     this.pathLayer = this.add.graphics();
@@ -577,10 +583,21 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.unitSprites.clear();
     this.redrawChangedTerrain();
 
-    // Property ownership: a small team-colored flag in the tile's top-left corner.
+    // Buildings in their owner's colors. Sit below the range tint so move ranges still show on them.
+    this.propertyLayer?.removeAll(true);
+    const drawn = new Set<string>();
+    const hasSheet = this.textures.exists(PROPERTY_SHEET_KEY);
+    for (const prop of this.state.properties) {
+      const frame = hasSheet ? findPropertyArt(activePack(), terrainAt(this.state.map, prop.pos), prop.owner) : null;
+      if (frame === null) continue;
+      this.propertyLayer?.add(this.add.image(prop.pos.x * TILE_SIZE, prop.pos.y * TILE_SIZE, PROPERTY_SHEET_KEY, frame).setOrigin(0));
+      drawn.add(`${prop.pos.x},${prop.pos.y}`);
+    }
+
+    // Owned properties without building art: a small team-colored flag in the tile's top-left corner.
     const flags = this.add.graphics();
     for (const prop of this.state.properties) {
-      if (prop.owner === null) continue;
+      if (prop.owner === null || drawn.has(`${prop.pos.x},${prop.pos.y}`)) continue;
       const [fill, outline] = playerColors(prop.owner);
       const x = prop.pos.x * TILE_SIZE;
       const y = prop.pos.y * TILE_SIZE;

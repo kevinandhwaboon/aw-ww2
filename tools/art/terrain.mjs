@@ -155,6 +155,36 @@ function beach(salt, pebbles) {
   return toRows(g);
 }
 
+// A concrete pillbox with a firing slit, banked with earth and sandbags.
+function bunker() {
+  const g = grass(30);
+  stamp(g, [
+    "....KKKKKKKK....", "...KjjjjjjjjK...", "..KjkkkkkkkkkK..", "..KkKKKKKKKKkK..",
+    "..KkkkkkkkkkkK..", ".KkkkkkkkkkkkkK.", "AKKKKKKKKKKKKKKA", "AAuuuuuuuuuuuuAA",
+  ], 0, 5);
+  return toRows(g);
+}
+
+// What a destroyed bunker leaves: broken slabs and twisted rebar on scorched earth.
+function rubble() {
+  const g = grass(31);
+  for (let y = 3; y < 15; y++) for (let x = 1; x < 15; x++) if (hash(x, y, 32) % 3) g[y][x] = hash(x, y, 33) % 4 ? "A" : "u";
+  stamp(g, ["KKKK.", "KjkkK", ".KKKK"], 2, 4);
+  stamp(g, ["..KKK", ".KjkK", "KkkkK", "KKKK."], 9, 7);
+  stamp(g, ["KKK", "KkK", "KKK"], 4, 10);
+  stamp(g, ["x..", ".x.", ".xx"], 10, 2);
+  stamp(g, ["x.x", ".x."], 1, 12);
+  return toRows(g);
+}
+
+// Dragon's teeth: staggered rows of concrete pyramids.
+function obstacle() {
+  const g = grass(34);
+  const tooth = ["..K..", ".KjK.", "KjkkK", "KKKKK"];
+  for (const [x, y] of [[0, 1], [5, 1], [10, 1], [2, 6], [7, 6], [12, 6], [0, 11], [5, 11], [10, 11]]) stamp(g, tooth, x, y);
+  return toRows(g);
+}
+
 // Directions in mask order: N=1, E=2, S=4, W=8.
 const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
@@ -262,7 +292,7 @@ export const layout = [
   ["reef", moving(reef)],
   ["beach", still(beach(10, [[4, 6], [11, 12]]))],
   ["beach", still(beach(11, [[9, 3]]))],
-  null, null, null,
+  ["bunker", still(bunker())], ["rubble", still(rubble())], ["obstacle", still(obstacle())],
   ...Array.from({ length: 16 }, (_, mask) => [`road-${mask}`, still(road(mask))]),
   ...Array.from({ length: 16 }, (_, mask) => [`river-${mask}`, moving((f) => river(mask, f))]),
   ["bridge-horizontal", still(bridge(true))], ["bridge-vertical", still(bridge(false))],
