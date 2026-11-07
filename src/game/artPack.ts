@@ -5,6 +5,7 @@
 import { NATIONS, type NationId } from "../engine/data/nations";
 import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "../engine/data/terrain";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "../engine/data/units";
+import type { Unit } from "../engine/state";
 
 const BUILT_IN_COLORS = {
   // HTML panels and screens
@@ -50,7 +51,10 @@ export interface PlayerArt {
   readonly outline: string;
 }
 
-/** A sprite sheet of 16×16 frames: one row per unit, with idle frames running across. */
+/**
+ * A sprite sheet of square frames: one row per unit, with idle frames running across. Frames are
+ * 16 or 32 pixels; either way a unit fills one map square (08-art-pipeline §17).
+ */
 export interface UnitSheet {
   readonly nation: NationId;
   readonly team: string;
@@ -60,6 +64,10 @@ export interface UnitSheet {
   readonly frames: number;
   /** The unit on each row, top to bottom; null for an empty row. */
   readonly rows: readonly (UnitTypeId | null)[];
+  /** Frame width and height in pixels: 16 or 32. */
+  readonly frameSize: 16 | 32;
+  /** Rows for an Infantry unit dropped by a Transport Aircraft, one picked per unit (08-art-pipeline §17). */
+  readonly paratroopers: readonly number[];
 }
 
 /** A sheet of 16×16 tiles, numbered left to right, top to bottom (08-art-pipeline §13–14). */
@@ -157,10 +165,13 @@ function parseColors(raw: unknown): Record<ColorKey, string> {
   return colors;
 }
 
+const isTileHeight = (value: unknown): value is 16 | 32 => value === 16 || value === 32;
+const isTileNumber = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
+
 function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   const where = `unit sheet ${index}`;
   if (!isObject(raw)) return fail(`${where} must be an object`);
-  const { nation, team, path, frames, rows } = raw;
+  const { nation, team, path, frames, rows, frameSize = 16, paratroopers = [] } = raw;
   if (typeof nation !== "string" || !Object.hasOwn(NATIONS, nation)) return fail(`${where}: unknown nation ${String(nation)}`);
   if (typeof team !== "string" || team === "") return fail(`${where} needs a team`);
   if (!isRelativePath(path)) return fail(`${where}: "path" must be a file in the pack`);
@@ -168,12 +179,11 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   if (!Array.isArray(rows)) return fail(`${where}: "rows" must be a list`);
   const bad: unknown = rows.find((row: unknown) => row !== null && !isUnitType(row));
   if (bad !== undefined) return fail(`${where}: unknown unit type ${JSON.stringify(bad)}`);
-  return { nation: nation as NationId, team, path, frames: frames as number, rows: rows as (UnitTypeId | null)[] };
+  if (!isTileHeight(frameSize)) return fail(`${where}: "frameSize" must be 16 or 32`);
+  if (!Array.isArray(paratroopers) || !paratroopers.every(isTileNumber)) return fail(`${where}: "paratroopers" must be a list of row numbers`);
+  return { nation: nation as NationId, team, path, frames: frames as number, rows: rows as (UnitTypeId | null)[], frameSize, paratroopers };
 }
 
-const isTileHeight = (value: unknown): value is 16 | 32 => value === 16 || value === 32;
-
-const isTileNumber = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
@@ -255,6 +265,7 @@ export interface UnitArt {
   readonly sheet: number;
   readonly row: number;
   readonly frames: number;
+  readonly frameSize: 16 | 32;
 }
 
 /**
@@ -269,12 +280,25 @@ export function findPropertyArt(pack: ArtPack, terrain: TerrainId, owner: number
   return column < 0 || row < 0 ? null : row * sheet.columns.length + column;
 }
 
-/** Where to find this unit's art for this nation and player, or null to use the placeholder. */
-export function findUnitArt(pack: ArtPack, nation: NationId, player: number, type: UnitTypeId): UnitArt | null {
+/**
+ * Where to find this unit's art for this nation and player, or null to use the placeholder. Pass the
+ * unit itself to get its own look: an air-dropped Infantry is a paratrooper, its suit picked by id.
+ */
+export function findUnitArt(
+  pack: ArtPack,
+  nation: NationId,
+  player: number,
+  type: UnitTypeId,
+  unit?: Pick<Unit, "id" | "airDropped">,
+): UnitArt | null {
   const team = pack.players[player % pack.players.length]?.team;
   for (const [sheet, def] of pack.unitSheets.entries()) {
-    const row = def.rows.indexOf(type);
-    if (def.nation === nation && def.team === team && row >= 0) return { sheet, row, frames: def.frames };
+    if (def.nation !== nation || def.team !== team) continue;
+    const paratrooper = type === "infantry" && unit?.airDropped && def.paratroopers.length > 0
+      ? def.paratroopers[unit.id % def.paratroopers.length]
+      : undefined;
+    const row = paratrooper ?? def.rows.indexOf(type);
+    if (row >= 0) return { sheet, row, frames: def.frames, frameSize: def.frameSize };
   }
   return null;
 }

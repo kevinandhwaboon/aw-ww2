@@ -4,27 +4,32 @@
     {
       "nation": "us",
       "team": "blue",
-      "path": "../../units/us-land-blue.png",
+      "path": "../../units/us-land-32-blue.png",
+      "frameSize": 32,
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
         null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
-      ]
+      ],
+      "paratroopers": [13, 14, 15, 16]
     },
     {
       "nation": "us",
       "team": "red",
-      "path": "../../units/us-land-red.png",
+      "path": "../../units/us-land-32-red.png",
+      "frameSize": 32,
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
         null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
-      ]
+      ],
+      "paratroopers": [13, 14, 15, 16]
     },
     {
       "nation": "germany",
       "team": "blue",
-      "path": "../../units/de-land-blue.png",
+      "path": "../../units/de-land-32-blue.png",
+      "frameSize": 32,
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
@@ -34,7 +39,8 @@
     {
       "nation": "germany",
       "team": "red",
-      "path": "../../units/de-land-red.png",
+      "path": "../../units/de-land-32-red.png",
+      "frameSize": 32,
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",

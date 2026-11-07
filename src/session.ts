@@ -148,17 +148,26 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
     return Math.max(1, Math.floor(Math.min(window.innerWidth / width, window.innerHeight / height)));
   }
 
+  // The canvas is as big as it shows on screen and the scene's camera does the enlarging, so art
+  // finer than one pixel per map pixel (32-pixel units) keeps its detail (08-art-pipeline §17).
+  let zoom = integerZoom();
+  scene.setPixelScale(zoom);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: gameRoot,
-    width,
-    height,
+    width: width * zoom,
+    height: height * zoom,
     pixelArt: true,
     backgroundColor: packColor("uiBg"),
-    scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
+    scale: { mode: Phaser.Scale.NONE },
     scene,
   });
 
   render();
-  window.addEventListener("resize", () => game.scale.setZoom(integerZoom()));
+  window.addEventListener("resize", () => {
+    if (integerZoom() === zoom) return;
+    zoom = integerZoom();
+    game.scale.resize(width * zoom, height * zoom);
+    scene.setPixelScale(zoom);
+  });
 }

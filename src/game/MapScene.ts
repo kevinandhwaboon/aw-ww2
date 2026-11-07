@@ -82,10 +82,22 @@ export class MapScene extends Phaser.Scene implements MapView {
     | { container: Phaser.GameObjects.Container; items: readonly MenuItem[]; rect: Phaser.Geom.Rectangle; selected: number }
     | undefined;
   private forecastPanel: Phaser.GameObjects.Container | undefined;
+  private pixelScale = 1;
+  private created = false;
 
   constructor(private readonly options: MapSceneOptions) {
     super("map");
     this.state = options.state;
+  }
+
+  /**
+   * Screen pixels per map pixel. The scene is drawn at screen resolution rather than enlarged
+   * afterwards, so 32-pixel unit art keeps its detail inside a 16-pixel square (08-art-pipeline §17).
+   */
+  setPixelScale(scale: number): void {
+    this.pixelScale = scale;
+    if (!this.created) return; // create() applies it
+    this.cameras.main.setSize(this.scale.width, this.scale.height).setOrigin(0, 0).setZoom(scale);
   }
 
   setHandlers(handlers: MapInputHandlers): void {
@@ -97,7 +109,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.load.on("loaderror", (file: { key: string }) => console.warn(`Art pack file failed to load: ${file.key}`));
     const pack = activePack();
     pack.unitSheets.forEach((sheet, i) => {
-      this.load.spritesheet(unitSheetKey(i), packFileUrl(sheet.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+      this.load.spritesheet(unitSheetKey(i), packFileUrl(sheet.path), { frameWidth: sheet.frameSize, frameHeight: sheet.frameSize });
     });
     if (pack.terrain) {
       this.load.image(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path));
@@ -165,6 +177,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   }
 
   create(): void {
+    this.created = true;
+    this.setPixelScale(this.pixelScale);
     this.paintTerrain();
     this.terrainImage = this.add.image(0, 0, terrainFrameKey(0)).setOrigin(0);
     if (this.terrainFrames > 1) {
@@ -661,13 +675,16 @@ export class MapScene extends Phaser.Scene implements MapView {
    */
   private unitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
     const player = this.state.players[unit.owner];
-    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type) : null;
+    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
     if (!art || !this.textures.exists(unitSheetKey(art.sheet))) {
       const marker = this.add.image(0, 0, this.texture(`unit-${unit.type}-${unit.owner}`, () => drawUnitMarker(unit.type, unit.owner)));
       return marker.setOrigin(0).setAlpha(unit.hasActed ? 0.5 : 1);
     }
     const key = unitSheetKey(art.sheet);
-    const sprite = this.add.sprite(0, 0, key, art.row * art.frames).setOrigin(0).setFlipX(player?.facing === "left");
+    const sprite = this.add.sprite(0, 0, key, art.row * art.frames)
+      .setOrigin(0)
+      .setScale(TILE_SIZE / art.frameSize)
+      .setFlipX(player?.facing === "left");
     if (unit.hasActed) return sprite.setAlpha(0.5);
     return sprite.play(this.idleAnimation(key, art));
   }
@@ -678,11 +695,12 @@ export class MapScene extends Phaser.Scene implements MapView {
    */
   private unitShadow(unit: Unit): Phaser.GameObjects.Sprite | null {
     const player = this.state.players[unit.owner];
-    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type) : null;
+    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
     if (!art || !this.textures.exists(unitSheetKey(art.sheet))) return null;
     const key = unitSheetKey(art.sheet);
     const shadow = this.add.sprite(UNIT_SHADOW_OFFSET.x, UNIT_SHADOW_OFFSET.y, key, art.row * art.frames)
       .setOrigin(0)
+      .setScale(TILE_SIZE / art.frameSize)
       .setFlipX(player?.facing === "left")
       .setTint(packColorNumber("unitShadow"))
       .setTintMode(Phaser.TintModes.FILL)

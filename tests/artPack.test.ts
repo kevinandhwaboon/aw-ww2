@@ -83,6 +83,8 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["an unknown nation", { unitSheets: [sheet({ nation: "atlantis" })] }, /unknown nation/],
     ["an unknown unit", { unitSheets: [sheet({ rows: ["dragon"] })] }, /unknown unit type/],
     ["zero frames", { unitSheets: [sheet({ frames: 0 })] }, /whole number/],
+    ["a frame size other than 16 or 32", { unitSheets: [sheet({ frameSize: 24 })] }, /16 or 32/],
+    ["paratrooper rows that aren't row numbers", { unitSheets: [sheet({ paratroopers: ["spade"] })] }, /row numbers/],
     ["an unknown terrain", { terrain: { path: "t.png", tiles: { lava: 0 } } }, /unknown terrain/],
     ["an empty variant list", { terrain: { path: "t.png", tiles: { plains: [] } } }, /list of them/],
     ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
@@ -122,6 +124,16 @@ describe("the packs that ship with the game", () => {
       "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
     ]);
   });
+
+  it("the shipped packs use the 32-pixel unit sheets, with paratroopers on the US ones (08-art-pipeline §17)", () => {
+    for (const raw of [defaultPack, nightOps]) {
+      for (const unitSheet of parseArtPack(raw).unitSheets) {
+        expect(unitSheet.frameSize).toBe(32);
+        expect(unitSheet.path).toContain("-32-");
+        expect(unitSheet.paratroopers).toEqual(unitSheet.nation === "us" ? [13, 14, 15, 16] : []);
+      }
+    }
+  });
 });
 
 describe("finding a unit's art", () => {
@@ -135,8 +147,20 @@ describe("finding a unit's art", () => {
   });
 
   it("picks the sheet for the unit's nation and its player's team", () => {
-    expect(findUnitArt(pack, "us", 0, "mediumTank")).toEqual({ sheet: 0, row: 2, frames: 2 });
-    expect(findUnitArt(pack, "us", 1, "infantry")).toEqual({ sheet: 1, row: 0, frames: 2 });
+    expect(findUnitArt(pack, "us", 0, "mediumTank")).toEqual({ sheet: 0, row: 2, frames: 2, frameSize: 16 });
+    expect(findUnitArt(pack, "us", 1, "infantry")).toEqual({ sheet: 1, row: 0, frames: 2, frameSize: 16 });
+  });
+
+  it("an air-dropped Infantry is drawn as a paratrooper, its suit picked by unit id (08-art-pipeline §17)", () => {
+    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ paratroopers: [5, 6, 7, 8] })] });
+    expect(findUnitArt(airborne, "us", 0, "infantry", { id: 9, airDropped: true })?.row).toBe(6);
+    expect(findUnitArt(airborne, "us", 0, "infantry", { id: 12, airDropped: true })?.row).toBe(5);
+  });
+
+  it("Infantry that wasn't air-dropped, or a sheet without paratroopers, keeps the normal Infantry look", () => {
+    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ paratroopers: [5, 6, 7, 8] })] });
+    expect(findUnitArt(airborne, "us", 0, "infantry", { id: 9 })?.row).toBe(0);
+    expect(findUnitArt(pack, "us", 0, "infantry", { id: 9, airDropped: true })?.row).toBe(0);
   });
 
   it("a different nation gets no art, so German units don't use American sprites", () => {
