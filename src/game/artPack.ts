@@ -3,7 +3,7 @@
 // pack can replace one unit or everything. Art never affects the rules.
 
 import { NATIONS, type NationId } from "../engine/data/nations";
-import { TERRAIN, TERRAIN_IDS, type TerrainId } from "../engine/data/terrain";
+import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "../engine/data/terrain";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "../engine/data/units";
 
 const BUILT_IN_COLORS = {
@@ -76,12 +76,23 @@ export interface TerrainSheet {
   readonly shore?: number;
 }
 
+/** Buildings for owned properties: one row per property, one column per owner (08-art-pipeline §15). */
+export interface PropertySheet {
+  /** Relative to the pack's folder. */
+  readonly path: string;
+  /** The owner each column is for: "neutral", or a player's `team`. */
+  readonly columns: readonly string[];
+  /** The property on each row, top to bottom. */
+  readonly rows: readonly TerrainId[];
+}
+
 export interface ArtPack {
   readonly name: string;
   readonly players: readonly PlayerArt[];
   readonly colors: Readonly<Record<ColorKey, string>>;
   readonly unitSheets: readonly UnitSheet[];
   readonly terrain: TerrainSheet | null;
+  readonly properties: PropertySheet | null;
   readonly unitNames: Readonly<Partial<Record<UnitTypeId, string>>>;
   readonly terrainNames: Readonly<Partial<Record<TerrainId, string>>>;
 }
@@ -98,6 +109,7 @@ export const BUILT_IN_PACK: ArtPack = {
   colors: BUILT_IN_COLORS,
   unitSheets: [],
   terrain: null,
+  properties: null,
   unitNames: {},
   terrainNames: {},
 };
@@ -187,6 +199,19 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   };
 }
 
+function parsePropertySheet(raw: unknown): PropertySheet {
+  if (!isObject(raw)) return fail(`"properties" must be an object`);
+  const { path, columns, rows } = raw;
+  if (!isRelativePath(path)) return fail(`properties: "path" must be a file in the pack`);
+  if (!Array.isArray(columns) || columns.length === 0 || !columns.every((c) => typeof c === "string" && c !== "")) {
+    return fail(`properties: "columns" must be a list of owner names`);
+  }
+  if (!Array.isArray(rows)) return fail(`properties: "rows" must be a list`);
+  const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || terrainDef(row).property === undefined);
+  if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property`);
+  return { path, columns: columns as string[], rows: rows as TerrainId[] };
+}
+
 function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key is K, label: string): Partial<Record<K, string>> {
   if (!isObject(raw)) return fail(`"${label}" must be an object`);
   for (const [key, value] of Object.entries(raw)) {
@@ -200,7 +225,7 @@ function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key
 export function parseArtPack(raw: unknown): ArtPack {
   if (!isObject(raw)) return fail("a pack must be an object");
   if (typeof raw.name !== "string" || raw.name === "") return fail(`a pack needs a "name"`);
-  const { players, colors, unitSheets, terrain, unitNames, terrainNames } = raw;
+  const { players, colors, unitSheets, terrain, properties, unitNames, terrainNames } = raw;
   if (unitSheets !== undefined && !Array.isArray(unitSheets)) return fail(`"unitSheets" must be a list`);
   return {
     name: raw.name,
@@ -208,6 +233,7 @@ export function parseArtPack(raw: unknown): ArtPack {
     colors: colors === undefined ? BUILT_IN_COLORS : parseColors(colors),
     unitSheets: ((unitSheets ?? []) as unknown[]).map(parseUnitSheet),
     terrain: terrain === undefined ? null : parseTerrainSheet(terrain),
+    properties: properties === undefined ? null : parsePropertySheet(properties),
     unitNames: unitNames === undefined ? {} : parseNames(unitNames, isUnitType, "unitNames"),
     terrainNames: terrainNames === undefined ? {} : parseNames(terrainNames, isTerrain, "terrainNames"),
   };
@@ -218,6 +244,18 @@ export interface UnitArt {
   readonly sheet: number;
   readonly row: number;
   readonly frames: number;
+}
+
+/**
+ * Which frame of the buildings sheet draws this property for this owner (null = unowned), or null to
+ * keep the placeholder and its corner flag.
+ */
+export function findPropertyArt(pack: ArtPack, terrain: TerrainId, owner: number | null): number | null {
+  const sheet = pack.properties;
+  if (!sheet) return null;
+  const column = sheet.columns.indexOf(owner === null ? "neutral" : (pack.players[owner % pack.players.length]?.team ?? ""));
+  const row = sheet.rows.indexOf(terrain);
+  return column < 0 || row < 0 ? null : row * sheet.columns.length + column;
 }
 
 /** Where to find this unit's art for this nation and player, or null to use the placeholder. */

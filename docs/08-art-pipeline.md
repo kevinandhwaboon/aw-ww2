@@ -1,6 +1,6 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), natural terrain is drawn in the game (section 14), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
+**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), terrain, buildings and fortifications are drawn in the game (sections 14–15), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
 **Last updated:** 2026-11-06
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
@@ -52,7 +52,7 @@ Each is 16×16 unless noted. The tiles in this section are drawn and in the game
 | Obstacle | 1 | Dragon's teeth or similar |
 | Beach obstacle | 1 | For phase 2 landings |
 
-Owned properties use team color, which today is a small flag in the tile's corner.
+Properties, Bunker, Rubble and Obstacle are drawn and in the game (section 15). The beach obstacle and damaged bunker versions aren't drawn yet.
 
 ## 4. Units (map sprites)
 
@@ -252,6 +252,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows` |
 | `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
+| `properties` | Buildings for properties: `path`, `columns` and `rows` (section 15) |
 | `terrainNames` | Display names by terrain id |
 
 **Unit sheets** use 16×16 frames, with one row per unit and idle frames running across. Draw units facing right: maps mirror them when a side faces left (section 12). `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.
@@ -260,11 +261,11 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 
 **The default pack** (`public/assets/packs/default/`) is the game's normal look. It points at the sheets `npm run art` writes to `public/assets/units/`. If the art tool's row order changes, `rows` in the pack has to change with it.
 
-**Not in packs yet:** the 3×5 map font, the HP and veterancy badges, property flags, HUD national flags, and menu words like FIRE. They can follow as that art gets made.
+**Not in packs yet:** the 3×5 map font, the HP and veterancy badges, the placeholder corner flags, HUD national flags, and menu words like FIRE. They can follow as that art gets made.
 
 ## 14. Terrain tiles
 
-The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` renders them to `public/assets/terrain/terrain.png`, and the default pack points at that sheet. Properties (City, Factory, Airfield, Port, HQ), Bunker, Rubble and Obstacle aren't drawn yet and keep their placeholders.
+The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` renders them to `public/assets/terrain/terrain.png`, and the default pack points at that sheet. Properties are on their own sheet (section 15). Bunker, Rubble and Obstacle are terrain tiles 13–15.
 
 **Answers to section 9:**
 - **Tall tiles (Q9):** no. Every tile stays inside its own 16×16 square, so draw order doesn't change.
@@ -297,7 +298,9 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | 9 | Sea |
 | 10 | Reef |
 | 11–12 | Beach |
-| 13–15 | Empty |
+| 13 | Bunker |
+| 14 | Rubble |
+| 15 | Obstacle (dragon's teeth) |
 | 16–31 | Road, by neighbor mask: N=1, E=2, S=4, W=8, added together |
 | 32–47 | River, by the same mask |
 | 48–49 | Bridge deck: left to right, top to bottom |
@@ -312,4 +315,34 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | `connected` | `road` and `river`: the first of their 16 pieces |
 | `bridges` | `horizontal` and `vertical` deck tiles, drawn over the river piece |
 | `shore` | The first of the 8 foam pieces |
+
+## 15. Buildings
+
+Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run art` to `public/assets/terrain/buildings.png`. The style is a Normandy village: cream stone walls with a roof, banner or trim in the owner's color.
+
+| Property | Look |
+|---|---|
+| City | Two stone houses with a chimney |
+| Factory | Brick shed with a sawtooth roof and a tall chimney |
+| Airfield | Round-roofed hangar and windsock beside a runway |
+| Port | Warehouse and crane on a quay, with pier posts in the water |
+| HQ | A chateau with two towers and a tall banner, so it stands out from a City |
+
+**Owner colors:** the sheet has one row per property and one column per owner: neutral, blue, red, green, gold. Neutral is weathered slate grey. A captured property switches column at once.
+
+**Corner flags:** a property drawn from the sheet shows no corner flag, since its colors show the owner. A property with no art for its owner's team keeps the placeholder and its flag.
+
+**Draw order:** buildings sit above the terrain and below the move and attack range tints, so ranges still show on them.
+
+**Pack field** `properties`:
+
+| Field | What it does |
+|---|---|
+| `path` | The buildings sheet |
+| `columns` | The owner each column is for: `neutral`, or a player's `team` |
+| `rows` | The property on each row, top to bottom |
+
+**Fortifications** are terrain tiles, not buildings, because no one owns them: a concrete pillbox for the Bunker, broken slabs and rebar for Rubble, and rows of dragon's teeth for the Obstacle. A unit standing on a bunker covers most of it, as before.
+
+**Not done yet:** damaged bunker versions (damage shows as an HP number), and the phase 2 beach obstacle.
 

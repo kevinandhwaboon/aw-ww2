@@ -4,6 +4,7 @@ import { UNITS } from "../src/engine/data/units";
 import {
   activePack,
   BUILT_IN_PACK,
+  findPropertyArt,
   findUnitArt,
   packColor,
   packColorNumber,
@@ -181,5 +182,45 @@ describe("the active pack", () => {
       expect(packColor("blast")).toBe("#112233");
       expect(packColorNumber("blast")).toBe(0x112233);
     });
+  });
+});
+
+describe("art packs: buildings (08-art-pipeline §15)", () => {
+  const properties = { path: "b.png", columns: ["neutral", "blue", "red"], rows: ["city", "factory", "hq"] };
+  const pack = parseArtPack({
+    name: "x",
+    players: [
+      { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
+      { team: "red", fill: "#c8463a", outline: "#5e1a14" },
+      { team: "purple", fill: "#8040c0", outline: "#301050" },
+    ],
+    properties,
+  });
+
+  it("an unowned property uses the neutral column", () => {
+    expect(findPropertyArt(pack, "factory", null)).toBe(3 + 0);
+  });
+
+  it("an owned property uses its owner's team column", () => {
+    expect(findPropertyArt(pack, "hq", 1)).toBe(6 + 2);
+  });
+
+  it("an owner whose team has no column keeps the placeholder and flag", () => {
+    expect(findPropertyArt(pack, "city", 2)).toBeNull();
+  });
+
+  it("a property the sheet doesn't draw keeps the placeholder", () => {
+    expect(findPropertyArt(pack, "airfield", 0)).toBeNull();
+  });
+
+  it("a pack with no buildings keeps every placeholder", () => {
+    expect(findPropertyArt(parseArtPack({ name: "x" }), "city", 0)).toBeNull();
+  });
+
+  it.each([
+    ["a row that isn't a property", { ...properties, rows: ["forest"] }, /isn't a property/],
+    ["no columns", { ...properties, columns: [] }, /owner names/],
+  ])("rejects %s", (_, change, message) => {
+    expect(() => parseArtPack({ name: "x", properties: change })).toThrow(message);
   });
 });
