@@ -66,6 +66,8 @@ export interface TerrainSheet {
   readonly path: string;
   /** Animation frames: the sheet is this many same-layout panels stacked top to bottom. */
   readonly frames: number;
+  /** 16, or 32 for tiles that rise into the tile behind (08-art-pipeline §16). */
+  readonly tileHeight: number;
   /** Tile numbers per terrain. Several are variants, picked by map position. */
   readonly tiles: Readonly<Partial<Record<TerrainId, readonly number[]>>>;
   /** First of 16 joined pieces, in neighbor-mask order (N=1, E=2, S=4, W=8). */
@@ -84,6 +86,8 @@ export interface PropertySheet {
   readonly columns: readonly string[];
   /** The property on each row, top to bottom. */
   readonly rows: readonly TerrainId[];
+  /** 16, or 32 for buildings that rise into the tile behind (08-art-pipeline §16). */
+  readonly tileHeight: number;
 }
 
 export interface ArtPack {
@@ -165,14 +169,17 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   return { nation: nation as NationId, team, path, frames: frames as number, rows: rows as (UnitTypeId | null)[] };
 }
 
+const isTileHeight = (value: unknown): value is 16 | 32 => value === 16 || value === 32;
+
 const isTileNumber = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, connected = {}, bridges, shore } = raw;
+  const { path, tiles, frames = 1, tileHeight = 16, connected = {}, bridges, shore } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
   if (!Number.isInteger(frames) || (frames as number) < 1) return fail(`terrain: "frames" must be a whole number`);
+  if (!isTileHeight(tileHeight)) return fail(`terrain: "tileHeight" must be 16 or 32`);
   const parsedTiles: Partial<Record<TerrainId, number[]>> = {};
   for (const [terrain, tile] of Object.entries(tiles)) {
     if (!isTerrain(terrain)) return fail(`terrain: unknown terrain "${terrain}"`);
@@ -192,6 +199,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   return {
     path,
     frames: frames as number,
+    tileHeight,
     tiles: parsedTiles,
     connected,
     bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
@@ -201,15 +209,16 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
 
 function parsePropertySheet(raw: unknown): PropertySheet {
   if (!isObject(raw)) return fail(`"properties" must be an object`);
-  const { path, columns, rows } = raw;
+  const { path, columns, rows, tileHeight = 16 } = raw;
   if (!isRelativePath(path)) return fail(`properties: "path" must be a file in the pack`);
   if (!Array.isArray(columns) || columns.length === 0 || !columns.every((c) => typeof c === "string" && c !== "")) {
     return fail(`properties: "columns" must be a list of owner names`);
   }
   if (!Array.isArray(rows)) return fail(`properties: "rows" must be a list`);
+  if (!isTileHeight(tileHeight)) return fail(`properties: "tileHeight" must be 16 or 32`);
   const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || terrainDef(row).property === undefined);
   if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property`);
-  return { path, columns: columns as string[], rows: rows as TerrainId[] };
+  return { path, columns: columns as string[], rows: rows as TerrainId[], tileHeight };
 }
 
 function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key is K, label: string): Partial<Record<K, string>> {

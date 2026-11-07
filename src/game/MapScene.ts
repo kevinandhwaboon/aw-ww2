@@ -42,6 +42,7 @@ const PROPERTY_SHEET_KEY = "pack-properties";
 /** How long each frame of moving water shows. */
 const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
+const ownerKey = (state: GameState) => state.properties.map((p) => p.owner ?? "-").join(",");
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 
 /** What a shot lands on: a unit, or just a tile for a fortification. */
@@ -69,7 +70,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   private cursor?: Phaser.GameObjects.Graphics;
   private rangeLayer?: Phaser.GameObjects.Graphics;
   private stateLayer?: Phaser.GameObjects.Container;
-  private propertyLayer?: Phaser.GameObjects.Container;
+  /** Who owned each property when the terrain was last painted, since buildings are painted with it. */
+  private drawnOwners = "";
   private pathLayer?: Phaser.GameObjects.Graphics;
   private unitSprites = new Map<UnitId, Phaser.GameObjects.Container>();
   private previewed: UnitId | undefined;
@@ -95,28 +97,35 @@ export class MapScene extends Phaser.Scene implements MapView {
       this.load.spritesheet(unitSheetKey(i), packFileUrl(sheet.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
     });
     if (pack.terrain) {
-      this.load.spritesheet(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+      this.load.image(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path));
     }
     if (pack.properties) {
-      this.load.spritesheet(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path), { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+      this.load.image(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path));
     }
   }
 
+  private sheetImage(key: string): (CanvasImageSource & { width: number; height: number }) | null {
+    return this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as CanvasImageSource & { width: number; height: number }) : null;
+  }
+
   /**
-   * Paints the whole map's terrain into one canvas per animation frame: the pack's tiles where it
-   * has them (08-art-pipeline §14), placeholders everywhere else.
+   * Paints the whole map's terrain and buildings into one canvas per animation frame: the pack's
+   * tiles where it has them (08-art-pipeline §14–16), placeholders everywhere else. Rows go top to
+   * bottom, so anything tall in front overlaps the row behind it.
    */
   private paintTerrain(): void {
     const { map } = this.state;
     const placeholders = (this.placeholderTiles ??= drawPlaceholderTileset());
-    const pack = activePack().terrain;
-    const source = pack && this.textures.exists(TERRAIN_SHEET_KEY)
-      ? (this.textures.get(TERRAIN_SHEET_KEY).getSourceImage() as CanvasImageSource & { width: number; height: number })
-      : null;
-    const sheet = source ? pack : null;
+    const pack = activePack();
+    const source = pack.terrain ? this.sheetImage(TERRAIN_SHEET_KEY) : null;
+    const sheet = source ? pack.terrain : null;
     const frames = sheet?.frames ?? 1;
+    const tall = sheet?.tileHeight ?? TILE_SIZE;
     const across = source ? Math.floor(source.width / TILE_SIZE) : 1;
-    const tilesPerFrame = source ? across * Math.floor(source.height / TILE_SIZE / frames) : 0;
+    const tilesPerFrame = source ? across * Math.floor(source.height / tall / frames) : 0;
+    const buildings = pack.properties ? this.sheetImage(PROPERTY_SHEET_KEY) : null;
+    const buildingHeight = pack.properties?.tileHeight ?? TILE_SIZE;
+    const owners = new Map(this.state.properties.map((p) => [p.pos.y * map.width + p.pos.x, p.owner]));
     for (let frame = 0; frame < frames; frame++) {
       const key = terrainFrameKey(frame);
       const texture = this.textures.exists(key)
@@ -132,9 +141,16 @@ export class MapScene extends Phaser.Scene implements MapView {
               ctx.drawImage(placeholders, tileIndex(layer.terrain) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             } else if (source) {
               const n = layer.tile + frame * tilesPerFrame;
-              const sx = (n % across) * TILE_SIZE, sy = Math.floor(n / across) * TILE_SIZE;
-              ctx.drawImage(source, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+              const sx = (n % across) * TILE_SIZE, sy = Math.floor(n / across) * tall;
+              ctx.drawImage(source, sx, sy, TILE_SIZE, tall, x * TILE_SIZE, (y + 1) * TILE_SIZE - tall, TILE_SIZE, tall);
             }
+          }
+          const owner = owners.get(y * map.width + x);
+          const building = buildings && owner !== undefined ? findPropertyArt(pack, terrainAt(map, { x, y }), owner) : null;
+          if (buildings && building !== null && pack.properties) {
+            const sx = (building % pack.properties.columns.length) * TILE_SIZE;
+            const sy = Math.floor(building / pack.properties.columns.length) * buildingHeight;
+            ctx.drawImage(buildings, sx, sy, TILE_SIZE, buildingHeight, x * TILE_SIZE, (y + 1) * TILE_SIZE - buildingHeight, TILE_SIZE, buildingHeight);
           }
         }
       }
@@ -142,6 +158,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
     this.terrainFrames = frames;
     this.drawnTerrain = map.terrain;
+    this.drawnOwners = ownerKey(this.state);
   }
 
   create(): void {
@@ -158,8 +175,7 @@ export class MapScene extends Phaser.Scene implements MapView {
       });
     }
 
-    // Draw order, bottom to top: terrain, buildings, range, flags + units, path arrow, cursor, menu.
-    this.propertyLayer = this.add.container(0, 0);
+    // Draw order, bottom to top: terrain and buildings, range, flags + units, path arrow, cursor, menu.
     this.rangeLayer = this.add.graphics();
     this.stateLayer = this.add.container(0, 0);
     this.pathLayer = this.add.graphics();
@@ -583,21 +599,13 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.unitSprites.clear();
     this.redrawChangedTerrain();
 
-    // Buildings in their owner's colors. Sit below the range tint so move ranges still show on them.
-    this.propertyLayer?.removeAll(true);
-    const drawn = new Set<string>();
+    // Buildings are painted with the terrain in their owner's colors. Any property without building
+    // art shows its owner with a small team-colored flag in the tile's top-left corner.
     const hasSheet = this.textures.exists(PROPERTY_SHEET_KEY);
-    for (const prop of this.state.properties) {
-      const frame = hasSheet ? findPropertyArt(activePack(), terrainAt(this.state.map, prop.pos), prop.owner) : null;
-      if (frame === null) continue;
-      this.propertyLayer?.add(this.add.image(prop.pos.x * TILE_SIZE, prop.pos.y * TILE_SIZE, PROPERTY_SHEET_KEY, frame).setOrigin(0));
-      drawn.add(`${prop.pos.x},${prop.pos.y}`);
-    }
-
-    // Owned properties without building art: a small team-colored flag in the tile's top-left corner.
     const flags = this.add.graphics();
     for (const prop of this.state.properties) {
-      if (prop.owner === null || drawn.has(`${prop.pos.x},${prop.pos.y}`)) continue;
+      if (prop.owner === null) continue;
+      if (hasSheet && findPropertyArt(activePack(), terrainAt(this.state.map, prop.pos), prop.owner) !== null) continue;
       const [fill, outline] = playerColors(prop.owner);
       const x = prop.pos.x * TILE_SIZE;
       const y = prop.pos.y * TILE_SIZE;
@@ -669,7 +677,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   private redrawChangedTerrain(): void {
     // A change can alter its neighbors' joins too, so repaint the lot: it's one pass over the map.
     const { terrain } = this.state.map;
-    if (terrain.some((id, i) => id !== this.drawnTerrain[i])) this.paintTerrain();
+    if (terrain.some((id, i) => id !== this.drawnTerrain[i]) || ownerKey(this.state) !== this.drawnOwners) this.paintTerrain();
   }
 
   /** Returns a texture key, generating the texture the first time it's needed. */

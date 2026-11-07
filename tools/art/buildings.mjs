@@ -1,12 +1,14 @@
-// Property buildings as 16x16 pixel grids: Normandy village stone, team-colored roofs and banners.
-// L/M/D is the owner's ramp, swapped per column of the sheet. Layout: docs/08-art-pipeline.md §15.
+// Property buildings, 16 wide by 32 tall: seen from the front and a little above, rising into the
+// tile behind, lit from the top left with a shadow to the lower right. Normandy village stone, with
+// roofs and banners in the owner's color (L/M/D, swapped per sheet column). Layout: 08-art-pipeline §15–16.
+import { art, compose, house, layer, put, rect } from "./depth.mjs";
 import { palette as terrainPalette } from "./terrain.mjs";
 
 const SIZE = 16;
 
 export const palette = {
   ...terrainPalette,
-  W: "#ece4cc", Y: "#c8bc9c", Z: "#8e8468", // stone walls: light, shade, dark
+  W: "#ece4cc", Y: "#c2b694", Z: "#8e8468", // stone walls: light, shade, dark
   c: "#a8d8e8", // glass
 };
 
@@ -25,120 +27,84 @@ const hash = (x, y, salt) => {
   v = Math.imul(v ^ (v >>> 13), 1274126177) >>> 0;
   return (v ^ (v >>> 16)) >>> 0;
 };
-const grid = (ch) => Array.from({ length: SIZE }, () => Array(SIZE).fill(ch));
-const toRows = (g) => g.map((r) => r.join(""));
-const put = (g, x, y, ch) => {
-  if (x >= 0 && y >= 0 && x < SIZE && y < SIZE) g[y][x] = ch;
-};
-const rect = (g, x0, y0, x1, y1, ch) => {
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(g, x, y, ch);
-};
-const art = (g, rows, ox, oy) => rows.forEach((row, y) => [...row].forEach((ch, x) => {
-  if (ch !== ".") put(g, ox + x, oy + y, ch);
-}));
 
+// 16x16 ground for the cell.
 function grass(salt) {
-  const g = grid("G");
-  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+  return Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => {
     const v = hash(x, y, salt) % 40;
-    if (v === 0) g[y][x] = "h";
-    else if (v === 1) g[y][x] = "g";
-  }
-  return g;
-}
-
-// A stone house: pitched roof in the owner's color, windows, and an optional door.
-function house(g, x0, x1, roofTop, wallTop, bottom, door) {
-  rect(g, x0 + 1, roofTop, x1 - 1, roofTop, "K");
-  for (let y = roofTop + 1; y < wallTop - 1; y++) {
-    put(g, x0, y, "K");
-    put(g, x1, y, "K");
-    rect(g, x0 + 1, y, x1 - 1, y, y === roofTop + 1 ? "L" : "M");
-  }
-  rect(g, x0 - 1, wallTop - 1, x1 + 1, wallTop - 1, "D");
-  put(g, x0 - 1, wallTop - 1, "K");
-  put(g, x1 + 1, wallTop - 1, "K");
-  for (let y = wallTop; y <= bottom; y++) {
-    put(g, x0, y, "K");
-    put(g, x1, y, "K");
-    rect(g, x0 + 1, y, x1 - 1, y, y === bottom ? "K" : y === bottom - 1 ? "Y" : "W");
-  }
-  for (let x = x0 + 2; x <= x1 - 2; x += 3) {
-    put(g, x, wallTop + 1, "c");
-    put(g, x, wallTop + 2, "K");
-  }
-  if (door !== undefined) rect(g, door, bottom - 3, door + 1, bottom - 1, "B");
+    return v === 0 ? "h" : v === 1 ? "g" : "G";
+  }).join(""));
 }
 
 function city() {
-  const g = grass(21);
-  art(g, ["KK", "Kr", "Kr"], 3, 1);
-  house(g, 1, 9, 3, 8, 14, 4);
-  house(g, 9, 14, 7, 11, 14, 11);
-  return toRows(g);
+  const obj = layer();
+  // Chimney on the back house.
+  art(obj, ["KK", "Kr", "Kr", "Kr"], 3, 13);
+  house(obj, { x: 1, base: 26, w: 7, h: 6, roof: 4, door: 3 });
+  house(obj, { x: 8, base: 30, w: 5, h: 5, roof: 3, door: 9 });
+  return compose(grass(21), obj);
 }
 
 function factory() {
-  const g = grass(22);
-  // Brick chimney with a band of the owner's color near the top.
-  art(g, ["KKK", "KDK", "KbK", "KbK", "KBK", "KbK", "KbK", "KbK"], 1, 0);
-  // Sawtooth roof: three teeth, glazing on each upright face.
-  for (let t = 0; t < 3; t++) {
-    const x = 4 + t * 4;
-    art(g, ["K...", "KL..", "cLL.", "cMLK", "DDDD"], x, 3);
-  }
-  rect(g, 3, 8, 15, 14, "b");
-  rect(g, 3, 8, 15, 8, "D");
-  rect(g, 3, 14, 15, 14, "K");
-  for (let x = 3; x <= 15; x += 12) rect(g, x, 8, x, 14, "K");
-  for (let x = 5; x <= 13; x += 3) rect(g, x, 10, x + 1, 10, "c");
-  rect(g, 8, 11, 10, 13, "B");
-  rect(g, 4, 12, 14, 12, "B");
-  rect(g, 8, 11, 10, 13, "x");
-  return toRows(g);
+  const obj = layer();
+  // Tall brick chimney behind, banded in the owner's color near the top.
+  art(obj, ["KKK", "KDK", ...Array(14).fill("KbK")], 1, 9);
+  house(obj, { x: 3, base: 29, w: 10, h: 6, roof: 2, windows: false });
+  // Sawtooth roof: three teeth with glazing on their upright faces.
+  for (let t = 0; t < 3; t++) art(obj, ["K...", "KL..", "cLL.", "cMLK"], 3 + t * 3, 17);
+  rect(obj, 4, 25, 12, 25, "c");
+  for (let x = 6; x <= 12; x += 3) put(obj, x, 25, "K");
+  rect(obj, 6, 26, 8, 28, "x");
+  for (let y = 24; y <= 28; y++) for (let x = 4; x <= 12; x++) if (obj[y][x] === "W") obj[y][x] = "b";
+  return compose(grass(22), obj);
 }
 
 function airfield() {
-  const g = grass(23);
-  // Runway across the bottom half, with a dashed centre line.
-  rect(g, 0, 10, 15, 14, "k");
-  rect(g, 0, 10, 15, 10, "K");
-  rect(g, 0, 14, 15, 14, "K");
-  for (let x = 1; x < SIZE; x += 4) rect(g, x, 12, x + 1, 12, "f");
-  // Round-roofed hangar in the owner's color.
-  art(g, [
-    "..KKKKK..", ".KLLLLLK.", "KLLMMMMLK", "KMMMMMMDK", "KWWKKKWWK", "KWWKxKWWK", "KKKKKKKKK",
-  ], 0, 2);
-  // Windsock on a pole.
-  art(g, ["KLL", "KDD.", "K", "K", "K", "K"], 12, 2);
-  return toRows(g);
+  const ground = grass(23).map((row) => [...row]);
+  // Runway across the front of the cell, with a dashed centre line.
+  for (let y = 10; y <= 14; y++) for (let x = 0; x < SIZE; x++) ground[y][x] = y === 10 || y === 14 ? "K" : "k";
+  for (let x = 1; x < SIZE; x += 4) ground[12][x] = ground[12][x + 1] = "f";
+  const obj = layer();
+  // A round-roofed hangar in the owner's color, open at the front.
+  art(obj, [
+    "...KKKKK...", "..KLLLLLKK.", ".KLLLMMMMDK", "KLLMMMMMDDK", "KMMMMMMDDK.", "KWWKKKKWYK.", "KWWKxxKWYK.", "KKKKKKKKKK.",
+  ], 0, 17);
+  // Control tower with a lit cab.
+  art(obj, ["KKKK", "KLLK", "KccK", "KWYK", "KWYK", "KWYK", "KWYK", "KKKK"], 11, 16);
+  return compose(ground.map((r) => r.join("")), obj, 2);
 }
 
 function port() {
-  const g = grid("S");
-  for (let y = 9; y < SIZE; y++) for (let x = 0; x < SIZE; x++) if (hash(x, y, 24) % 11 === 0) g[y][x] = "l";
-  // Quay along the top, warehouse on it, and a crane over the water.
-  rect(g, 0, 0, 15, 8, "j");
-  rect(g, 0, 8, 15, 8, "K");
-  rect(g, 0, 7, 15, 7, "k");
-  for (let x = 1; x < SIZE; x += 5) put(g, x, 7, "x");
-  house(g, 1, 8, 0, 4, 7, 4);
-  art(g, ["KKKKKK", "...KxK", "...K.K", "...KxK", "...K.K", "...KxK", "...KKK", "...K.K", "..KK.KK"], 9, 0);
-  art(g, ["K", "K", "K", "f"], 9, 1);
+  const ground = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => {
+    if (y < 8) return y === 7 ? "k" : "j";
+    if (y === 8) return "K";
+    return hash(x, y, 24) % 11 === 0 ? "l" : "S";
+  }));
+  for (let x = 1; x < SIZE; x += 5) ground[7][x] = "x";
+  const obj = layer();
+  house(obj, { x: 1, base: 22, w: 7, h: 4, roof: 3, door: 4 });
+  // A crane leaning out over the water.
+  art(obj, [
+    "KKKKKKK", "KxxxxxK", ".KK..K.", "..K..f.", "..K....", ".KxK...", ".KxK...", ".KxK...", ".KxK...", ".KxK...",
+    ".KxK...", "KKKKK..",
+  ], 9, 11);
   // Pier posts standing in the water.
-  for (let x = 2; x < 9; x += 3) art(g, ["B", "B", "f"], x, 9);
-  return toRows(g);
+  for (let x = 2; x < 9; x += 3) art(obj, ["B", "B", "f"], x, 25);
+  return compose(ground.map((r) => r.join("")), obj, 2);
 }
 
 function hq() {
-  const g = grass(25);
-  // A chateau: two towers with pointed roofs, a main block, and a tall banner.
-  house(g, 3, 12, 4, 8, 14, 7);
-  for (const x of [1, 12]) {
-    art(g, ["..K..", ".KLK.", "KLMMK", "KMMDK", "KWWWK", "KWcWK", "KWKWK", "KWWWK", "KYYYK", "KKKKK"], x - 1, 5);
+  const obj = layer();
+  // A banner on a tall pole, behind the main block.
+  art(obj, ["K....", "KLLLK", "KMMMK", "KLLLK", ...Array(12).fill("K....")], 7, 2);
+  house(obj, { x: 3, base: 29, w: 9, h: 7, roof: 4, door: 6 });
+  // Two towers with pointed roofs on the front corners.
+  for (const x of [0, 11]) {
+    art(obj, [
+      "..K..", ".KLK.", ".KLMK", "KLMMK", "KMMDK", "KWWYK", "KWcYK", "KWWYK", "KWKYK", "KWWYK", "KWWYK", "KYYYK", "KKKKK",
+    ], x, 18);
   }
-  art(g, ["K....", "KLLLK", "KMMMK", "KLLLK", "K....", "K....", "K...."], 7, 0);
-  return toRows(g);
+  return compose(grass(25), obj);
 }
 
 // Rows of the sheet, top to bottom.
@@ -150,7 +116,9 @@ export const rows = [
   ["hq", hq()],
 ];
 
+export const TILE_HEIGHT = 32;
+
 for (const [name, g] of rows) {
-  if (g.length !== SIZE || g.some((r) => r.length !== SIZE)) throw new Error(`${name}: not 16x16`);
-  for (const ch of g.join("")) if (!palette[ch] && !"LMD".includes(ch)) throw new Error(`${name}: no color for "${ch}"`);
+  if (g.length !== TILE_HEIGHT || g.some((r) => r.length !== SIZE)) throw new Error(`${name}: not 16x32`);
+  for (const ch of g.join("")) if (ch !== "." && !palette[ch] && !"LMD".includes(ch)) throw new Error(`${name}: no color for "${ch}"`);
 }
