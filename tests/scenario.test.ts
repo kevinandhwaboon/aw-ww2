@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
 import { TERRAIN, type MovementType } from "../src/engine/data/terrain";
+import { UNITS } from "../src/engine/data/units";
 import { terrainAt, type GameMap, type Point } from "../src/engine/map";
 import { loadGame, saveGame } from "../src/engine/save";
 import { parseScenario, type Scenario } from "../src/engine/scenario";
@@ -26,6 +27,23 @@ const properties = (scenario: Scenario, terrain: string, owner: number) => {
   const { map, propertyOwners } = scenario.setup;
   return (propertyOwners ?? []).filter((p) => p.owner === owner && terrainAt(map, p.pos) === terrain);
 };
+
+/** Every tile a unit of one of these movement types could ever reach from a starting tile, ignoring other units. */
+function reachable(map: GameMap, types: readonly MovementType[], from: Point): Set<string> {
+  const seen = new Set([`${from.x},${from.y}`]);
+  const queue = [from];
+  for (let p = queue.shift(); p; p = queue.shift()) {
+    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+      const q = P(p.x + dx, p.y + dy);
+      if (q.x < 0 || q.y < 0 || q.x >= map.width || q.y >= map.height || seen.has(`${q.x},${q.y}`)) continue;
+      const costs = TERRAIN[terrainAt(map, q)].moveCost;
+      if (types.every((type) => costs[type] === null)) continue;
+      seen.add(`${q.x},${q.y}`);
+      queue.push(q);
+    }
+  }
+  return seen;
+}
 
 /** Whether a unit of this movement type could ever travel between two tiles, ignoring other units. */
 function connected(map: GameMap, type: MovementType, from: Point, to: Point): boolean {
@@ -66,13 +84,16 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const owner of [0, 1]) expect((scenario.setup.units ?? []).some((u) => u.owner === owner)).toBe(true);
     });
 
-    it("infantry can walk, and tanks can drive, from one side to the other", () => {
+    it("infantry and tanks can reach the enemy HQ, on land or carried across the sea by Landing Craft", () => {
       const { map } = scenario.setup;
       const [a] = properties(scenario, "hq", 0);
       const [b] = properties(scenario, "hq", 1);
       if (!a || !b) throw new Error("missing HQ");
-      expect(connected(map, "foot", a.pos, b.pos)).toBe(true);
-      expect(connected(map, "tracks", a.pos, b.pos)).toBe(true);
+      for (const type of ["foot", "tracks"] as const) {
+        const byLand = connected(map, type, a.pos, b.pos);
+        const bySea = reachable(map, [type, "landingCraft"], a.pos).has(`${b.pos.x},${b.pos.y}`);
+        expect(byLand || bySea, type).toBe(true);
+      }
     });
 
     it("starts a game that can be played", () => {
@@ -105,6 +126,73 @@ describe("built-in scenarios (00-master-design §8)", () => {
     expect(side(1).map((u) => key(u.type, u.pos)).sort()).toEqual(side(0).map((u) => key(u.type, rotate(u.pos))).sort());
     const owned = (owner: number) => (propertyOwners ?? []).filter((p) => p.owner === owner);
     expect(owned(1).map((p) => key("p", p.pos)).sort()).toEqual(owned(0).map((p) => key("p", rotate(p.pos))).sort());
+  });
+
+  describe("Normandy", () => {
+    const normandy = SCENARIOS.find((s) => s.id === "normandy");
+    if (!normandy) throw new Error("missing scenario");
+    const { map, units } = normandy.setup;
+    const [alliedHq] = properties(normandy, "hq", 0);
+    const [germanHq] = properties(normandy, "hq", 1);
+    if (!alliedHq || !germanHq) throw new Error("missing HQ");
+    const france = reachable(map, ["foot"], germanHq.pos);
+    const tiles = (keep: (p: Point, key: string) => boolean) =>
+      map.terrain.map((_, i) => P(i % map.width, Math.floor(i / map.width))).filter((p) => keep(p, `${p.x},${p.y}`));
+    const isLand = (p: Point) => TERRAIN[terrainAt(map, p)].moveCost.foot !== null;
+
+    it("is a large theater map, bigger than 80 by 70 squares (00-master-design §8)", () => {
+      expect(map.width).toBeGreaterThan(80);
+      expect(map.height).toBeGreaterThan(70);
+    });
+
+    it("England and France are split by the Channel: no one can walk from London to the German HQ", () => {
+      expect(france.has(`${alliedHq.pos.x},${alliedHq.pos.y}`)).toBe(false);
+    });
+
+    it("the Channel is wider than Rocket Artillery range, so rockets can't fire from one coast to the other (01-units §8)", () => {
+      const range = UNITS.rocketArtillery.range.max;
+      const french = tiles((p, key) => france.has(key) && isLand(p));
+      const otherLand = tiles((p, key) => !france.has(key) && isLand(p));
+      // Jersey counts with the English side here, which only makes the check stricter.
+      let closest = Infinity;
+      for (const a of french) for (const b of otherLand) closest = Math.min(closest, Math.abs(a.x - b.x) + Math.abs(a.y - b.y));
+      expect(closest).toBeGreaterThan(range);
+    });
+
+    it("England's cities and ports pay the Allies at least half as much again as the Germans earn", () => {
+      const owned = (owner: number) => (normandy.setup.propertyOwners ?? []).filter((p) => p.owner === owner).length;
+      expect(owned(0)).toBeGreaterThanOrEqual(owned(1) * 1.5);
+    });
+
+    it("both sides start small, with at most 8 units each", () => {
+      for (const owner of [0, 1]) expect((units ?? []).filter((u) => u.owner === owner).length).toBeLessThanOrEqual(8);
+    });
+
+    it("the Allies start with a Landing Craft and both sides have ports to build more ships", () => {
+      expect((units ?? []).some((u) => u.owner === 0 && u.type === "landingCraft")).toBe(true);
+      for (const owner of [0, 1]) expect(properties(normandy, "port", owner).length).toBeGreaterThan(0);
+    });
+
+    const neighbors = (p: Point) => [P(p.x, p.y - 1), P(p.x + 1, p.y), P(p.x, p.y + 1), P(p.x - 1, p.y)];
+    const inMap = (p: Point) => p.x >= 0 && p.y >= 0 && p.x < map.width && p.y < map.height;
+    const onShore = (p: Point) => neighbors(p).some((q) => inMap(q) && terrainAt(map, q) === "sea");
+
+    it("the French coast has plenty of beaches to land on, not just a handful of squares", () => {
+      const frenchBeaches = tiles((p, key) => france.has(key) && terrainAt(map, p) === "beach");
+      expect(frenchBeaches.length).toBeGreaterThanOrEqual(30);
+    });
+
+    it("some bunkers stand on clifftops with cliffs beside them, as at Pointe du Hoc", () => {
+      const clifftop = tiles((p, key) => {
+        if (!france.has(key) || terrainAt(map, p) !== "bunker" || !onShore(p)) return false;
+        return neighbors(p).some((q) => inMap(q) && terrainAt(map, q) === "hills" && onShore(q));
+      });
+      expect(clifftop.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("the game ends by capturing the enemy HQ, not by wiping out units", () => {
+      expect(normandy.setup.victory).toEqual([{ type: "hqCapture" }]);
+    });
   });
 
   it("the demo keeps the US from building Heavy Tanks, as the availability rule requires (01-units §1)", () => {
