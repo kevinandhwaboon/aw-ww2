@@ -23,12 +23,14 @@
     {
       "nation": "us",
       "team": "olive",
-      "path": "../../units/us-land-olive.png",
+      "path": "../../units/us-land-32-olive.png",
+      "frameSize": 32,
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
         null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
-      ]
+      ],
+      "paratroopers": [13, 14, 15, 16]
     }
   ],
   "terrain": {
