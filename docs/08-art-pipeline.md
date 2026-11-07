@@ -276,7 +276,7 @@ The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` rend
 | Terrain | What's drawn |
 |---|---|
 | Plains, Forest, Hills, Bocage, Beach | One of several variants, picked by map position. A cell always gets the same one |
-| Road | The piece matching which sides join a road or bridge |
+| Road | The piece matching which sides join a road or bridge. Roads are 10 pixels wide, most of the tile |
 | River | The piece matching which sides join a river, bridge, sea or reef, so rivers flow into the sea |
 | Bridge | The river piece beneath it, with a deck on top. Water above or below means the deck runs left to right, otherwise top to bottom |
 | Sea, Reef | The water tile, then foam along each side that touches land. A foam corner shows where land touches only diagonally. Rivers, bridges, reefs and the map's edge count as water |
@@ -358,6 +358,8 @@ Terrain and buildings are drawn so the map looks solid rather than flat, using t
 - **Light** comes from the top left. Lit faces are lighter and faces turned away are darker.
 - **Shadows** fall to the lower right, inside the object's own cell. A shadow darkens whatever ground it lands on, so the sheets stay fully opaque on the ground.
 - **What rises:** Forest, Hills, Bocage hedges, Bunker, Rubble, Obstacle and every building. Plains, roads, rivers, bridges, beach, sea and reef stay flat.
+- **Units** stay inside their 16×16 cell. Each one casts a shadow: a dark copy of its sprite, 2 pixels right and 1 down. The game draws it, not the sheet, so it falls to the right even when a unit is mirrored. The shadow color is `unitShadow` in the pack's colors.
+- **Unit shading:** US land sprites are lit on the top edge of their team-colored body and shaded on the right edge. German sprites don't have this yet.
 - **The map's top row:** anything rising from the top row is cut off at the map's edge.
 
 The helpers for this are in `tools/art/depth.mjs`.

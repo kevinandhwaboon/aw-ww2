@@ -299,3 +299,4 @@ UI falls into four categories:
 | 2026-11-06 | Terrain art: variants by map position, 16-piece roads and rivers, bridge decks over rivers, and shore foam layered on sea instead of 47 coastline tiles. Water animates in 2 frames; tiles never overlap the one above (08-art-pipeline §14) |
 | 2026-11-06 | Buildings show their owner by roof and banner color, from a sheet with one column per owner, and replace the corner flag. Buildings draw under range tints; fortifications are terrain tiles (08-art-pipeline §15) |
 | 2026-11-06 | Reversed: tall tiles now rise into the tile behind. Terrain and buildings are 16×32, painted row by row from the top, lit from the top left with shadows to the lower right (08-art-pipeline §16) |
+| 2026-11-06 | Roads widened to 10 pixels. Units cast an in-game shadow to the lower right, so it stays correct when mirrored; US land sprites shaded to match the terrain's light (08-art-pipeline §16) |

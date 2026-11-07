@@ -36,6 +36,9 @@ const MOVE_MS_PER_TILE = 70;
 const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack" };
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
+/** Unit shadows fall to the lower right, like the terrain's (08-art-pipeline §16). */
+const UNIT_SHADOW_OFFSET = { x: 2, y: 1 };
+const UNIT_SHADOW_ALPHA = 0.35;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
 const TERRAIN_SHEET_KEY = "pack-terrain";
 const PROPERTY_SHEET_KEY = "pack-properties";
@@ -627,6 +630,8 @@ export class MapScene extends Phaser.Scene implements MapView {
 
     for (const unit of this.state.units) {
       const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
+      const shadow = this.unitShadow(unit);
+      if (shadow) sprite.add(shadow);
       sprite.add(this.unitImage(unit));
 
       const hp = displayHp(unit.hp);
@@ -662,15 +667,37 @@ export class MapScene extends Phaser.Scene implements MapView {
       return marker.setOrigin(0).setAlpha(unit.hasActed ? 0.5 : 1);
     }
     const key = unitSheetKey(art.sheet);
-    const firstFrame = art.row * art.frames;
-    const sprite = this.add.sprite(0, 0, key, firstFrame).setOrigin(0).setFlipX(player?.facing === "left");
+    const sprite = this.add.sprite(0, 0, key, art.row * art.frames).setOrigin(0).setFlipX(player?.facing === "left");
     if (unit.hasActed) return sprite.setAlpha(0.5);
+    return sprite.play(this.idleAnimation(key, art));
+  }
+
+  /**
+   * A dark copy of the unit's sprite, offset to the lower right. Drawn in the game rather than in the
+   * sheet so it still falls to the right when the sprite is mirrored. Placeholder markers have none.
+   */
+  private unitShadow(unit: Unit): Phaser.GameObjects.Sprite | null {
+    const player = this.state.players[unit.owner];
+    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type) : null;
+    if (!art || !this.textures.exists(unitSheetKey(art.sheet))) return null;
+    const key = unitSheetKey(art.sheet);
+    const shadow = this.add.sprite(UNIT_SHADOW_OFFSET.x, UNIT_SHADOW_OFFSET.y, key, art.row * art.frames)
+      .setOrigin(0)
+      .setFlipX(player?.facing === "left")
+      .setTint(packColorNumber("unitShadow"))
+      .setTintMode(Phaser.TintModes.FILL)
+      .setAlpha(unit.hasActed ? UNIT_SHADOW_ALPHA / 2 : UNIT_SHADOW_ALPHA);
+    return unit.hasActed ? shadow : shadow.play(this.idleAnimation(key, art));
+  }
+
+  private idleAnimation(key: string, art: { row: number; frames: number }): string {
     const animation = `${key}-row-${art.row}`;
     if (!this.anims.exists(animation)) {
-      const frames = this.anims.generateFrameNumbers(key, { start: firstFrame, end: firstFrame + art.frames - 1 });
+      const first = art.row * art.frames;
+      const frames = this.anims.generateFrameNumbers(key, { start: first, end: first + art.frames - 1 });
       this.anims.create({ key: animation, frames, frameRate: IDLE_FRAMES_PER_SECOND, repeat: -1 });
     }
-    return sprite.play(animation);
+    return animation;
   }
 
   /** Terrain can change in play: a destroyed bunker becomes rubble (02-terrain §4). */
