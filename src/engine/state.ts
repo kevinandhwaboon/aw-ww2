@@ -66,6 +66,11 @@ export interface Unit {
   readonly hasActed: boolean;
   /** Passengers. They aren't in GameState.units until unloaded (05-supply-transport §4). */
   readonly cargo: readonly Unit[];
+  /**
+   * Set once a Transport Aircraft drops this unit (01-units §5). No rule reads it: it only lets the
+   * art show paratroopers (08-art-pipeline §17).
+   */
+  readonly airDropped?: true;
 }
 
 export interface PropertyState {

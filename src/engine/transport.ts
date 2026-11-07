@@ -55,7 +55,8 @@ export function unloadTiles(state: GameState, transport: Unit, passenger: Unit):
 /** Unloads a passenger, who can't act this turn (05-supply-transport §4). */
 export function applyUnload(state: GameState, transport: Unit, passenger: Unit, to: Point): { state: GameState; event: GameEvent } {
   const emptied: Unit = { ...transport, cargo: transport.cargo.filter((c) => c.id !== passenger.id) };
-  const landed: Unit = { ...passenger, pos: to, hasActed: true };
+  const dropped = unitDef(transport.type).movementType === "air";
+  const landed: Unit = { ...passenger, pos: to, hasActed: true, ...(dropped ? { airDropped: true } : {}) };
   return {
     state: { ...state, units: [...state.units.map((u) => (u.id === transport.id ? emptied : u)), landed].sort((a, b) => a.id - b.id) },
     event: { type: "unitUnloaded", unitId: passenger.id, transportId: transport.id, pos: to },

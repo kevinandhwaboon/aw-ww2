@@ -76,6 +76,7 @@ Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is 
 - After moving, the aircraft drops its passengers onto its own tile or adjacent tiles.
 - Units cannot drop onto water or occupied tiles.
 - Dropped units cannot act on the turn they land.
+- A dropped unit is remembered as air-dropped. No rule reads this: it only lets US Infantry be drawn as 101st Airborne paratroopers (08-art-pipeline §17).
 - The aircraft is reusable: it flies back to an airfield to refuel and load again.
 - Possible later addition: a one-way **Glider** for specific scenarios that can carry a light vehicle. Not planned for now.
 
