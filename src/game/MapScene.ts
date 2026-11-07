@@ -10,6 +10,7 @@ import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
 import { terrainLayers } from "./terrainTiles";
+import { clampScroll, FOLLOW_MARGIN_SQUARES, inLeftHalf, revealScroll, type Scroll, type Size } from "./viewport";
 import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
 
 /** What the scene reports to whoever handles input (the InputController, wired up in main.ts). */
@@ -47,6 +48,8 @@ const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
 const ownerKey = (state: GameState) => state.properties.map((p) => p.owner ?? "-").join(",");
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
+/** How long the view takes to pan to the cursor or to the next thing that happens. */
+const PAN_MS = { cursor: 90, action: 220 };
 
 /** What a shot lands on: a unit, or just a tile for a fortification. */
 interface StrikeTarget {
@@ -100,6 +103,92 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.pixelScale = scale;
     if (!this.created) return; // create() applies it
     this.cameras.main.setSize(this.scale.width, this.scale.height).setOrigin(0, 0).setZoom(scale);
+    this.scrollTo(this.scroll);
+    void this.revealTiles([this.cursorTile], 0);
+  }
+
+  // ---- The view: which part of a large map is on screen (00-master-design §12) ----
+
+  private scroll: Scroll = { x: 0, y: 0 };
+  private panTween: Phaser.Tweens.Tween | undefined;
+
+  /** The visible part of the map, in map pixels. */
+  private viewSize(): Size {
+    return { width: this.scale.width / this.pixelScale, height: this.scale.height / this.pixelScale };
+  }
+
+  private mapSize(): Size {
+    return { width: this.state.map.width * TILE_SIZE, height: this.state.map.height * TILE_SIZE };
+  }
+
+  /** The part of the map on screen, in map pixels: menus and panels stay inside it. */
+  private visibleRect(): { left: number; top: number; right: number; bottom: number } {
+    const view = this.viewSize();
+    return { left: this.scroll.x, top: this.scroll.y, right: this.scroll.x + view.width, bottom: this.scroll.y + view.height };
+  }
+
+  /** Whether a tile is in the left half of what's on screen, so panels can sit on the other side. */
+  tileInLeftHalf(tile: Point): boolean {
+    if (!this.created) return tile.x < this.state.map.width / 2;
+    return inLeftHalf(tile.x * TILE_SIZE + TILE_SIZE / 2, this.scroll.x, this.viewSize().width);
+  }
+
+  /** Moves the view at once, kept inside the map and on whole screen pixels. */
+  private scrollTo(target: Scroll): void {
+    const clamped = clampScroll(target, this.viewSize(), this.mapSize());
+    const snap = (v: number) => Math.round(v * this.pixelScale) / this.pixelScale;
+    this.scroll = { x: snap(clamped.x), y: snap(clamped.y) };
+    this.cameras.main.setScroll(this.scroll.x, this.scroll.y);
+  }
+
+  /**
+   * Pans just far enough to show these tiles with a margin, or not at all if they're in view. Tiles
+   * that don't fit the view together show the last one. Resolves when the pan finishes.
+   */
+  private revealTiles(tiles: readonly Point[], ms: number): Promise<void> {
+    if (!this.created || tiles.length === 0) return Promise.resolve();
+    const xs = tiles.map((t) => t.x * TILE_SIZE);
+    const ys = tiles.map((t) => t.y * TILE_SIZE);
+    const box = { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs) + TILE_SIZE, height: Math.max(...ys) - Math.min(...ys) + TILE_SIZE };
+    const view = this.viewSize();
+    const last = tiles[tiles.length - 1];
+    const fits = box.width <= view.width && box.height <= view.height;
+    const target = fits || !last ? box : { x: last.x * TILE_SIZE, y: last.y * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE };
+    const next = revealScroll(this.scroll, view, this.mapSize(), target, FOLLOW_MARGIN_SQUARES * TILE_SIZE);
+    return this.panTo(next, ms);
+  }
+
+  private panTo(target: Scroll, ms: number): Promise<void> {
+    const from = this.scroll;
+    if (target.x === from.x && target.y === from.y) return Promise.resolve();
+    this.panTween?.stop();
+    this.panTween = undefined;
+    if (ms <= 0) {
+      this.scrollTo(target);
+      this.viewMoved();
+      return Promise.resolve();
+    }
+    const position = { ...from };
+    return new Promise((resolve) => {
+      this.panTween = this.tweens.add({
+        targets: position,
+        x: target.x,
+        y: target.y,
+        duration: ms,
+        ease: "Sine.easeOut",
+        onUpdate: () => this.scrollTo(position),
+        onComplete: () => {
+          this.viewMoved();
+          resolve();
+        },
+        onStop: () => resolve(),
+      });
+    });
+  }
+
+  /** The panels pick their side from where the cursor is on screen, which a pan changes. */
+  private viewMoved(): void {
+    this.options.onCursorMove(this.cursorTile);
   }
 
   setHandlers(handlers: MapInputHandlers): void {
@@ -212,6 +301,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.drawCursor();
     this.options.onCursorMove(this.cursorTile);
 
+    // A mouse wheel or two-finger trackpad swipe scrolls the view.
+    this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _over: unknown, dx: number, dy: number) => {
+      this.scrollTo({ x: this.scroll.x + dx / this.pixelScale, y: this.scroll.y + dy / this.pixelScale });
+      this.viewMoved();
+    });
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.onPointerMove(pointer));
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
@@ -248,13 +342,13 @@ export class MapScene extends Phaser.Scene implements MapView {
       if (index !== null) this.highlightMenuItem(index);
       return;
     }
-    this.setCursor(this.tileAt(pointer.worldX, pointer.worldY));
+    this.setCursor(this.tileAt(pointer.worldX, pointer.worldY), false);
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     if (pointer.rightButtonDown()) {
       const tile = this.tileAt(pointer.worldX, pointer.worldY);
-      if (!this.menu) this.setCursor(tile);
+      if (!this.menu) this.setCursor(tile, false);
       this.handlers?.onPeekStart(tile);
       return;
     }
@@ -266,7 +360,7 @@ export class MapScene extends Phaser.Scene implements MapView {
       return;
     }
     const tile = this.tileAt(pointer.worldX, pointer.worldY);
-    this.setCursor(tile);
+    this.setCursor(tile, false);
     this.handlers?.onConfirm(tile);
   }
 
@@ -308,10 +402,12 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
   }
 
-  setCursor(tile: Point): void {
+  /** Moves the cursor. Unless it followed the mouse, the view pans to keep it on screen. */
+  setCursor(tile: Point, follow = true): void {
     const { map } = this.state;
     const x = Phaser.Math.Clamp(tile.x, 0, map.width - 1);
     const y = Phaser.Math.Clamp(tile.y, 0, map.height - 1);
+    if (follow) void this.revealTiles([{ x, y }], PAN_MS.cursor);
     if (x === this.cursorTile.x && y === this.cursorTile.y) return;
     this.cursorTile = { x, y };
     this.drawCursor();
@@ -398,11 +494,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.closeMenu();
     const width = Math.max(...items.map((i) => textWidth(i.label))) + MENU.pad * 2 + 5;
     const height = items.length * MENU.itemHeight + MENU.pad * 2 - 2;
-    const mapW = this.state.map.width * TILE_SIZE;
-    const mapH = this.state.map.height * TILE_SIZE;
+    const view = this.visibleRect();
     let x = (at.x + 1) * TILE_SIZE + 2;
-    if (x + width > mapW) x = at.x * TILE_SIZE - width - 2;
-    const y = Phaser.Math.Clamp(at.y * TILE_SIZE, 0, mapH - height);
+    if (x + width > view.right) x = at.x * TILE_SIZE - width - 2;
+    const y = Phaser.Math.Clamp(at.y * TILE_SIZE, view.top, view.bottom - height);
 
     const container = this.add.container(x, y);
     this.menu = { container, items, rect: new Phaser.Geom.Rectangle(x, y, width, height), selected };
@@ -419,10 +514,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     const lineHeight = GLYPH_HEIGHT + 2;
     const width = Math.max(...lines.map(textWidth)) + 6;
     const height = lines.length * lineHeight + 4;
-    const mapW = this.state.map.width * TILE_SIZE;
-    const x = Phaser.Math.Clamp(at.x * TILE_SIZE + (TILE_SIZE - width) / 2, 0, mapW - width);
+    const view = this.visibleRect();
+    const x = Phaser.Math.Clamp(at.x * TILE_SIZE + (TILE_SIZE - width) / 2, view.left, view.right - width);
     const above = at.y * TILE_SIZE - height - 2;
-    const y = above >= 0 ? above : (at.y + 1) * TILE_SIZE + 2;
+    const y = above >= view.top ? above : (at.y + 1) * TILE_SIZE + 2;
 
     const panel = this.add.container(Math.round(x), y);
     const g = this.add.graphics();
@@ -501,6 +596,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   /** Animates engine events. Call before setState(newState); resolves when the animations finish. */
   async playEvents(events: readonly GameEvent[]): Promise<void> {
     for (const event of events) {
+      await this.revealTiles(this.eventTiles(event), PAN_MS.action);
       if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
       if (event.type === "combat") await this.playCombat(event);
       if (event.type === "fortAttacked") {
@@ -519,6 +615,28 @@ export class MapScene extends Phaser.Scene implements MapView {
       }
     }
     await Promise.all(this.repairLabels(events));
+  }
+
+  /** Where an event happens, so the view can pan to it first. Repairs at turn start don't pan. */
+  private eventTiles(event: GameEvent): Point[] {
+    switch (event.type) {
+      case "unitMoved":
+        return event.path.slice(0, 1);
+      case "combat":
+        return [event.attacker.pos, event.defender.pos];
+      case "fortAttacked":
+        return [event.attackerPos, event.pos];
+      case "captureProgress":
+      case "propertyCaptured":
+      case "unitOutOfFuel":
+        return [event.pos];
+      case "unitJoined": {
+        const target = this.state.units.find((u) => u.id === event.targetId);
+        return target ? [target.pos] : [];
+      }
+      default:
+        return [];
+    }
   }
 
   /** "+2" over repaired units and "SUPPLY" over units only resupplied, all at once. */
@@ -606,15 +724,19 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!sprite || !end) return;
     if (sprite.x === end.x * TILE_SIZE && sprite.y === end.y * TILE_SIZE) return;
     for (const p of fullPath.slice(1)) {
-      await new Promise<void>((resolve) => {
-        this.tweens.add({
-          targets: sprite,
-          x: p.x * TILE_SIZE,
-          y: p.y * TILE_SIZE,
-          duration: MOVE_MS_PER_TILE,
-          onComplete: () => resolve(),
-        });
-      });
+      // The view keeps pace with the unit, so a long move never walks off screen.
+      await Promise.all([
+        this.revealTiles([p], MOVE_MS_PER_TILE),
+        new Promise<void>((resolve) => {
+          this.tweens.add({
+            targets: sprite,
+            x: p.x * TILE_SIZE,
+            y: p.y * TILE_SIZE,
+            duration: MOVE_MS_PER_TILE,
+            onComplete: () => resolve(),
+          });
+        }),
+      ]);
     }
   }
 
