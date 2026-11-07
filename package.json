@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui --watch",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "art": "node tools/art/render-units.mjs"
+    "art": "node tools/art/render-units.mjs && node tools/art/render-terrain.mjs"
   },
   "dependencies": {
     "phaser": "4.2.1"

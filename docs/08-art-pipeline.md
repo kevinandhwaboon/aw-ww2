@@ -1,7 +1,7 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US land unit sprites are approved and drawn in the game, German land sprites are drawn in the game and awaiting approval (section 12), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
-**Last updated:** 2026-11-01
+**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), natural terrain is drawn in the game (section 14), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
+**Last updated:** 2026-11-06
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
 This doc is written to start a new conversation on its own: it lists everything the game needs drawn, and the questions to answer before generating any of it.
@@ -20,7 +20,7 @@ This doc is written to start a new conversation on its own: it lists everything 
 
 ## 2. Terrain (map tiles)
 
-Each is 16×16 unless noted. Today every terrain is a single flat tile.
+Each is 16×16 unless noted. The tiles in this section are drawn and in the game (section 14). Properties, fortifications and rubble still use placeholders.
 
 | Terrain | Needs | Notes |
 |---|---|---|
@@ -36,7 +36,7 @@ Each is 16×16 unless noted. Today every terrain is a single flat tile.
 | Beach | Connected set | Where sand meets sea and land. The key tile for landings |
 | Coastline | Connected set | Where sea meets land directly |
 
-**Connected sets:** tiles that change shape based on their neighbors. A road needs roughly 16 pieces (straights, corners, T-junctions, crossing, ends). Coastlines need more if corners are smoothed, up to 47. The game doesn't choose connected tiles yet, so that code comes with this art.
+**Connected sets:** tiles that change shape based on their neighbors. A road needs roughly 16 pieces (straights, corners, T-junctions, crossing, ends). Coastlines need more if corners are smoothed, up to 47. Section 14 has how the game picks them.
 
 ## 3. Properties and fortifications
 
@@ -250,7 +250,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `players` | One entry per player: `team`, `fill` and `outline`. `team` picks that player's unit sheets |
 | `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: panels, ranges, path arrow, menus, effects |
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows` |
-| `terrain` | One sheet: `path`, and `tiles` giving a tile number per terrain. Tiles are numbered left to right, top to bottom |
+| `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `terrainNames` | Display names by terrain id |
 
@@ -261,3 +261,55 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 **The default pack** (`public/assets/packs/default/`) is the game's normal look. It points at the sheets `npm run art` writes to `public/assets/units/`. If the art tool's row order changes, `rows` in the pack has to change with it.
 
 **Not in packs yet:** the 3×5 map font, the HP and veterancy badges, property flags, HUD national flags, and menu words like FIRE. They can follow as that art gets made.
+
+## 14. Terrain tiles
+
+The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` renders them to `public/assets/terrain/terrain.png`, and the default pack points at that sheet. Properties (City, Factory, Airfield, Port, HQ), Bunker, Rubble and Obstacle aren't drawn yet and keep their placeholders.
+
+**Answers to section 9:**
+- **Tall tiles (Q9):** no. Every tile stays inside its own 16×16 square, so draw order doesn't change.
+- **Connected tiles (Q10):** roads and rivers have 16 pieces each. Coastlines are 8 foam pieces layered over sea, which gives the same result as the full 47 without drawing 47 tiles. Land next to the sea doesn't change.
+
+**How the game picks tiles:**
+
+| Terrain | What's drawn |
+|---|---|
+| Plains, Forest, Hills, Bocage, Beach | One of several variants, picked by map position. A cell always gets the same one |
+| Road | The piece matching which sides join a road or bridge |
+| River | The piece matching which sides join a river, bridge, sea or reef, so rivers flow into the sea |
+| Bridge | The river piece beneath it, with a deck on top. Water above or below means the deck runs left to right, otherwise top to bottom |
+| Sea, Reef | The water tile, then foam along each side that touches land. A foam corner shows where land touches only diagonally. Rivers, bridges, reefs and the map's edge count as water |
+
+A road or river that dead-ends at the map's edge runs straight on past it. One that turns or branches at the edge keeps its shape.
+
+**Animation:** sea, reef, rivers and shore foam have 2 frames, swapped every 0.6 seconds. Everything else repeats the same tile in both frames.
+
+**Bocage** is a small field with hedgerows on all four sides, so a patch of bocage reads as hedge country. Forest is round trees, so the two can't be confused.
+
+**Sheet layout:** 8 tiles across. The sheet holds one panel per animation frame, stacked top to bottom, each with the same layout:
+
+| Tiles | What |
+|---|---|
+| 0–2 | Plains |
+| 3–4 | Forest |
+| 5–6 | Hills |
+| 7–8 | Bocage |
+| 9 | Sea |
+| 10 | Reef |
+| 11–12 | Beach |
+| 13–15 | Empty |
+| 16–31 | Road, by neighbor mask: N=1, E=2, S=4, W=8, added together |
+| 32–47 | River, by the same mask |
+| 48–49 | Bridge deck: left to right, top to bottom |
+| 50–57 | Shore foam: edges N, E, S, W, then corners NE, SE, SW, NW |
+
+**Pack fields** for a terrain sheet. Only `path` and `tiles` are required, so a pack with one tile per terrain still works:
+
+| Field | What it does |
+|---|---|
+| `tiles` | Terrain to a tile number, or a list of numbers for variants |
+| `frames` | How many animation panels the sheet holds. Default 1 |
+| `connected` | `road` and `river`: the first of their 16 pieces |
+| `bridges` | `horizontal` and `vertical` deck tiles, drawn over the river piece |
+| `shore` | The first of the 8 foam pieces |
+

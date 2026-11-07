@@ -46,9 +46,31 @@ describe("art pack files (08-art-pipeline §13)", () => {
     });
     expect(pack.players).toHaveLength(1);
     expect(pack.unitSheets[0]?.rows).toEqual(["infantry", null, "mediumTank"]);
-    expect(pack.terrain?.tiles).toEqual({ plains: 0, sea: 3 });
+    expect(pack.terrain?.tiles).toEqual({ plains: [0], sea: [3] });
     expect(pack.unitNames.mediumTank).toBe("Sherman");
     expect(pack.terrainNames.bocage).toBe("Hedgerows");
+  });
+
+  it("reads terrain variants, joined pieces, bridges, shore and animation frames (08-art-pipeline §13)", () => {
+    const pack = parseArtPack({
+      name: "x",
+      terrain: {
+        path: "t.png",
+        frames: 2,
+        tiles: { plains: [0, 1, 2], sea: 9 },
+        connected: { road: 16, river: 32 },
+        bridges: { horizontal: 48, vertical: 49 },
+        shore: 50,
+      },
+    });
+    expect(pack.terrain).toEqual({
+      path: "t.png",
+      frames: 2,
+      tiles: { plains: [0, 1, 2], sea: [9] },
+      connected: { road: 16, river: 32 },
+      bridges: { horizontal: 48, vertical: 49 },
+      shore: 50,
+    });
   });
 
   it.each([
@@ -60,6 +82,10 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["an unknown unit", { unitSheets: [sheet({ rows: ["dragon"] })] }, /unknown unit type/],
     ["zero frames", { unitSheets: [sheet({ frames: 0 })] }, /whole number/],
     ["an unknown terrain", { terrain: { path: "t.png", tiles: { lava: 0 } } }, /unknown terrain/],
+    ["an empty variant list", { terrain: { path: "t.png", tiles: { plains: [] } } }, /list of them/],
+    ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
+    ["a bridge without both directions", { terrain: { path: "t.png", tiles: {}, bridges: { horizontal: 1 } } }, /horizontal and vertical/],
+    ["zero terrain frames", { terrain: { path: "t.png", tiles: {}, frames: 0 } }, /whole number/],
     ["an unknown unit name", { unitNames: { dragon: "Puff" } }, /unknown id/],
     ["an empty name", { unitNames: { infantry: "" } }, /must be text/],
   ])("rejects %s", (_, change, message) => {
