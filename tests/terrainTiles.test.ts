@@ -10,6 +10,7 @@ const RIVER = ["river", "bridge", "sea", "reef"] as const;
 const sheet: TerrainSheet = {
   path: "terrain.png",
   frames: 2,
+  tileWidth: 16,
   tileHeight: 32,
   tiles: { plains: [0, 1, 2], forest: [3, 4], sea: [9], reef: [10] },
   connected: { road: 16, river: 32 },
@@ -185,7 +186,7 @@ describe("terrain tiles: variants and fallbacks (08-art-pipeline §14)", () => {
   });
 
   it("a pack with one tile per terrain still works, with no joined pieces", () => {
-    const simple: TerrainSheet = { path: "t.png", frames: 1, tileHeight: 16, tiles: { road: [1] }, connected: {}, bridges: null };
+    const simple: TerrainSheet = { path: "t.png", frames: 1, tileWidth: 16, tileHeight: 16, tiles: { road: [1] }, connected: {}, bridges: null };
     const map = parseAsciiMap(["=="]);
     expect(terrainLayers(map, 0, 0, simple)).toEqual([{ kind: "sheet", tile: 1 }]);
   });

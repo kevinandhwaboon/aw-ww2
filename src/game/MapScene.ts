@@ -67,6 +67,8 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   private terrainImage?: Phaser.GameObjects.Image;
   private terrainFrames = 1;
+  /** Canvas pixels per map pixel for the painted terrain: 2 when a sheet is drawn for the 32-pixel grid. */
+  private terrainResolution = 1;
   private terrainFrame = 0;
   private placeholderTiles?: HTMLCanvasElement;
   private drawnTerrain: GameState["map"]["terrain"] = [];
@@ -125,8 +127,9 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   /**
    * Paints the whole map's terrain and buildings into one canvas per animation frame: the pack's
-   * tiles where it has them (08-art-pipeline §14–16), placeholders everywhere else. Rows go top to
-   * bottom, so anything tall in front overlaps the row behind it.
+   * tiles where it has them (08-art-pipeline §14–17), placeholders everywhere else. Rows go top to
+   * bottom, so anything tall in front overlaps the row behind it. Art drawn for the 32-pixel grid is
+   * painted at double resolution and the image scaled back into 16-pixel squares, keeping its detail.
    */
   private paintTerrain(): void {
     const { map } = this.state;
@@ -135,43 +138,51 @@ export class MapScene extends Phaser.Scene implements MapView {
     const source = pack.terrain ? this.sheetImage(TERRAIN_SHEET_KEY) : null;
     const sheet = source ? pack.terrain : null;
     const frames = sheet?.frames ?? 1;
+    const wide = sheet?.tileWidth ?? TILE_SIZE;
     const tall = sheet?.tileHeight ?? TILE_SIZE;
-    const across = source ? Math.floor(source.width / TILE_SIZE) : 1;
+    const across = source ? Math.floor(source.width / wide) : 1;
     const tilesPerFrame = source ? across * Math.floor(source.height / tall / frames) : 0;
     const buildings = pack.properties ? this.sheetImage(PROPERTY_SHEET_KEY) : null;
+    const buildingWidth = pack.properties?.tileWidth ?? TILE_SIZE;
     const buildingHeight = pack.properties?.tileHeight ?? TILE_SIZE;
+    const res = Math.max(source ? wide : TILE_SIZE, buildings ? buildingWidth : TILE_SIZE) / TILE_SIZE;
+    const cell = TILE_SIZE * res;
     const owners = new Map(this.state.properties.map((p) => [p.pos.y * map.width + p.pos.x, p.owner]));
     for (let frame = 0; frame < frames; frame++) {
       const key = terrainFrameKey(frame);
       const texture = this.textures.exists(key)
         ? (this.textures.get(key) as Phaser.Textures.CanvasTexture)
-        : this.textures.createCanvas(key, map.width * TILE_SIZE, map.height * TILE_SIZE);
+        : this.textures.createCanvas(key, map.width * cell, map.height * cell);
       if (!texture) throw new Error("Failed to create the terrain canvas");
       const ctx = texture.getContext();
-      ctx.clearRect(0, 0, map.width * TILE_SIZE, map.height * TILE_SIZE);
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, map.width * cell, map.height * cell);
       for (let y = 0; y < map.height; y++) {
         for (let x = 0; x < map.width; x++) {
           for (const layer of terrainLayers(map, x, y, sheet)) {
             if (layer.kind === "placeholder") {
-              ctx.drawImage(placeholders, tileIndex(layer.terrain) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+              ctx.drawImage(placeholders, tileIndex(layer.terrain) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x * cell, y * cell, cell, cell);
             } else if (source) {
               const n = layer.tile + frame * tilesPerFrame;
-              const sx = (n % across) * TILE_SIZE, sy = Math.floor(n / across) * tall;
-              ctx.drawImage(source, sx, sy, TILE_SIZE, tall, x * TILE_SIZE, (y + 1) * TILE_SIZE - tall, TILE_SIZE, tall);
+              const sx = (n % across) * wide, sy = Math.floor(n / across) * tall;
+              const h = (tall * cell) / wide;
+              ctx.drawImage(source, sx, sy, wide, tall, x * cell, (y + 1) * cell - h, cell, h);
             }
           }
           const owner = owners.get(y * map.width + x);
           const building = buildings && owner !== undefined ? findPropertyArt(pack, terrainAt(map, { x, y }), owner) : null;
           if (buildings && building !== null && pack.properties) {
-            const sx = (building % pack.properties.columns.length) * TILE_SIZE;
+            const sx = (building % pack.properties.columns.length) * buildingWidth;
             const sy = Math.floor(building / pack.properties.columns.length) * buildingHeight;
-            ctx.drawImage(buildings, sx, sy, TILE_SIZE, buildingHeight, x * TILE_SIZE, (y + 1) * TILE_SIZE - buildingHeight, TILE_SIZE, buildingHeight);
+            const h = (buildingHeight * cell) / buildingWidth;
+            ctx.drawImage(buildings, sx, sy, buildingWidth, buildingHeight, x * cell, (y + 1) * cell - h, cell, h);
           }
         }
       }
       texture.refresh();
     }
     this.terrainFrames = frames;
+    this.terrainResolution = res;
     this.drawnTerrain = map.terrain;
     this.drawnOwners = ownerKey(this.state);
   }
@@ -180,7 +191,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.created = true;
     this.setPixelScale(this.pixelScale);
     this.paintTerrain();
-    this.terrainImage = this.add.image(0, 0, terrainFrameKey(0)).setOrigin(0);
+    this.terrainImage = this.add.image(0, 0, terrainFrameKey(0)).setOrigin(0).setScale(1 / this.terrainResolution);
     if (this.terrainFrames > 1) {
       this.time.addEvent({
         delay: TERRAIN_FRAME_MS,

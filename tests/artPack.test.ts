@@ -67,6 +67,7 @@ describe("art pack files (08-art-pipeline §13)", () => {
     expect(pack.terrain).toEqual({
       path: "t.png",
       frames: 2,
+      tileWidth: 16,
       tileHeight: 16,
       tiles: { plains: [0, 1, 2], sea: [9] },
       connected: { road: 16, river: 32 },
@@ -91,6 +92,8 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["a bridge without both directions", { terrain: { path: "t.png", tiles: {}, bridges: { horizontal: 1 } } }, /horizontal and vertical/],
     ["zero terrain frames", { terrain: { path: "t.png", tiles: {}, frames: 0 } }, /whole number/],
     ["a tile height that isn't 16 or 32", { terrain: { path: "t.png", tiles: {}, tileHeight: 24 } }, /16 or 32/],
+    ["a tile width that isn't 16 or 32", { terrain: { path: "t.png", tiles: {}, tileWidth: 24 } }, /16 or 32/],
+    ["a 32-wide tile only 48 tall", { terrain: { path: "t.png", tiles: {}, tileWidth: 32, tileHeight: 48 } }, /32 or 64/],
     ["an unknown unit name", { unitNames: { dragon: "Puff" } }, /unknown id/],
     ["an empty name", { unitNames: { infantry: "" } }, /must be text/],
   ])("rejects %s", (_, change, message) => {
@@ -125,14 +128,25 @@ describe("the packs that ship with the game", () => {
     ]);
   });
 
-  it("the shipped packs use the 32-pixel unit sheets, with paratroopers on the US ones (08-art-pipeline §17)", () => {
+  it("the shipped packs use the 32-pixel unit sheets, with paratroopers on the US land ones (08-art-pipeline §17)", () => {
     for (const raw of [defaultPack, nightOps]) {
       for (const unitSheet of parseArtPack(raw).unitSheets) {
         expect(unitSheet.frameSize).toBe(32);
         expect(unitSheet.path).toContain("-32-");
-        expect(unitSheet.paratroopers).toEqual(unitSheet.nation === "us" ? [13, 14, 15, 16] : []);
+        const usLand = unitSheet.nation === "us" && unitSheet.path.includes("-land-");
+        expect(unitSheet.paratroopers).toEqual(usLand ? [13, 14, 15, 16] : []);
       }
     }
+  });
+
+  it("the default pack has art for every unit type each side fields, air and naval included (08-art-pipeline §17)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = (nation: string) => new Set(pack.unitSheets.filter((s) => s.nation === nation).flatMap((s) => s.rows));
+    for (const type of ["fighter", "bomber", "transportAircraft", "destroyer", "submarine", "torpedoBoat"] as const) {
+      expect(drawn("us").has(type)).toBe(true);
+      expect(drawn("germany").has(type)).toBe(true);
+    }
+    expect(drawn("germany").has("battleship")).toBe(false);
   });
 });
 
@@ -226,6 +240,12 @@ describe("art packs: buildings (08-art-pipeline §15)", () => {
   it("tiles are 16 tall unless a sheet says 32, for art that rises into the tile behind (08-art-pipeline §16)", () => {
     expect(pack.properties?.tileHeight).toBe(16);
     expect(parseArtPack({ name: "x", properties: { ...properties, tileHeight: 32 } }).properties?.tileHeight).toBe(32);
+  });
+
+  it("sheets drawn for the 32-pixel grid are 32 wide and up to 64 tall, scaled into a square (08-art-pipeline §17)", () => {
+    const big = parseArtPack({ name: "x", properties: { ...properties, tileWidth: 32, tileHeight: 64 } }).properties;
+    expect([big?.tileWidth, big?.tileHeight]).toEqual([32, 64]);
+    expect(parseArtPack({ name: "x", properties: { ...properties, tileWidth: 32 } }).properties?.tileHeight).toBe(32);
   });
 
   it("an unowned property uses the neutral column", () => {

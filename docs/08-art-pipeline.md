@@ -364,9 +364,9 @@ Terrain and buildings are drawn so the map looks solid rather than flat, using t
 
 The helpers for this are in `tools/art/depth.mjs`.
 
-## 17. Units at 32×32
+## 17. Art at 32 pixels
 
-Every land unit is also drawn at 32×32 in a top-down 3/4 view, with five shades per team color. **The game uses them since 2026-11-07,** without changing the map: a square is still 16 map pixels and the same size on screen. The game draws at screen resolution and scales the 32-pixel units down to fit a square, so their detail shows instead of being lost. At an odd zoom (3×, 5×) each art pixel covers 1.5 or 2.5 screen pixels, so pixel edges are slightly uneven; at an even zoom they're exact. The 16×16 sheets stay in `public/assets/units/` but no shipped pack uses them.
+Every unit is drawn at 32×32 in a top-down 3/4 view, with five shades per team color, and terrain and buildings are drawn at 32 pixels per square too. **The game uses them since 2026-11-07,** without changing the map: a square is still 16 map pixels and the same size on screen. The game draws at screen resolution and scales the 32-pixel art down to fit a square, so its detail shows instead of being lost. Terrain and buildings are painted at double resolution, then scaled the same way. At an odd zoom (3×, 5×) each art pixel covers 1.5 or 2.5 screen pixels, so pixel edges are slightly uneven; at an even zoom they're exact. The 16-pixel sheets stay in `public/assets/` but no shipped pack uses them.
 
 - **Source:** `tools/art/kit32.mjs` (shared shapes, helmets, rifles and running gear), `us-units32.mjs` and `de-units32.mjs`. Sprites are built from shapes, then outlined and lit from the top left automatically.
 - **Wheels** on the jeep, sidecar and halftracks sit in wheel wells: the body wraps round their top half.
@@ -385,5 +385,9 @@ Every land unit is also drawn at 32×32 in a top-down 3/4 view, with five shades
 
 In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (13–16 on the US sheets); the game picks one by unit id.
 
-**Not done yet:** air and naval units at 32 (they still use placeholders).
+- **Aircraft** (`tools/art/air-naval32.mjs`): seen from above and a little behind, the far wing short above the fuselage and the near wing larger below it. They bob and their propellers spin. US: P-51, B-26, C-47. Germany: Bf 109, Ju 88, and a Ju 52 with its ribbed skin.
+- **Ships:** the deck from above, the hull side as a band, and foam at the bow and a wake that shift between frames. US: USS Texas, Fletcher, Gato, LCT, PT boat. Germany fields only a Z-class destroyer, a Type VII U-boat and an S-boot, so its Battleship and Landing Craft rows are empty (section 4: both are rare).
+- **Air and naval sheets:** `public/assets/units/{nation}-air-32-{team}.png` (rows FT, BM, TA) and `{nation}-naval-32-{team}.png` (rows BB, DD, SS, LC, TB). Previews: `docs/art/us-air-naval-32.png` and `docs/art/de-air-naval-32.png`.
+- **Terrain and buildings** (`tools/art/terrain32.mjs`, `buildings32.mjs`, `depth32.mjs`): tiles are 32 wide by 64 tall, the bottom 32 rows being the map cell and the top 32 room to rise. They use the same sheet layouts as sections 14–15, so tile numbers don't change. Grass has tufts and flowers, roads have wheel ruts, rivers have sandy banks, and buildings have stone courses and tiled roofs. Sheets: `public/assets/terrain/terrain-32.png` and `buildings-32.png`.
+- **Pack fields:** terrain and building sheets take `tileWidth` (16 or 32). `tileHeight` is the width, or twice it for art that rises into the tile behind.
 

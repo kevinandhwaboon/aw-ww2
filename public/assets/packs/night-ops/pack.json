@@ -31,6 +31,22 @@
         null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
       ],
       "paratroopers": [13, 14, 15, 16]
+    },
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-air-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-naval-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
     }
   ],
   "terrain": {

@@ -98,3 +98,35 @@ for (const { id, units, extra, teams: names } of big) {
   savePng(preview, join(previewDir, `${id}-land-units-32.png`));
   console.log(`${id}: ${shown.length} land units rendered at 32x32`);
 }
+
+// ---- 32x32 aircraft and ships. Rows: FT, BM, TA and BB, DD, SS, LC, TB; empty where a nation has none.
+const { usAir, usNaval, deAir, deNaval } = await import("./air-naval32.mjs");
+const airRows = ["FT", "BM", "TA"];
+const navalRows = ["BB", "DD", "SS", "LC", "TB"];
+for (const { id, air, naval, teams: names } of [
+  { id: "us", air: usAir, naval: usNaval, teams: ["olive", "blue", "red"] },
+  { id: "de", air: deAir, naval: deNaval, teams: ["grey", "blue", "red"] },
+]) {
+  for (const [kind, list, order] of [["air", air, airRows], ["naval", naval, navalRows]]) {
+    const rows = order.map((code) => list.find((u) => u.code === code));
+    for (const team of names) {
+      const sheet = canvas(64, 32 * rows.length);
+      rows.forEach((u, row) => u?.frames.forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
+      savePng(sheet, join(sheetDir, `${id}-${kind}-32-${team}.png`));
+    }
+  }
+  const shown = [...air, ...naval];
+  const scale = 3, cell = 96, gap = 6, across = 4;
+  const preview = canvas(across * (cell * 2 + 2 + gap) - gap, Math.ceil(shown.length / across) * (cell + gap) - gap);
+  preview.px.fill(255);
+  shown.forEach((u, i) => {
+    const x = (i % across) * (cell * 2 + 2 + gap), y = Math.floor(i / across) * (cell + gap);
+    const ground = air.includes(u) ? grass : "#3f86c8";
+    u.frames.forEach((f, col) => {
+      stamp(preview, Array(32).fill("G".repeat(32)), { G: ground }, x + col * (cell + 2), y, scale);
+      stamp(preview, f, { ...fixedColors, ...teamRamps[names[0]] }, x + col * (cell + 2), y, scale);
+    });
+  });
+  savePng(preview, join(previewDir, `${id}-air-naval-32.png`));
+  console.log(`${id}: ${air.length} aircraft and ${naval.length} ships rendered at 32x32`);
+}
