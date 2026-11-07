@@ -76,7 +76,9 @@ export interface TerrainSheet {
   readonly path: string;
   /** Animation frames: the sheet is this many same-layout panels stacked top to bottom. */
   readonly frames: number;
-  /** 16, or 32 for tiles that rise into the tile behind (08-art-pipeline §16). */
+  /** 16, or 32 for art drawn for the 32-pixel grid and scaled into a square (08-art-pipeline §17). */
+  readonly tileWidth: 16 | 32;
+  /** The tile width, or twice it for tiles that rise into the tile behind (08-art-pipeline §16). */
   readonly tileHeight: number;
   /** Tile numbers per terrain. Several are variants, picked by map position. */
   readonly tiles: Readonly<Partial<Record<TerrainId, readonly number[]>>>;
@@ -96,7 +98,9 @@ export interface PropertySheet {
   readonly columns: readonly string[];
   /** The property on each row, top to bottom. */
   readonly rows: readonly TerrainId[];
-  /** 16, or 32 for buildings that rise into the tile behind (08-art-pipeline §16). */
+  /** 16, or 32 for art drawn for the 32-pixel grid and scaled into a square (08-art-pipeline §17). */
+  readonly tileWidth: 16 | 32;
+  /** The tile width, or twice it for buildings that rise into the tile behind (08-art-pipeline §16). */
   readonly tileHeight: number;
 }
 
@@ -166,6 +170,12 @@ function parseColors(raw: unknown): Record<ColorKey, string> {
 }
 
 const isTileHeight = (value: unknown): value is 16 | 32 => value === 16 || value === 32;
+/** A tile is as tall as it is wide, or twice as tall when it rises into the tile behind. */
+const tileSizeProblem = (width: unknown, height: unknown): string | null => {
+  if (!isTileHeight(width)) return `"tileWidth" must be 16 or 32`;
+  return height === width || height === width * 2 ? null : `"tileHeight" must be ${width} or ${width * 2}`;
+};
+
 const isTileNumber = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
 
 function parseUnitSheet(raw: unknown, index: number): UnitSheet {
@@ -187,11 +197,13 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileHeight = 16, connected = {}, bridges, shore } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore } = raw;
+  const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
   if (!Number.isInteger(frames) || (frames as number) < 1) return fail(`terrain: "frames" must be a whole number`);
-  if (!isTileHeight(tileHeight)) return fail(`terrain: "tileHeight" must be 16 or 32`);
+  const sizeProblem = tileSizeProblem(tileWidth, tileHeight);
+  if (sizeProblem) return fail(`terrain: ${sizeProblem}`);
   const parsedTiles: Partial<Record<TerrainId, number[]>> = {};
   for (const [terrain, tile] of Object.entries(tiles)) {
     if (!isTerrain(terrain)) return fail(`terrain: unknown terrain "${terrain}"`);
@@ -211,7 +223,8 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   return {
     path,
     frames: frames as number,
-    tileHeight,
+    tileWidth: tileWidth as 16 | 32,
+    tileHeight: tileHeight as number,
     tiles: parsedTiles,
     connected,
     bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
@@ -221,16 +234,18 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
 
 function parsePropertySheet(raw: unknown): PropertySheet {
   if (!isObject(raw)) return fail(`"properties" must be an object`);
-  const { path, columns, rows, tileHeight = 16 } = raw;
+  const { path, columns, rows, tileWidth = 16 } = raw;
+  const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`properties: "path" must be a file in the pack`);
   if (!Array.isArray(columns) || columns.length === 0 || !columns.every((c) => typeof c === "string" && c !== "")) {
     return fail(`properties: "columns" must be a list of owner names`);
   }
   if (!Array.isArray(rows)) return fail(`properties: "rows" must be a list`);
-  if (!isTileHeight(tileHeight)) return fail(`properties: "tileHeight" must be 16 or 32`);
+  const sizeProblem = tileSizeProblem(tileWidth, tileHeight);
+  if (sizeProblem) return fail(`properties: ${sizeProblem}`);
   const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || terrainDef(row).property === undefined);
   if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property`);
-  return { path, columns: columns as string[], rows: rows as TerrainId[], tileHeight };
+  return { path, columns: columns as string[], rows: rows as TerrainId[], tileWidth: tileWidth as 16 | 32, tileHeight: tileHeight as number };
 }
 
 function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key is K, label: string): Partial<Record<K, string>> {

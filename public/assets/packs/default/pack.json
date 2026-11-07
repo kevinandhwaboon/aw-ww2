@@ -46,12 +46,77 @@
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
         "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
       ]
+    },
+    {
+      "nation": "us",
+      "team": "blue",
+      "path": "../../units/us-air-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "nation": "us",
+      "team": "blue",
+      "path": "../../units/us-naval-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-air-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-naval-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-air-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-naval-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [null, "destroyer", "submarine", null, "torpedoBoat"]
+    },
+    {
+      "nation": "germany",
+      "team": "red",
+      "path": "../../units/de-air-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": ["fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "nation": "germany",
+      "team": "red",
+      "path": "../../units/de-naval-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [null, "destroyer", "submarine", null, "torpedoBoat"]
     }
   ],
   "terrain": {
-    "path": "../../terrain/terrain.png",
+    "path": "../../terrain/terrain-32.png",
     "frames": 2,
-    "tileHeight": 32,
+    "tileWidth": 32,
+    "tileHeight": 64,
     "tiles": {
       "plains": [0, 1, 2], "forest": [3, 4], "hills": [5, 6], "bocage": [7, 8],
       "sea": [9], "reef": [10], "beach": [11, 12],
@@ -62,8 +127,9 @@
     "shore": 50
   },
   "properties": {
-    "path": "../../terrain/buildings.png",
-    "tileHeight": 32,
+    "path": "../../terrain/buildings-32.png",
+    "tileWidth": 32,
+    "tileHeight": 64,
     "columns": ["neutral", "blue", "red", "green", "gold"],
     "rows": ["city", "factory", "airfield", "port", "hq"]
   }

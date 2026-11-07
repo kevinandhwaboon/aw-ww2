@@ -30,3 +30,23 @@ savePng(buildingSheet, join(dir, "buildings.png"));
 
 console.log(`buildings: ${buildings.length} properties, ${columns.length} owners`);
 console.log(`terrain: ${layout.filter(Boolean).length} tiles, ${FRAMES} frames`);
+
+// ---- The 32-pixel grid's terrain and buildings (08-art-pipeline §17): 32x64 tiles, same layouts.
+// Not used by the game until the map moves to a 32-pixel grid.
+const t32 = await import("./terrain32.mjs");
+const b32 = await import("./buildings32.mjs");
+{
+  const rows32 = Math.ceil(t32.layout.length / t32.ACROSS);
+  const sheet32 = canvas(t32.ACROSS * 32, rows32 * 64 * t32.FRAMES);
+  t32.layout.forEach((entry, i) => {
+    const x = (i % t32.ACROSS) * 32, y = Math.floor(i / t32.ACROSS) * 64;
+    entry[1].forEach((grid, frame) => stamp(sheet32, grid, t32.palette, x, y + frame * rows32 * 64));
+  });
+  savePng(sheet32, join(dir, "terrain-32.png"));
+  const bSheet = canvas(b32.columns.length * 32, b32.rows.length * 64);
+  b32.rows.forEach(([, grid], row) => b32.columns.forEach((owner, col) => {
+    stamp(bSheet, grid, { ...b32.palette, ...b32.ramps[owner] }, col * 32, row * 64);
+  }));
+  savePng(bSheet, join(dir, "buildings-32.png"));
+  console.log(`terrain and buildings rendered at 32x64`);
+}
