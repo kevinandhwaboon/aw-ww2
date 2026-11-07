@@ -1,6 +1,6 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), terrain, buildings and fortifications are drawn in the game (sections 14–15), and art can be swapped with art packs (section 13). Everything else is still open. Game mechanics are paused at milestone 10 while visuals are worked on.
+**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), terrain, buildings and fortifications are drawn in the game (sections 14–15), and art can be swapped with art packs (section 13). Everything else is still open.
 **Last updated:** 2026-11-06
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
@@ -109,7 +109,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Capturing | C badge |
 | Carrying passengers | + badge |
 | Low fuel warning | F badge |
-| Submerged | Marker for submarines (milestone 10) |
+| Submerged | A wave badge in the top-left corner, plus the sprite tinted with the pack's `submerged` color. Placeholder badge drawn in code today |
 
 ## 6. Map UI (drawn in the game canvas)
 
@@ -119,7 +119,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Move range | Tile tint | Blue overlay today |
 | Threat range | Tile tints | Orange for move, red for attack today |
 | Path arrow | About 10 pieces | Straights, corners and 4 arrowheads |
-| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
+| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, DIVE, SURFACE, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
 | Forecast panel | Panel frame | "DMG 71-80%" style text |
 | Pixel font | 1 full font | Open-licensed, with letters, digits and % - + ? |
 | Floating numbers | Uses the pixel font | Damage, capture and repair labels |

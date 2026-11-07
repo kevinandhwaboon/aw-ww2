@@ -21,7 +21,10 @@ export type UnitAction =
   /** Unload a passenger onto a tile next to the transport's destination. */
   | { readonly type: "unload"; readonly passenger: UnitId; readonly to: Point }
   /** Refill the fuel and ammo of adjacent friendly units. */
-  | { readonly type: "supply" };
+  | { readonly type: "supply" }
+  /** A submarine goes below the surface, or comes back up (05-supply-transport §9). */
+  | { readonly type: "dive" }
+  | { readonly type: "surface" };
 
 /** One shot in a combat. `damage` is the internal HP actually removed. */
 export interface CombatStrike {
@@ -106,6 +109,8 @@ export type GameEvent =
   /** `hp` is displayed HP restored. */
   | { readonly type: "unitRepaired"; readonly unitId: UnitId; readonly hp: number; readonly cost: number }
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
+  | { readonly type: "unitDived"; readonly unitId: UnitId }
+  | { readonly type: "unitSurfaced"; readonly unitId: UnitId }
   /** An air unit crashed or a ship sank at turn start (05-supply-transport §5, §7). */
   | {
       readonly type: "unitOutOfFuel";
@@ -134,6 +139,8 @@ export type RejectionCode =
   | "cannotUnload"
   | "cannotJoin"
   | "cannotSupply"
+  | "cannotDive"
+  | "cannotSurface"
   /** The game has ended: nothing more can be done. */
   | "gameOver";
 

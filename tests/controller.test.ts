@@ -233,6 +233,40 @@ describe("transport, supply and join", () => {
   });
 });
 
+describe("submarines (05-supply-transport §9)", () => {
+  const endTurn = async (game: ReturnType<typeof setup>, emptyTile: Point) => {
+    game.controller.onConfirm(emptyTile);
+    game.controller.onMenuChoice("endTurn");
+    await game.settle();
+  };
+
+  it("a surfaced submarine's menu offers Dive, and a submerged one's offers Surface", async () => {
+    const game = setup(["SS."], [{ type: "submarine", owner: 0, pos: P(0, 0) }]);
+    game.controller.onConfirm(P(0, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["dive", "wait", "cancel"]);
+    game.controller.onMenuChoice("dive");
+    await game.settle();
+    expect(game.seen.commands[0]).toMatchObject({ path: [P(1, 0)], action: { type: "dive" } });
+
+    await endTurn(game, P(2, 0));
+    await endTurn(game, P(2, 0));
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["surface", "wait", "cancel"]);
+  });
+
+  it("other ships get neither", async () => {
+    const game = setup(["SS"], [{ type: "destroyer", owner: 0, pos: P(0, 0) }]);
+    game.controller.onConfirm(P(0, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["wait", "cancel"]);
+  });
+});
+
 describe("after the game ends", () => {
   it("all input is ignored and the map is cleared", () => {
     const { controller, seen } = setup(["======"], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);

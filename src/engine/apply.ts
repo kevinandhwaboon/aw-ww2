@@ -18,6 +18,7 @@ import {
   supplyTargets,
   unloadTiles,
 } from "./transport";
+import { diveProblem, surfaceProblem } from "./submarine";
 import { startTurn } from "./turn";
 import { checkAfterCapture, checkAtTurnEnd, defeatPlayers } from "./victory";
 
@@ -52,6 +53,8 @@ function isAction(action: unknown): action is UnitAction {
     case "load":
     case "join":
     case "supply":
+    case "dive":
+    case "surface":
       return true;
     case "attack":
       return Number.isInteger(a.target);
@@ -101,6 +104,14 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
 
   if (action.type === "wait") {
     return { ok: true, state: afterMove, events: [...events, { type: "unitWaited", unitId }] };
+  }
+
+  if (action.type === "dive" || action.type === "surface") {
+    const diving = action.type === "dive";
+    const problem = diving ? diveProblem(moved) : surfaceProblem(moved);
+    if (problem) return reject(diving ? "cannotDive" : "cannotSurface", `Can't ${action.type}: ${problem}`);
+    const changed = { ...afterMove, units: afterMove.units.map((u) => (u.id === unitId ? { ...moved, submerged: diving } : u)) };
+    return { ok: true, state: changed, events: [...events, { type: diving ? "unitDived" : "unitSurfaced", unitId }] };
   }
 
   if (action.type === "capture") {

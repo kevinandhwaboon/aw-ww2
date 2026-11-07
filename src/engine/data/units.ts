@@ -32,6 +32,10 @@ export interface UnitDef {
   readonly maxFuel: number;
   /** Fuel burned at the start of each of the owner's turns (air and naval only). */
   readonly fuelPerDay: number;
+  /** Fuel burned per day instead while submerged; null for units that can't dive (05-supply-transport §9). */
+  readonly fuelPerDaySubmerged: number | null;
+  /** Can attack, and so counter, a submerged submarine (03-combat §5c). */
+  readonly attacksSubmerged: boolean;
   /** Uses ammo. null = no primary weapon. */
   readonly primaryWeapon: { readonly name: string; readonly maxAmmo: number } | null;
   /** Unlimited ammo. null = no secondary weapon. */
@@ -61,6 +65,8 @@ const DIRECT = { min: 1, max: 1 } as const;
 const BASE = {
   phase: 1,
   fuelPerDay: 0,
+  fuelPerDaySubmerged: null,
+  attacksSubmerged: false,
   primaryWeapon: null,
   secondaryWeapon: null,
   range: DIRECT,
@@ -157,13 +163,12 @@ export const UNITS = {
   destroyer: {
     ...BASE, phase: 2, name: "Destroyer", category: "naval", cost: 16000, movePoints: 6, movementType: "sea",
     vision: 3, maxFuel: 99, fuelPerDay: 1, primaryWeapon: { name: "Guns/depth charges", maxAmmo: 9 },
-    secondaryWeapon: { name: "AA guns" },
+    secondaryWeapon: { name: "AA guns" }, attacksSubmerged: true,
   },
   submarine: {
-    // Burns 5 fuel/day instead of 1 while submerged (05-supply-transport §1).
     ...BASE, phase: 2, name: "Submarine", category: "naval", cost: 20000, movePoints: 5, movementType: "sea",
-    vision: 5, maxFuel: 60, fuelPerDay: 1, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
-    specialActions: ["dive"],
+    vision: 5, maxFuel: 60, fuelPerDay: 1, fuelPerDaySubmerged: 5, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
+    attacksSubmerged: true, specialActions: ["dive"],
   },
   landingCraft: {
     ...BASE, phase: 2, name: "Landing Craft", category: "naval", cost: 12000, movePoints: 6,

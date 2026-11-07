@@ -19,6 +19,13 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(state, P(0, 0)).unit).toEqual({ name: "Infantry", owner: 1 });
   });
 
+  it("says when a submarine is submerged (05-supply-transport §9)", () => {
+    const state = makeGame(["S"], [{ type: "submarine", owner: 0, pos: P(0, 0) }]);
+    expect(tileInfo(state, P(0, 0)).unit?.name).toBe("Submarine");
+    const dived = { ...state, units: state.units.map((u) => ({ ...u, submerged: true })) };
+    expect(tileInfo(dived, P(0, 0)).unit?.name).toBe("Submarine (submerged)");
+  });
+
   it("shows the terrain's defense stars (02-terrain §1)", () => {
     expect(tileInfo(makeGame(["F"]), P(0, 0)).stars).toBe(2);
   });

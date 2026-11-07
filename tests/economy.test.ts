@@ -227,7 +227,7 @@ describe("build (04-economy §4)", () => {
     expect(apply(state, build("mediumTank", P(0, 0))).ok).toBe(true);
   });
 
-  it("by default players can build land and air units, but not units that aren't finished yet", () => {
+  it("by default players can build land, air and naval units, but not units that aren't finished yet", () => {
     const state = makeGame(["fAP"], [], {
       players: [{ name: "A", nation: "us", funds: 50_000 }, { name: "B", nation: "germany" }],
       propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(1, 0), owner: 0 }, { pos: P(2, 0), owner: 0 }],
@@ -235,7 +235,8 @@ describe("build (04-economy §4)", () => {
     expect(buildProblem(state, "flakGun", P(0, 0))).toBeNull();
     expect(buildProblem(state, "fighter", P(1, 0))).toBeNull();
     expect(buildProblem(state, "transportAircraft", P(1, 0))).toMatch(/available/);
-    expect(buildProblem(state, "destroyer", P(2, 0))).toMatch(/available/);
+    expect(buildProblem(state, "destroyer", P(2, 0))).toBeNull();
+    expect(buildProblem(state, "landingCraft", P(2, 0))).toMatch(/available/);
   });
 
   it("a scenario's unit cap stops further builds", () => {

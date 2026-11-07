@@ -375,6 +375,10 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
       return `${unitName(e.unitId)} repaired +${e.hp} HP for ${e.cost.toLocaleString("en-US")}`;
     case "unitResupplied":
       return `${unitName(e.unitId)} resupplied`;
+    case "unitDived":
+      return `${unitName(e.unitId)} dived`;
+    case "unitSurfaced":
+      return `${unitName(e.unitId)} surfaced`;
     case "playerDefeated":
       return `${name(e.player)} is out (${e.reason === "hqCapture" ? "HQ captured" : e.reason === "rout" ? "no units left" : "resigned"})`;
     case "gameOver":

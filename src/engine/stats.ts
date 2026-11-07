@@ -59,8 +59,11 @@ export function maxAmmo(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "maxAmmo", UNITS[unit.type].primaryWeapon?.maxAmmo ?? 0);
 }
 
+/** Fuel burned at the start of the owner's turn. A submerged submarine burns more (05-supply-transport §9). */
 export function fuelPerDay(state: GameState, unit: Unit): number {
-  return unitStat(state, unit, "fuelPerDay", UNITS[unit.type].fuelPerDay);
+  const def = UNITS[unit.type];
+  const base = unit.submerged ? (def.fuelPerDaySubmerged ?? def.fuelPerDay) : def.fuelPerDay;
+  return unitStat(state, unit, "fuelPerDay", base);
 }
 
 /** Attack range in tiles, or null for unarmed units. */

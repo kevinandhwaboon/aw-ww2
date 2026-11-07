@@ -71,6 +71,8 @@ export interface Unit {
    * art show paratroopers (08-art-pipeline §17).
    */
   readonly airDropped?: true;
+  /** A submarine below the surface (05-supply-transport §9). Missing until it first dives. */
+  readonly submerged?: boolean;
 }
 
 export interface PropertyState {

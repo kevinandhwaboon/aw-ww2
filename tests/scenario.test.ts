@@ -115,7 +115,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
-  it.each(["twin-bridges", "contested-skies"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
+  it.each(["twin-bridges", "contested-skies", "narrow-sea"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
     if (!scenario) throw new Error("missing scenario");
     const { map, units, propertyOwners } = scenario.setup;
@@ -193,6 +193,16 @@ describe("built-in scenarios (00-master-design §8)", () => {
     it("the game ends by capturing the enemy HQ, not by wiping out units", () => {
       expect(normandy.setup.victory).toEqual([{ type: "hqCapture" }]);
     });
+  });
+
+  it("the coastal map gives each side a port and starts both with a Destroyer and a Submarine (11-tech-setup §6, milestone 10)", () => {
+    const scenario = SCENARIOS.find((s) => s.id === "narrow-sea");
+    if (!scenario) throw new Error("missing scenario");
+    for (const owner of [0, 1]) {
+      expect(properties(scenario, "port", owner), `player ${owner} port`).toHaveLength(1);
+      const ships = (scenario.setup.units ?? []).filter((u) => u.owner === owner).map((u) => u.type);
+      expect(ships).toEqual(expect.arrayContaining(["destroyer", "submarine"]));
+    }
   });
 
   it("the demo keeps the US from building Heavy Tanks, as the availability rule requires (01-units §1)", () => {

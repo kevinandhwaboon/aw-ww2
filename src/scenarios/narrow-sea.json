@@ -1,0 +1,46 @@
+{
+  "id": "narrow-sea",
+  "name": "Narrow Sea",
+  "description": "Two ports face each other across a narrow sea, with a coast road around it. Fight for the shore, or for the water: only Destroyers and Submarines can find a submarine that has dived.",
+  "map": [
+    "Q==f..FF..HH..C.",
+    "f.=..C.==b...F..",
+    ".C=.._______..H.",
+    "..=._SSSSSSSS_..",
+    "C.=PSSSrSSSSSS_F",
+    "..=_SSSSSSSS_=..",
+    "F_SSSSSSrSSSP=.C",
+    ".._SSSSSSSS_.=..",
+    ".H.._______..=C.",
+    "..F...b==.C..=.f",
+    ".C..HH..FF..f==Q"
+  ],
+  "players": [
+    { "name": "Allies", "nation": "us", "funds": 8000 },
+    { "name": "Axis", "nation": "germany", "funds": 8000, "facing": "left" }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 0, "y": 0 }, "owner": 0 },
+    { "pos": { "x": 3, "y": 0 }, "owner": 0 },
+    { "pos": { "x": 0, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 3, "y": 4 }, "owner": 0 },
+    { "pos": { "x": 15, "y": 10 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 10 }, "owner": 1 },
+    { "pos": { "x": 15, "y": 9 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 6 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 4, "y": 1 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 1, "y": 3 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 2, "y": 2 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 1, "y": 4 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 4, "y": 4 } },
+    { "type": "submarine", "owner": 0, "pos": { "x": 5, "y": 3 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 9 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 14, "y": 7 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 13, "y": 8 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 14, "y": 6 } },
+    { "type": "destroyer", "owner": 1, "pos": { "x": 11, "y": 6 } },
+    { "type": "submarine", "owner": 1, "pos": { "x": 10, "y": 7 } }
+  ]
+}

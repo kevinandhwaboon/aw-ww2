@@ -66,6 +66,11 @@ function damageWith(state: GameState, attacker: Unit, defender: Unit, entry: Dam
   });
 }
 
+/** Only some units can reach a submerged submarine, to attack it or to counter it (03-combat §5c). */
+function canReach(attacker: Unit, defender: Unit): boolean {
+  return defender.submerged !== true || UNITS[attacker.type].attacksSubmerged;
+}
+
 function sameSide(state: GameState, a: Unit, b: Unit): boolean {
   return state.players[a.owner]?.side === state.players[b.owner]?.side;
 }
@@ -86,6 +91,7 @@ export function targetProblem(state: GameState, attacker: Unit, defender: Unit, 
   const problem = rangeProblem(state, attacker, defender.pos, moved);
   if (problem) return problem;
   if (!chooseWeapon(attacker, defender.type)) return "no usable weapon against that target";
+  if (!canReach(attacker, defender)) return "this unit can't attack a submerged submarine";
   return null;
 }
 
@@ -140,7 +146,8 @@ export function canCounter(state: GameState, attacker: Unit, defender: Unit): bo
     range !== null &&
     range.min === 1 &&
     distance(attacker.pos, defender.pos) === 1 &&
-    chooseWeapon(defender, attacker.type) !== null
+    chooseWeapon(defender, attacker.type) !== null &&
+    canReach(defender, attacker)
   );
 }
 
