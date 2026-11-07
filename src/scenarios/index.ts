@@ -3,7 +3,8 @@
 import { parseScenario, type Scenario } from "../engine/scenario";
 import bocageCountry from "./bocage-country.json";
 import contestedSkies from "./contested-skies.json";
+import normandy from "./normandy.json";
 import provingGround from "./proving-ground.json";
 import twinBridges from "./twin-bridges.json";
 
-export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, contestedSkies, provingGround].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, contestedSkies, normandy, provingGround].map(parseScenario);
