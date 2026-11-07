@@ -1,9 +1,12 @@
-// Terrain tiles as 16x16 pixel grids. Roads, rivers and shorelines are built from parts so every
+// Terrain tiles as pixel grids, 16 wide by 32 tall (docs/08-art-pipeline.md §16): flat ground fills
+// the bottom 16 rows, and trees, hills, hedges and fortifications rise into the top 16 with shadows. Roads, rivers and shorelines are built from parts so every
 // neighbor combination stays consistent. Sheet layout and joining rules: docs/08-art-pipeline.md §14.
+
+import { art, compose, flat, layer, put, rect, withShade } from "./depth.mjs";
 
 const SIZE = 16;
 
-export const palette = {
+export const palette = withShade({
   G: "#8cc25a", g: "#74a848", h: "#a4d470", // grass
   T: "#3f8a3a", U: "#2a6430", V: "#62a848", n: "#5a4028", O: "#1c3a20", // trees
   q: "#b4cc72", w: "#8aa850", u: "#5e7a38", Q: "#3e5428", // hills
@@ -13,7 +16,7 @@ export const palette = {
   a: "#e8d7a0", A: "#cdb67e", i: "#f6ecc8", // sand
   R: "#c8bc98", r: "#9a8c66", p: "#ddd4b4", // road
   b: "#a0804e", B: "#6e5434", x: "#3a2c1c", // bridge
-};
+});
 
 // Small deterministic hash, so detail looks scattered but never changes between runs.
 const hash = (x, y, salt = 0) => {
@@ -50,64 +53,62 @@ function plains(salt) {
   return toRows(g);
 }
 
+// A round broadleaf tree, lit from the top left, on a short trunk.
 const tree = [
-  "..OOO..", ".OVVTO.", "OVVTTTO", "OVTTTUO", "OTTTUUO", ".OUUUO.", "..OnO..",
+  "..OOOO..", ".OVVVTO.", "OVVVTTTO", "OVVTTTTO", "OVTTTTUO", "OTTTTUUO", ".OTTUUO.", "..OOOO..",
+  "...On...", "...On...",
 ];
-function stamp(g, art, ox, oy) {
-  art.forEach((row, y) => [...row].forEach((ch, x) => {
-    if (ch !== "." && inTile(ox + x, oy + y)) g[oy + y][ox + x] = ch;
-  }));
-}
 function forest(spots, salt) {
-  const g = grass(salt);
-  for (const [x, y] of spots) stamp(g, tree, x, y);
-  return toRows(g);
+  const obj = layer();
+  // Trees further back (higher up) go down first, so nearer ones overlap them.
+  for (const [x, y] of [...spots].sort((p, q) => p[1] - q[1])) art(obj, tree, x, y);
+  return compose(toRows(grass(salt)), obj);
 }
 
-// A grassy mound lit from the top left, with a dark outline.
+// Grassy domes lit from the top left, rising above the tile, with a dark outline.
 function hills(mounds, salt) {
-  const g = grass(salt);
+  const obj = layer();
   for (const [cx, base, rx, ry] of mounds) {
     const shade = [];
     for (let y = base - ry; y <= base; y++) {
       for (let x = cx - rx; x <= cx + rx; x++) {
         const nx = (x - cx) / rx, ny = (y - base) / ry;
-        if (nx * nx + ny * ny > 1 || !inTile(x, y)) continue;
-        const light = -(nx * 0.7 + ny * 0.7);
-        shade.push([x, y, light > 0.45 ? "q" : light > -0.15 ? "w" : "u"]);
+        if (nx * nx + ny * ny > 1) continue;
+        const light = -(nx * 0.75 + ny * 0.55);
+        shade.push([x, y, light > 0.5 ? "q" : light > 0.05 ? "w" : "u"]);
       }
     }
     const inside = new Set(shade.map(([x, y]) => `${x},${y}`));
     for (const [x, y, ch] of shade) {
       const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !inside.has(`${x + dx},${y + dy}`));
-      g[y][x] = edge && y < base ? "Q" : ch;
+      put(obj, x, y, edge ? "Q" : ch);
     }
+    // A few tufts catching the light near the top.
+    for (let i = 0; i < 3; i++) put(obj, cx - 2 + i * 2, base - ry + 3 + (i % 2), "h");
   }
-  return toRows(g);
+  return compose(toRows(grass(salt)), obj);
 }
 
-// A small field enclosed by hedgerows on every side, so it reads as hedge country and not woods.
-// A gap in the hedge marks a gate; extra hedges split the field.
+// A small field enclosed by raised hedgerows: a leafy top, a darker face toward the viewer, and a
+// shadow on the field. A gap in the hedge is a gate; extra hedges split the field.
 function bocage(gate, extra, salt) {
-  const g = grass(salt);
-  const hedge = (x, y) => {
-    if (!inTile(x, y)) return;
+  const obj = layer();
+  const leaf = (x, y) => {
     const v = hash(x, y, salt + 3) % 6;
-    g[y][x] = v === 0 ? "y" : v < 3 ? "e" : "E";
+    put(obj, x, y, v === 0 ? "y" : v < 3 ? "E" : "T");
   };
-  for (let a = 0; a < SIZE; a++) {
-    const depth = (side) => 2 + (hash(a, side, salt) % 2);
-    for (let d = 0; d < depth(0); d++) hedge(a, d);
-    for (let d = 0; d < depth(1); d++) hedge(SIZE - 1 - d, a);
-    for (let d = 0; d < depth(2); d++) hedge(a, SIZE - 1 - d);
-    for (let d = 0; d < depth(3); d++) hedge(d, a);
-  }
-  for (const [x0, y0, x1, y1] of extra) {
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) hedge(x, y);
-  }
+  const band = (x0, y0, x1, y1) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) leaf(x, y);
+    rect(obj, x0, y1 + 1, x1, y1 + 1, "e");
+  };
+  band(0, 14, 15, 16);
+  band(0, 28, 15, 30);
+  band(0, 14, 2, 30);
+  band(13, 14, 15, 30);
+  for (const [x0, y0, x1, y1] of extra) band(x0, y0 + 16, x1, y1 + 16);
   const [gx0, gy0, gx1, gy1] = gate;
-  for (let y = gy0; y <= gy1; y++) for (let x = gx0; x <= gx1; x++) g[y][x] = "G";
-  return toRows(g);
+  rect(obj, gx0, gy0 + 16, gx1, gy1 + 16, ".");
+  return compose(toRows(grass(salt)), obj, 2);
 }
 
 // Open water with short wave marks that drift right between frames.
@@ -119,6 +120,12 @@ function water(salt, frame) {
     if (inTile((x + 1) % SIZE, y + 1)) g[y + 1][(x + 1) % SIZE] = "s";
   }
   return g;
+}
+
+function stamp(g, rows, ox, oy) {
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch !== "." && inTile(ox + x, oy + y)) g[oy + y][ox + x] = ch;
+  }));
 }
 
 const rocks = [
@@ -155,34 +162,35 @@ function beach(salt, pebbles) {
   return toRows(g);
 }
 
-// A concrete pillbox with a firing slit, banked with earth and sandbags.
+// A concrete pillbox: a lit top, a front face with a firing slit, a shaded side, banked with earth.
 function bunker() {
-  const g = grass(30);
-  stamp(g, [
-    "....KKKKKKKK....", "...KjjjjjjjjK...", "..KjkkkkkkkkkK..", "..KkKKKKKKKKkK..",
-    "..KkkkkkkkkkkK..", ".KkkkkkkkkkkkkK.", "AKKKKKKKKKKKKKKA", "AAuuuuuuuuuuuuAA",
-  ], 0, 5);
-  return toRows(g);
+  const obj = layer();
+  art(obj, [
+    "...KKKKKKKK.....", "..KjjjjjjjjKK...", ".KjjjjjjjjjkkK..", ".KkkkkkkkkkkkK..",
+    ".KkKKKKKKKKkkK..", ".KkkkkkkkkkkK...", "AKKKKKKKKKKKKA..", "AAuuuuuuuuuuuAA.",
+  ], 0, 20);
+  return compose(toRows(grass(30)), obj);
 }
 
 // What a destroyed bunker leaves: broken slabs and twisted rebar on scorched earth.
 function rubble() {
-  const g = grass(31);
-  for (let y = 3; y < 15; y++) for (let x = 1; x < 15; x++) if (hash(x, y, 32) % 3) g[y][x] = hash(x, y, 33) % 4 ? "A" : "u";
-  stamp(g, ["KKKK.", "KjkkK", ".KKKK"], 2, 4);
-  stamp(g, ["..KKK", ".KjkK", "KkkkK", "KKKK."], 9, 7);
-  stamp(g, ["KKK", "KkK", "KKK"], 4, 10);
-  stamp(g, ["x..", ".x.", ".xx"], 10, 2);
-  stamp(g, ["x.x", ".x."], 1, 12);
-  return toRows(g);
+  const ground = grass(31);
+  for (let y = 3; y < 15; y++) for (let x = 1; x < 15; x++) if (hash(x, y, 32) % 3) ground[y][x] = hash(x, y, 33) % 4 ? "A" : "u";
+  const obj = layer();
+  art(obj, ["KKKK.", "KjkkK", ".KKKK"], 2, 19);
+  art(obj, ["..KKK", ".KjkK", "KjkkK", "KKKK."], 9, 22);
+  art(obj, ["KK.", "KjK", "KKK"], 4, 26);
+  art(obj, ["x..", ".x.", ".xx"], 10, 17);
+  art(obj, ["x.x", ".x."], 1, 28);
+  return compose(toRows(ground), obj, 2);
 }
 
-// Dragon's teeth: staggered rows of concrete pyramids.
+// Dragon's teeth: staggered rows of concrete pyramids, lit on the left face.
 function obstacle() {
-  const g = grass(34);
-  const tooth = ["..K..", ".KjK.", "KjkkK", "KKKKK"];
-  for (const [x, y] of [[0, 1], [5, 1], [10, 1], [2, 6], [7, 6], [12, 6], [0, 11], [5, 11], [10, 11]]) stamp(g, tooth, x, y);
-  return toRows(g);
+  const obj = layer();
+  const tooth = ["..K..", ".KjK.", ".jjkK", "KjjkK", "KKKKK"];
+  for (const [x, y] of [[0, 14], [5, 14], [10, 14], [2, 19], [7, 19], [12, 19], [0, 25], [5, 25], [10, 25]]) art(obj, tooth, x, y);
+  return compose(toRows(grass(34)), obj, 2);
 }
 
 // Directions in mask order: N=1, E=2, S=4, W=8.
@@ -282,11 +290,11 @@ const moving = (draw) => [draw(0), draw(1)];
 // The sheet, 8 tiles across, in the order docs/08-art-pipeline.md §14 lists. Gaps stay empty.
 export const layout = [
   ["plains", still(plains(1))], ["plains", still(plains(2))], ["plains", still(plains(3))],
-  ["forest", still(forest([[1, 1], [8, 0], [4, 7], [10, 8]], 4))],
-  ["forest", still(forest([[0, 4], [6, 1], [9, 6], [3, 9]], 5))],
-  ["hills", still(hills([[8, 14, 7, 9]], 6))],
-  ["hills", still(hills([[5, 13, 5, 7], [11, 15, 5, 8]], 7))],
-  ["bocage", still(bocage([6, 13, 9, 15], [], 8))],
+  ["forest", still(forest([[1, 11], [8, 10], [4, 17], [10, 18]], 4))],
+  ["forest", still(forest([[0, 14], [6, 11], [9, 16], [3, 19]], 5))],
+  ["hills", still(hills([[7, 30, 8, 13]], 6))],
+  ["hills", still(hills([[5, 28, 6, 11], [11, 31, 5, 9]], 7))],
+  ["bocage", still(bocage([6, 12, 9, 15], [], 8))],
   ["bocage", still(bocage([0, 6, 2, 8], [[7, 2, 8, 13]], 9))],
   ["sea", moving((f) => toRows(water(3, f)))],
   ["reef", moving(reef)],
@@ -300,14 +308,20 @@ export const layout = [
   ...[0, 1, 2, 3].map((c) => [`shore-${["NE", "SE", "SW", "NW"][c]}`, moving((f) => shoreCorner(c, f))]),
 ];
 
+// Flat tiles sit in the bottom half; raised ones already fill all 32 rows.
+for (const entry of layout) {
+  if (entry) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));
+}
+
 export const ACROSS = 8;
+export const TILE_HEIGHT = 32;
 export const FRAMES = 2;
 
 for (const entry of layout) {
   if (!entry) continue;
   const [name, frames] = entry;
   for (const rows of frames) {
-    if (rows.length !== SIZE || rows.some((r) => r.length !== SIZE)) throw new Error(`${name}: not 16x16`);
+    if (rows.length !== TILE_HEIGHT || rows.some((r) => r.length !== SIZE)) throw new Error(`${name}: not 16x32`);
     for (const ch of rows.join("")) if (ch !== "." && !palette[ch]) throw new Error(`${name}: no color for "${ch}"`);
   }
 }

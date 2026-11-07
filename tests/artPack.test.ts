@@ -67,6 +67,7 @@ describe("art pack files (08-art-pipeline §13)", () => {
     expect(pack.terrain).toEqual({
       path: "t.png",
       frames: 2,
+      tileHeight: 16,
       tiles: { plains: [0, 1, 2], sea: [9] },
       connected: { road: 16, river: 32 },
       bridges: { horizontal: 48, vertical: 49 },
@@ -87,6 +88,7 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
     ["a bridge without both directions", { terrain: { path: "t.png", tiles: {}, bridges: { horizontal: 1 } } }, /horizontal and vertical/],
     ["zero terrain frames", { terrain: { path: "t.png", tiles: {}, frames: 0 } }, /whole number/],
+    ["a tile height that isn't 16 or 32", { terrain: { path: "t.png", tiles: {}, tileHeight: 24 } }, /16 or 32/],
     ["an unknown unit name", { unitNames: { dragon: "Puff" } }, /unknown id/],
     ["an empty name", { unitNames: { infantry: "" } }, /must be text/],
   ])("rejects %s", (_, change, message) => {
@@ -195,6 +197,11 @@ describe("art packs: buildings (08-art-pipeline §15)", () => {
       { team: "purple", fill: "#8040c0", outline: "#301050" },
     ],
     properties,
+  });
+
+  it("tiles are 16 tall unless a sheet says 32, for art that rises into the tile behind (08-art-pipeline §16)", () => {
+    expect(pack.properties?.tileHeight).toBe(16);
+    expect(parseArtPack({ name: "x", properties: { ...properties, tileHeight: 32 } }).properties?.tileHeight).toBe(32);
   });
 
   it("an unowned property uses the neutral column", () => {

@@ -2,7 +2,8 @@
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
 
-export const rgba = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).concat(255);
+// "#rrggbb", or "#rrggbbaa" for see-through colors like shadows.
+export const rgba = (hex) => [1, 3, 5, 7].map((i) => (i < hex.length ? parseInt(hex.slice(i, i + 2), 16) : 255));
 export const canvas = (w, h) => ({ w, h, px: new Uint8Array(w * h * 4) });
 
 export function stamp(c, grid, palette, ox, oy, scale = 1) {
@@ -12,7 +13,11 @@ export function stamp(c, grid, palette, ox, oy, scale = 1) {
     const color = rgba(hex);
     for (let sy = 0; sy < scale; sy++) {
       for (let sx = 0; sx < scale; sx++) {
-        c.px.set(color, ((oy + y * scale + sy) * c.w + ox + x * scale + sx) * 4);
+        const at = ((oy + y * scale + sy) * c.w + ox + x * scale + sx) * 4;
+        // See-through colors blend over what is already drawn there.
+        const a = color[3] / 255, under = c.px[at + 3] / 255;
+        if (a === 1 || under === 0) c.px.set(color, at);
+        else for (let k = 0; k < 3; k++) c.px[at + k] = Math.round(color[k] * a + c.px[at + k] * (1 - a));
       }
     }
   }));

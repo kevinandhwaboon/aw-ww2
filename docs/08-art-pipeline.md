@@ -268,7 +268,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` renders them to `public/assets/terrain/terrain.png`, and the default pack points at that sheet. Properties are on their own sheet (section 15). Bunker, Rubble and Obstacle are terrain tiles 13–15.
 
 **Answers to section 9:**
-- **Tall tiles (Q9):** no. Every tile stays inside its own 16×16 square, so draw order doesn't change.
+- **Tall tiles (Q9):** yes, since 2026-11-06. Trees, hills, hedges, fortifications and buildings rise into the tile behind (section 16).
 - **Connected tiles (Q10):** roads and rivers have 16 pieces each. Coastlines are 8 foam pieces layered over sea, which gives the same result as the full 47 without drawing 47 tiles. Land next to the sea doesn't change.
 
 **How the game picks tiles:**
@@ -287,7 +287,7 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 
 **Bocage** is a small field with hedgerows on all four sides, so a patch of bocage reads as hedge country. Forest is round trees, so the two can't be confused.
 
-**Sheet layout:** 8 tiles across. The sheet holds one panel per animation frame, stacked top to bottom, each with the same layout:
+**Sheet layout:** 8 tiles across, each 16 wide by 32 tall (section 16). The sheet holds one panel per animation frame, stacked top to bottom, each with the same layout:
 
 | Tiles | What |
 |---|---|
@@ -312,6 +312,7 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 |---|---|
 | `tiles` | Terrain to a tile number, or a list of numbers for variants |
 | `frames` | How many animation panels the sheet holds. Default 1 |
+| `tileHeight` | 16, or 32 for tiles that rise into the tile behind. Default 16 |
 | `connected` | `road` and `river`: the first of their 16 pieces |
 | `bridges` | `horizontal` and `vertical` deck tiles, drawn over the river piece |
 | `shore` | The first of the 8 foam pieces |
@@ -332,7 +333,7 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 
 **Corner flags:** a property drawn from the sheet shows no corner flag, since its colors show the owner. A property with no art for its owner's team keeps the placeholder and its flag.
 
-**Draw order:** buildings sit above the terrain and below the move and attack range tints, so ranges still show on them.
+**Draw order:** buildings are painted with the terrain, row by row, below the move and attack range tints, so ranges still show on them.
 
 **Pack field** `properties`:
 
@@ -341,8 +342,23 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 | `path` | The buildings sheet |
 | `columns` | The owner each column is for: `neutral`, or a player's `team` |
 | `rows` | The property on each row, top to bottom |
+| `tileHeight` | 16, or 32 for buildings that rise into the tile behind. Default 16 |
 
 **Fortifications** are terrain tiles, not buildings, because no one owns them: a concrete pillbox for the Bunker, broken slabs and rebar for Rubble, and rows of dragon's teeth for the Obstacle. A unit standing on a bunker covers most of it, as before.
 
 **Not done yet:** damaged bunker versions (damage shows as an HP number), and the phase 2 beach obstacle.
+
+## 16. Depth and shadows
+
+Terrain and buildings are drawn so the map looks solid rather than flat, using the same general techniques as GBA-era tactics games. The art itself is original.
+
+- **Tall tiles:** every terrain and building tile is 16 wide by 32 tall. The bottom 16 rows are the map cell. The top 16 are room for anything that rises above it, and that part overlaps the tile behind.
+- **Draw order:** the map is painted one row at a time from the top, so a tree, hill or building in front covers the bottom of the row behind it. Units, ranges, the cursor and menus still draw on top of everything.
+- **View:** buildings are seen from the front and a little above: a front wall, a side wall receding to the right, and a roof.
+- **Light** comes from the top left. Lit faces are lighter and faces turned away are darker.
+- **Shadows** fall to the lower right, inside the object's own cell. A shadow darkens whatever ground it lands on, so the sheets stay fully opaque on the ground.
+- **What rises:** Forest, Hills, Bocage hedges, Bunker, Rubble, Obstacle and every building. Plains, roads, rivers, bridges, beach, sea and reef stay flat.
+- **The map's top row:** anything rising from the top row is cut off at the map's edge.
+
+The helpers for this are in `tools/art/depth.mjs`.
 

@@ -45,6 +45,7 @@
   "terrain": {
     "path": "../../terrain/terrain.png",
     "frames": 2,
+    "tileHeight": 32,
     "tiles": {
       "plains": [0, 1, 2], "forest": [3, 4], "hills": [5, 6], "bocage": [7, 8],
       "sea": [9], "reef": [10], "beach": [11, 12],
@@ -56,6 +57,7 @@
   },
   "properties": {
     "path": "../../terrain/buildings.png",
+    "tileHeight": 32,
     "columns": ["neutral", "blue", "red", "green", "gold"],
     "rows": ["city", "factory", "airfield", "port", "hq"]
   }
