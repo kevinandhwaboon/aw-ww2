@@ -26,7 +26,8 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: st
 const stars = (n: number) => (n > 0 ? "★".repeat(n) : "–");
 
 /** The terrain under the cursor and its defense, and the unit there if any. Stays away from the cursor. */
-export function createTileInfo(root: HTMLElement): { show: (state: GameState, tile: Point) => void } {
+/** `cursorOnLeft`: the cursor is in the left half of the screen, so the panel goes right. */
+export function createTileInfo(root: HTMLElement): { show: (state: GameState, tile: Point, cursorOnLeft: boolean) => void } {
   const panel = el("div", "panel tile-info");
   const name = el("div", "panel-title");
   const defense = el("div", "tile-defense");
@@ -35,14 +36,14 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   root.append(panel);
 
   return {
-    show(state, tile) {
+    show(state, tile, cursorOnLeft) {
       const info = tileInfo(state, tile);
       name.textContent = info.terrain;
       defense.textContent = info.stars > 0 ? `Defense ${stars(info.stars)}` : "No defense";
       unitLine.hidden = !info.unit;
       unitLine.textContent = info.unit?.name ?? "";
       unitLine.style.color = info.unit ? playerColors(info.unit.owner)[0] : "";
-      panel.classList.toggle("tile-info-right", tile.x < state.map.width / 2);
+      panel.classList.toggle("tile-info-right", cursorOnLeft);
     },
   };
 }
@@ -64,7 +65,7 @@ function drawFlag(nation: NationId): HTMLCanvasElement {
 }
 
 /** The current player's flag, the day and their funds. Sits on the side of the map away from the cursor. */
-export function createHud(root: HTMLElement): { update: (state: GameState, cursor: Point) => void } {
+export function createHud(root: HTMLElement): { update: (state: GameState, cursorOnLeft: boolean) => void } {
   const hud = el("div", "panel hud");
   const flag = el("span", "hud-flag");
   const day = el("span", "hud-day");
@@ -74,7 +75,7 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
   let shownNation: NationId | undefined;
 
   return {
-    update(state, cursor) {
+    update(state, cursorOnLeft) {
       const current = state.players[state.currentPlayer];
       if (!current) return;
       if (current.nation !== shownNation) {
@@ -83,7 +84,7 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
       }
       day.textContent = `Day ${state.day}`;
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
-      hud.classList.toggle("hud-right", cursor.x < state.map.width / 2);
+      hud.classList.toggle("hud-right", cursorOnLeft);
     },
   };
 }

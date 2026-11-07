@@ -4,13 +4,14 @@
 import Phaser from "phaser";
 import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
-import { inBounds, type Point } from "./engine/map";
+import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
 import { unitAt, type GameState } from "./engine/state";
 import { packColor } from "./game/artPack";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
+import { viewSize } from "./game/viewport";
 import { playerColors } from "./game/placeholderUnits";
 import {
   createBanner,
@@ -76,8 +77,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
 
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
-    hud.update(state, cursor);
-    tileInfoPanel.show(state, cursor);
+    const onLeft = scene.tileInLeftHalf(cursor);
+    hud.update(state, onLeft);
+    tileInfoPanel.show(state, cursor, onLeft);
     unitPanel?.show(state, unitAt(state, cursor));
   }
 
@@ -105,6 +107,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
       if (!player) continue;
       const income = result.events.find((e) => e.type === "incomeReceived");
       const earned = income ? ` +${income.amount.toLocaleString("en-US")}` : "";
+      scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
       if (passDevice) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
@@ -143,20 +146,22 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
     }
   });
 
-  /** Largest whole-number scale that fits the window, so pixels stay crisp (00-master-design §14). */
-  function integerZoom(): number {
-    return Math.max(1, Math.floor(Math.min(window.innerWidth / width, window.innerHeight / height)));
-  }
+  /**
+   * Whole-number zoom so pixels stay crisp (00-master-design §14), filling the window, but never so
+   * small that squares are hard to read: past that the view scrolls (00-master-design §12).
+   */
+  const fitWindow = () => viewSize({ width: window.innerWidth, height: window.innerHeight }, { width, height });
 
   // The canvas is as big as it shows on screen and the scene's camera does the enlarging, so art
   // finer than one pixel per map pixel (32-pixel units) keeps its detail (08-art-pipeline §17).
-  let zoom = integerZoom();
-  scene.setPixelScale(zoom);
+  let view = fitWindow();
+  scene.setPixelScale(view.zoom);
+  scene.setCursor(turnStartTile(state, state.currentPlayer));
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: gameRoot,
-    width: width * zoom,
-    height: height * zoom,
+    width: view.width,
+    height: view.height,
     pixelArt: true,
     backgroundColor: packColor("uiBg"),
     scale: { mode: Phaser.Scale.NONE },
@@ -165,9 +170,16 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
 
   render();
   window.addEventListener("resize", () => {
-    if (integerZoom() === zoom) return;
-    zoom = integerZoom();
-    game.scale.resize(width * zoom, height * zoom);
-    scene.setPixelScale(zoom);
+    const next = fitWindow();
+    if (next.zoom === view.zoom && next.width === view.width && next.height === view.height) return;
+    view = next;
+    game.scale.resize(view.width, view.height);
+    scene.setPixelScale(view.zoom);
   });
+}
+
+/** Where a player's turn starts the cursor: on their HQ, or their first unit if they have none. */
+function turnStartTile(state: GameState, player: number): Point {
+  const hq = state.properties.find((p) => p.owner === player && terrainAt(state.map, p.pos) === "hq");
+  return hq?.pos ?? state.units.find((u) => u.owner === player)?.pos ?? { x: 0, y: 0 };
 }

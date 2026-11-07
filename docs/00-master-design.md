@@ -92,7 +92,7 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 
 - Unit scale should match the original's abstract feel (not explicitly divisional). **TBD and expected to be tuned.**
 - Known tension: a theater-scale map at the original's unit scale means many tiles and/or many units. Movement ranges, Channel crossing time and unit counts must be designed together.
-- Large-map needs (to be designed later): zoom, minimap, jump-to-unit, "next idle unit" cycling, multi-turn move orders, possibly reserve areas or a lighter buildup phase to reduce turn tedium.
+- Large maps scroll (section 12, "Camera"). Still to design: minimap, jump-to-unit, "next idle unit" cycling, multi-turn move orders, possibly reserve areas or a lighter buildup phase to reduce turn tedium.
 
 ## 10. Technology
 
@@ -163,6 +163,16 @@ UI falls into four categories:
 - Mobile and touch considerations (for later): no hover (info follows selection), menus placed away from the finger, tap targets around 44px on screen, pan/pinch-zoom coexisting with tap-to-select, top/bottom layout in portrait.
 - Factory build menu: **HTML** (it's a scrolling list). Each row shows the unit's sprite, cost, role, and what it's strong and weak against. The guide is written by hand in `src/game/unitGuide.ts`, and a test checks it against the damage chart.
 - The whole game plays from the keyboard, title screen to results (11-tech-setup §3c). The mouse still works but is never required.
+
+**Camera (large maps):**
+
+- The map zooms up to fill the window, in whole-number steps so pixels stay crisp (section 14). It never zooms below **3×** (a square is 48 screen pixels). A map too big to fit at 3× keeps 3× and the view scrolls. Small maps look exactly as before.
+- Moving the cursor with the keyboard scrolls the view, keeping **2 squares** between the cursor and the edge where the map allows. Moving it with the mouse doesn't scroll.
+- A mouse wheel or a two-finger trackpad swipe scrolls the view.
+- Before anything plays (a move, an attack, a capture), the view pans to show it, and it follows a moving unit square by square. Repairs at the start of a turn don't pan.
+- Each turn starts with the cursor on that player's HQ (or their first unit if they have no HQ), and the view pans there.
+- Menus and the damage forecast stay inside the visible part of the map. The HUD and tile info sit on the side of the screen away from the cursor, judged within the view, not the whole map.
+- Not yet: edge scrolling, dragging the map, a minimap.
 
 ## 13. Combat presentation (staged)
 
@@ -303,3 +313,4 @@ UI falls into four categories:
 | 2026-11-07 | Units redrawn at 32×32 in a top-down 3/4 view (art only until the map moves to a 32-pixel grid). US Infantry dropped by a Transport Aircraft is drawn as a 101st Airborne paratrooper with a card-suit helmet and M1 carbine; the engine records air drops but no rule reads it (08-art-pipeline §17) |
 | 2026-11-07 | The game shows the 32×32 units without changing the map: squares stay 16 map pixels and the same size on screen, the game draws at screen resolution and scales units to fit a square. Air-dropped US Infantry shows as paratroopers (08-art-pipeline §17) |
 | 2026-11-07 | Aircraft, ships, terrain and buildings drawn at 32 pixels and shown in the game, painted at double resolution into 16-pixel squares. Germany gets no Battleship or Landing Craft art (08-art-pipeline §17) |
+| 2026-11-07 | Large maps scroll: zoom to fit the window but never below 3×, beyond that a scrolling view that follows the keyboard cursor and pans to each move and attack; each turn starts on the player's HQ (section 12, Camera) |
