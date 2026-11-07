@@ -60,11 +60,20 @@ export interface UnitSheet {
   readonly rows: readonly (UnitTypeId | null)[];
 }
 
-/** A sheet of 16×16 tiles, with the tile number for each terrain it replaces. */
+/** A sheet of 16×16 tiles, numbered left to right, top to bottom (08-art-pipeline §13–14). */
 export interface TerrainSheet {
   /** Relative to the pack's folder. */
   readonly path: string;
-  readonly tiles: Readonly<Partial<Record<TerrainId, number>>>;
+  /** Animation frames: the sheet is this many same-layout panels stacked top to bottom. */
+  readonly frames: number;
+  /** Tile numbers per terrain. Several are variants, picked by map position. */
+  readonly tiles: Readonly<Partial<Record<TerrainId, readonly number[]>>>;
+  /** First of 16 joined pieces, in neighbor-mask order (N=1, E=2, S=4, W=8). */
+  readonly connected: Readonly<Partial<Record<"road" | "river", number>>>;
+  /** Bridge decks drawn over a river piece. */
+  readonly bridges: { readonly horizontal: number; readonly vertical: number } | null;
+  /** First of 8 shore pieces drawn over sea next to land: edges N, E, S, W, then corners NE, SE, SW, NW. */
+  readonly shore?: number;
 }
 
 export interface ArtPack {
@@ -144,16 +153,38 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   return { nation: nation as NationId, team, path, frames: frames as number, rows: rows as (UnitTypeId | null)[] };
 }
 
+const isTileNumber = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
+
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles } = raw;
+  const { path, tiles, frames = 1, connected = {}, bridges, shore } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
+  if (!Number.isInteger(frames) || (frames as number) < 1) return fail(`terrain: "frames" must be a whole number`);
+  const parsedTiles: Partial<Record<TerrainId, number[]>> = {};
   for (const [terrain, tile] of Object.entries(tiles)) {
     if (!isTerrain(terrain)) return fail(`terrain: unknown terrain "${terrain}"`);
-    if (!Number.isInteger(tile) || (tile as number) < 0) return fail(`terrain: tile for "${terrain}" must be a whole number`);
+    const list: unknown[] = Array.isArray(tile) ? tile : [tile];
+    if (list.length === 0 || !list.every(isTileNumber)) return fail(`terrain: tile for "${terrain}" must be a whole number or a list of them`);
+    parsedTiles[terrain] = list;
   }
-  return { path, tiles: tiles };
+  if (!isObject(connected)) return fail(`terrain: "connected" must be an object`);
+  for (const [terrain, first] of Object.entries(connected)) {
+    if (terrain !== "road" && terrain !== "river") return fail(`terrain: only road and river can be connected, not "${terrain}"`);
+    if (!isTileNumber(first)) return fail(`terrain: connected "${terrain}" must be a whole number`);
+  }
+  if (bridges !== undefined && (!isObject(bridges) || !isTileNumber(bridges.horizontal) || !isTileNumber(bridges.vertical))) {
+    return fail(`terrain: "bridges" needs whole numbers for horizontal and vertical`);
+  }
+  if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
+  return {
+    path,
+    frames: frames as number,
+    tiles: parsedTiles,
+    connected,
+    bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
+    ...(shore === undefined ? {} : { shore }),
+  };
 }
 
 function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key is K, label: string): Partial<Record<K, string>> {

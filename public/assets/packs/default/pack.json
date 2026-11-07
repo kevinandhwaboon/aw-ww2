@@ -41,5 +41,16 @@
         "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
       ]
     }
-  ]
+  ],
+  "terrain": {
+    "path": "../../terrain/terrain.png",
+    "frames": 2,
+    "tiles": {
+      "plains": [0, 1, 2], "forest": [3, 4], "hills": [5, 6], "bocage": [7, 8],
+      "sea": [9], "reef": [10], "beach": [11, 12]
+    },
+    "connected": { "road": 16, "river": 32 },
+    "bridges": { "horizontal": 48, "vertical": 49 },
+    "shore": 50
+  }
 }

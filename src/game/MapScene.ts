@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
-import type { TerrainId } from "../engine/data/terrain";
 import { veterancyFor } from "../engine/data/veterancy";
 import type { Point } from "../engine/map";
 import { displayHp, type GameState, type Unit, type UnitId } from "../engine/state";
@@ -10,6 +9,7 @@ import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
+import { terrainLayers } from "./terrainTiles";
 import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
 
 /** What the scene reports to whoever handles input (the InputController, wired up in main.ts). */
@@ -38,6 +38,9 @@ const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
 const TERRAIN_SHEET_KEY = "pack-terrain";
+/** How long each frame of moving water shows. */
+const TERRAIN_FRAME_MS = 600;
+const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 
 /** What a shot lands on: a unit, or just a tile for a fortification. */
@@ -57,7 +60,10 @@ export class MapScene extends Phaser.Scene implements MapView {
   private handlers?: MapInputHandlers;
   private cursorTile: Point = { x: 0, y: 0 };
 
-  private tilemap?: Phaser.Tilemaps.Tilemap;
+  private terrainImage?: Phaser.GameObjects.Image;
+  private terrainFrames = 1;
+  private terrainFrame = 0;
+  private placeholderTiles?: HTMLCanvasElement;
   private drawnTerrain: GameState["map"]["terrain"] = [];
   private cursor?: Phaser.GameObjects.Graphics;
   private rangeLayer?: Phaser.GameObjects.Graphics;
@@ -91,36 +97,61 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
   }
 
-  /** The placeholder tiles, with whichever tiles the pack supplies drawn over them. */
-  private buildTileset(): HTMLCanvasElement {
-    const canvas = drawPlaceholderTileset();
-    const terrain = activePack().terrain;
-    const ctx = canvas.getContext("2d");
-    if (!terrain || !ctx || !this.textures.exists(TERRAIN_SHEET_KEY)) return canvas;
-    const source = this.textures.get(TERRAIN_SHEET_KEY).getSourceImage() as CanvasImageSource & { width: number };
-    const across = Math.floor(source.width / TILE_SIZE);
-    for (const [id, tile] of Object.entries(terrain.tiles) as [TerrainId, number][]) {
-      const sx = (tile % across) * TILE_SIZE;
-      const sy = Math.floor(tile / across) * TILE_SIZE;
-      ctx.clearRect(tileIndex(id) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-      ctx.drawImage(source, sx, sy, TILE_SIZE, TILE_SIZE, tileIndex(id) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+  /**
+   * Paints the whole map's terrain into one canvas per animation frame: the pack's tiles where it
+   * has them (08-art-pipeline §14), placeholders everywhere else.
+   */
+  private paintTerrain(): void {
+    const { map } = this.state;
+    const placeholders = (this.placeholderTiles ??= drawPlaceholderTileset());
+    const pack = activePack().terrain;
+    const source = pack && this.textures.exists(TERRAIN_SHEET_KEY)
+      ? (this.textures.get(TERRAIN_SHEET_KEY).getSourceImage() as CanvasImageSource & { width: number; height: number })
+      : null;
+    const sheet = source ? pack : null;
+    const frames = sheet?.frames ?? 1;
+    const across = source ? Math.floor(source.width / TILE_SIZE) : 1;
+    const tilesPerFrame = source ? across * Math.floor(source.height / TILE_SIZE / frames) : 0;
+    for (let frame = 0; frame < frames; frame++) {
+      const key = terrainFrameKey(frame);
+      const texture = this.textures.exists(key)
+        ? (this.textures.get(key) as Phaser.Textures.CanvasTexture)
+        : this.textures.createCanvas(key, map.width * TILE_SIZE, map.height * TILE_SIZE);
+      if (!texture) throw new Error("Failed to create the terrain canvas");
+      const ctx = texture.getContext();
+      ctx.clearRect(0, 0, map.width * TILE_SIZE, map.height * TILE_SIZE);
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          for (const layer of terrainLayers(map, x, y, sheet)) {
+            if (layer.kind === "placeholder") {
+              ctx.drawImage(placeholders, tileIndex(layer.terrain) * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            } else if (source) {
+              const n = layer.tile + frame * tilesPerFrame;
+              const sx = (n % across) * TILE_SIZE, sy = Math.floor(n / across) * TILE_SIZE;
+              ctx.drawImage(source, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
+          }
+        }
+      }
+      texture.refresh();
     }
-    return canvas;
+    this.terrainFrames = frames;
+    this.drawnTerrain = map.terrain;
   }
 
   create(): void {
-    const { map } = this.state;
-    this.textures.addCanvas("terrain", this.buildTileset());
-    const data: number[][] = [];
-    for (let y = 0; y < map.height; y++) {
-      data.push(map.terrain.slice(y * map.width, (y + 1) * map.width).map(tileIndex));
+    this.paintTerrain();
+    this.terrainImage = this.add.image(0, 0, terrainFrameKey(0)).setOrigin(0);
+    if (this.terrainFrames > 1) {
+      this.time.addEvent({
+        delay: TERRAIN_FRAME_MS,
+        loop: true,
+        callback: () => {
+          this.terrainFrame = (this.terrainFrame + 1) % this.terrainFrames;
+          this.terrainImage?.setTexture(terrainFrameKey(this.terrainFrame));
+        },
+      });
     }
-    const tilemap = this.make.tilemap({ data, tileWidth: TILE_SIZE, tileHeight: TILE_SIZE });
-    const tileset = tilemap.addTilesetImage("terrain");
-    if (!tileset) throw new Error("Failed to create terrain tileset");
-    tilemap.createLayer(0, tileset, 0, 0);
-    this.tilemap = tilemap;
-    this.drawnTerrain = map.terrain;
 
     // Draw order, bottom to top: terrain, range, flags + units, path arrow, cursor, menu.
     this.rangeLayer = this.add.graphics();
@@ -619,11 +650,9 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   /** Terrain can change in play: a destroyed bunker becomes rubble (02-terrain §4). */
   private redrawChangedTerrain(): void {
-    const { width, terrain } = this.state.map;
-    terrain.forEach((id, i) => {
-      if (id !== this.drawnTerrain[i]) this.tilemap?.putTileAt(tileIndex(id), i % width, Math.floor(i / width));
-    });
-    this.drawnTerrain = terrain;
+    // A change can alter its neighbors' joins too, so repaint the lot: it's one pass over the map.
+    const { terrain } = this.state.map;
+    if (terrain.some((id, i) => id !== this.drawnTerrain[i])) this.paintTerrain();
   }
 
   /** Returns a texture key, generating the texture the first time it's needed. */
