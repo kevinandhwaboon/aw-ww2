@@ -9,7 +9,7 @@ import { drawBackdrop, SCENE } from "../backdrops";
 import { C, Painter, teamShades } from "../paint";
 import type { Look, Pose } from "../rig";
 import { tankRig } from "../vehicles";
-import { drawMesh, screenPoint, THREE_QUARTER } from "./mesh";
+import { drawMesh, screenPoint, THREE_QUARTER, type View } from "./mesh";
 import { panzerIV, sherman, tiger, type Model } from "./models";
 
 const US = { team: teamShades(0, "us"), nation: "us", paratrooper: false, suit: 0, submerged: false, dugIn: false, beached: false } as const satisfies Look;
@@ -47,15 +47,20 @@ function head(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x - 3, y - 8, 7, 3, look.nation === "germany" ? C("battleRubber") : C("battleLeather"));
 }
 
+/** The view the samples use; `&deg=10` turns the figures 10 degrees toward the viewer. */
+let view: View = THREE_QUARTER;
+const degreesOf = (v: View) => Math.round((-v.yaw * 180) / Math.PI);
+const turned = (degrees: number): View => ({ ...THREE_QUARTER, yaw: (-degrees * Math.PI) / 180 });
+
 function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, x: number, y: number, flip: boolean, firing = false, scale = 1): void {
   stamp(target, x, y, (p) => {
-    drawMesh(p, model.faces, THREE_QUARTER, 0, 0, flip, scale);
-    const c = screenPoint(model.commander, THREE_QUARTER, 0, 0, flip, scale);
+    drawMesh(p, model.faces, view, 0, 0, flip, scale);
+    const c = screenPoint(model.commander, view, 0, 0, flip, scale);
     head(p, c.x, c.y, look);
   });
   if (firing) {
     const p = new Painter(target);
-    const m = screenPoint(model.muzzle, THREE_QUARTER, x, y, flip, scale);
+    const m = screenPoint(model.muzzle, view, x, y, flip, scale);
     const dir = flip ? -1 : 1;
     p.disc(m.x + dir * 4, m.y + 1, 5, C("battleFlash"));
     p.line(m.x, m.y, m.x + dir * 13, m.y + 3, C("battleFire"), 2);
@@ -88,7 +93,7 @@ function comparison(): HTMLCanvasElement {
   p.rect(0, 0, SCENE.width, 16, C("battlePanel"));
   text(ctx, "SIDE VIEW - NOW", 6, 4, 2, C("labelText"));
   p.rect(0, 116, SCENE.width, 14, C("battlePanel"));
-  text(ctx, "TURNED 20 DEGREES - PROPOSED", 6, 119, 2, C("labelGold"));
+  text(ctx, `TURNED ${degreesOf(view)} DEGREES - PROPOSED`, 6, 119, 2, C("labelGold"));
   stamp(ctx, 60, 104, (q) => tankRig("medium").draw(q, IDLE, US));
   stamp(ctx, 186, 104, (q) => tankRig("medium").draw(q, IDLE, DE));
   stamp(ctx, 318, 104, (q) => tankRig("heavy").draw(q, IDLE, DE));
@@ -127,11 +132,33 @@ function closeUp(): HTMLCanvasElement {
   return c;
 }
 
+/** The same three tanks at several angles, one row each, with the side view on top for reference. */
+function angles(): HTMLCanvasElement {
+  const [c, ctx] = canvas(SCENE.width, SCENE.height);
+  ground(ctx);
+  const p = new Painter(ctx);
+  const saved = view;
+  const rows = [0, 5, 10, 15];
+  rows.forEach((degrees, row) => {
+    const y = 62 + row * 52;
+    p.rect(0, y - 46, 30, 12, C("battlePanel"));
+    text(ctx, `${degrees}`, 4, y - 43, 2, degrees === 0 ? C("labelText") : C("labelGold"));
+    view = turned(degrees);
+    angledTank(ctx, sherman(US.team), US, 82, y, false);
+    angledTank(ctx, panzerIV(DE.team), DE, 196, y, false);
+    angledTank(ctx, tiger(DE.team), DE, 316, y, false);
+  });
+  view = saved;
+  return c;
+}
+
 export function showAngledSamples(root: HTMLElement, params: URLSearchParams): void {
   const scale = Math.max(1, Number(params.get("scale") ?? 2));
   const only = params.get("sample");
+  const deg = Number(params.get("deg") ?? NaN);
+  view = Number.isFinite(deg) ? turned(deg) : THREE_QUARTER;
   root.style.cssText = `display:flex;flex-wrap:wrap;gap:8px;padding:8px;overflow:auto;height:100vh;box-sizing:border-box;background:${packColor("uiBg")}`;
-  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp]];
+  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp], ["angles", angles]];
   for (const [name, make] of samples) {
     if (only && only !== name) continue;
     const source = make();
