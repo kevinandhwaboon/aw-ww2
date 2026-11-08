@@ -6,7 +6,8 @@
 // moment, side by side (`&t=fire` or `&t=hit` for the first shot leaving or landing);
 // `&zoom=0,150,192,72` enlarges one part of each and `&scale=1` sets the size. `&storm=all` (or
 // `capture`, `garrison`) shows the storming scenes instead, and `&t=end` holds each at its outcome.
-// `&drop=on` shows airborne drops.
+// `&drop=on` shows airborne drops. `&weather=winter` draws every scene on snowy ground, and
+// `&weather=snow` adds an overcast sky and falling snow (12-weather §5).
 
 import Phaser from "phaser";
 import type { NationId } from "../../engine/data/nations";
@@ -15,6 +16,8 @@ import { UNIT_TYPE_IDS, type UnitTypeId } from "../../engine/data/units";
 import { packColor } from "../artPack";
 import { SCENE } from "./backdrops";
 import { BattleScene } from "./BattleScene";
+import { battleWeather, setBattleWeather } from "./colors";
+import { drawSnowfall } from "./snowfall";
 import { BattleRenderer } from "./renderer";
 import { showAngledSamples } from "./angled/samples";
 import type { DropPlan } from "./drop";
@@ -111,6 +114,8 @@ function showFrozen(root: HTMLElement, matchups: readonly Matchup[], at: string,
     // "fire": just as the first shot leaves; "hit": just as it lands; or a time in ms.
     const t = at === "fire" ? (first?.fireAt ?? 0) + 30 : at === "hit" ? (first?.landAt ?? 0) + 60 : Number(at);
     renderer.render(t);
+    const ctx = battleWeather().snowing ? source.getContext("2d") : null;
+    if (ctx) drawSnowfall(ctx, t);
     show(root, source, [zx, zy, zw, zh], scale, `${m.a} vs ${m.d}`);
   }
 }
@@ -234,6 +239,8 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
 }
 
 export function startBattlePreview(root: HTMLElement, params: URLSearchParams): void {
+  const weather = params.get("weather");
+  if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow" });
   if (params.get("angled") !== null) {
     showAngledSamples(root, params);
     return;

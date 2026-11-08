@@ -6,6 +6,7 @@ import { UNITS, type UnitTypeId } from "./data/units";
 import { veterancyFor } from "./data/veterancy";
 import { applyModifiers, modifierApplies, type ModifiableStat, type Modifier, type PlayerId, type StatContext } from "./modifiers";
 import type { GameState, Unit } from "./state";
+import { weatherModifiers } from "./weather";
 
 /** Modifiers that come from the unit itself rather than from GameState (currently veterancy). */
 export function unitModifiers(unit: Unit): Modifier[] {
@@ -18,8 +19,14 @@ export function unitModifiers(unit: Unit): Modifier[] {
   ];
 }
 
+/** Scenario and commander modifiers plus today's weather: everything stored in or derived from GameState. */
+function stateModifiers(state: GameState): Modifier[] {
+  return [...state.modifiers, ...weatherModifiers(state)];
+}
+
 function typeContext(player: PlayerId, type: UnitTypeId, terrain?: TerrainId): StatContext {
-  const ctx = { player, unitType: type, category: UNITS[type].category };
+  const def = UNITS[type];
+  const ctx = { player, unitType: type, category: def.category, movementType: def.movementType };
   return terrain === undefined ? ctx : { ...ctx, terrain };
 }
 
@@ -36,11 +43,11 @@ function terrainUnder(state: GameState, unit: Unit): TerrainId {
 /** Every modifier currently affecting this unit (any stat), for UI and debugging. */
 export function modifiersAffecting(state: GameState, unit: Unit): Modifier[] {
   const ctx = unitContext(state, unit);
-  return [...state.modifiers, ...unitModifiers(unit)].filter((m) => modifierApplies(m, ctx));
+  return [...stateModifiers(state), ...unitModifiers(unit)].filter((m) => modifierApplies(m, ctx));
 }
 
 function unitStat(state: GameState, unit: Unit, stat: ModifiableStat, base: number): number {
-  return applyModifiers(base, stat, unitContext(state, unit), [...state.modifiers, ...unitModifiers(unit)]);
+  return applyModifiers(base, stat, unitContext(state, unit), [...stateModifiers(state), ...unitModifiers(unit)]);
 }
 
 export function movePoints(state: GameState, unit: Unit): number {
@@ -86,7 +93,7 @@ export function defenseMod(state: GameState, unit: Unit): number {
 
 /** defenseMod for a fortification being attacked, base 100. It gets no terrain stars (03-combat §4). */
 export function fortDefenseMod(state: GameState, terrain: TerrainId): number {
-  return applyModifiers(100, "defense", { terrain }, state.modifiers);
+  return applyModifiers(100, "defense", { terrain }, stateModifiers(state));
 }
 
 /** Defense stars the unit gets where it stands. Air units always get 0 (02-terrain §1). */
@@ -104,16 +111,16 @@ export function moveCost(state: GameState, unit: Unit, terrain: TerrainId): numb
   const base = TERRAIN[terrain].moveCost[UNITS[unit.type].movementType];
   if (base === null) return null;
   const ctx = typeContext(unit.owner, unit.type, terrain);
-  return Math.max(1, applyModifiers(base, "moveCost", ctx, [...state.modifiers, ...unitModifiers(unit)]));
+  return Math.max(1, applyModifiers(base, "moveCost", ctx, [...stateModifiers(state), ...unitModifiers(unit)]));
 }
 
 /** What a player pays to build a unit type. */
 export function unitCost(state: GameState, player: PlayerId, type: UnitTypeId): number {
-  return applyModifiers(UNITS[type].cost, "cost", typeContext(player, type), state.modifiers);
+  return applyModifiers(UNITS[type].cost, "cost", typeContext(player, type), stateModifiers(state));
 }
 
 /** What a player earns at the start of each of their turns (04-economy §1). */
 export function propertyIncome(state: GameState, player: PlayerId): number {
   const owned = state.properties.filter((p) => p.owner === player).length;
-  return applyModifiers(owned * state.settings.incomePerProperty, "income", { player }, state.modifiers);
+  return applyModifiers(owned * state.settings.incomePerProperty, "income", { player }, stateModifiers(state));
 }

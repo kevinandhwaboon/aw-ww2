@@ -52,6 +52,7 @@ export {
   CAPTURE_POINTS,
   DEFAULT_SETTINGS,
   DEFAULT_VICTORY,
+  DEFAULT_WEATHER,
   MAX_HP,
   type DefeatReason,
   type Facing,
@@ -65,7 +66,10 @@ export {
   type Unit,
   type UnitId,
   type VictoryCondition,
+  type ForecastEntry,
+  type WeatherPlan,
 } from "./state";
+export { weatherOn } from "./weather";
 export * as stats from "./stats";
 export type { Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
 export { parseAsciiMap, terrainAt, inBounds, type GameMap, type Point } from "./map";
@@ -73,4 +77,5 @@ export { TERRAIN, TERRAIN_IDS, type TerrainId, type MovementType } from "./data/
 export { UNITS, UNIT_TYPE_IDS, type UnitTypeId, type UnitDef, type UnitCategory } from "./data/units";
 export { baseDamage, DAMAGE_CHART, type DamageEntry, type DamageTarget } from "./data/damage";
 export { veterancyFor, VETERANCY, type VeterancyLevel } from "./data/veterancy";
+export { WEATHER, WEATHER_IDS, SEASONS, type WeatherId, type Season } from "./data/weather";
 export { NATIONS, type NationId, type Side } from "./data/nations";

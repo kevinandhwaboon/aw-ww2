@@ -1,7 +1,7 @@
 // Saving and loading a game as text (00-master-design §11). GameState is plain data, so this is
 // mostly JSON, plus a version number so old saves can be recognized once the format changes.
 
-import type { GameState } from "./state";
+import { DEFAULT_WEATHER, type GameState } from "./state";
 
 const SAVE_VERSION = 1;
 
@@ -19,5 +19,7 @@ export function loadGame(text: string): GameState {
   }
   if (saved?.version !== SAVE_VERSION) throw new Error(`Unsupported save version: ${String(saved?.version)}`);
   if (typeof saved.state !== "object" || saved.state === null) throw new Error("This save file has no game in it");
-  return saved.state as GameState;
+  // Saves from before weather existed are clear all game (12-weather §1).
+  const state = saved.state as Omit<GameState, "weather"> & { weather?: GameState["weather"] };
+  return { ...state, weather: state.weather ?? DEFAULT_WEATHER };
 }

@@ -1,5 +1,6 @@
 // Colors for battle figures, free of the DOM so models and tests can use them (08-art-pipeline §18).
 
+import type { Season } from "../../engine/data/weather";
 import { packColor, type ColorKey } from "../artPack";
 
 const hex = (value: number) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0");
@@ -35,5 +36,44 @@ export interface TeamShades {
   readonly clothLo: string;
 }
 
-/** Shorthand for battle colors from the art pack. */
-export const C = (key: ColorKey): string => packColor(key);
+/** What the sky and ground look like in battle scenes (12-weather §5). */
+export interface BattleWeather {
+  readonly season: Season;
+  readonly snowing: boolean;
+}
+
+/** On a winter map, snow-covered colors stand in for the summer ground and trees. */
+const WINTER: Partial<Record<ColorKey, ColorKey>> = {
+  battleGrass: "battleSnow",
+  battleGrassLight: "battleSnowLight",
+  battleGrassDark: "battleSnowDark",
+  battleDirt: "battleSnowDirt",
+  battleRoad: "battleSnowRoad",
+  battleHill: "battleSnowHill",
+  battleTree: "battleWinterTree",
+  battleTreeDark: "battleWinterTreeDark",
+};
+/** While it snows, the sky is overcast. */
+const SNOWING: Partial<Record<ColorKey, ColorKey>> = {
+  battleSkyTop: "battleOvercastTop",
+  battleSkyLow: "battleOvercastLow",
+  battleCloud: "battleOvercastLow",
+};
+
+let weather: BattleWeather = { season: "summer", snowing: false };
+
+/** Sets the weather the next battle scenes are drawn in. Drawing only: no outcome depends on it. */
+export function setBattleWeather(next: BattleWeather): void {
+  weather = next;
+}
+
+export function battleWeather(): BattleWeather {
+  return weather;
+}
+
+/** Shorthand for battle colors from the art pack, in the current battle weather. */
+export const C = (key: ColorKey): string => {
+  const winter = weather.season === "winter" ? WINTER[key] : undefined;
+  const sky = weather.snowing ? SNOWING[key] : undefined;
+  return packColor(sky ?? winter ?? key);
+};

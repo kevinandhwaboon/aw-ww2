@@ -514,3 +514,13 @@ Capture flags fly from a tall flagpole on the square in front of the building, d
 
 `src/game/battle/drop.ts` plans and times it (tested in `tests/storm.test.ts`); `dropRenderer.ts` draws it. Preview: `?battle=demo&drop=on`, with `&t=end` for the landed squads.
 
+
+## 21. Winter art
+
+**Since 2026-11-08,** a scenario whose weather says `"season": "winter"` (12-weather §6) is drawn in snow from start to finish, even after the skies clear. Only drawing reads the season.
+
+- **Map tiles:** the pack's terrain and building sheets can each name a `winterPath`, a second sheet with **the same layout**, so every tile number works for both. A winter map draws from the winter sheets; a pack without them draws its summer sheets.
+- **The default pack's winter terrain** (`tools/art/terrain32-winter.mjs`, rendered by `npm run art` to `terrain-32-winter.png`): snow for grass, with blue shadows instead of green; packed, dirty snow on the roads with muddy ruts; cold dark water with ice at the banks; hedges dusted with snow. Forests are redrawn as **snow-laden firs**, as in the Ardennes, and hills as snowy ridges with dark rock showing on the steep, shaded side and a few small firs.
+- **Winter buildings** (`buildings-32-winter.png`) are the summer buildings standing on snow. Roofs keep the owner's color, so ownership still reads at a glance.
+- **Battle scenes on a winter map** swap the ground, dirt, road, hill and tree colors for winter ones (`battleSnow…` and `battleWinterTree…` in the pack's colors). While it **snows**, the sky is overcast grey and snow drifts down over the whole scene; under clear skies the sky is blue over the snow.
+- **Snowfall over the map** while it snows: light flakes drift down over the visible part of the map, under the cursor and menus. Color `snowfall`.

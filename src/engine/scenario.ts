@@ -3,11 +3,12 @@
 
 import { NATIONS, type NationId, type Side } from "./data/nations";
 import { TERRAIN } from "./data/terrain";
+import { SEASONS, WEATHER_IDS, type Season, type WeatherId } from "./data/weather";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { parseAsciiMap, terrainAt, type Point } from "./map";
 import { MODIFIABLE_STATS, type Modifier, type ModifiableStat } from "./modifiers";
 import { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
-import type { Settings, VictoryCondition } from "./state";
+import type { Settings, VictoryCondition, WeatherPlan } from "./state";
 
 export interface Scenario {
   readonly id: string;
@@ -131,6 +132,20 @@ function parseSettings(raw: unknown): Partial<Settings> {
   };
 }
 
+function parseWeather(raw: unknown): WeatherPlan {
+  if (!isObject(raw)) return fail(`"weather" must be an object`);
+  const season = raw.season ?? "summer";
+  if (!SEASONS.includes(season as Season)) return fail(`weather: "season" must be summer or winter`);
+  const forecast = (raw.forecast === undefined ? [{ fromDay: 1, weather: "clear" }] : list(raw, "forecast", "weather")).map((entry, i) => {
+    const where = `weather forecast ${i}`;
+    if (!isObject(entry)) return fail(`${where}: must be an object`);
+    const weather = entry.weather as WeatherId;
+    if (!WEATHER_IDS.includes(weather)) return fail(`${where}: unknown weather ${String(entry.weather)}`);
+    return { fromDay: count(entry, "fromDay", where), weather };
+  });
+  return { season: season as Season, forecast };
+}
+
 function parseSetup(raw: Json): Omit<GameSetup, "seed"> {
   const rows = list(raw, "map", "scenario");
   if (!rows.every((row) => typeof row === "string")) return fail(`"map" must be a list of text rows`);
@@ -146,6 +161,7 @@ function parseSetup(raw: Json): Omit<GameSetup, "seed"> {
     ...(raw.victory === undefined ? {} : { victory: list(raw, "victory", "scenario").map(parseVictory) }),
     ...(raw.modifiers === undefined ? {} : { modifiers: list(raw, "modifiers", "scenario").map(parseModifier) }),
     ...(raw.settings === undefined ? {} : { settings: parseSettings(raw.settings) }),
+    ...(raw.weather === undefined ? {} : { weather: parseWeather(raw.weather) }),
   };
 }
 

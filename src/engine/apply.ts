@@ -1,6 +1,7 @@
 // The single entry point for changing the game: apply(state, command) → new state + events,
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
+import { weatherOn } from "./weather";
 import { fortTargetProblem, resolveCombat, resolveFortAttack, targetProblem } from "./combat";
 import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
 import { UNIT_TYPE_IDS } from "./data/units";
@@ -200,7 +201,9 @@ function passTurn(state: GameState, events: GameEvent[]): ApplyResult {
     // A new day: day-based victory conditions are checked before anyone's turn starts (04-economy §8).
     const day = state.day + 1;
     const checked = checkAtDayStart({ ...state, day });
-    events = [...events, { type: "dayStarted", day }, ...checked.events];
+    const weather = weatherOn(state, day);
+    const changed: GameEvent[] = weather === weatherOn(state, state.day) ? [] : [{ type: "weatherChanged", day, weather }];
+    events = [...events, { type: "dayStarted", day }, ...changed, ...checked.events];
     if (checked.state.result) return { ok: true, state: checked.state, events };
     current = checked.state;
   }

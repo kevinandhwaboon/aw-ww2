@@ -225,6 +225,8 @@ UI falls into four categories:
 | 09-ai.md | **v0 decided**: AI interface, rules for AIs, the first Greedy AI |
 | 10-scenarios-normandy.md | **First theater map (v0)**: southern England and Normandy, 92 × 78; balance untested |
 | 11-tech-setup.md | **Decided**: tooling, repo layout, engine boundary, testing, phased build plan |
+| 12-weather.md | **v0 decided**: Clear and Snow, set per scenario as a forecast; snow uses the original's movement costs |
+| 13-scenarios-ardennes.md | **First Ardennes map (v0)**: Bastogne, 40 × 30, snow then clear; balance untested |
 
 ## 18. Open questions
 
@@ -233,7 +235,7 @@ UI falls into four categories:
 - Tuning provisional unit stats (01-units v0) after playtesting
 - Real generals vs. doctrines for COs
 - National insignia policy (beyond "no Nazi or political symbols")
-- Weather? Day/night? (not yet discussed)
+- Day/night? (not yet discussed). Weather: v0 decided (12-weather); random weather and rain left open
 - Tuning v0 terrain values (Bocage, Bunker stars) after playtesting
 
 ## 19. Decision log
@@ -331,3 +333,6 @@ UI falls into four categories:
 | 2026-11-08 | Battle scenes: tanks and tank destroyers are drawn as 3D models turned 5° toward the viewer, looking down about 24°, so turret roofs and fronts show; chosen over 10°, 15°, 20° and 47° samples. Everything else stays side-on for now (08-art-pipeline §18) |
 | 2026-11-08 | Battle scenes: every other land machine (recon, halftracks, Mobile AA, flak guns, artillery, rocket artillery) and the bunker get 5° models too; foot soldiers stay side-on. A fallen soldier topples about his own feet and leaves his mortar or sandbags standing (08-art-pipeline §18) |
 | 2026-11-08 | Objective marker changed from a gold frame to gold corner marks, since a full box read as a second cursor. The tile info box marks objectives and shows a unit's fuel and ammo left, for every side (04-economy §8, 00-master-design §12) |
+| 2026-11-08 | Weather (12-weather): Clear and Snow, the same for the whole map for a whole day, set by the scenario in advance as a forecast; no random weather in v0. Snow adds to movement costs through the modifier layer, using the original game's snow table (roads and towns unchanged, aircraft pay 2 per tile). Rain waits for fog of war. Modifiers can now be scoped by movement type |
+| 2026-11-08 | A scenario can say its map is in winter: snowy map tiles and battle scenes all game, even under clear skies, since snow stays on the ground. Art only; packs give a winter version of the terrain and building sheets with the same layout (08-art-pipeline §21) |
+| 2026-11-08 | Bastogne map (13-scenarios-ardennes): the Ardennes in December 1944, 40 × 30. Germany attacks with a bigger army whose tanks start short of fuel and has no aircraft; it wins by taking Bastogne or the US HQ at Arlon. The US wins by holding out to day 12. Snow until day 5, clear from day 6 |

@@ -108,6 +108,10 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     debugPanel?.logEvents(state, previous, result.events);
     render();
     for (const event of result.events) {
+      if (event.type === "weatherChanged") {
+        await banner.show(event.weather === "snow" ? "Snow is falling" : "The skies clear", packColor("uiInk"));
+        continue;
+      }
       if (event.type !== "turnStarted") continue;
       const player = state.players[event.player];
       if (!player) continue;

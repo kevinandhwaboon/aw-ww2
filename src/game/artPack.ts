@@ -4,6 +4,7 @@
 
 import { NATIONS, type NationId } from "../engine/data/nations";
 import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "../engine/data/terrain";
+import { WEATHER, type WeatherId } from "../engine/data/weather";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "../engine/data/units";
 import type { Unit } from "../engine/state";
 
@@ -39,6 +40,9 @@ const BUILT_IN_COLORS = {
   labelOutline: "#101018",
   // Shadow under unit sprites
   unitShadow: "#1c3412",
+  // Snow falling over the map and battle scenes while it snows (12-weather §5)
+  snowfall: "#ffffff",
+  snowfallShadow: "#4a5a78",
   labelGold: "#f0d040",
   labelGreen: "#80f080",
   labelBlue: "#a0d8ff",
@@ -63,6 +67,18 @@ const BUILT_IN_COLORS = {
   battleStone: "#d8ccb0",
   battleRoof: "#9a4a34",
   battleConcrete: "#9a9888",
+  // Battle scenes on winter maps (12-weather §5): these stand in for the grass, tree, hill and road
+  // colors above, and the overcast sky for the clear one while it snows.
+  battleSnow: "#dfe6ee",
+  battleSnowLight: "#f8fbff",
+  battleSnowDark: "#b2c0d2",
+  battleSnowDirt: "#8a7c6a",
+  battleSnowRoad: "#b4aa9a",
+  battleSnowHill: "#c8d2de",
+  battleWinterTree: "#24483a",
+  battleWinterTreeDark: "#14302a",
+  battleOvercastTop: "#7e8898",
+  battleOvercastLow: "#c2c8d2",
   // Battle scenes: figures and materials
   battleOlive: "#5c6038",
   battleFieldGrey: "#5e665c",
@@ -131,6 +147,8 @@ export interface TerrainSheet {
   readonly bridges: { readonly horizontal: number; readonly vertical: number } | null;
   /** First of 8 shore pieces drawn over sea next to land: edges N, E, S, W, then corners NE, SE, SW, NW. */
   readonly shore?: number;
+  /** The same layout drawn in snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
+  readonly winterPath?: string;
 }
 
 /** Buildings for owned properties: one row per property, one column per owner (08-art-pipeline §15). */
@@ -145,6 +163,8 @@ export interface PropertySheet {
   readonly tileWidth: 16 | 32;
   /** The tile width, or twice it for buildings that rise into the tile behind (08-art-pipeline §16). */
   readonly tileHeight: number;
+  /** The same layout standing on snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
+  readonly winterPath?: string;
 }
 
 export interface ArtPack {
@@ -240,7 +260,7 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore, winterPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -263,6 +283,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     return fail(`terrain: "bridges" needs whole numbers for horizontal and vertical`);
   }
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
+  if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`terrain: "winterPath" must be a file in the pack`);
   return {
     path,
     frames: frames as number,
@@ -272,12 +293,13 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     connected,
     bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
     ...(shore === undefined ? {} : { shore }),
+    ...(winterPath === undefined ? {} : { winterPath }),
   };
 }
 
 function parsePropertySheet(raw: unknown): PropertySheet {
   if (!isObject(raw)) return fail(`"properties" must be an object`);
-  const { path, columns, rows, tileWidth = 16 } = raw;
+  const { path, columns, rows, tileWidth = 16, winterPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`properties: "path" must be a file in the pack`);
   if (!Array.isArray(columns) || columns.length === 0 || !columns.every((c) => typeof c === "string" && c !== "")) {
@@ -289,7 +311,15 @@ function parsePropertySheet(raw: unknown): PropertySheet {
   // A "bunker" row is the bunker drawn garrisoned, in the colors of the side holding it.
   const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || (row !== "bunker" && terrainDef(row).property === undefined));
   if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property or "bunker"`);
-  return { path, columns: columns as string[], rows: rows as TerrainId[], tileWidth: tileWidth as 16 | 32, tileHeight: tileHeight as number };
+  if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`properties: "winterPath" must be a file in the pack`);
+  return {
+    path,
+    columns: columns as string[],
+    rows: rows as TerrainId[],
+    tileWidth: tileWidth as 16 | 32,
+    tileHeight: tileHeight as number,
+    ...(winterPath === undefined ? {} : { winterPath }),
+  };
 }
 
 function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key is K, label: string): Partial<Record<K, string>> {
@@ -380,3 +410,4 @@ export const packColorNumber = (key: ColorKey): number => parseInt(active.colors
 export const unitName = (type: UnitTypeId): string => active.unitNames[type] ?? UNITS[type].name;
 
 export const terrainName = (id: TerrainId): string => active.terrainNames[id] ?? TERRAIN[id].name;
+export const weatherName = (id: WeatherId): string => WEATHER[id].name;
