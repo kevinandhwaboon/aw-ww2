@@ -333,6 +333,8 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 
 **Corner flags:** a property drawn from the sheet shows no corner flag, since its colors show the owner. A property with no art for its owner's team keeps the placeholder and its flag.
 
+**Garrisoned bunkers:** a bunker with Infantry, Assault Infantry or a Mortar Team inside is drawn garrisoned, as in Red Alert 2: the firing slit boarded up in the holder's color and their flag on the roof. The soldier itself is hidden inside, though its HP and veterancy badges still show, and it reappears when it walks out. Vehicles on a bunker are drawn as usual. The art is a "bunker" row in the 32-pixel buildings sheet (`garrisonedBunker` in `tools/art/buildings32.mjs`), drawn on a clear background over the bunker tile. A pack without that row keeps plain bunkers and shows the soldier on top. Drawing only: no rule reads it.
+
 **Draw order:** buildings are painted with the terrain, row by row, below the move and attack range tints, so ranges still show on them.
 
 **Pack field** `properties`:

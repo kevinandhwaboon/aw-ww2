@@ -114,12 +114,34 @@ function hq() {
   return compose(grass(25), obj);
 }
 
+/**
+ * A bunker with Infantry inside, drawn over the bunker terrain tile: the same pillbox, its firing slit
+ * boarded up in the owner's color and the owner's flag on the roof, like a garrisoned building in Red
+ * Alert 2. The ground is left transparent so the terrain tile shows through (08-art-pipeline §15).
+ */
+function garrisonedBunker() {
+  const obj = layer();
+  art(obj, ["KKKKKKK", "KLLLLLK", "KMMMMMK", "KMMMMDK", "KKKKKKK", ...Array(9).fill("K......")], 13, 30);
+  const pillbox = [
+    "......KKKKKKKKKKKKKKKK......", "....KKjjjjjjjjjjjjjjjjKK....", "...KjjjjjjjjjjjjjjjjjjjkK...", "..KjjjjjjjjjjjjjjjjjjjjkkK..",
+    "..KkkkkkkkkkkkkkkkkkkkkkkK..", "..KkkKKKKKKKKKKKKKKKKKkkkK..", "..KkkKKKKKKKKKKKKKKKKKkkkK..", "..KkkkkkkkkkkkkkkkkkkkkkkK..",
+    ".KkkkkkkkkkkkkkkkkkkkkkkkkK.", "KAAKKKKKKKKKKKKKKKKKKKKKKAAK", "KaAAaAAaAAuuuuuuuuuuAAaAAaAK", ".KKKKKKKKKKKKKKKKKKKKKKKKKK.",
+  ];
+  // Planks across the slit: light and mid boards with dark gaps every third pixel.
+  const boarded = pillbox.map((row, y) => (y === 5 || y === 6
+    ? [...row].map((ch, x) => (x > 5 && x < 21 ? ((x + y) % 3 === 0 ? "D" : y === 5 ? "L" : "M") : ch)).join("")
+    : row));
+  art(obj, boarded, 2, 44);
+  return compose(Array(SIZE).fill(".".repeat(SIZE)), obj);
+}
+
 export const rows = [
   ["city", city()],
   ["factory", factory()],
   ["airfield", airfield()],
   ["port", port()],
   ["hq", hq()],
+  ["bunker", garrisonedBunker()],
 ];
 
 export const TILE_WIDTH = 32;

@@ -1,6 +1,7 @@
 // Movement rules (02-terrain §5, 05-supply-transport §1). Used both by apply() to validate moves
 // and by the UI to show move ranges and build paths, so the two can never disagree.
 
+import { UNITS } from "./data/units";
 import { inBounds, type Point } from "./map";
 import type { GameState, Unit } from "./state";
 import * as stats from "./stats";
@@ -32,13 +33,24 @@ function sideOf(state: GameState, unit: Unit) {
   return state.players[unit.owner]?.side;
 }
 
-/** Whether the unit may pass through this tile: in bounds, passable terrain, no enemy unit. */
+const isAir = (unit: Unit) => UNITS[unit.type].category === "air";
+
+/**
+ * Whether an enemy on this tile stops the unit passing (02-terrain §5): enemies block, except that
+ * aircraft fly over enemy ground units and ships. Enemy aircraft block everything.
+ */
+function blocks(state: GameState, unit: Unit, occupant: Unit): boolean {
+  if (sideOf(state, occupant) === sideOf(state, unit)) return false;
+  return !isAir(unit) || isAir(occupant);
+}
+
+/** Whether the unit may pass through this tile: in bounds, passable terrain, no enemy in its way. */
 function enterCost(state: GameState, unit: Unit, p: Point): number | null {
   if (!inBounds(state.map, p)) return null;
   const terrain = state.map.terrain[tileIndex(state, p)];
   if (terrain === undefined) return null;
   const occupant = state.units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
-  if (occupant && sideOf(state, occupant) !== sideOf(state, unit)) return null; // enemies block
+  if (occupant && blocks(state, unit, occupant)) return null;
   return stats.moveCost(state, unit, terrain);
 }
 

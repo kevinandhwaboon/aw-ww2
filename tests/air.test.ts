@@ -47,10 +47,31 @@ describe("flying (05-supply-transport §5)", () => {
     expect(byId(run(state, wait(0, [P(1, 0)])), 0)?.pos).toEqual(P(1, 0));
   });
 
-  it("enemy units still block aircraft, and there's one unit per tile (02-terrain §5)", () => {
-    const state = makeGame(["===="], [u("fighter", 0, 0), u("infantry", 1, 1), u("infantry", 0, 2)]);
+  it("aircraft fly over enemy ground units and ships, but can't stop on them (02-terrain §5)", () => {
+    const state = makeGame(["==S="], [u("fighter", 0, 0), u("infantry", 1, 1), u("destroyer", 1, 2)]);
     const reach = moveDestinations(state, state.units[0] as Unit).map((p) => p.x);
-    expect(reach).toEqual([0]); // the enemy at x=1 is the only way along this row
+    expect(reach).toEqual([0, 3]); // over the Infantry and the Destroyer, landing beyond them
+  });
+
+  it("an aircraft surrounded by enemy Infantry can still fly out (02-terrain §5)", () => {
+    const state = makeGame(["...", "...", "..."], [
+      { type: "fighter", owner: 0, pos: P(1, 1) },
+      ...[P(1, 0), P(0, 1), P(2, 1), P(1, 2)].map((pos) => ({ type: "infantry" as const, owner: 1, pos })),
+    ]);
+    expect(moveDestinations(state, state.units[0] as Unit)).toContainEqual(P(0, 0));
+  });
+
+  it("enemy aircraft still block aircraft", () => {
+    const state = makeGame(["===="], [u("fighter", 0, 0), u("fighter", 1, 1)]);
+    expect(moveDestinations(state, state.units[0] as Unit).map((p) => p.x)).toEqual([0]);
+  });
+
+  it("enemy aircraft still block ground units, as in the original", () => {
+    const state = makeGame(["==="], [u("mediumTank", 0, 0), u("fighter", 1, 1)]);
+    expect(moveDestinations(state, state.units[0] as Unit).map((p) => p.x)).toEqual([0]);
+  });
+
+  it("friendly units can be passed through, and there's one unit per tile (02-terrain §5)", () => {
     const friendly = makeGame(["==="], [u("fighter", 0, 0), u("infantry", 0, 1)]);
     expect(moveDestinations(friendly, friendly.units[0] as Unit).map((p) => p.x)).toEqual([0, 2]);
   });
