@@ -98,8 +98,8 @@ describe("ports (04-economy §1, §5)", () => {
     expect(apply(built.state, wait(ship?.id ?? -1)).ok).toBe(false);
   });
 
-  it("by default a port offers every warship except the Landing Craft, which waits for landings in milestone 11 (11-tech-setup §6)", () => {
-    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "destroyer", "submarine", "torpedoBoat"]);
+  it("by default a port offers every ship, the Landing Craft included", () => {
+    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "destroyer", "landingCraft", "submarine", "torpedoBoat"]);
   });
 
   it("ports build only ships, and factories never build ships", () => {

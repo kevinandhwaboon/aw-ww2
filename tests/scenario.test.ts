@@ -205,6 +205,16 @@ describe("built-in scenarios (00-master-design §8)", () => {
     }
   });
 
+  it("the amphibious map gives the Allies a Landing Craft and a Transport Aircraft, and the Axis bunkers above the beaches (11-tech-setup §6, milestone 11)", () => {
+    const scenario = SCENARIOS.find((s) => s.id === "beachhead");
+    if (!scenario) throw new Error("missing scenario");
+    const { map, units } = scenario.setup;
+    const allied = (units ?? []).filter((u) => u.owner === 0).map((u) => u.type);
+    expect(allied).toEqual(expect.arrayContaining(["landingCraft", "transportAircraft"]));
+    const axisOnBunkers = (units ?? []).filter((u) => u.owner === 1 && terrainAt(map, u.pos) === "bunker");
+    expect(axisOnBunkers.length).toBeGreaterThan(0);
+  });
+
   it("the demo keeps the US from building Heavy Tanks, as the availability rule requires (01-units §1)", () => {
     const scenario = SCENARIOS.find((s) => s.id === "proving-ground");
     expect(scenario?.setup.players[0]?.buildable).not.toContain("heavyTank");

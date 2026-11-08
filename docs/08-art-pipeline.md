@@ -119,7 +119,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Move range | Tile tint | Blue overlay today |
 | Threat range | Tile tints | Orange for move, red for attack today |
 | Path arrow | About 10 pieces | Straights, corners and 4 arrowheads |
-| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, DIVE, SURFACE, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
+| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD (or UNLOAD plus a unit name), SUPPLY, DIVE, SURFACE, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
 | Forecast panel | Panel frame | "DMG 71-80%" style text |
 | Pixel font | 1 full font | Open-licensed, with letters, digits and % - + ? |
 | Floating numbers | Uses the pixel font | Damage, capture and repair labels |
@@ -332,6 +332,8 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 **Owner colors:** the sheet has one row per property and one column per owner: neutral, blue, red, green, gold. Neutral is weathered slate grey. A captured property switches column at once.
 
 **Corner flags:** a property drawn from the sheet shows no corner flag, since its colors show the owner. A property with no art for its owner's team keeps the placeholder and its flag.
+
+**Garrisoned bunkers:** a bunker with Infantry, Assault Infantry or a Mortar Team inside is drawn garrisoned, as in Red Alert 2: the firing slit boarded up in the holder's color and their flag on the roof. The soldier itself is hidden inside, though its HP and veterancy badges still show, and it reappears when it walks out. Vehicles on a bunker are drawn as usual. The art is a "bunker" row in the 32-pixel buildings sheet (`garrisonedBunker` in `tools/art/buildings32.mjs`), drawn on a clear background over the bunker tile. A pack without that row keeps plain bunkers and shows the soldier on top. Drawing only: no rule reads it.
 
 **Draw order:** buildings are painted with the terrain, row by row, below the move and attack range tints, so ranges still show on them.
 

@@ -98,7 +98,7 @@ export interface PropertySheet {
   readonly path: string;
   /** The owner each column is for: "neutral", or a player's `team`. */
   readonly columns: readonly string[];
-  /** The property on each row, top to bottom. */
+  /** The property on each row, top to bottom, or "bunker" for a bunker with Infantry inside. */
   readonly rows: readonly TerrainId[];
   /** 16, or 32 for art drawn for the 32-pixel grid and scaled into a square (08-art-pipeline §17). */
   readonly tileWidth: 16 | 32;
@@ -245,8 +245,9 @@ function parsePropertySheet(raw: unknown): PropertySheet {
   if (!Array.isArray(rows)) return fail(`properties: "rows" must be a list`);
   const sizeProblem = tileSizeProblem(tileWidth, tileHeight);
   if (sizeProblem) return fail(`properties: ${sizeProblem}`);
-  const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || terrainDef(row).property === undefined);
-  if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property`);
+  // A "bunker" row is the bunker drawn garrisoned, in the colors of the side holding it.
+  const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || (row !== "bunker" && terrainDef(row).property === undefined));
+  if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property or "bunker"`);
   return { path, columns: columns as string[], rows: rows as TerrainId[], tileWidth: tileWidth as 16 | 32, tileHeight: tileHeight as number };
 }
 

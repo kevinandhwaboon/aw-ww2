@@ -80,6 +80,11 @@ body {
   font-weight: bold;
 }
 
+.tile-capture,
+.tile-cargo {
+  font-size: 13px;
+}
+
 .panel-title {
   font-weight: bold;
   text-transform: uppercase;

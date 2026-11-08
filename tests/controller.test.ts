@@ -233,6 +233,75 @@ describe("transport, supply and join", () => {
   });
 });
 
+describe("unloading two passengers (05-supply-transport §8, D3)", () => {
+  /** A Landing Craft (0) on a beach at (1,1), loaded with the two units given, which start above and left of it. */
+  async function loadedCraft(first: UnitTypeId, second: UnitTypeId) {
+    const game = setup(["...", "._S", "..."], [
+      { type: "landingCraft", owner: 0, pos: P(1, 1) },
+      { type: first, owner: 0, pos: P(1, 0) },
+      { type: second, owner: 0, pos: P(0, 1) },
+    ]);
+    for (const from of [P(1, 0), P(0, 1)]) {
+      game.controller.onConfirm(from);
+      game.controller.onConfirm(P(1, 1));
+      await game.settle();
+      game.controller.onMenuChoice("load");
+      await game.settle();
+    }
+    game.controller.onConfirm(P(1, 1));
+    game.controller.onConfirm(P(1, 1));
+    await game.settle();
+    return game;
+  }
+
+  it("two different passengers each get their own Unload, by name", async () => {
+    const game = await loadedCraft("infantry", "mediumTank");
+    expect(game.seen.menu?.map((i) => i.label)).toEqual(["UNLOAD INFANTRY", "UNLOAD MEDIUM TANK", "WAIT", "CANCEL"]);
+  });
+
+  it("two passengers of the same type share one Unload", async () => {
+    const game = await loadedCraft("infantry", "infantry");
+    expect(game.labels()).toEqual(["unload", "wait", "cancel"]);
+  });
+
+  it("after placing the first, Unload places the other and sends both in one order", async () => {
+    const game = await loadedCraft("infantry", "mediumTank");
+    game.controller.onMenuChoice("unload:2");
+    game.controller.onConfirm(P(1, 2));
+    expect(game.labels()).toEqual(["unload", "wait", "cancel"]);
+    game.controller.onMenuChoice("unload");
+    expect(game.seen.ranges).toEqual([{ tiles: [P(1, 0), P(0, 1)], kind: "move" }]); // not (1,2), now taken
+    game.controller.onConfirm(P(0, 1));
+    await game.settle();
+    expect(game.seen.commands.at(-1)).toMatchObject({
+      action: { type: "unload", passenger: 2, to: P(1, 2), second: { passenger: 1, to: P(0, 1) } },
+    });
+    expect(game.getState().units.find((u) => u.id === 0)?.cargo).toEqual([]);
+  });
+
+  it("Wait after placing the first unloads just that one", async () => {
+    const game = await loadedCraft("infantry", "mediumTank");
+    game.controller.onMenuChoice("unload:1");
+    game.controller.onConfirm(P(1, 2));
+    game.controller.onMenuChoice("wait");
+    await game.settle();
+    const action = game.seen.commands.at(-1);
+    expect(action).toMatchObject({ action: { type: "unload", passenger: 1, to: P(1, 2) } });
+    expect(game.getState().units.find((u) => u.id === 0)?.cargo.map((c) => c.id)).toEqual([2]);
+  });
+
+  it("cancel steps back one choice at a time", async () => {
+    const game = await loadedCraft("infantry", "mediumTank");
+    game.controller.onMenuChoice("unload:1");
+    game.controller.onConfirm(P(1, 2));
+    game.controller.onMenuChoice("unload");
+    game.controller.onCancel();
+    expect(game.labels()).toEqual(["unload", "wait", "cancel"]);
+    game.controller.onCancel();
+    expect(game.labels()).toEqual(["unload:1", "unload:2", "wait", "cancel"]);
+  });
+});
+
 describe("submarines (05-supply-transport §9)", () => {
   const endTurn = async (game: ReturnType<typeof setup>, emptyTile: Point) => {
     game.controller.onConfirm(emptyTile);

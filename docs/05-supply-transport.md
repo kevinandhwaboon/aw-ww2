@@ -1,6 +1,6 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0, sections 5 to 9. Air (section 5) and naval units and submarines (sections 7 and 9) are built, in milestones 9 and 10. Transport Aircraft drops and Landing Craft (sections 6 and 8) come in milestone 11.
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11).
 **Last updated:** 2026-11-07
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
@@ -47,7 +47,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 ## 5. Air units (phase 2)
 
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
-- **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit, and enemy units still block its path (02-terrain §5).
+- **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit. It flies over enemy ground units and ships, but enemy aircraft block its path (02-terrain §5).
 - **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter and Bomber 5, Transport Aircraft 4). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
 - **Service:** owned airfields repair and resupply air units (04-economy §5). A Halftrack also resupplies an adjacent aircraft, since the rule covers all friendly units.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
@@ -56,7 +56,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Capacity:** 2 foot units. It's unarmed and reusable.
 - **Load:** foot units board only while the aircraft is on an owned airfield.
-- **Drop:** after moving, the aircraft drops one or both passengers onto its own tile or orthogonally adjacent tiles. A tile qualifies if it's empty and the passenger could enter it. That rules out sea, but allows Hills, Bocage and River **(D2)**. There's no scatter or landing risk.
+- **Drop:** after moving, the aircraft drops one or both passengers onto orthogonally adjacent tiles. Not onto its own tile: the aircraft is still there, and one unit per tile holds for aircraft too (02-terrain §5). This was decided on 2026-11-07, when building milestone 11 showed the earlier wording broke that rule. A tile qualifies if it's empty and the passenger could enter it. That rules out sea, but allows Hills, Bocage and River **(D2)**. There's no scatter or landing risk.
 - Dropping both in one action is allowed **(D3)**. Dropped units can't act that turn, and the drop ends the aircraft's action.
 - **Shot down:** passengers are lost with it and don't count as kills.
 

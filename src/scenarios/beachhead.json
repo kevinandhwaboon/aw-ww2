@@ -1,0 +1,45 @@
+{
+  "id": "beachhead",
+  "name": "Beachhead",
+  "description": "The Allies have to cross the water: drive a Landing Craft onto the beaches or drop Infantry from the air, while the Axis holds the bunkers above the shore. The road around the north is the long way in.",
+  "map": [
+    "...F..FFFF..F...",
+    "Qf..F.F..F..F.C.",
+    ".A..SSSSSSS_X..f",
+    "C.P_SSSSSSS_.=..",
+    "..f.SSSrSSS_X.=C",
+    "....SSSSSSS_..=.",
+    "C..SSSSSSSSS_.=Q",
+    "...SSSSSSSSSS_.."
+  ],
+  "players": [
+    { "name": "Allies", "nation": "us", "funds": 12000 },
+    { "name": "Axis", "nation": "germany", "funds": 6000, "facing": "left" }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 0, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 2 }, "owner": 0 },
+    { "pos": { "x": 2, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 2, "y": 4 }, "owner": 0 },
+    { "pos": { "x": 0, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 15, "y": 6 }, "owner": 1 },
+    { "pos": { "x": 15, "y": 2 }, "owner": 1 },
+    { "pos": { "x": 15, "y": 4 }, "owner": 1 },
+    { "pos": { "x": 14, "y": 1 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 2, "y": 2 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 0, "y": 2 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 3, "y": 4 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 3, "y": 2 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 1, "y": 3 } },
+    { "type": "landingCraft", "owner": 0, "pos": { "x": 4, "y": 3 } },
+    { "type": "transportAircraft", "owner": 0, "pos": { "x": 1, "y": 2 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 12, "y": 2 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 12, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 14, "y": 2 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 14, "y": 3 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 13, "y": 5 } }
+  ]
+}

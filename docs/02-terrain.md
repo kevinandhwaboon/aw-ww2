@@ -71,7 +71,7 @@ Following the original:
 
 - A unit may move along any path whose total entry cost ≤ its move points, also limited by its remaining fuel.
 - **Fuel cost** equals the movement cost spent (05-supply-transport).
-- **Enemy units block** movement: a unit can't enter or pass through an enemy-occupied tile.
+- **Enemy units block** movement: a unit can't enter or pass through an enemy-occupied tile. **Except (new):** aircraft fly over enemy ground units and ships, so a ring of Infantry can't trap a plane. Enemy aircraft still block aircraft and ground units, as in the original.
 - **Friendly units** can be passed through, but a unit can't end its move on a friendly unit unless it is loading into a transport or joining (04-economy, 05-supply-transport).
 - A unit can always choose not to move (move 0) and still act.
 - **One unit per tile, of any category.** An aircraft over a tile blocks a ground unit from ending there, and the reverse. Load and Join are the only exceptions (05-supply-transport §5).

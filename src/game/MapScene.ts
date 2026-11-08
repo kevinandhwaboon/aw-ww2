@@ -2,10 +2,11 @@ import Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
-import { displayHp, type GameState, type Unit, type UnitId } from "../engine/state";
+import { displayHp, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import * as stats from "../engine/stats";
 import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
+import { garrisonedBunkers } from "./garrison";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
@@ -46,7 +47,9 @@ const PROPERTY_SHEET_KEY = "pack-properties";
 /** How long each frame of moving water shows. */
 const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
-const ownerKey = (state: GameState) => state.properties.map((p) => p.owner ?? "-").join(",");
+/** Changes when any building changes hands or any bunker is garrisoned or left, so the map repaints. */
+const ownerKey = (state: GameState) =>
+  `${state.properties.map((p) => p.owner ?? "-").join(",")}|${[...garrisonedBunkers(state)].map(([tile, owner]) => `${tile}:${owner}`).join(",")}`;
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 /** How long the view takes to pan to the cursor or to the next thing that happens. */
 const PAN_MS = { cursor: 90, action: 220 };
@@ -82,6 +85,9 @@ export class MapScene extends Phaser.Scene implements MapView {
   private drawnOwners = "";
   private pathLayer?: Phaser.GameObjects.Graphics;
   private unitSprites = new Map<UnitId, Phaser.GameObjects.Container>();
+  /** Each unit's sprite inside its container, and the units drawn inside a garrisoned bunker. */
+  private unitImages = new Map<UnitId, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
+  private garrisoned = new Set<UnitId>();
   private previewed: UnitId | undefined;
   private menu:
     | { container: Phaser.GameObjects.Container; items: readonly MenuItem[]; rect: Phaser.Geom.Rectangle; selected: number }
@@ -236,7 +242,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     const buildingHeight = pack.properties?.tileHeight ?? TILE_SIZE;
     const res = Math.max(source ? wide : TILE_SIZE, buildings ? buildingWidth : TILE_SIZE) / TILE_SIZE;
     const cell = TILE_SIZE * res;
-    const owners = new Map(this.state.properties.map((p) => [p.pos.y * map.width + p.pos.x, p.owner]));
+    const owners = new Map<number, PlayerId | null>([
+      ...this.state.properties.map((p) => [p.pos.y * map.width + p.pos.x, p.owner] as const),
+      ...this.garrisonArt(),
+    ]);
     for (let frame = 0; frame < frames; frame++) {
       const key = terrainFrameKey(frame);
       const texture = this.textures.exists(key)
@@ -487,6 +496,8 @@ export class MapScene extends Phaser.Scene implements MapView {
     const unit = this.state.units.find((u) => u.id === this.previewed);
     const sprite = this.unitSprites.get(this.previewed);
     if (unit && sprite) sprite.setPosition(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
+    // Back inside its bunker, a garrisoned soldier is hidden again.
+    if (this.garrisoned.has(this.previewed)) this.unitImages.get(this.previewed)?.setVisible(false);
     this.previewed = undefined;
   }
 
@@ -729,6 +740,8 @@ export class MapScene extends Phaser.Scene implements MapView {
     const end = fullPath[fullPath.length - 1];
     if (!sprite || !end) return;
     if (sprite.x === end.x * TILE_SIZE && sprite.y === end.y * TILE_SIZE) return;
+    // A soldier leaving a garrisoned bunker comes out into view.
+    this.unitImages.get(unitId)?.setVisible(true);
     for (const p of fullPath.slice(1)) {
       // The view keeps pace with the unit, so a long move never walks off screen.
       await Promise.all([
@@ -753,7 +766,10 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!layer) return;
     layer.removeAll(true);
     this.unitSprites.clear();
+    this.unitImages.clear();
     this.redrawChangedTerrain();
+    const garrisons = this.garrisonArt();
+    this.garrisoned = new Set(this.state.units.filter((u) => garrisons.has(u.pos.y * this.state.map.width + u.pos.x)).map((u) => u.id));
 
     // Buildings are painted with the terrain in their owner's colors. Any property without building
     // art shows its owner with a small team-colored flag in the tile's top-left corner.
@@ -783,9 +799,13 @@ export class MapScene extends Phaser.Scene implements MapView {
 
     for (const unit of this.state.units) {
       const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
-      const shadow = this.unitShadow(unit);
+      // A soldier in a garrisoned bunker is drawn as the bunker itself; only its badges show.
+      const inside = this.garrisoned.has(unit.id);
+      const shadow = inside ? null : this.unitShadow(unit);
       if (shadow) sprite.add(shadow);
-      sprite.add(this.unitImage(unit));
+      const image = this.unitImage(unit).setVisible(!inside);
+      sprite.add(image);
+      this.unitImages.set(unit.id, image);
 
       const hp = displayHp(unit.hp);
       if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
@@ -865,6 +885,16 @@ export class MapScene extends Phaser.Scene implements MapView {
       this.anims.create({ key: animation, frames, frameRate: IDLE_FRAMES_PER_SECOND, repeat: -1 });
     }
     return animation;
+  }
+
+  /**
+   * Bunkers with soldiers inside that the art pack can draw garrisoned (08-art-pipeline §15), by tile.
+   * Without that art the bunker stays plain and the soldier is drawn on top as usual.
+   */
+  private garrisonArt(): Map<number, PlayerId> {
+    const pack = activePack();
+    if (!pack.properties || !this.textures.exists(PROPERTY_SHEET_KEY)) return new Map();
+    return new Map([...garrisonedBunkers(this.state)].filter(([, owner]) => findPropertyArt(pack, "bunker", owner) !== null));
   }
 
   /** Terrain can change in play: a destroyed bunker becomes rubble (02-terrain §4). */

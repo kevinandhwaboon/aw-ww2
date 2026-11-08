@@ -31,8 +31,10 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   const panel = el("div", "panel tile-info");
   const name = el("div", "panel-title");
   const defense = el("div", "tile-defense");
+  const captureLine = el("div", "tile-capture");
   const unitLine = el("div", "tile-unit");
-  panel.append(name, defense, unitLine);
+  const cargoLine = el("div", "tile-cargo");
+  panel.append(name, defense, captureLine, unitLine, cargoLine);
   root.append(panel);
 
   return {
@@ -43,6 +45,11 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       unitLine.hidden = !info.unit;
       unitLine.textContent = info.unit?.name ?? "";
       unitLine.style.color = info.unit ? playerColors(info.unit.owner)[0] : "";
+      captureLine.hidden = !info.capture;
+      captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
+      const cargo = info.unit?.cargo;
+      cargoLine.hidden = !cargo;
+      cargoLine.textContent = cargo ? `Carrying: ${cargo.length > 0 ? cargo.join(", ") : "nothing"}` : "";
       panel.classList.toggle("tile-info-right", cursorOnLeft);
     },
   };

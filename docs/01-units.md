@@ -73,7 +73,7 @@ Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is 
 **Airborne drops (Transport Aircraft):**
 - There is no separate Paratrooper unit. Any foot unit can be air-dropped.
 - Foot units load at an airfield.
-- After moving, the aircraft drops its passengers onto its own tile or adjacent tiles.
+- After moving, the aircraft drops its passengers onto adjacent tiles, not its own (05-supply-transport §6).
 - Units cannot drop onto water or occupied tiles.
 - Dropped units cannot act on the turn they land.
 - A dropped unit is remembered as air-dropped. No rule reads this: it only lets US Infantry be drawn as 101st Airborne paratroopers (08-art-pipeline §17).

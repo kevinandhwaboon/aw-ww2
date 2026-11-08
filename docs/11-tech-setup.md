@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air) and 10 (naval) are done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval) and 11 (landings and drops) are done.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -81,8 +81,8 @@
 | Fire at a target | FIRE in the menu, then click a red target | Z on FIRE, arrow keys step between targets, Z on one, X to go back |
 | Capture a property | CAPTURE in the menu | Z on CAPTURE |
 | Build a unit | Click your empty factory, then a unit | Z on the factory, arrow keys, Z |
-| Load or join | Move onto your Halftrack or a damaged unit of the same type, then LOAD or JOIN | The same with arrow keys and Z |
-| Unload | UNLOAD in the menu, then click a blue tile | Z on UNLOAD, arrow keys step between tiles, Z on one, X to go back |
+| Load or join | Move onto your transport or a damaged unit of the same type, then LOAD or JOIN | The same with arrow keys and Z |
+| Unload | UNLOAD in the menu, then click a blue tile. With two different passengers aboard, the menu names each one (UNLOAD INFANTRY) so you pick who goes first. After placing one, UNLOAD places the other, or WAIT lands just the first | Z on UNLOAD, arrow keys step between tiles, Z on one, X to go back a step |
 | Undo last move this turn | None | U or Cmd/Ctrl+Z |
 | End turn | END TURN in the turn menu | Z twice on any tile with no unit ready to move, or E |
 | Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |

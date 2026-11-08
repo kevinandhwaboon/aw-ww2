@@ -18,8 +18,16 @@ export type UnitAction =
   | { readonly type: "load" }
   /** Merge into the damaged unit of the same type on the destination tile. */
   | { readonly type: "join" }
-  /** Unload a passenger onto a tile next to the transport's destination. */
-  | { readonly type: "unload"; readonly passenger: UnitId; readonly to: Point }
+  /**
+   * Unload a passenger onto a tile next to the transport's destination. `second` unloads the other
+   * passenger in the same action (05-supply-transport §6, §8, D3).
+   */
+  | {
+      readonly type: "unload";
+      readonly passenger: UnitId;
+      readonly to: Point;
+      readonly second?: { readonly passenger: UnitId; readonly to: Point };
+    }
   /** Refill the fuel and ammo of adjacent friendly units. */
   | { readonly type: "supply" }
   /** A submarine goes below the surface, or comes back up (05-supply-transport §9). */

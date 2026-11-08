@@ -131,6 +131,6 @@
     "tileWidth": 32,
     "tileHeight": 64,
     "columns": ["neutral", "blue", "red", "green", "gold"],
-    "rows": ["city", "factory", "airfield", "port", "hq"]
+    "rows": ["city", "factory", "airfield", "port", "hq", "bunker"]
   }
 }

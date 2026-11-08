@@ -11,6 +11,7 @@ import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from ".
 import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
 import { diveProblem, surfaceProblem } from "../engine/submarine";
 import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
+import { unitName } from "./artPack";
 import { extendPath } from "./pathBuilder";
 
 export type RangeKind = "move" | "inspect" | "attack";
@@ -58,6 +59,12 @@ interface Chosen {
   readonly path: Point[];
 }
 
+/** A passenger and the tile chosen for it, not yet sent to the engine. */
+interface PlannedUnload {
+  readonly passenger: UnitId;
+  readonly to: Point;
+}
+
 /** A chosen move plus what the unit could fire on from there. */
 interface Aimed extends Chosen {
   readonly targets: readonly Unit[];
@@ -69,8 +76,10 @@ type Mode =
   | ({ readonly kind: "selected" } & Chosen)
   | ({ readonly kind: "menu" } & Aimed)
   | ({ readonly kind: "targeting" } & Aimed)
-  /** Choosing where to unload a passenger. */
-  | ({ readonly kind: "unloading"; readonly passenger: UnitId; readonly tiles: readonly Point[] } & Aimed)
+  /** Choosing where to unload a passenger; `first` is set while placing the second of two. */
+  | ({ readonly kind: "unloading"; readonly passenger: UnitId; readonly tiles: readonly Point[]; readonly first?: PlannedUnload } & Aimed)
+  /** One passenger placed: unload the other too, or Wait to land just the first. */
+  | ({ readonly kind: "unloadMenu"; readonly first: PlannedUnload } & Aimed)
   /** The factory build list is open. */
   | { readonly kind: "building" }
   /** The End Turn and Resign menu, opened on any tile with no unit ready to move. */
@@ -215,10 +224,9 @@ export class InputController {
         return;
       }
       case "unloading":
-        if (mode.tiles.some((t) => t.x === tile.x && t.y === tile.y)) {
-          void this.commit(mode, { type: "unload", passenger: mode.passenger, to: tile });
-        }
+        if (mode.tiles.some((t) => t.x === tile.x && t.y === tile.y)) this.placePassenger(mode, tile);
         return;
+      case "unloadMenu":
       case "menu":
       case "turnMenu":
       case "confirmResign":
@@ -243,8 +251,18 @@ export class InputController {
       case "menu":
         this.backToSelection(mode);
         return;
-      case "targeting":
       case "unloading":
+        if (mode.first) {
+          this.deps.view.clearRange();
+          this.openUnloadMenu(mode, mode.first);
+          return;
+        }
+        this.deps.view.clearRange();
+        this.openMenu(mode);
+        this.cursorToDestination(mode);
+        return;
+      case "unloadMenu":
+      case "targeting":
         this.deps.view.clearRange();
         this.deps.view.clearForecast();
         this.openMenu(mode);
@@ -291,6 +309,12 @@ export class InputController {
       else if (id === "keepPlaying") this.openTurnMenu(mode.at);
       return;
     }
+    if (mode.kind === "unloadMenu") {
+      if (id === "unload") this.startUnloading(mode, this.unloadable(mode, mode.first)[0]?.id, mode.first);
+      else if (id === "wait") void this.commit(mode, { type: "unload", ...mode.first });
+      else if (id === "cancel") this.onCancel();
+      return;
+    }
     if (mode.kind !== "menu") return;
     if (id === "cancel") this.backToSelection(mode);
     else if (id === "wait") void this.commit(mode, { type: "wait" });
@@ -300,7 +324,8 @@ export class InputController {
     else if (id === "supply") void this.commit(mode, { type: "supply" });
     else if (id === "dive") void this.commit(mode, { type: "dive" });
     else if (id === "surface") void this.commit(mode, { type: "surface" });
-    else if (id === "unload") this.startUnloading(mode);
+    else if (id === "unload") this.startUnloading(mode, this.unloadable(mode)[0]?.id);
+    else if (id.startsWith("unload:")) this.startUnloading(mode, Number(id.slice("unload:".length)));
     else if (id === "fire") this.startTargeting(mode);
   }
 
@@ -423,17 +448,16 @@ export class InputController {
   private boardingItems(unit: Unit, tile: Point): MenuItem[] {
     const host = unitAt(this.deps.getState(), tile);
     if (!host || host.id === unit.id) return [];
-    return [...(loadProblem(unit, host) === null ? [LOAD] : []), ...(joinProblem(unit, host) === null ? [JOIN] : [])];
+    return [...(loadProblem(this.deps.getState(), unit, host) === null ? [LOAD] : []), ...(joinProblem(unit, host) === null ? [JOIN] : [])];
   }
 
   /** What the unit could do on an empty tile, besides Wait. */
   private actionItems(unit: Unit, at: Point, canFire: boolean): MenuItem[] {
     const { state, moved } = this.afterMove(unit, at);
-    const passenger = moved.cargo[0];
     return [
       ...(canFire ? [FIRE] : []),
       ...(captureProblem(state, moved) === null ? [CAPTURE] : []),
-      ...(passenger && unloadTiles(state, moved, passenger).length > 0 ? [UNLOAD] : []),
+      ...this.unloadItems(this.unloadable({ unitId: unit.id, path: [at] })),
       ...(supplyTargets(state, moved).length > 0 ? [SUPPLY] : []),
       ...(diveProblem(moved) === null ? [DIVE] : []),
       ...(surfaceProblem(moved) === null ? [SURFACE] : []),
@@ -447,20 +471,66 @@ export class InputController {
     return { state: { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) }, moved };
   }
 
-  private startUnloading(mode: Extract<Mode, { kind: "menu" }>): void {
+  /**
+   * UNLOAD, or one UNLOAD per passenger when two different units are aboard, so the player picks
+   * who goes first (05-supply-transport §8, D3).
+   */
+  private unloadItems(passengers: readonly Unit[]): MenuItem[] {
+    const [first, second] = passengers;
+    if (!first) return [];
+    if (!second || second.type === first.type) return [UNLOAD];
+    return passengers.map((p) => ({ id: `unload:${p.id}`, label: `UNLOAD ${unitName(p.type).toUpperCase()}` }));
+  }
+
+  /** Passengers that could be unloaded where the transport is about to stop, after any already placed. */
+  private unloadable(chosen: Pick<Chosen, "unitId" | "path">, placed?: PlannedUnload): Unit[] {
+    const unit = this.deps.getState().units.find((u) => u.id === chosen.unitId);
+    if (!unit) return [];
+    return unit.cargo.filter((p) => p.id !== placed?.passenger && this.unloadTilesFor(chosen, p.id, placed).length > 0);
+  }
+
+  /** Where this passenger could go, leaving out a tile already chosen for the other one. */
+  private unloadTilesFor(chosen: Pick<Chosen, "unitId" | "path">, passengerId: UnitId, placed?: PlannedUnload): Point[] {
+    const unit = this.deps.getState().units.find((u) => u.id === chosen.unitId);
+    const passenger = unit?.cargo.find((c) => c.id === passengerId);
+    if (!unit || !passenger) return [];
+    const { state, moved } = this.afterMove(unit, chosen.path[chosen.path.length - 1] ?? unit.pos);
+    return unloadTiles(state, moved, passenger).filter((t) => !placed || t.x !== placed.to.x || t.y !== placed.to.y);
+  }
+
+  private startUnloading(mode: Aimed, passengerId: UnitId | undefined, first?: PlannedUnload): void {
     const { view } = this.deps;
-    const unit = this.deps.getState().units.find((u) => u.id === mode.unitId);
-    if (!unit) return;
-    const { state, moved } = this.afterMove(unit, mode.path[mode.path.length - 1] ?? unit.pos);
-    const passenger = moved.cargo[0];
-    if (!passenger) return;
-    const tiles = unloadTiles(state, moved, passenger);
-    const first = tiles[0];
-    if (!first) return;
+    if (passengerId === undefined) return;
+    const tiles = this.unloadTilesFor(mode, passengerId, first);
+    const start = tiles[0];
+    if (!start) return;
     view.closeMenu();
-    this.mode = { ...mode, kind: "unloading", passenger: passenger.id, tiles };
+    const { unitId, reach, path, targets, forts } = mode;
+    this.mode = { kind: "unloading", unitId, reach, path, targets, forts, passenger: passengerId, tiles, ...(first ? { first } : {}) };
     view.showRanges([{ tiles, kind: "move" }]);
-    view.setCursor(first);
+    view.setCursor(start);
+  }
+
+  /** A tile was chosen: send the order, or ask about the other passenger if it could land too. */
+  private placePassenger(mode: Extract<Mode, { kind: "unloading" }>, to: Point): void {
+    const placed = { passenger: mode.passenger, to };
+    if (mode.first) {
+      void this.commit(mode, { type: "unload", ...mode.first, second: placed });
+      return;
+    }
+    if (this.unloadable(mode, placed).length > 0) {
+      this.deps.view.clearRange();
+      this.openUnloadMenu(mode, placed);
+      return;
+    }
+    void this.commit(mode, { type: "unload", ...placed });
+  }
+
+  private openUnloadMenu(mode: Aimed, first: PlannedUnload): void {
+    const { unitId, reach, path, targets, forts } = mode;
+    this.mode = { kind: "unloadMenu", unitId, reach, path, targets, forts, first };
+    this.deps.view.setCursor(first.to);
+    this.deps.view.openMenu(first.to, [UNLOAD, WAIT, CANCEL]);
   }
 
   private startTargeting(mode: Extract<Mode, { kind: "menu" }>): void {
