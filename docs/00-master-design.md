@@ -31,7 +31,7 @@ The two goals are equally weighted:
 | **0: Setup** | Repo, tooling, CLAUDE.md, CI, deploy pipeline, test map |
 | **1: Core MVP** | Hot-seat player vs. player on small test maps. Land units, terrain, movement, combat, capture, income, production, fuel/ammo, win conditions. Map-level combat effects only. |
 | **2: Systems** | Air and naval units, transports and amphibious unloading, modifier layer (CO hooks), scenario-defined victory conditions, the pluggable AI interface and a first basic AI |
-| **3: Content and polish** | Commanders, battle cutscene (staged), more scenarios, better art, mobile phone layout |
+| **3: Content and polish** | Commanders, battle cutscene art (a code-drawn version exists since 2026-11-07), more scenarios, better art, mobile phone layout |
 | **4: Normandy theater** | Full Normandy + southeastern England theater map and scenario |
 | **Later / maybe** | Fog of war, save/load, campaign mode, custom community AIs, online multiplayer |
 
@@ -177,7 +177,8 @@ UI falls into four categories:
 ## 13. Combat presentation (staged)
 
 - **MVP:** combat plays on the map. The attacker nudges toward the target, a flash/explosion shows on the defender, a floating damage number appears, then the counterattack plays the same way.
-- **Later:** a split-screen battle cutscene as a separate Phaser scene. Terrain backgrounds, larger battle sprites, unit count reflecting HP, fire/impact/explosion effects, HP bar drain. Begin with static sprites + code-driven motion + particles; add full animated art unit by unit, falling back to the simple version where art is missing.
+- **Built 2026-11-07** (ahead of phase 3, at the developer's request): a split-screen battle scene, as a separate Phaser scene drawn over the map, with code-drawn figures whose animations show what's distinctive about each unit. Skippable, and can be turned off. Details: 08-art-pipeline §18. The original plan follows.
+- **Plan:** a split-screen battle cutscene as a separate Phaser scene. Terrain backgrounds, larger battle sprites, unit count reflecting HP, fire/impact/explosion effects, HP bar drain. Begin with static sprites + code-driven motion + particles; add full animated art unit by unit, falling back to the simple version where art is missing.
 - **Requirement from day one:** the rules engine emits combat as a result event that the presentation plays back. The cutscene can never affect outcomes, so skip and "animations off" options come for free.
 
 ## 14. Art
@@ -321,3 +322,6 @@ UI falls into four categories:
 | 2026-11-07 | Aircraft fly over enemy ground units and ships (a departure from the original, where surrounding a plane with Infantry trapped it). Enemy aircraft still block. One unit per tile still holds (02-terrain §5) |
 | 2026-11-07 | The tile info box shows a property's capture points left ("Capture 12/20") and what a transport is carrying. A bunker with foot soldiers inside is drawn garrisoned in their side's colors, Red Alert 2 style, with the soldier hidden inside (08-art-pipeline §15) |
 | 2026-11-07 | Scenario victory conditions implemented (milestone 12): captureProperties, holdProperties and surviveDays. A side wins by defeating everyone on the other side; hold counts start on day 2 and reset when any objective is lost. Objectives get a gold frame, are listed with progress in the HUD and on the results screen. New map: Crossroads (04-economy §8) |
+| 2026-11-07 | Battle scenes brought forward from phase 3: every attack plays as a split-screen scene, attacker first, then the counter. Figures are drawn in code with per-unit animations (the mortar crew drops a round and ducks, the artillery loader rams a shell before the lanyard is pulled), figure counts follow HP, and HP pips tick down as shots land. The side facing right stands on the left. Skippable; "Battle scenes" option, on by default (08-art-pipeline §18) |
+| 2026-11-07 | Battle scenes revised after playtest: more figures (Infantry 8, most vehicles 3–4), soldiers enlarged to about 44 pixels with a real squad mix (riflemen, an SMG, a prone BAR or MG 42), dug-in sandbag positions on bunkers, shots leaving along the barrel on arcs that match it, anti-aircraft fire hitting aircraft from below, a Willys-style jeep, a detailed factory, Landing Craft beached half on the sand, and more identifying detail on every vehicle and aircraft (08-art-pipeline §18) |
+| 2026-11-08 | Battle scenes, second playtest: tank platoons show 5 tanks (heavy tanks 4); units on Hills stand on a crest over the valley; US squads carry two Thompsons (paratroopers three); paratroopers get their own look with the card suit the map shows; mortars, artillery and rockets fire high, out of sight for about a second, then drop steeply onto the target (08-art-pipeline §18) |

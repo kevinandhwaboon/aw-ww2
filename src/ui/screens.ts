@@ -10,6 +10,8 @@ export interface GameOptions {
   readonly luck: boolean;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
+  /** Attacks play as split-screen battle scenes (08-art-pipeline §18). */
+  readonly battleScenes: boolean;
 }
 
 type OnStart = (scenario: Scenario, options: GameOptions) => void;
@@ -80,11 +82,12 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
 
   const luck = checkbox("Luck in combat", defaults.luck);
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
+  const battleScenes = checkbox("Battle scenes", defaults.battleScenes);
   const start = el("button", "btn btn-big", "Start");
   start.addEventListener("click", () => {
     if (!chosen) return;
     close();
-    onStart(chosen, { luck: luck.input.checked, passDevice: passDevice.input.checked });
+    onStart(chosen, { luck: luck.input.checked, passDevice: passDevice.input.checked, battleScenes: battleScenes.input.checked });
   });
 
   panel.append(
@@ -96,6 +99,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     el("div", "panel-subtitle", "Options"),
     luck.row,
     passDevice.row,
+    battleScenes.row,
     start,
   );
   node.append(panel);
@@ -107,7 +111,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     () => {
       const mapRows = rows.map(({ row }) => row);
       const onList = mapRows.some((row) => row === document.activeElement);
-      return onList ? mapRows : [chosenRow(), luck.input, passDevice.input, start].flatMap((item) => item ?? []);
+      return onList ? mapRows : [chosenRow(), luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
     },
     () => {
       close();
