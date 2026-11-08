@@ -16,6 +16,7 @@ import { packColor } from "../artPack";
 import { SCENE } from "./backdrops";
 import { BattleScene } from "./BattleScene";
 import { BattleRenderer } from "./renderer";
+import { showAngledSamples } from "./angled/samples";
 import type { DropPlan } from "./drop";
 import { DropRenderer } from "./dropRenderer";
 import type { StormPlan, StormUnit } from "./storm";
@@ -233,6 +234,10 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
 }
 
 export function startBattlePreview(root: HTMLElement, params: URLSearchParams): void {
+  if (params.get("angled") !== null) {
+    showAngledSamples(root, params);
+    return;
+  }
   if (params.get("drop") !== null) {
     startDropPreview(root, params);
     return;
