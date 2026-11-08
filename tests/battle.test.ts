@@ -42,10 +42,11 @@ function combat(state: GameState, attacker = 0, target = 1): Extract<GameEvent, 
 }
 
 describe("figures on screen (08-art-pipeline §18)", () => {
-  it("a full-strength squad shows eight soldiers, a tank platoon five tanks and a heavy tank platoon four", () => {
+  it("a full-strength squad shows eight soldiers, and every vehicle or gun unit shows five", () => {
     expect(figureCount("infantry", 10)).toBe(8);
-    expect(figureCount("mediumTank", 10)).toBe(5);
-    expect(figureCount("heavyTank", 10)).toBe(4);
+    for (const kind of ["recon", "halftrack", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"] as const) {
+      expect(figureCount(kind, 10)).toBe(5);
+    }
   });
 
   it("a unit with 1 HP left still shows one figure; a destroyed one shows none", () => {

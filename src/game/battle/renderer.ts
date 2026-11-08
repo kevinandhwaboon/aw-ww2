@@ -52,16 +52,17 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   infantry: [pt(116, 216), pt(76, 208), pt(36, 216), pt(132, 190), pt(140, 220), pt(94, 184), pt(52, 180), pt(112, 166)],
   assaultInfantry: [pt(70, 216), pt(146, 204), pt(84, 184), pt(150, 168)],
   mortar: [pt(64, 214), pt(142, 196), pt(76, 174)],
-  recon: [pt(48, 216), pt(130, 206), pt(62, 184), pt(142, 170)],
-  halftrack: [pt(52, 216), pt(136, 198), pt(64, 174)],
-  lightTank: [pt(44, 218), pt(128, 210), pt(60, 193), pt(140, 180), pt(70, 166)],
-  mediumTank: [pt(46, 218), pt(126, 210), pt(58, 193), pt(130, 180), pt(68, 166)],
-  heavyTank: [pt(54, 218), pt(112, 204), pt(60, 184), pt(116, 168)],
-  tankDestroyer: [pt(46, 218), pt(122, 210), pt(56, 193), pt(126, 180), pt(66, 166)],
-  artillery: [pt(64, 218), pt(146, 198), pt(88, 172)],
-  rocketArtillery: [pt(60, 216), pt(136, 198), pt(66, 176)],
-  mobileAA: [pt(54, 216), pt(134, 198), pt(62, 176)],
-  flakGun: [pt(54, 216), pt(134, 198), pt(62, 176)],
+  // Every vehicle and gun unit shows five at full strength, in two staggered columns and five ranks.
+  recon: [pt(44, 218), pt(152, 208), pt(54, 195), pt(146, 182), pt(48, 169)],
+  halftrack: [pt(40, 218), pt(148, 208), pt(50, 195), pt(142, 182), pt(44, 169)],
+  lightTank: [pt(32, 218), pt(145, 208), pt(42, 195), pt(139, 182), pt(36, 169)],
+  mediumTank: [pt(42, 218), pt(132, 208), pt(52, 195), pt(126, 182), pt(46, 169)],
+  heavyTank: [pt(50, 218), pt(118, 208), pt(60, 195), pt(112, 182), pt(54, 169)],
+  tankDestroyer: [pt(42, 218), pt(130, 208), pt(52, 195), pt(124, 182), pt(46, 169)],
+  artillery: [pt(64, 218), pt(148, 208), pt(74, 195), pt(142, 182), pt(68, 169)],
+  rocketArtillery: [pt(66, 218), pt(144, 208), pt(76, 195), pt(138, 182), pt(70, 169)],
+  mobileAA: [pt(40, 218), pt(148, 208), pt(50, 195), pt(142, 182), pt(44, 169)],
+  flakGun: [pt(44, 218), pt(132, 208), pt(54, 195), pt(126, 182), pt(48, 169)],
   fighter: [pt(100, 118), pt(146, 76), pt(58, 160), pt(56, 58)],
   bomber: [pt(100, 104), pt(118, 172), pt(76, 52)],
   transportAircraft: [pt(100, 104), pt(118, 172), pt(76, 52)],
@@ -615,7 +616,10 @@ export class BattleRenderer {
         const reach = (m.y - (SCENE.top - 14)) / -hy;
         const k = elapsed / up;
         const d = reach * k * (0.6 + 0.4 * k);
-        return { at: { x: m.x + shot.heading.x * d, y: m.y + hy * d }, dir: { x: shot.heading.x, y: hy } };
+        const at = { x: m.x + shot.heading.x * d, y: m.y + hy * d };
+        // On the way up a round stays on its own side: it leaves the shooter's half, not into the other.
+        if (side === 1 ? at.x > SCENE.half - 2 : at.x < SCENE.half + 2) return null;
+        return { at, dir: { x: shot.heading.x, y: hy } };
       }
       if (elapsed < total - INDIRECT_MS.down) return null;
       const steep = Math.max(Math.abs(Math.atan2(shot.heading.y, Math.abs(shot.heading.x))), 1.15);
@@ -623,7 +627,10 @@ export class BattleRenderer {
       const drop = (target.y - (SCENE.top - 14)) / fall.y;
       const k = (elapsed - (total - INDIRECT_MS.down)) / INDIRECT_MS.down;
       const d = drop * (1 - k * k);
-      return { at: { x: target.x - fall.x * d, y: target.y - fall.y * d }, dir: fall };
+      const at = { x: target.x - fall.x * d, y: target.y - fall.y * d };
+      // Coming down, it appears only over the target's half.
+      if (side === 1 ? at.x < SCENE.half + 2 : at.x > SCENE.half - 2) return null;
+      return { at, dir: fall };
     }
     if (kind === "charge") {
       const hx = Math.abs(shot.heading.x) < 0.15 ? 0.15 * side : shot.heading.x;

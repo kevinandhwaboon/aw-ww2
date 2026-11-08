@@ -8,7 +8,7 @@ import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING, figureTiming } from "./timeline";
 import { along, justFired, kick, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
-export type Stance = "stand" | "kneel" | "crouch";
+export type Stance = "stand" | "kneel" | "crouch" | "run";
 
 export interface Frame {
   readonly top: number;
@@ -21,9 +21,9 @@ export interface Frame {
 }
 
 export function soldierFrame(x: number, y: number, stance: Stance, lean = 0): Frame {
-  const hip = y - (stance === "stand" ? 17 : stance === "kneel" ? 12 : 9);
+  const hip = y - (stance === "stand" ? 17 : stance === "run" ? 16 : stance === "kneel" ? 12 : 9);
   const top = hip - (stance === "crouch" ? 11 : 14);
-  const l = lean + (stance === "crouch" ? 3 : 0);
+  const l = lean + (stance === "crouch" ? 3 : stance === "run" ? 3 : 0);
   return {
     top,
     hip,
@@ -105,7 +105,17 @@ export interface SoldierOptions {
   readonly headDx?: number;
   /** Drawn between the body and the front arm, so the near hand holds it. */
   readonly weapon?: () => void;
+  /** Running: which of the four steps of the stride the legs are in. */
+  readonly stride?: number;
 }
+
+/** Running legs, step by step: the near leg's knee and foot, then the far leg's, from the hip. */
+const STRIDE: readonly (readonly [number, number, number, number, number, number, number, number])[] = [
+  [5, 8, 9, 0, -3, 9, -10, -5],
+  [4, 8, 3, 0, -1, 10, -5, -8],
+  [-3, 9, -10, -5, 5, 8, 9, 0],
+  [-1, 10, -5, -8, 4, 8, 3, 0],
+];
 
 /** The uniform's two shades. Paratroopers wear the tan M1942 jump suit, toned with the team color. */
 function uniform(look: Look): { cloth: string; clothLo: string } {
@@ -155,6 +165,20 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
     } else {
       leggings(x + 1, y - 10, 6);
       p.rect(x - 4, y - 9, 5, 5, shade(C("battleSand"), 0.8));
+    }
+  } else if (stance === "run") {
+    const step = STRIDE[(((o.stride ?? 0) % 4) + 4) % 4] ?? STRIDE[0];
+    if (step) {
+      const [nkx, nky, nfx, nfy, fkx, fky, ffx, ffy] = step;
+      const leg = (kx: number, ky: number, fx: number, fy: number, color: string) => {
+        p.line(x, f.hip + 1, x + kx, f.hip + ky, color, 5);
+        p.line(x + kx, f.hip + ky, x + fx, y - 3 + fy, color, 4);
+        const bootColor = para ? C("battleLeather") : boot;
+        p.rect(x + fx - 2, y - 4 + fy, 7, 4, bootColor);
+        if (!de && !para) p.rect(x + fx - 1, y - 8 + fy, 4, 4, C("battleSand"));
+      };
+      leg(fkx, fky, ffx, ffy, clothLo);
+      leg(nkx, nky, nfx, nfy, cloth);
     }
   } else if (stance === "kneel") {
     p.rect(x - 5, f.hip, 5, y - 4 - f.hip, clothLo);
@@ -275,7 +299,7 @@ export function earsCovered(f: Frame): SoldierOptions {
 export type GunKind = "garand" | "kar98" | "carbine" | "thompson" | "mp40" | "bar" | "mg42";
 
 /** Each gun's length from butt to muzzle, and where the hands go on it. */
-const GUN: Record<GunKind, { readonly length: number; readonly trigger: number; readonly fore: number }> = {
+export const GUN: Record<GunKind, { readonly length: number; readonly trigger: number; readonly fore: number }> = {
   garand: { length: 30, trigger: 10, fore: 19 },
   kar98: { length: 32, trigger: 10, fore: 20 },
   carbine: { length: 23, trigger: 8, fore: 15 },
@@ -421,7 +445,7 @@ export function sandbags(p: Painter, x0: number, x1: number, ground: number, hei
 const INFANTRY_STANCE: readonly ("kneel" | "stand" | "prone")[] = ["kneel", "kneel", "kneel", "stand", "prone", "stand", "stand", "stand"];
 const stanceOf = (index: number) => INFANTRY_STANCE[index] ?? "stand";
 
-function squadGun(index: number, look: Look): GunKind {
+export function squadGun(index: number, look: Look): GunKind {
   const de = look.nation === "germany";
   const weapon = squadWeapon(index, look.nation, look.paratrooper);
   if (weapon === "smg") return de ? "mp40" : "thompson";
