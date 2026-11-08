@@ -88,7 +88,7 @@ function comparison(): HTMLCanvasElement {
   p.rect(0, 0, SCENE.width, 16, C("battlePanel"));
   text(ctx, "SIDE VIEW - NOW", 6, 4, 2, C("labelText"));
   p.rect(0, 116, SCENE.width, 14, C("battlePanel"));
-  text(ctx, "THREE-QUARTER VIEW - PROPOSED", 6, 119, 2, C("labelGold"));
+  text(ctx, "TURNED 20 DEGREES - PROPOSED", 6, 119, 2, C("labelGold"));
   stamp(ctx, 60, 104, (q) => tankRig("medium").draw(q, IDLE, US));
   stamp(ctx, 186, 104, (q) => tankRig("medium").draw(q, IDLE, DE));
   stamp(ctx, 318, 104, (q) => tankRig("heavy").draw(q, IDLE, DE));

@@ -23,7 +23,7 @@ export interface View {
   readonly pitch: number;
 }
 
-export const THREE_QUARTER: View = { yaw: -0.82, pitch: 0.5 };
+export const THREE_QUARTER: View = { yaw: -0.35, pitch: 0.42 };
 
 // Model axes: x forward (toward the enemy), y to the vehicle's left, z up. Units are scene pixels.
 
