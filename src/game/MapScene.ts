@@ -6,6 +6,8 @@ import { displayHp, type GameState, type PlayerId, type Unit, type UnitId } from
 import * as stats from "../engine/stats";
 import type { BattlePlayer } from "./battle/BattleScene";
 import { planCombat, planFortAttack } from "./battle/plan";
+import { planDrop } from "./battle/drop";
+import { planCapture, planGarrison } from "./battle/storm";
 import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
@@ -617,7 +619,16 @@ export class MapScene extends Phaser.Scene implements MapView {
   async playEvents(events: readonly GameEvent[]): Promise<void> {
     for (const event of events) {
       await this.revealTiles(this.eventTiles(event), PAN_MS.action);
-      if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
+      if (event.type === "unitMoved") {
+        await this.walk(event.unitId, event.path);
+        await this.playGarrison(event.unitId, event.path[0] ?? null, event.path[event.path.length - 1], events);
+      }
+      if (event.type === "unitUnloaded") {
+        // A Transport Aircraft's passengers jump (08-art-pipeline §20); others may go into a bunker.
+        const drop = this.battle && planDrop(this.state, event);
+        if (this.battle && drop) await this.battle.playDrop(drop);
+        else await this.playGarrison(event.unitId, null, event.pos, events);
+      }
       if (event.type === "combat") await this.playCombat(event);
       if (event.type === "fortAttacked") {
         const plan = this.battle && planFortAttack(this.state, event);
@@ -627,8 +638,13 @@ export class MapScene extends Phaser.Scene implements MapView {
           await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
         }
       }
-      if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
-      if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
+      if (event.type === "captureProgress" || event.type === "propertyCaptured") {
+        // A capture plays as a storming scene when scenes are on (08-art-pipeline §19), else as a label.
+        const plan = this.battle && planCapture(this.state, event);
+        if (this.battle && plan) await this.battle.playStorm(plan);
+        else if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
+        else await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
+      }
       if (event.type === "unitOutOfFuel") {
         const lost = { pos: event.pos, unitId: event.unitId };
         await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"))]);
@@ -645,6 +661,13 @@ export class MapScene extends Phaser.Scene implements MapView {
       }
     }
     await Promise.all(this.repairLabels(events));
+  }
+
+  /** Foot soldiers going into a bunker play a storming scene, when scenes are on (08-art-pipeline §19). */
+  private async playGarrison(unitId: UnitId, from: Point | null, to: Point | undefined, events: readonly GameEvent[]): Promise<void> {
+    if (!this.battle || !to) return;
+    const plan = planGarrison(this.state, unitId, from, to, events);
+    if (plan) await this.battle.playStorm(plan);
   }
 
   /** Where an event happens, so the view can pan to it first. Repairs at turn start don't pan. */

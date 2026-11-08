@@ -408,9 +408,9 @@ In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (
 | Unit | Figures at 10 HP |
 |---|---|
 | Infantry | 8 soldiers: the front three kneel, the squad's automatic weapon lies prone at the front, the rest stand |
-| Light and Medium Tank, Tank Destroyer | 5 |
-| Assault Infantry, Recon, Heavy Tank, Fighter, Torpedo Boat | 4 (Assault Infantry: launcher teams of gunner and loader) |
-| Mortar Team, Halftrack, Artillery, Rocket Artillery, Mobile AA, Flak Gun, Bomber, Transport Aircraft | 3 (Mortar Team: crews of loader and assistant) |
+| Every vehicle and gun: Recon, Halftrack, Light, Medium and Heavy Tank, Tank Destroyer, Artillery, Rocket Artillery, Mobile AA, Flak Gun | 5, in two staggered columns |
+| Assault Infantry, Fighter, Torpedo Boat | 4 (Assault Infantry: launcher teams of gunner and loader) |
+| Mortar Team, Bomber, Transport Aircraft | 3 (Mortar Team: crews of loader and assistant) |
 | Destroyer, Submarine, Landing Craft | 2 |
 | Battleship, Bunker | 1 |
 
@@ -432,7 +432,7 @@ Figures fall from the back of the formation first, as the shots that take them l
 | Recon | The gunner behind the jeep's .30 cal (or the sidecar gunner on the German motorcycle) fires bursts |
 | Tanks, Tank Destroyer | The gun recoils, the hull rocks, dust kicks up in front. With the secondary weapon, the hull machine gun fires instead |
 | Artillery | The loader carries a shell up and rams it home, steps back covering his ears, and the gunner pulls the lanyard; the barrel recoils and the gun hops |
-| Rocket Artillery | Six rockets ripple out with smoke trails and leave a cloud behind the launcher: a Calliope rack on a Sherman, or a Nebelwerfer fired from a sandbagged foxhole |
+| Rocket Artillery | Six rockets ripple out with smoke trails and leave a cloud behind the launcher: a Calliope rack on a Sherman, or a Nebelwerfer fired from a sandbagged foxhole. A forward observer kneels out in front of the lead launcher, watching the target through binoculars, with a field telephone |
 | Mobile AA, Flak Gun | Barrels fire in turn, aimed high at aircraft and flat at ground targets; the Flak Gun's loader brings the next round and the spent casing flies out |
 | Fighter | Wing guns (and the Bf 109's nose guns) fire tracers |
 | Bomber | The bomb bay opens and bombs fall out of the bottom of the half, then onto the target |
@@ -442,7 +442,7 @@ Figures fall from the back of the formation first, as the shots that take them l
 
 Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-units), so they only ever take fire.
 
-**What flies.** Every shot leaves the muzzle in the direction the barrel points, and the flash points the same way. Direct fire flies straight across the line between the halves. Indirect fire (mortars, artillery, rockets) is fired high: the round leaves fast along the raised barrel and climbs out of the top of the screen, there's a pause of about a second while it's overhead, and then it drops steeply onto the target from high above. Depth charges arc from the destroyer's stern onto the submarine. Ground fire at aircraft (Mobile AA, Flak Gun, or any other) climbs out of the top of its own half along the barrel and comes up into the other half from below, bursting under the aircraft. Bombs drop out of the bottom of their half and in at the top of the other.
+**What flies.** Every shot leaves the muzzle in the direction the barrel points, and the flash points the same way. Direct fire flies straight across the line between the halves. Indirect fire (mortars, artillery, rockets) is fired high: the round leaves fast along the raised barrel and climbs out of the top of the screen, there's a pause of about a second while it's overhead, and then it drops steeply onto the target from high above. On the way up it shows only over the firing half, and coming down only over the target's half. Depth charges arc from the destroyer's stern onto the submarine. Ground fire at aircraft (Mobile AA, Flak Gun, or any other) climbs out of the top of its own half along the barrel and comes up into the other half from below, bursting under the aircraft. Bombs drop out of the bottom of their half and in at the top of the other.
 
 **Landings.** A Landing Craft on a Beach is drawn run aground: sea toward the half's outer edge, sand toward the middle, the stern in the water and the bow ramp down on the sand.
 
@@ -458,8 +458,55 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **How it's built.** The figures are drawn in code, not from sprite sheets: `src/game/battle/`. Each unit is a *rig*, a function that draws it at any moment of its animation from simple shapes (rectangles, lines, discs, polygons) on a 384×240 canvas, which is scaled up with nearest-neighbor so it stays pixel art. Figures get a dark outline. `plan.ts` and `timeline.ts` decide what happens when, and are tested; `soldiers.ts`, `vehicles.ts` and `airNaval.ts` hold the rigs; `backdrops.ts` the backgrounds; `renderer.ts` puts a frame together. Sprite-sheet battle art in packs can replace rigs unit by unit later (00-master-design §13); nothing in the pack format covers it yet.
 
-**Option.** "Battle scenes" on the map select screen, on by default. `?battle=off` turns them off. Off, attacks play on the map as before.
+**Option.** "Battle scenes" on the map select screen, on by default. `?battle=off` turns them off. Off, attacks play on the map as before. The same option covers captures and bunkers (section 19).
 
 **Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each (11-tech-setup §7).
 
 **Not done yet:** separate art for UK, Canadian and Soviet units; sound; a faster speed setting; pack-supplied battle sprites.
+
+## 19. Storming scenes: captures and bunkers
+
+**Since 2026-11-08,** two non-combat moments play as cut-in scenes, in the same style as battle scenes (section 18) and under the same "Battle scenes" option: an Infantry or Assault Infantry unit capturing a property, and foot soldiers going into a bunker. Like battle scenes they only show what the engine decided, can be skipped the same way, and fall back to the map's floating labels when scenes are off. No other non-combat action gets a scene (decided 2026-11-08).
+
+**Layout.** One full-width view: open fields on the left, the building on the right, a track to its door. The top panel names the unit and the property; the bottom panel shows the capture count (20 pips in the old owner's color) or, for a bunker, the unit's HP.
+
+**The buildings,** drawn large:
+
+| Property | Look | Way in |
+|---|---|---|
+| City | A Normandy town: rooftops and a church spire behind, and on a cobbled square the mairie with its clock, a half-timbered house, and a café with a striped awning and tables | The mairie's arched door |
+| HQ | A chateau with dormers and two round towers with conical roofs | Double door under a pediment |
+| Factory | Brick hall with a sawtooth roof of skylights, a banded chimney trailing smoke | Sliding door rolled half open |
+| Airfield | Curved-roof hangar with a control cabin, a tail fin in the dark interior; the runway in front, with its centre line, threshold bars and edge lights, and a windsock | Across the runway, through the open hangar doors |
+| Port | Quayside warehouse with a loading hoist and a crane | Wooden warehouse door |
+| Bunker | Concrete casemate with camouflage netting and sandbags | Steel door in its side |
+
+**Capturing.** The squad runs in from the left in lanes, one soldier at a time, and goes through the door; the count drops as each one gets inside, ending on the engine's number. For Infantry, the two front soldiers first kneel and fire at the windows (muzzle flashes, tracers, breaking glass) while the rest run past, then follow them in. One figure per soldier, as in battle scenes (an Infantry squad at 10 HP is 8 runners); Mortar and launcher teams show both men of each team. Riflemen carry their weapon at port arms, launcher gunners the tube on the shoulder, mortar crews the tube and the baseplate. When everyone is inside:
+- **A capture that completes:** the old owner's flag comes down (none for a neutral property), the captor's goes all the way up, and "CAPTURED" appears.
+- **A capture still in progress:** the old flag stays at the top, the captor's goes part of the way up below it, as far as the points taken (halfway at 10 left), and the scene shows how many points are left, such as "10 LEFT".
+
+**Follow-up turns.** Only the first turn of a capture storms the building. On later turns the squad already holds it: one soldier hauls the captor's flag up the pole hand over hand while two stand guard, from where it was to where the new count puts it, and the count drops as it rises. When it reaches the top the old flag comes down and the guards raise their rifles.
+
+Capture flags fly from a tall flagpole on the square in front of the building, drawn at twice the size of the bunker's, so the flags read clearly.
+
+**Going into a bunker** plays when Infantry, Assault Infantry or a Mortar Team moves onto a bunker or is unloaded onto one. Nothing plays for a unit already inside, for one that only stops there to board a transport, or for vehicles. The soldiers run in through the steel door; the firing slit is boarded up in their color, rifle barrels poke out, their flag goes up on the roof (the garrisoned look, section 15), and "GARRISONED" appears.
+
+**Flags** are the nations' HUD flags (`src/game/placeholderFlags.ts`), with a streamer in the player's color underneath so two players of one nation can be told apart.
+
+**How it's built.** `src/game/battle/storm.ts` plans the scene from the engine's event and the state before it, and times it; it's pure and tested (`tests/storm.test.ts`). `stormRenderer.ts` draws it. The same Phaser scene that plays battles plays these.
+
+**Preview.** `?battle=demo&storm=all` plays every storming scene in turn (`storm=capture` or `storm=garrison` for one kind); `&t=end` shows each at its outcome, side by side.
+
+## 20. Airborne drops
+
+**Since 2026-11-08,** a Transport Aircraft unloading soldiers (05-supply-transport §6) plays as a static-line jump, under the same "Battle scenes" option and skip keys. One scene per passenger dropped.
+
+- **The plane** (the C-47 with invasion stripes, or the Ju 52) flies across the sky from left to right with its door open.
+- **The jump:** as the door passes over the drop zone the men go out one after another, one figure per soldier as in section 19 (a full Infantry squad is 8 men). Each falls a moment in the slipstream while his static line pays out from the door, then his canopy snaps open from a streamer into a full dome on its rigging lines.
+- **The descent:** they drift down and back, swaying under their canopies, hands up on the risers, a reserve chute on the chest and a leg bag.
+- **Landing:** each hits the ground in a roll, his chute collapsing beside him, then stands with his weapon ready. "LANDED" appears once the last man is down.
+- **Who jumps:** US Infantry jump as 101st Airborne paratroopers (section 18), as the map shows them once they've landed. German soldiers jump in their own uniforms from the Ju 52. Mortar and launcher teams jump too.
+- **The ground** is the terrain of the tile they land on.
+
+`src/game/battle/drop.ts` plans and times it (tested in `tests/storm.test.ts`); `dropRenderer.ts` draws it. Preview: `?battle=demo&drop=on`, with `&t=end` for the landed squads.
+

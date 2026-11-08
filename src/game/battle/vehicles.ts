@@ -866,6 +866,30 @@ export const artilleryRig: Rig = {
 
 // ---- Rocket Artillery: a Calliope rack on a Sherman, or a Nebelwerfer ----
 
+/**
+ * The rocket unit's forward observer: one soldier, kneeling out in front of the lead launcher,
+ * watching the target through binoculars, with a field telephone.
+ */
+function spotter(p: Painter, x: number, look: Look): void {
+  const f = soldierFrame(x, 0, "kneel", 1);
+  const eye = { x: f.head.x + 1 + 6, y: f.head.y + 2 };
+  drawSoldier(p, x, 0, "kneel", look, {
+    lean: 1,
+    headDx: 1,
+    back: { x: eye.x - 1, y: eye.y + 2 },
+    front: { x: eye.x + 1, y: eye.y + 3 },
+    weapon: () => {
+      p.rect(eye.x - 1, eye.y - 1, 5, 3, C("battleRubber"));
+      p.px(eye.x + 3, eye.y - 1, C("battleSkyLow"));
+      p.px(eye.x + 3, eye.y + 1, C("battleSkyLow"));
+    },
+  });
+  // Field telephone in its leather case at his knee.
+  p.rect(x - 12, -6, 6, 6, C("battleLeather"));
+  p.rect(x - 11, -5, 4, 2, C("battleSteelDark"));
+  p.line(x - 12, -1, x - 30, 0, C("battleRubber"));
+}
+
 const NEBEL_PIVOT = { x: 2, y: -22 };
 const NEBEL_ANGLE = -0.7;
 const CALLIOPE = { x: 2, y: -52, angle: -0.35 };
@@ -902,9 +926,11 @@ export const rocketRig: Rig = {
       drawSoldier(p, -54, 2, "crouch", look, firing ? earsCovered(f) : { front: { x: -44, y: -8 } });
       sandbags(p, -66, -44, 4, 4);
       if (firing) p.line(-44, -4, -8, -4, C("battleRubber"));
+      if (pose.index === 0) spotter(p, 46, look);
       return;
     }
     // T34 Calliope: a Sherman with a 60-tube launcher over its turret, tied to the gun barrel.
+    if (pose.index === 0) spotter(p, 58, look);
     drawTank(p, TANKS.medium.us, look, 0, pose.index);
     const rack = (dx: number, dy: number): Pt => {
       const a = CALLIOPE.angle;
