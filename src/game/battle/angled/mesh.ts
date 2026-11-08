@@ -3,7 +3,13 @@
 // Shapes are boxes, extrusions and lofts; they're turned toward the viewer, lit, and painted back
 // to front as crisp pixel polygons.
 
-import { mix, shade, type Painter } from "../paint";
+import { mix, shade } from "../colors";
+
+/** What drawing a mesh needs: crisp polygons and lines (the battle Painter provides both). */
+export interface PolyPainter {
+  poly(points: readonly (readonly [number, number])[], color: string): void;
+  line(x0: number, y0: number, x1: number, y1: number, color: string, width?: number): void;
+}
 
 export type V3 = readonly [number, number, number];
 
@@ -153,7 +159,7 @@ const LIGHT: V3 = (() => {
  * Paints faces back to front at (ox, oy). `flip` mirrors the result so a figure on the right half
  * faces left. Edges are inked a shade darker so the shapes read as pixel art, not flat polygons.
  */
-export function drawMesh(p: Painter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1): void {
+export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1): void {
   const cp = Math.cos(view.pitch);
   const sp = Math.sin(view.pitch);
   const toward: V3 = [0, -cp, sp];

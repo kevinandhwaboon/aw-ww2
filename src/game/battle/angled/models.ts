@@ -3,7 +3,7 @@
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
 // StuG III. `recoil` slides the gun back along its barrel when it fires.
 
-import { C, mix, type TeamShades } from "../paint";
+import { C, mix, type TeamShades } from "../colors";
 import { barrel, box, circle, decalY, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
 
 export interface Model {
