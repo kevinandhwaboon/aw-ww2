@@ -7,6 +7,8 @@ import type { UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { figureCount, fireKind, planCombat, planFortAttack, squadWeapon, type BattlePlan } from "../src/game/battle/plan";
 import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt } from "../src/game/battle/timeline";
+import { BATTLE_VIEW, project } from "../src/game/battle/angled/mesh";
+import { TANK_MODELS } from "../src/game/battle/angled/models";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -216,5 +218,37 @@ describe("the order things happen in a battle scene (08-art-pipeline §18)", () 
     const timeline = buildTimeline(plan(false, 10));
     expect(timeline.shots.length).toBeGreaterThan(0);
     expect(deathTimes(timeline, "right").size).toBe(0);
+  });
+});
+
+describe("tanks drawn turned 5° toward the viewer (08-art-pipeline §18)", () => {
+  const team = { hi: "#88aaff", mid: "#4466cc", lo: "#334488", deep: "#223366", cloth: "#556677", clothLo: "#445566" };
+  const kinds = ["light", "medium", "heavy", "td"] as const;
+
+  it("every tank and tank destroyer has its own model for the US and for Germany", () => {
+    for (const kind of kinds) {
+      const us = TANK_MODELS[kind].us(team);
+      const de = TANK_MODELS[kind].de(team);
+      expect(us.faces.length).toBeGreaterThan(20);
+      expect(de.faces.length).toBeGreaterThan(20);
+      expect(TANK_MODELS[kind].us).not.toBe(TANK_MODELS[kind].de);
+    }
+  });
+
+  it("each gun points forward, ahead of the hull's middle, and slides back when it recoils", () => {
+    for (const kind of kinds) {
+      for (const make of [TANK_MODELS[kind].us, TANK_MODELS[kind].de]) {
+        const still = make(team).muzzle;
+        const recoiled = make(team, 4).muzzle;
+        expect(still[0]).toBeGreaterThan(20);
+        expect(recoiled[0]).toBe(still[0] - 4);
+      }
+    }
+  });
+
+  it("at 5° the view is mostly side-on: a tank's length on screen is nearly its full length", () => {
+    const tip = project([40, 0, 0], BATTLE_VIEW).x;
+    expect(tip).toBeGreaterThan(39);
+    expect(Math.round((-BATTLE_VIEW.yaw * 180) / Math.PI)).toBe(5);
   });
 });
