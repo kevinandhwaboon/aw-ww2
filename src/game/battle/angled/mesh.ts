@@ -1,5 +1,5 @@
-// Prototype (not used by the game yet): battle figures built from simple 3D shapes and drawn from a
-// three-quarter view, so a vehicle's front, turret face and gun mantlet show as well as its side.
+// Battle figures built from simple 3D shapes and drawn turned a little toward the viewer, so a
+// vehicle's turret roof, front and mantlet show as well as its side (08-art-pipeline §18).
 // Shapes are boxes, extrusions and lofts; they're turned toward the viewer, lit, and painted back
 // to front as crisp pixel polygons.
 
@@ -23,7 +23,8 @@ export interface View {
   readonly pitch: number;
 }
 
-export const THREE_QUARTER: View = { yaw: -0.087, pitch: 0.42 };
+/** Battle scenes turn vehicles 5° toward the viewer and look down about 24° (08-art-pipeline §18). */
+export const BATTLE_VIEW: View = { yaw: -0.087, pitch: 0.42 };
 
 // Model axes: x forward (toward the enemy), y to the vehicle's left, z up. Units are scene pixels.
 

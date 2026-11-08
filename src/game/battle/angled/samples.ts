@@ -9,7 +9,7 @@ import { drawBackdrop, SCENE } from "../backdrops";
 import { C, Painter, teamShades } from "../paint";
 import type { Look, Pose } from "../rig";
 import { tankRig } from "../vehicles";
-import { drawMesh, screenPoint, THREE_QUARTER, type View } from "./mesh";
+import { drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
 import { panzerIV, sherman, tiger, type Model } from "./models";
 
 const US = { team: teamShades(0, "us"), nation: "us", paratrooper: false, suit: 0, submerged: false, dugIn: false, beached: false } as const satisfies Look;
@@ -48,15 +48,17 @@ function head(p: Painter, x: number, y: number, look: Look): void {
 }
 
 /** The view the samples use; `&deg=10` turns the figures 10 degrees toward the viewer. */
-let view: View = THREE_QUARTER;
+let view: View = BATTLE_VIEW;
 const degreesOf = (v: View) => Math.round((-v.yaw * 180) / Math.PI);
-const turned = (degrees: number): View => ({ ...THREE_QUARTER, yaw: (-degrees * Math.PI) / 180 });
+const turned = (degrees: number): View => ({ ...BATTLE_VIEW, yaw: (-degrees * Math.PI) / 180 });
 
 function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, x: number, y: number, flip: boolean, firing = false, scale = 1): void {
   stamp(target, x, y, (p) => {
     drawMesh(p, model.faces, view, 0, 0, flip, scale);
-    const c = screenPoint(model.commander, view, 0, 0, flip, scale);
-    head(p, c.x, c.y, look);
+    for (const at of [...(model.commander ? [model.commander] : []), ...(model.crew ?? [])]) {
+      const c = screenPoint(at, view, 0, 0, flip, scale);
+      head(p, c.x, c.y, look);
+    }
   });
   if (firing) {
     const p = new Painter(target);
@@ -156,7 +158,7 @@ export function showAngledSamples(root: HTMLElement, params: URLSearchParams): v
   const scale = Math.max(1, Number(params.get("scale") ?? 2));
   const only = params.get("sample");
   const deg = Number(params.get("deg") ?? NaN);
-  view = Number.isFinite(deg) ? turned(deg) : THREE_QUARTER;
+  view = Number.isFinite(deg) ? turned(deg) : BATTLE_VIEW;
   root.style.cssText = `display:flex;flex-wrap:wrap;gap:8px;padding:8px;overflow:auto;height:100vh;box-sizing:border-box;background:${packColor("uiBg")}`;
   const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp], ["angles", angles]];
   for (const [name, make] of samples) {

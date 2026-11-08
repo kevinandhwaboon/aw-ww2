@@ -4,6 +4,8 @@
 // a Tiger's interleaved wheels and Zimmerit, a Willys jeep's flat hood and upright windshield.
 // Stats never differ; only the look does.
 
+import { BATTLE_VIEW, drawMesh, screenPoint } from "./angled/mesh";
+import { TANK_MODELS, type Model, type TankKind } from "./angled/models";
 import { C, mix, shade, type Painter } from "./paint";
 import { drawSoldier, earsCovered, sandbags, soldierFrame } from "./soldiers";
 import { FIRE_TIMING } from "./timeline";
@@ -425,26 +427,46 @@ function drawTank(p: Painter, s: TankSpec, look: Look, recoil: number, seed: num
   }
 }
 
-export function tankRig(kind: keyof typeof TANKS): Rig {
-  const spec = (look: Look) => (de(look) ? TANKS[kind].de : TANKS[kind].us);
+/** Seen from a little above, the near track sits below the model's origin: lift it onto the slot. */
+const MODEL_LIFT = 6;
+
+/** Built models, by tank kind, nation, team color and how far the gun has recoiled (whole pixels). */
+const modelCache = new Map<string, Model>();
+
+function tankModel(kind: TankKind, look: Look, recoil: number): Model {
+  const key = `${kind}|${look.nation ?? ""}|${look.team.mid}|${recoil}`;
+  let model = modelCache.get(key);
+  if (!model) {
+    model = (de(look) ? TANK_MODELS[kind].de : TANK_MODELS[kind].us)(look.team, recoil);
+    modelCache.set(key, model);
+  }
+  return model;
+}
+
+/**
+ * Tanks and tank destroyers are 3D models turned 5° toward the viewer, so turret roofs, hatches
+ * and fronts show (08-art-pipeline §18). The gun recoils and the hull rocks when it fires.
+ */
+export function tankRig(kind: TankKind): Rig {
   return {
     body: "machine",
     hit: { x: 0, y: -18 },
     draw(p, pose, look) {
       const gun = pose.fire === "tankGun";
       const shotAt = FIRE_TIMING.tankGun.shots[0] ?? 150;
-      const recoil = gun ? kick(pose.ct, shotAt, 50, 350) * 5 : 0;
+      const recoil = gun ? Math.round(kick(pose.ct, shotAt, 50, 350) * 5) : 0;
       const rock = gun ? Math.round(kick(pose.ct, shotAt, 60, 200)) : 0;
-      p.ctx.save();
-      p.ctx.translate(-rock, 0);
-      drawTank(p, spec(look), look, recoil, pose.index);
-      p.ctx.restore();
+      const model = tankModel(kind, look, recoil);
+      drawMesh(p, model.faces, BATTLE_VIEW, -rock, -MODEL_LIFT);
+      for (const at of [...(model.commander ? [model.commander] : []), ...(model.crew ?? [])]) {
+        const head = screenPoint(at, BATTLE_VIEW, -rock, -MODEL_LIFT);
+        commander(p, Math.round(head.x) - 2, Math.round(head.y), look);
+      }
     },
     muzzle(pose, _shot, look): Muzzle {
-      const s = spec(look);
-      const g = tankGeometry(s);
-      if (pose.fire === "mg") return { x: g.mgAt.x + 4, y: g.mgAt.y, angle: 0 };
-      return { x: g.gunAt.x - 2 + s.gun.len, y: g.gunAt.y, angle: 0 };
+      const model = tankModel(kind, look, 0);
+      const at = screenPoint(pose.fire === "mg" ? model.mg : model.muzzle, BATTLE_VIEW, 0, -MODEL_LIFT);
+      return { x: at.x, y: at.y, angle: 0 };
     },
   };
 }
