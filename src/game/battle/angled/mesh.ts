@@ -123,6 +123,56 @@ export function decalY(y: number, outline: Poly2, color: string): Face {
   return { points: outline.map(([x, z]) => [x, y, z] as V3), color, decal: true, facing: [0, y < 0 ? -1 : 1, 0] };
 }
 
+/** A flat marking lying on a face at x (the front is x positive). */
+export function decalX(x: number, outline: Poly2, color: string): Face {
+  return { points: outline.map(([y, z]) => [x, y, z] as V3), color, decal: true, facing: [x < 0 ? -1 : 1, 0, 0] };
+}
+
+/** A flat marking lying on a roof or deck at height z. */
+export function decalZ(z: number, outline: Poly2, color: string): Face {
+  return { points: outline.map(([x, y]) => [x, y, z] as V3), color, decal: true, facing: [0, 0, 1] };
+}
+
+/** A square beam from a to b, `w` wide and `h` tall: gun trails, struts, frame tubes. */
+export function beam(a: V3, b: V3, w: number, h: number, color: string): Face[] {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy) || 1;
+  // Across the beam, level with the ground; for a vertical beam, across the vehicle.
+  const n: V3 = len > 0.01 ? [(-dy / len) * (w / 2), (dx / len) * (w / 2), 0] : [0, w / 2, 0];
+  const section = (c: V3): V3[] => [
+    [c[0] - n[0], c[1] - n[1], c[2] - h / 2],
+    [c[0] + n[0], c[1] + n[1], c[2] - h / 2],
+    [c[0] + n[0], c[1] + n[1], c[2] + h / 2],
+    [c[0] - n[0], c[1] - n[1], c[2] + h / 2],
+  ];
+  return loft(section(a), section(b), color);
+}
+
+/** Moves faces by (dx, dy, dz). */
+export function shift(faces: readonly Face[], dx: number, dy: number, dz: number): Face[] {
+  return faces.map((f) => ({ ...f, points: f.points.map((q) => [q[0] + dx, q[1] + dy, q[2] + dz] as V3) }));
+}
+
+/** A point turned up by `angle` radians about the axle across the vehicle at (x, z): a gun's elevation. */
+export function elevatePoint(q: V3, x: number, z: number, angle: number): V3 {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const dx = q[0] - x;
+  const dz = q[2] - z;
+  return [x + dx * c - dz * s, q[1], z + dx * s + dz * c];
+}
+
+/** Faces turned up by `angle` radians about the axle at (x, z): a gun or launcher raised to fire. */
+export function elevate(faces: readonly Face[], x: number, z: number, angle: number): Face[] {
+  return faces.map((f) => {
+    const turned: Face = { ...f, points: f.points.map((q) => elevatePoint(q, x, z, angle)) };
+    if (!f.facing) return turned;
+    const d = elevatePoint(f.facing, 0, 0, angle);
+    return { ...turned, facing: d };
+  });
+}
+
 // ---- Projection ----
 
 export interface Projected {
@@ -201,6 +251,13 @@ export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox:
 export function screenPoint(pt: V3, view: View, ox: number, oy: number, flip = false, scale = 1): { x: number; y: number } {
   const q = project(pt, view);
   return { x: ox + (flip ? -q.x : q.x) * scale, y: oy + q.y * scale };
+}
+
+/** The direction from a to b on screen, in radians (0 = right, negative = up), as Muzzle angles use. */
+export function screenAngle(a: V3, b: V3, view: View): number {
+  const p = project(a, view);
+  const q = project(b, view);
+  return Math.atan2(q.y - p.y, q.x - p.x);
 }
 
 export const tone = (a: string, b: string, t: number): string => mix(a, b, t);

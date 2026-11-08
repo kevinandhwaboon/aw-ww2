@@ -40,6 +40,8 @@ export interface Pose {
   readonly atAir: boolean;
   /** The half's displayed HP right now. */
   readonly hp: number;
+  /** Ms since this figure was knocked out; absent while it's alive. */
+  readonly down?: number;
 }
 
 /** How a figure goes down: soldiers fall, machines burn, aircraft drop out of the sky, ships settle. */
@@ -52,8 +54,12 @@ export interface Rig {
   draw(p: Painter, pose: Pose, look: Look): void;
   /** Where shot number `shot` of a cycle leaves from. */
   muzzle(pose: Pose, shot: number, look: Look): Muzzle;
-  /** Figures lying flat, which slump where they are instead of toppling over. */
-  prone?(index: number): boolean;
+  /**
+   * Soldiers draw their own fall (from `pose.down`): each man topples about his own feet while the
+   * gear around him (a mortar, sandbags) stays put. True while that gear is still on the ground
+   * after the men have gone, so its shadow stays too.
+   */
+  gearStays?(look: Look): boolean;
 }
 
 export const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));

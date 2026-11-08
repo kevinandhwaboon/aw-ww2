@@ -20,7 +20,7 @@ export interface Model {
 type Poly = (readonly [number, number])[];
 
 /** A five-pointed star lying on the vehicle's right side (y), centred at (x, z). */
-function starDecal(y: number, x: number, z: number, r: number): Face {
+export function starDecal(y: number, x: number, z: number, r: number): Face {
   const pts = Array.from({ length: 10 }, (_, i) => {
     const a = -Math.PI / 2 + (i * Math.PI) / 5;
     const rr = i % 2 === 0 ? r : r * 0.42;
@@ -30,7 +30,7 @@ function starDecal(y: number, x: number, z: number, r: number): Face {
 }
 
 /** German vehicles carry no insignia (08-art-pipeline §12): camouflage blotches on the side instead. */
-function camoDecals(y: number, x0: number, x1: number, z0: number, z1: number, t: TeamShades, seed: number): Face[] {
+export function camoDecals(y: number, x0: number, x1: number, z0: number, z1: number, t: TeamShades, seed: number): Face[] {
   const color = mix(t.lo, C("battleOlive"), 0.5);
   const out: Face[] = [];
   const count = Math.max(3, Math.floor((x1 - x0) / 12));
@@ -52,7 +52,7 @@ function trackProfile(x0: number, x1: number, h: number): Poly {
 }
 
 /** Both tracks, the belly between them, and the links along the near track's top and bottom. */
-function running(x0: number, x1: number, h: number, inner: number, outer: number, belly: string): Face[] {
+export function running(x0: number, x1: number, h: number, inner: number, outer: number, belly: string): Face[] {
   const f: Face[] = [];
   f.push(...extrudeY(inner, outer, trackProfile(x0, x1, h), rubber()));
   f.push(...extrudeY(-outer, -inner, trackProfile(x0, x1, h), rubber()));
@@ -62,7 +62,7 @@ function running(x0: number, x1: number, h: number, inner: number, outer: number
 }
 
 /** A road wheel on the near side: rubber rim, steel disc. */
-const roadWheel = (x: number, y: number, z: number, r: number, tone = 1) =>
+export const roadWheel = (x: number, y: number, z: number, r: number, tone = 1) =>
   wheel(x, y, z, r, 1.2, tone === 1 ? steel() : mix(steel(), steelDark(), 0.4), steelDark());
 
 // ---- US ----
