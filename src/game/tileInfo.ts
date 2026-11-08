@@ -19,6 +19,6 @@ export function tileInfo(state: GameState, tile: Point): TileInfo {
   return {
     terrain: terrainName(id),
     stars,
-    unit: unit ? { name: unitName(unit.type), owner: unit.owner } : null,
+    unit: unit ? { name: unit.submerged === true ? `${unitName(unit.type)} (submerged)` : unitName(unit.type), owner: unit.owner } : null,
   };
 }

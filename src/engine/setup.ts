@@ -25,9 +25,9 @@ import { startTurn } from "./turn";
 
 /**
  * What a player can build unless the scenario says otherwise: the units in play so far. Transport
- * Aircraft have no use until drops arrive in milestone 11, and ships arrive in milestone 10.
+ * Aircraft and Landing Craft wait for drops and beach landings in milestone 11.
  */
-const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((id) => UNITS[id].category !== "naval" && id !== "transportAircraft");
+const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((id) => id !== "transportAircraft" && id !== "landingCraft");
 
 export interface PlayerSetup {
   readonly name: string;

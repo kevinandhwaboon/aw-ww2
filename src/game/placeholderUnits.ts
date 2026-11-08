@@ -72,6 +72,17 @@ export function drawHpBadge(hp: number): HTMLCanvasElement {
   return c;
 }
 
+/** One wave on a dark background, marking a submerged submarine (05-supply-transport §9). */
+export function drawSubmergedBadge(): HTMLCanvasElement {
+  const [c, ctx] = canvas(7, 5);
+  ctx.fillStyle = "#101018";
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = activePack().colors.submerged;
+  // A "~" 7 wide: up, then down.
+  for (const [x, y] of [[0, 2], [1, 1], [2, 1], [3, 2], [4, 3], [5, 3], [6, 2]] as const) ctx.fillRect(x, y, 1, 1);
+  return c;
+}
+
 /** Veterancy chevrons: one for Veteran, three for Elite (03-combat §6). */
 export function drawVeterancyBadge(level: Exclude<VeterancyLevel, "rookie">): HTMLCanvasElement {
   const count = level === "elite" ? 3 : 1;

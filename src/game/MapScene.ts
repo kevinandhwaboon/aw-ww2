@@ -11,7 +11,7 @@ import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
 import { terrainLayers } from "./terrainTiles";
 import { clampScroll, FOLLOW_MARGIN_SQUARES, inLeftHalf, revealScroll, type Scroll, type Size } from "./viewport";
-import { drawHpBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
+import { drawHpBadge, drawSubmergedBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
 
 /** What the scene reports to whoever handles input (the InputController, wired up in main.ts). */
 export interface MapInputHandlers {
@@ -613,6 +613,12 @@ export class MapScene extends Phaser.Scene implements MapView {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
       }
+      if (event.type === "unitDived" || event.type === "unitSurfaced") {
+        // The sprite has already walked to where the submarine dived or surfaced.
+        const sprite = this.unitSprites.get(event.unitId);
+        const tile = sprite && { x: Math.round(sprite.x / TILE_SIZE), y: Math.round(sprite.y / TILE_SIZE) };
+        if (tile) await this.floatLabel(tile, event.type === "unitDived" ? "DIVE" : "SURFACE", packColor("submerged"));
+      }
     }
     await Promise.all(this.repairLabels(events));
   }
@@ -793,6 +799,8 @@ export class MapScene extends Phaser.Scene implements MapView {
       }
       // A transport carrying units shows a small marker.
       if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));
+      // So does a submerged submarine, in the same corner, which a submarine never otherwise uses.
+      if (unit.submerged === true) sprite.add(this.add.image(0, 0, this.texture("submerged", drawSubmergedBadge)).setOrigin(0));
       const { level } = veterancyFor(unit.kills);
       if (level !== "rookie") {
         sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));
@@ -805,8 +813,14 @@ export class MapScene extends Phaser.Scene implements MapView {
   /**
    * The unit's sprite from the art pack, animated until it has acted, or its placeholder marker.
    * Sprites are mirrored for a player the map faces left. Markers aren't: their letters would read backwards.
+   * A submerged submarine is tinted, as if seen through the water.
    */
   private unitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
+    const image = this.untintedUnitImage(unit);
+    return unit.submerged === true ? image.setTint(packColorNumber("submerged")) : image;
+  }
+
+  private untintedUnitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
     const player = this.state.players[unit.owner];
     const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
     if (!art || !this.textures.exists(unitSheetKey(art.sheet))) {
@@ -824,9 +838,11 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   /**
    * A dark copy of the unit's sprite, offset to the lower right. Drawn in the game rather than in the
-   * sheet so it still falls to the right when the sprite is mirrored. Placeholder markers have none.
+   * sheet so it still falls to the right when the sprite is mirrored. Placeholder markers and
+   * submerged submarines have none.
    */
   private unitShadow(unit: Unit): Phaser.GameObjects.Sprite | null {
+    if (unit.submerged === true) return null;
     const player = this.state.players[unit.owner];
     const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
     if (!art || !this.textures.exists(unitSheetKey(art.sheet))) return null;

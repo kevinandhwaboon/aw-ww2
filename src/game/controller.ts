@@ -9,6 +9,7 @@ import { buildOptions, captureProblem, type BuildOption } from "../engine/econom
 import { inBounds, type Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
 import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
+import { diveProblem, surfaceProblem } from "../engine/submarine";
 import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
 import { extendPath } from "./pathBuilder";
 
@@ -97,6 +98,8 @@ const LOAD: MenuItem = { id: "load", label: "LOAD" };
 const JOIN: MenuItem = { id: "join", label: "JOIN" };
 const UNLOAD: MenuItem = { id: "unload", label: "UNLOAD" };
 const SUPPLY: MenuItem = { id: "supply", label: "SUPPLY" };
+const DIVE: MenuItem = { id: "dive", label: "DIVE" };
+const SURFACE: MenuItem = { id: "surface", label: "SURFACE" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
 const RESIGN: MenuItem = { id: "resign", label: "RESIGN" };
@@ -295,6 +298,8 @@ export class InputController {
     else if (id === "load") void this.commit(mode, { type: "load" });
     else if (id === "join") void this.commit(mode, { type: "join" });
     else if (id === "supply") void this.commit(mode, { type: "supply" });
+    else if (id === "dive") void this.commit(mode, { type: "dive" });
+    else if (id === "surface") void this.commit(mode, { type: "surface" });
     else if (id === "unload") this.startUnloading(mode);
     else if (id === "fire") this.startTargeting(mode);
   }
@@ -430,6 +435,8 @@ export class InputController {
       ...(captureProblem(state, moved) === null ? [CAPTURE] : []),
       ...(passenger && unloadTiles(state, moved, passenger).length > 0 ? [UNLOAD] : []),
       ...(supplyTargets(state, moved).length > 0 ? [SUPPLY] : []),
+      ...(diveProblem(moved) === null ? [DIVE] : []),
+      ...(surfaceProblem(moved) === null ? [SURFACE] : []),
     ];
   }
 
