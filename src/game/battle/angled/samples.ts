@@ -1,6 +1,7 @@
 // Sample images for the three-quarter battle view prototype: `?battle=demo&angled=on`. Not part of
-// the game. Shows the current side view next to the three-quarter view, a battle scene mocked up in
-// the three-quarter view, and a close-up of the turrets.
+// the game. Shows the old side view next to the three-quarter view, a battle scene mocked up in
+// the three-quarter view, a close-up of the turrets, every other machine (`&sample=machines`) and the
+// bunker (`&sample=bunker`).
 
 import { packColor } from "../../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../../pixelFont";
@@ -8,7 +9,8 @@ import { playerColors } from "../../placeholderUnits";
 import { drawBackdrop, SCENE } from "../backdrops";
 import { C, Painter, teamShades } from "../paint";
 import type { Look, Pose } from "../rig";
-import { tankRig } from "../vehicles";
+import type { Rig } from "../rig";
+import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "../vehicles";
 import { drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
 import { panzerIV, sherman, tiger, type Model } from "./models";
 
@@ -154,18 +156,44 @@ function angles(): HTMLCanvasElement {
   return c;
 }
 
+/** Every machine other than the tanks, US above German, at rest: `&sample=machines`. */
+function machines(): HTMLCanvasElement {
+  const [c, ctx] = canvas(600, 350);
+  ctx.fillStyle = C("battleGrass");
+  ctx.fillRect(0, 0, 600, 350);
+  const rigs: [Rig, Partial<Pose>][] = [[reconRig, {}], [halftrackRig, {}], [mobileAARig, { atAir: true }], [flakRig, { atAir: true }], [artilleryRig, {}], [rocketRig, { index: 1 }]];
+  [US, DE].forEach((look, nation) => {
+    rigs.forEach(([rig, pose], i) => {
+      const x = 90 + (i % 3) * 200;
+      const y = 80 + nation * 170 + (i >= 3 ? 80 : 0);
+      stamp(ctx, x, y, (q) => rig.draw(q, { ...IDLE, ...pose }, look));
+    });
+  });
+  return c;
+}
+
+/** The bunker and its defenders, at rest and knocked out: `&sample=bunker`. */
+function fort(): HTMLCanvasElement {
+  const [c, ctx] = canvas(SCENE.width, SCENE.height);
+  ground(ctx);
+  const neutral: Look = { ...US, team: teamShades(null, null), nation: null };
+  stamp(ctx, 96, 200, (q) => bunkerRig.draw(q, IDLE, neutral));
+  stamp(ctx, 280, 200, (q) => bunkerRig.draw(q, { ...IDLE, hp: 3 }, neutral));
+  return c;
+}
+
 export function showAngledSamples(root: HTMLElement, params: URLSearchParams): void {
   const scale = Math.max(1, Number(params.get("scale") ?? 2));
   const only = params.get("sample");
   const deg = Number(params.get("deg") ?? NaN);
   view = Number.isFinite(deg) ? turned(deg) : BATTLE_VIEW;
   root.style.cssText = `display:flex;flex-wrap:wrap;gap:8px;padding:8px;overflow:auto;height:100vh;box-sizing:border-box;background:${packColor("uiBg")}`;
-  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp], ["angles", angles]];
+  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp], ["angles", angles], ["machines", machines], ["bunker", fort]];
   for (const [name, make] of samples) {
     if (only && only !== name) continue;
     const source = make();
-    const [view, vctx] = canvas(SCENE.width * scale, SCENE.height * scale);
-    vctx.drawImage(source, 0, 0, SCENE.width * scale, SCENE.height * scale);
+    const [view, vctx] = canvas(source.width * scale, source.height * scale);
+    vctx.drawImage(source, 0, 0, source.width * scale, source.height * scale);
     view.title = name;
     root.append(view);
   }

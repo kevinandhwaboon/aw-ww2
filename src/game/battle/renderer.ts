@@ -322,7 +322,7 @@ export class BattleRenderer {
       ctx.globalAlpha = 0.28;
       for (const i of order) {
         const died = h.deaths.get(i);
-        if (died !== undefined && h.rig.body === "soldier" && t > died + 1100) continue;
+        if (died !== undefined && h.rig.body === "soldier" && t > died + 1100 && !h.rig.gearStays?.(h.look)) continue;
         const s = this.slot(h, i);
         this.p.ellipse(s.x - h.dir * 2, s.y, SHADOW[h.data.kind], 3, C("battleInk"));
       }
@@ -347,7 +347,7 @@ export class BattleRenderer {
   private drawFigure(h: HalfView, i: number, t: number): void {
     const died = h.deaths.get(i);
     const age = died === undefined ? -1 : t - died;
-    if (age > 1100 && h.rig.body === "soldier") return;
+    if (age > 1100 && h.rig.body === "soldier" && !h.rig.gearStays?.(h.look)) return;
     if (age > 1400 && h.rig.body === "air") return;
     const pose = this.pose(h, i, t);
     const alive = age < 0;
@@ -357,7 +357,7 @@ export class BattleRenderer {
     f.clearRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
     f.save();
     f.translate(FIGURE_BOX.ox, FIGURE_BOX.oy);
-    h.rig.draw(this.fig, alive ? pose : { ...pose, fire: null, ct: null }, h.look);
+    h.rig.draw(this.fig, alive ? pose : { ...pose, fire: null, ct: null, down: age }, h.look);
     f.restore();
     const tint = (color: string, alpha: number) => {
       f.save();
@@ -382,15 +382,9 @@ export class BattleRenderer {
     const at = this.slot(h, i);
     let dy = 0;
     let rotate = 0;
-    let alpha = 1;
+    // Soldiers draw their own fall; see Rig.gearStays.
     if (!alive) {
-      if (h.rig.body === "soldier" && h.rig.prone?.(i)) {
-        dy = Math.min(2, age / 100);
-        alpha = 1 - seg(age, 500, 1000);
-      } else if (h.rig.body === "soldier") {
-        rotate = -(age < 90 ? 0.5 : age < 180 ? 1.1 : Math.PI / 2);
-        alpha = 1 - seg(age, 700, 1100);
-      } else if (h.rig.body === "air") {
+      if (h.rig.body === "air") {
         dy = Math.pow(age / 1000, 2) * 170;
         rotate = Math.min(0.7, age / 900);
       } else if (h.rig.body === "ship") {
@@ -404,7 +398,6 @@ export class BattleRenderer {
       ctx.rect(h.x0, 0, SCENE.half, at.y + 3);
       ctx.clip();
     }
-    ctx.globalAlpha = alpha;
     ctx.translate(at.x, Math.round(at.y + dy));
     ctx.scale(h.dir, 1);
     ctx.rotate(rotate);

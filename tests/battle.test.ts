@@ -9,6 +9,8 @@ import { figureCount, fireKind, planCombat, planFortAttack, squadWeapon, type Ba
 import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt } from "../src/game/battle/timeline";
 import { BATTLE_VIEW, project } from "../src/game/battle/angled/mesh";
 import { TANK_MODELS } from "../src/game/battle/angled/models";
+import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys } from "../src/game/battle/angled/vehicleModels";
+import { FALL_MS, fallAt } from "../src/game/battle/fall";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -250,5 +252,67 @@ describe("tanks drawn turned 5° toward the viewer (08-art-pipeline §18)", () =
     const tip = project([40, 0, 0], BATTLE_VIEW).x;
     expect(tip).toBeGreaterThan(39);
     expect(Math.round((-BATTLE_VIEW.yaw * 180) / Math.PI)).toBe(5);
+  });
+});
+
+describe("the other land machines drawn turned 5° too (08-art-pipeline §18)", () => {
+  const team = { hi: "#88aaff", mid: "#4466cc", lo: "#334488", deep: "#223366", cloth: "#556677", clothLo: "#445566" };
+  const all = (m: { far: readonly unknown[]; near: readonly unknown[]; front?: readonly unknown[] }) => m.far.length + m.near.length + (m.front?.length ?? 0);
+
+  it("recon, halftracks, Mobile AA, flak guns, howitzers and rocket launchers each have a US and a German model", () => {
+    const pairs = [
+      [willys(team), r75(team)],
+      [m3(team), sdkfz251(team)],
+      [quadAA(team, false, 1, -1), quadAA(team, true, 1, -1)],
+      [flakGun(team, false, 1, 0), flakGun(team, true, 1, 0)],
+      [howitzer(team, false, 0.85, 0), howitzer(team, true, 0.85, 0)],
+      [calliope(team, 0.38), nebelwerfer(team, 0.75)],
+    ] as const;
+    for (const [us, de] of pairs) {
+      expect(all(us)).toBeGreaterThan(20);
+      expect(all(de)).toBeGreaterThan(20);
+      expect(all(us)).not.toBe(all(de));
+    }
+    expect(all(bunker(team))).toBeGreaterThan(20);
+  });
+
+  it("anti-aircraft guns point high at aircraft and nearly level at ground targets", () => {
+    const high = quadAA(team, false, 1.05, -1).at.muzzle0;
+    const low = quadAA(team, false, 0.13, -1).at.muzzle0;
+    expect(high[2]).toBeGreaterThan(low[2] + 15);
+    expect(flakGun(team, true, 1, 0).at.muzzle[2]).toBeGreaterThan(flakGun(team, true, 0.07, 0).at.muzzle[2] + 30);
+  });
+
+  it("howitzers and rocket launchers are raised, so their rounds leave climbing", () => {
+    const gun = howitzer(team, false, 0.85, 0);
+    expect(gun.at.muzzle[2]).toBeGreaterThan(gun.at.breech[2] + 30);
+    expect(nebelwerfer(team, 0.75).at.muzzle0[2]).toBeGreaterThan(30);
+    expect(calliope(team, 0.38).at.muzzle4[2]).toBeGreaterThan(calliope(team, 0.38).at.muzzle0[2]);
+  });
+
+  it("every barrel of a quad mount and every Nebelwerfer tube fires from its own muzzle", () => {
+    const quad = quadAA(team, true, 1, -1).at;
+    expect(new Set([quad.muzzle0, quad.muzzle1, quad.muzzle2, quad.muzzle3].map((m) => m.join())).size).toBe(4);
+    const nebel = nebelwerfer(team, 0.75).at;
+    expect(new Set([nebel.muzzle0, nebel.muzzle1, nebel.muzzle2, nebel.muzzle3, nebel.muzzle4, nebel.muzzle5].map((m) => m.join())).size).toBe(6);
+  });
+});
+
+describe("soldiers falling in battle scenes (08-art-pipeline §18)", () => {
+  it("a man who is hit topples onto his back about his own feet, so the mortar or sandbags beside him stay put", () => {
+    expect(fallAt(0, false).angle).toBeGreaterThan(0);
+    expect(fallAt(400, false).angle).toBeCloseTo(Math.PI / 2);
+    expect(fallAt(400, false).sink).toBe(0);
+  });
+
+  it("a man lying prone slumps where he lies instead of toppling", () => {
+    expect(fallAt(400, true).angle).toBe(0);
+    expect(fallAt(400, true).sink).toBeGreaterThan(0);
+  });
+
+  it("fallen men fade out by the time the scene moves on", () => {
+    expect(fallAt(100, false).alpha).toBe(1);
+    expect(fallAt(FALL_MS, false).alpha).toBe(0);
+    expect(fallAt(FALL_MS, true).alpha).toBe(0);
   });
 });

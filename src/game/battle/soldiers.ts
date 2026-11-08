@@ -3,12 +3,35 @@
 // weapons and webbing read clearly: the US M1 helmet, Garand, Thompson and BAR; the German
 // Stahlhelm, Kar98k, MP 40 and MG 42.
 
+import { fallAt, FALL_MS } from "./fall";
 import { squadWeapon } from "./plan";
 import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING, figureTiming } from "./timeline";
 import { along, justFired, kick, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
 export type Stance = "stand" | "kneel" | "crouch" | "run";
+
+/**
+ * Draws one man, who may have been hit (`down` ms ago): he topples backwards about his feet at
+ * `footX` and fades, without taking the gear around him along (fall.ts). `facing` -1 for a man
+ * facing left, who falls the other way.
+ */
+function falling(p: Painter, down: number | undefined, footX: number, draw: () => void, o: { facing?: 1 | -1; prone?: boolean } = {}): void {
+  if (down === undefined) {
+    draw();
+    return;
+  }
+  if (down > FALL_MS) return;
+  const f = fallAt(down, o.prone ?? false);
+  const { ctx } = p;
+  ctx.save();
+  ctx.globalAlpha *= f.alpha;
+  ctx.translate(footX, f.sink);
+  ctx.rotate(-f.angle * (o.facing ?? 1));
+  ctx.translate(-footX, 0);
+  draw();
+  ctx.restore();
+}
 
 export interface Frame {
   readonly top: number;
@@ -499,45 +522,52 @@ function drawProne(p: Painter, look: Look, butt: Pt, angle: number, kind: GunKin
   p.rect(butt.x + 8, butt.y, 3, 3, C("battleSkin"));
 }
 
+/** One man of a rifle squad, with his weapon and its brass. */
+function drawRifleman(p: Painter, pose: Pose, look: Look, g: ReturnType<typeof gunPose>): void {
+  const shots = shotsFor(pose, look);
+  const fired = justFired(pose.ct, shots, 50);
+  const recoil = g.kind === "garand" || g.kind === "kar98" || g.kind === "carbine" ? kick(pose.ct, shots[0] ?? 0, 40, 160) * 2 : fired >= 0 ? 1 : 0;
+  if (g.stance === "prone") {
+    drawProne(p, look, g.butt, g.angle, g.kind, recoil);
+    return;
+  }
+  const spec = GUN[g.kind];
+  const trigger = along(g.butt.x, g.butt.y, g.angle, spec.trigger - recoil);
+  const fore = along(g.butt.x, g.butt.y, g.angle, spec.fore - recoil);
+  // A German rifleman works the Kar98k's bolt between shots.
+  const bolt = g.kind === "kar98" && pose.ct !== null ? seg(pose.ct, 280, 360) - seg(pose.ct, 440, 520) : 0;
+  const back = g.aiming ? { x: lerp(trigger.x, trigger.x + 3, bolt), y: lerp(trigger.y + 2, trigger.y - 3, bolt) } : { x: trigger.x, y: trigger.y + 1 };
+  drawSoldier(p, 0, g.bob, g.stance, look, {
+    lean: g.aiming ? 1 : 0,
+    headDx: g.aiming ? 1 : 0,
+    back,
+    front: { x: fore.x, y: fore.y + 1 },
+    weapon: () => {
+      drawGun(p, g.butt.x, g.butt.y, g.angle, g.kind, look, recoil);
+    },
+  });
+  // Brass: the Garand flicks its casing up and back; the Kar98k drops it as the bolt opens.
+  if (pose.ct !== null && (g.kind === "garand" || g.kind === "kar98")) {
+    const ejectAt = g.kind === "kar98" ? 380 : 220;
+    const u = seg(pose.ct, ejectAt, ejectAt + 260);
+    if (u > 0 && u < 1) {
+      const from = along(g.butt.x, g.butt.y, g.angle, 13);
+      p.rect(from.x - u * 9, from.y - Math.sin(u * Math.PI) * 10 + u * 8, 2, 1, C("battleBrass"));
+    }
+  }
+}
+
 export const infantryRig: Rig = {
   body: "soldier",
   hit: { x: 1, y: -20 },
-  prone: (index) => stanceOf(index) === "prone",
+  gearStays: (look) => look.dugIn,
   draw(p, pose, look) {
     const g = gunPose(pose, look);
-    const shots = shotsFor(pose, look);
-    const fired = justFired(pose.ct, shots, 50);
-    const recoil = g.kind === "garand" || g.kind === "kar98" || g.kind === "carbine" ? kick(pose.ct, shots[0] ?? 0, 40, 160) * 2 : fired >= 0 ? 1 : 0;
-    if (g.stance === "prone") {
-      drawProne(p, look, g.butt, g.angle, g.kind, recoil);
-      if (look.dugIn) sandbags(p, 18, 34, 0, 8);
-      return;
+    falling(p, pose.down, 0, () => drawRifleman(p, pose, look, g), { prone: g.stance === "prone" });
+    if (look.dugIn) {
+      if (g.stance === "prone") sandbags(p, 18, 34, 0, 8);
+      else sandbags(p, -16, 16, 0, g.stance === "stand" ? 18 : 12);
     }
-    const spec = GUN[g.kind];
-    const trigger = along(g.butt.x, g.butt.y, g.angle, spec.trigger - recoil);
-    const fore = along(g.butt.x, g.butt.y, g.angle, spec.fore - recoil);
-    // A German rifleman works the Kar98k's bolt between shots.
-    const bolt = g.kind === "kar98" && pose.ct !== null ? seg(pose.ct, 280, 360) - seg(pose.ct, 440, 520) : 0;
-    const back = g.aiming ? { x: lerp(trigger.x, trigger.x + 3, bolt), y: lerp(trigger.y + 2, trigger.y - 3, bolt) } : { x: trigger.x, y: trigger.y + 1 };
-    drawSoldier(p, 0, g.bob, g.stance, look, {
-      lean: g.aiming ? 1 : 0,
-      headDx: g.aiming ? 1 : 0,
-      back,
-      front: { x: fore.x, y: fore.y + 1 },
-      weapon: () => {
-        drawGun(p, g.butt.x, g.butt.y, g.angle, g.kind, look, recoil);
-      },
-    });
-    // Brass: the Garand flicks its casing up and back; the Kar98k drops it as the bolt opens.
-    if (pose.ct !== null && (g.kind === "garand" || g.kind === "kar98")) {
-      const ejectAt = g.kind === "kar98" ? 380 : 220;
-      const u = seg(pose.ct, ejectAt, ejectAt + 260);
-      if (u > 0 && u < 1) {
-        const from = along(g.butt.x, g.butt.y, g.angle, 13);
-        p.rect(from.x - u * 9, from.y - Math.sin(u * Math.PI) * 10 + u * 8, 2, 1, C("battleBrass"));
-      }
-    }
-    if (look.dugIn) sandbags(p, -16, 16, 0, g.stance === "stand" ? 18 : 12);
   },
   muzzle(pose, _shot, look): Muzzle {
     const g = gunPose({ ...pose, fire: pose.fire ?? "rifle" }, look);
@@ -551,6 +581,7 @@ export const infantryRig: Rig = {
 export const assaultRig: Rig = {
   body: "soldier",
   hit: { x: -6, y: -18 },
+  gearStays: (look) => look.dugIn,
   draw(p, pose, look) {
     const de = look.nation === "germany";
     const ct = pose.fire === "bazooka" ? pose.ct : null;
@@ -577,7 +608,7 @@ export const assaultRig: Rig = {
     p.rect(lx - 13, -7, 8, 1, shade(C("battleOlive"), 1.3));
     p.rect(lx - 12, -10, 2, 3, C("battleSteelDark"));
     p.rect(lx - 9, -10, 2, 3, C("battleSteelDark"));
-    drawSoldier(p, lx, 0, lStance, look, {
+    falling(p, pose.down, lx, () => drawSoldier(p, lx, 0, lStance, look, {
       ...(ducking
         ? earsCovered(lf)
         : tap
@@ -594,14 +625,14 @@ export const assaultRig: Rig = {
           p.rect(rocketAt.x - 2, rocketAt.y - 2, 2, 5, C("battleSteelDark"));
         }
       },
-    });
+    }));
 
     // The gunner kneels with the launcher on his shoulder, or fires his submachine gun.
     if (smg) {
       const kind: GunKind = de ? "mp40" : "thompson";
       const fired = justFired(pose.ct, FIRE_TIMING.mg.shots, 50) >= 0 ? 1 : 0;
       const butt = { x: g.backShoulder.x - 1 - fired, y: g.top + 5 };
-      drawSoldier(p, 0, 0, "kneel", look, {
+      falling(p, pose.down, 0, () => drawSoldier(p, 0, 0, "kneel", look, {
         lean: 1,
         headDx: 1,
         back: { x: butt.x + GUN[kind].trigger, y: butt.y + 2 },
@@ -611,10 +642,11 @@ export const assaultRig: Rig = {
           p.line(-14, g.top - 2, 8, g.top + 12, de ? C("battleSteelDark") : look.team.lo, 3);
           drawGun(p, butt.x, butt.y, 0, kind, look);
         },
-      });
+      }));
+      if (look.dugIn) sandbags(p, -36, 12, 0, 10);
       return;
     }
-    drawSoldier(p, 0, 0, "kneel", look, {
+    falling(p, pose.down, 0, () => drawSoldier(p, 0, 0, "kneel", look, {
       lean: 1,
       headDx: 1,
       back: { x: tubeBack + 17, y: tubeY + 4 },
@@ -647,7 +679,7 @@ export const assaultRig: Rig = {
           p.rect(tubeBack + tubeLen - 2, tubeY - 2, 2, 5, steel);
         }
       },
-    });
+    }));
     if (look.dugIn) sandbags(p, -36, 12, 0, 10);
   },
   muzzle(pose, _shot, look): Muzzle {
@@ -669,6 +701,7 @@ const MORTAR_LEN = 28;
 export const mortarRig: Rig = {
   body: "soldier",
   hit: { x: 6, y: -16 },
+  gearStays: () => true,
   draw(p, pose, look) {
     const ct = pose.ct;
     const shotAt = FIRE_TIMING.mortar.shots[0] ?? 430;
@@ -694,7 +727,7 @@ export const mortarRig: Rig = {
     // The assistant kneels behind the tube on the sight; he covers his ears when it fires.
     const aStance: Stance = ducked ? "crouch" : "kneel";
     const af = soldierFrame(-14, 0, aStance);
-    drawSoldier(p, -14, 0, aStance, look, ducked ? earsCovered(af) : { front: { x: base.x - 1, y: base.y - 12 }, back: { x: af.backShoulder.x + 4, y: af.hip - 1 } });
+    falling(p, pose.down, -14, () => drawSoldier(p, -14, 0, aStance, look, ducked ? earsCovered(af) : { front: { x: base.x - 1, y: base.y - 12 }, back: { x: af.backShoulder.x + 4, y: af.hip - 1 } }));
 
     // The loader kneels on the far side, facing the tube: he lifts a round over the muzzle, lets it
     // drop, and ducks with his hands over his ears.
@@ -706,18 +739,12 @@ export const mortarRig: Rig = {
       : { x: muzzle.x, y: lerp(muzzle.y - 12, muzzle.y - 2, drop) };
     const lf = soldierFrame(lx, 0, lStance);
     const head = { x: 2 * lx - lf.head.x - 6, y: lf.head.y };
-    drawSoldierFacingLeft(
-      p,
-      lx,
-      0,
-      lStance,
-      look,
-      ducked
-        ? { back: { x: head.x + 5, y: head.y + 3 }, front: { x: head.x, y: head.y + 3 } }
-        : holding
-          ? { front: { x: roundAt.x + 1, y: roundAt.y + 5 }, back: { x: roundAt.x + 2, y: roundAt.y + 7 } }
-          : { front: { x: muzzle.x + 4, y: muzzle.y - 4 }, back: { x: muzzle.x + 5, y: muzzle.y - 1 } },
-    );
+    const loaderPose = ducked
+      ? { back: { x: head.x + 5, y: head.y + 3 }, front: { x: head.x, y: head.y + 3 } }
+      : holding
+        ? { front: { x: roundAt.x + 1, y: roundAt.y + 5 }, back: { x: roundAt.x + 2, y: roundAt.y + 7 } }
+        : { front: { x: muzzle.x + 4, y: muzzle.y - 4 }, back: { x: muzzle.x + 5, y: muzzle.y - 1 } };
+    falling(p, pose.down, lx, () => drawSoldierFacingLeft(p, lx, 0, lStance, look, loaderPose), { facing: -1 });
 
     // The mortar, in front: baseplate, tube, bipod with its traversing gear, and the sight.
     p.rect(base.x - 8, base.y, 17, 4, C("battleSteel"));
@@ -735,8 +762,8 @@ export const mortarRig: Rig = {
     p.rect(collar.x - 6, collar.y - 4, 3, 3, look.team.lo);
     p.px(collar.x - 5, collar.y - 4, C("battleSkyLow"));
 
-    // The round, fins down: olive with a yellow band.
-    if (ct === null || ct < 330) {
+    // The round, fins down: olive with a yellow band. A loader who's been hit drops it.
+    if ((ct === null || ct < 330) && pose.down === undefined) {
       p.rect(roundAt.x - 1, roundAt.y, 4, 8, C("battleOlive"));
       p.px(roundAt.x, roundAt.y - 1, C("battleOlive"));
       p.px(roundAt.x + 1, roundAt.y - 1, C("battleOlive"));
