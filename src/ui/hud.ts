@@ -6,7 +6,8 @@ import type { Modifier } from "../engine/modifiers";
 import type { Point } from "../engine/map";
 import { displayHp, type DefeatReason, type GameState, type Player, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
-import { activePack, findUnitArt, terrainName, unitName as unitTypeName } from "../game/artPack";
+import { activePack, findUnitArt, terrainName, unitName as unitTypeName, weatherName } from "../game/artPack";
+import { weatherOn } from "../engine/weather";
 import type { BuildMenu } from "../game/controller";
 import { packFileUrl } from "../game/loadArtPack";
 import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
@@ -90,9 +91,10 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
   const hud = el("div", "panel hud");
   const flag = el("span", "hud-flag");
   const day = el("span", "hud-day");
+  const weather = el("span", "hud-weather");
   const funds = el("span", "hud-funds");
   const objectives = el("div", "hud-objectives");
-  hud.append(flag, day, funds, objectives);
+  hud.append(flag, day, weather, funds, objectives);
   root.append(hud);
   let shownNation: NationId | undefined;
 
@@ -105,6 +107,9 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
         flag.replaceChildren(drawFlag(current.nation));
       }
       day.textContent = `Day ${state.day}`;
+      const today = weatherOn(state);
+      weather.textContent = `${today === "snow" ? "❄" : "☀"} ${weatherName(today)}`;
+      weather.dataset.weather = today;
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
       const lines = objectiveLines(state);
       objectives.hidden = lines.length === 0;
@@ -436,6 +441,8 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
       return `${name(e.player)} ended their turn`;
     case "dayStarted":
       return `Day ${e.day} begins`;
+    case "weatherChanged":
+      return `The weather turns to ${weatherName(e.weather)}`;
     case "turnStarted":
       return `Turn: ${name(e.player)} (day ${e.day})`;
   }

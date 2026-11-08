@@ -195,6 +195,56 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
+  describe("Bastogne (13-scenarios-ardennes)", () => {
+    const bastogne = SCENARIOS.find((s) => s.id === "bastogne");
+    if (!bastogne) throw new Error("missing scenario");
+    const { map, units, victory, weather } = bastogne.setup;
+    const town = victory?.find((v) => v.type === "captureProperties")?.properties[0];
+    if (!town) throw new Error("missing objective");
+    const roadsOut = [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx, dy]) => {
+      const t = terrainAt(map, P(town.x + (dx ?? 0), town.y + (dy ?? 0)));
+      return t === "road" || t === "bridge";
+    });
+
+    it("Germany wins by taking the town of Bastogne, which the US holds at the start", () => {
+      expect(terrainAt(map, town)).toBe("city");
+      expect(bastogne.setup.propertyOwners).toContainEqual({ pos: town, owner: 0 });
+      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [town] });
+    });
+
+    it("the US wins by holding out to the start of day 12", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 12 });
+    });
+
+    it("Bastogne is a crossroads: roads leave it on every side", () => {
+      expect(roadsOut).toHaveLength(4);
+    });
+
+    it("snow falls for the first five days, then the skies clear on day 6, and the map is drawn in winter (12-weather)", () => {
+      expect(weather).toEqual({ season: "winter", forecast: [{ fromDay: 1, weather: "snow" }, { fromDay: 6, weather: "clear" }] });
+    });
+
+    it("Germany attacks with the bigger army, but its tanks start short of fuel", () => {
+      const count = (owner: number) => units?.filter((u) => u.owner === owner).length ?? 0;
+      expect(count(1)).toBeGreaterThan(count(0));
+      const tanks = units?.filter((u) => u.owner === 1 && (u.type === "heavyTank" || u.type === "mediumTank")) ?? [];
+      expect(tanks.length).toBeGreaterThanOrEqual(4);
+      for (const t of tanks) expect(t.fuel).toBeLessThan(UNITS[t.type].maxFuel * 0.7);
+    });
+
+    it("only the US can build aircraft: Germany has no airfield and no planes on its build list", () => {
+      expect(properties(bastogne, "airfield", 0)).toHaveLength(1);
+      expect(properties(bastogne, "airfield", 1)).toHaveLength(0);
+      expect(bastogne.setup.players[1]?.buildable?.some((t) => UNITS[t].category === "air")).toBe(false);
+    });
+
+    it("German tanks can drive from their start to Bastogne", () => {
+      const tank = units?.find((u) => u.owner === 1 && u.type === "mediumTank");
+      if (!tank) throw new Error("no tank");
+      expect(connected(map, "tracks", tank.pos, town)).toBe(true);
+    });
+  });
+
   it("the coastal map gives each side a port and starts both with a Destroyer and a Submarine (11-tech-setup §6, milestone 10)", () => {
     const scenario = SCENARIOS.find((s) => s.id === "narrow-sea");
     if (!scenario) throw new Error("missing scenario");

@@ -9,7 +9,7 @@
 ## 1. Principles
 
 1. Terrain has two jobs: **movement cost** (per movement type) and **defense stars** (used in the damage formula, 03-combat section 1).
-2. All terrain values live in data files and pass through the modifier layer (weather, COs later).
+2. All terrain values live in data files and pass through the modifier layer (weather: 12-weather; COs later).
 3. Air units always get 0 defense stars, whatever the terrain under them.
 4. Names are generic and WW2-flavored, not copied from the original.
 

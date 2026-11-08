@@ -1,6 +1,7 @@
 // The built-in scenarios, in the order the map select shows them. Each file is validated on load.
 
 import { parseScenario, type Scenario } from "../engine/scenario";
+import bastogne from "./bastogne.json";
 import beachhead from "./beachhead.json";
 import bocageCountry from "./bocage-country.json";
 import contestedSkies from "./contested-skies.json";
@@ -10,4 +11,4 @@ import normandy from "./normandy.json";
 import provingGround from "./proving-ground.json";
 import twinBridges from "./twin-bridges.json";
 
-export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, crossroads, contestedSkies, narrowSea, beachhead, normandy, provingGround].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, crossroads, contestedSkies, narrowSea, beachhead, normandy, bastogne, provingGround].map(parseScenario);

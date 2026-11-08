@@ -4,6 +4,7 @@
 import type { NationId, Side } from "./data/nations";
 import type { TerrainId } from "./data/terrain";
 import type { UnitTypeId } from "./data/units";
+import type { Season, WeatherId } from "./data/weather";
 import type { Point } from "./map";
 import type { Modifier, PlayerId } from "./modifiers";
 import type { RngState } from "./rng";
@@ -109,6 +110,23 @@ export interface Settings {
   readonly unitCap: number | null;
 }
 
+/** From `fromDay` on, the weather is `weather` (12-weather §4). */
+export interface ForecastEntry {
+  readonly fromDay: number;
+  readonly weather: WeatherId;
+}
+
+/** The scenario's weather plan (12-weather §1, §6). */
+export interface WeatherPlan {
+  /** Art only: whether the map is drawn snowy. No rule reads it. */
+  readonly season: Season;
+  /** Starts on day 1, start days rising. */
+  readonly forecast: readonly ForecastEntry[];
+}
+
+/** Clear all game, summer art: a scenario that says nothing about weather. */
+export const DEFAULT_WEATHER: WeatherPlan = { season: "summer", forecast: [{ fromDay: 1, weather: "clear" }] };
+
 export const DEFAULT_SETTINGS: Settings = { luck: true, incomePerProperty: 1000, unitCap: null };
 
 export interface GameState {
@@ -133,6 +151,8 @@ export interface GameState {
   /** Scenario, commander and weather modifiers. Veterancy is derived from units, not stored here. */
   readonly modifiers: readonly Modifier[];
   readonly settings: Settings;
+  /** The day's weather comes from this plan and the day number (engine/weather.ts). */
+  readonly weather: WeatherPlan;
   readonly victoryConditions: readonly VictoryCondition[];
   /**
    * For each victory condition, by index: the days in a row a holdProperties condition's side has

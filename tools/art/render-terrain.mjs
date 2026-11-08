@@ -50,3 +50,23 @@ const b32 = await import("./buildings32.mjs");
   savePng(bSheet, join(dir, "buildings-32.png"));
   console.log(`terrain and buildings rendered at 32x64`);
 }
+
+// ---- Winter versions of the 32-pixel terrain and buildings (08-art-pipeline §21): same layouts,
+// so the same tile numbers. Buildings keep their owner roofs and stand on snow.
+const w32 = await import("./terrain32-winter.mjs");
+{
+  const rows32 = Math.ceil(w32.layout.length / w32.ACROSS);
+  const sheet = canvas(w32.ACROSS * 32, rows32 * 64 * w32.FRAMES);
+  w32.layout.forEach((entry, i) => {
+    const x = (i % w32.ACROSS) * 32, y = Math.floor(i / w32.ACROSS) * 64;
+    entry[1].forEach((grid, frame) => stamp(sheet, grid, w32.palette, x, y + frame * rows32 * 64));
+  });
+  savePng(sheet, join(dir, "terrain-32-winter.png"));
+  const winterBuildings = { ...b32.palette, ...w32.palette, W: b32.palette.W, Y: b32.palette.Y, Z: b32.palette.Z, c: b32.palette.c };
+  const bSheet = canvas(b32.columns.length * 32, b32.rows.length * 64);
+  b32.rows.forEach(([, grid], row) => b32.columns.forEach((owner, col) => {
+    stamp(bSheet, grid, { ...winterBuildings, ...b32.ramps[owner] }, col * 32, row * 64);
+  }));
+  savePng(bSheet, join(dir, "buildings-32-winter.png"));
+  console.log(`winter terrain and buildings rendered at 32x64`);
+}

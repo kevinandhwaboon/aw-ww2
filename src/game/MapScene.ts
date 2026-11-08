@@ -4,7 +4,9 @@ import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
 import { displayHp, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import * as stats from "../engine/stats";
+import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
+import { setBattleWeather } from "./battle/colors";
 import { planCombat, planFortAttack } from "./battle/plan";
 import { planDrop } from "./battle/drop";
 import { planCapture, planGarrison } from "./battle/storm";
@@ -49,6 +51,8 @@ const UNIT_SHADOW_ALPHA = 0.35;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
 const TERRAIN_SHEET_KEY = "pack-terrain";
 const PROPERTY_SHEET_KEY = "pack-properties";
+/** Winter versions of the two sheets, same layouts (08-art-pipeline §21). */
+const winterKey = (key: string) => `${key}-winter`;
 /** How long each frame of moving water shows. */
 const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
@@ -221,10 +225,18 @@ export class MapScene extends Phaser.Scene implements MapView {
     });
     if (pack.terrain) {
       this.load.image(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path));
+      if (pack.terrain.winterPath) this.load.image(winterKey(TERRAIN_SHEET_KEY), packFileUrl(pack.terrain.winterPath));
     }
     if (pack.properties) {
       this.load.image(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path));
+      if (pack.properties.winterPath) this.load.image(winterKey(PROPERTY_SHEET_KEY), packFileUrl(pack.properties.winterPath));
     }
+  }
+
+  /** The sheet to draw from: its winter version on a winter map, if the pack has one (12-weather §5). */
+  private seasonal(key: string): string {
+    const winter = winterKey(key);
+    return this.state.weather.season === "winter" && this.textures.exists(winter) ? winter : key;
   }
 
   private sheetImage(key: string): (CanvasImageSource & { width: number; height: number }) | null {
@@ -241,14 +253,14 @@ export class MapScene extends Phaser.Scene implements MapView {
     const { map } = this.state;
     const placeholders = (this.placeholderTiles ??= drawPlaceholderTileset());
     const pack = activePack();
-    const source = pack.terrain ? this.sheetImage(TERRAIN_SHEET_KEY) : null;
+    const source = pack.terrain ? this.sheetImage(this.seasonal(TERRAIN_SHEET_KEY)) : null;
     const sheet = source ? pack.terrain : null;
     const frames = sheet?.frames ?? 1;
     const wide = sheet?.tileWidth ?? TILE_SIZE;
     const tall = sheet?.tileHeight ?? TILE_SIZE;
     const across = source ? Math.floor(source.width / wide) : 1;
     const tilesPerFrame = source ? across * Math.floor(source.height / tall / frames) : 0;
-    const buildings = pack.properties ? this.sheetImage(PROPERTY_SHEET_KEY) : null;
+    const buildings = pack.properties ? this.sheetImage(this.seasonal(PROPERTY_SHEET_KEY)) : null;
     const buildingWidth = pack.properties?.tileWidth ?? TILE_SIZE;
     const buildingHeight = pack.properties?.tileHeight ?? TILE_SIZE;
     const res = Math.max(source ? wide : TILE_SIZE, buildings ? buildingWidth : TILE_SIZE) / TILE_SIZE;
@@ -316,6 +328,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.rangeLayer = this.add.graphics();
     this.stateLayer = this.add.container(0, 0);
     this.pathLayer = this.add.graphics();
+    this.snowLayer = this.add.graphics();
     this.cursor = this.add.graphics();
     this.renderState();
     this.drawCursor();
@@ -337,6 +350,37 @@ export class MapScene extends Phaser.Scene implements MapView {
     window.addEventListener("keyup", (event) => {
       if (event.key === "x" || event.key === "X") this.handlers?.onPeekEnd();
     });
+  }
+
+  private snowLayer?: Phaser.GameObjects.Graphics;
+
+  /**
+   * Snow falling over the visible part of the map while it snows (12-weather §5). Each flake's place
+   * is a function of the time, so nothing is stored between frames.
+   */
+  override update(time: number): void {
+    const layer = this.snowLayer;
+    if (!layer) return;
+    layer.clear();
+    if (weatherOn(this.state) !== "snow") return;
+    const view = this.cameras.main.worldView;
+    const color = packColorNumber("snowfall");
+    const shadow = packColorNumber("snowfallShadow");
+    const flakes = Math.round((view.width * view.height) / 700);
+    for (let i = 0; i < flakes; i++) {
+      const seedX = ((i * 7919) % 1009) / 1009;
+      const seedY = ((i * 104729) % 997) / 997;
+      const fall = 0.012 + ((i * 31) % 7) * 0.002; // map pixels per millisecond
+      const y = (seedY * view.height + time * fall) % view.height;
+      const sway = Math.sin(time / 900 + i) * 3;
+      const x = (((seedX * view.width + time * 0.004 + sway) % view.width) + view.width) % view.width;
+      const size = i % 4 === 0 ? 1 : 0.5;
+      // A faint shadow below each flake, so it shows over snowy ground as well as over trees.
+      layer.fillStyle(shadow, 0.35);
+      layer.fillRect(view.x + x + size / 2, view.y + y + size, size, size);
+      layer.fillStyle(color, 0.95);
+      layer.fillRect(view.x + x, view.y + y, size, size);
+    }
   }
 
   /** Shows a new game state. Safe to call before the scene has been created. */
@@ -617,6 +661,7 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   /** Animates engine events. Call before setState(newState); resolves when the animations finish. */
   async playEvents(events: readonly GameEvent[]): Promise<void> {
+    setBattleWeather({ season: this.state.weather.season, snowing: weatherOn(this.state) === "snow" });
     for (const event of events) {
       await this.revealTiles(this.eventTiles(event), PAN_MS.action);
       if (event.type === "unitMoved") {

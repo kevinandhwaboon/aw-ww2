@@ -14,14 +14,14 @@ const SHADOW_STRENGTH = 0.42;
 const SHADE = { G: "1", g: "2", h: "3", a: "4", A: "5", i: "6", j: "7", k: "8", S: "9", l: "0", u: "!", r: "#", f: "@" };
 
 /** Adds the shaded twin of each ground color to a palette. */
-export function withShade(palette) {
+export function withShade(palette, shadow = SHADOW, strength = SHADOW_STRENGTH) {
   const out = { ...palette };
   for (const [base, twin] of Object.entries(SHADE)) {
     const hex = palette[base];
     if (!hex) continue;
     const mixed = [1, 3, 5].map((i, k) => {
       const v = parseInt(hex.slice(i, i + 2), 16);
-      return Math.round(v * (1 - SHADOW_STRENGTH) + SHADOW[k] * SHADOW_STRENGTH).toString(16).padStart(2, "0");
+      return Math.round(v * (1 - strength) + shadow[k] * strength).toString(16).padStart(2, "0");
     });
     out[twin] = `#${mixed.join("")}`;
   }

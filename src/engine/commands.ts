@@ -4,6 +4,7 @@
 import type { TerrainId } from "./data/terrain";
 import type { UnitTypeId } from "./data/units";
 import type { VeterancyLevel } from "./data/veterancy";
+import type { WeatherId } from "./data/weather";
 import type { Point } from "./map";
 import type { DefeatReason, GameResult, GameState, PlayerId, UnitId } from "./state";
 
@@ -131,6 +132,8 @@ export type GameEvent =
   | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }
   | { readonly type: "dayStarted"; readonly day: number }
+  /** The weather is different from yesterday's (12-weather §4). */
+  | { readonly type: "weatherChanged"; readonly day: number; readonly weather: WeatherId }
   | { readonly type: "turnStarted"; readonly player: PlayerId; readonly day: number };
 
 export type RejectionCode =

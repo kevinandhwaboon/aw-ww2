@@ -114,6 +114,7 @@
   ],
   "terrain": {
     "path": "../../terrain/terrain-32.png",
+    "winterPath": "../../terrain/terrain-32-winter.png",
     "frames": 2,
     "tileWidth": 32,
     "tileHeight": 64,
@@ -128,6 +129,7 @@
   },
   "properties": {
     "path": "../../terrain/buildings-32.png",
+    "winterPath": "../../terrain/buildings-32-winter.png",
     "tileWidth": 32,
     "tileHeight": 64,
     "columns": ["neutral", "blue", "red", "green", "gold"],

@@ -7,7 +7,7 @@
 //   3. a "set" replaces the result (the last matching "set" wins),
 // then the result is rounded down and clamped at 0. Stats are always whole numbers.
 
-import type { TerrainId } from "./data/terrain";
+import type { MovementType, TerrainId } from "./data/terrain";
 import type { UnitCategory, UnitTypeId } from "./data/units";
 
 export const MODIFIABLE_STATS = [
@@ -34,6 +34,7 @@ export interface ModifierScope {
   readonly unitTypes?: readonly UnitTypeId[];
   readonly categories?: readonly UnitCategory[];
   readonly terrain?: readonly TerrainId[];
+  readonly movementTypes?: readonly MovementType[];
 }
 
 export interface Modifier {
@@ -51,6 +52,7 @@ export interface StatContext {
   readonly unitType?: UnitTypeId;
   readonly category?: UnitCategory;
   readonly terrain?: TerrainId;
+  readonly movementType?: MovementType;
 }
 
 /** Whether a modifier's scope covers this lookup (ignores which stat it modifies). */
@@ -66,7 +68,8 @@ function matches(scope: ModifierScope | undefined, ctx: StatContext): boolean {
     fieldMatches(scope.players, ctx.player) &&
     fieldMatches(scope.unitTypes, ctx.unitType) &&
     fieldMatches(scope.categories, ctx.category) &&
-    fieldMatches(scope.terrain, ctx.terrain)
+    fieldMatches(scope.terrain, ctx.terrain) &&
+    fieldMatches(scope.movementTypes, ctx.movementType)
   );
 }
 

@@ -11,6 +11,7 @@ import {
   CAPTURE_POINTS,
   DEFAULT_SETTINGS,
   DEFAULT_VICTORY,
+  DEFAULT_WEATHER,
   MAX_HP,
   type Facing,
   type FortificationState,
@@ -20,7 +21,9 @@ import {
   type Settings,
   type Unit,
   type VictoryCondition,
+  type WeatherPlan,
 } from "./state";
+import { weatherPlanProblem } from "./weather";
 import { startTurn } from "./turn";
 
 /** What a player can build unless the scenario says otherwise: every unit (01-units availability rule). */
@@ -59,6 +62,8 @@ export interface GameSetup {
   readonly modifiers?: readonly Modifier[];
   /** How this scenario is won; defaults to HQ capture and rout. */
   readonly victory?: readonly VictoryCondition[];
+  /** Clear all game and summer art unless the scenario says otherwise (12-weather §1). */
+  readonly weather?: WeatherPlan;
 }
 
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
@@ -127,6 +132,10 @@ export function createGame(setup: GameSetup): GameState {
     });
   }
 
+  const weather = setup.weather ?? DEFAULT_WEATHER;
+  const weatherProblem = weatherPlanProblem(weather);
+  if (weatherProblem) throw new Error(`weather: ${weatherProblem}`);
+
   const victory = setup.victory ?? DEFAULT_VICTORY;
   checkVictory(victory, properties, setup.players);
 
@@ -152,6 +161,7 @@ export function createGame(setup: GameSetup): GameState {
     nextUnitId: units.length,
     modifiers: [...(setup.modifiers ?? [])],
     settings: { ...DEFAULT_SETTINGS, ...setup.settings },
+    weather,
     victoryConditions: victory,
     holdStreaks: victory.map(() => 0),
     result: null,

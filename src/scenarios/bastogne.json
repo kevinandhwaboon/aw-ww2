@@ -1,0 +1,130 @@
+{
+  "id": "bastogne",
+  "name": "Bastogne",
+  "description": "December 1944. Germany's last great offensive bursts out of the snowy Eifel. Its tanks are strong but short of fuel, and the snow keeps them on the roads. Germany wins by taking the crossroads town of Bastogne or the US HQ at Arlon. The US wins by holding out to the start of day 12. Snow falls until day 6; then the skies clear and US aircraft can fly at full range.",
+  "map": [
+    "F...F.~FFHF...F.HHFH...F.......~..F.FFHF",
+    "F.F...~~HFHFFH....HF.HHF..C...~~..H.FHFF",
+    ".HHFH==#====FF.HH.FFFFFF..=HF~~.FFF..HF.",
+    "..FHf=F~~..=FF..F.F==========#===FH..HF.",
+    "HHFFFHF.~~.=..F=====HFHFF.HF~~.H=HfFFFHF",
+    "HFF.HF.F.~~C====F...~~FFF.FF~H.H===.FFF.",
+    "..H.FF.FFF~~.F==FFF~~.FFFF.~~FHHFF=FFF..",
+    ".....F...FF~~F=CF~~~F.FFHF~~F.HHHF=HFF.F",
+    "FHHF..FFFFHF~~##~~FFFF...F~.HF=====FFF..",
+    "FHHH.FFF..FFFF==..HFFFH.HF~FFFCFHCHHFF..",
+    ".HFFF.H.H...F.==.FHFFHFF..~F.==FF==HHF.H",
+    "..FH..F.....F.=C..FFFHFC==#C===FFF=.HF..",
+    ".FH.FFFF.F....==========HF~FFH=.F.==FF.F",
+    "..FFFFFFFF..==C=...=F.FFFF~~.===FHH=FFFF",
+    "FFHF..FFFF..=.=....=FF.F===#==Hf====FH.H",
+    "FFHF...HFFH.C.=....=CHHF=H.~~CFHHF===Q..",
+    "FHFFFHFF.C===.=...FF=====FFH~.FFFF..FF.H",
+    "FHFFHAF===~~..=HFFF~~~~=HFFF~~.FFFF.FF..",
+    "..FF.===HFF~~F=FF.~~FF~#~~HHF~~FFFHH...F",
+    "FHFF..==FFFF~~==.~~.FFH=F~~~~~~~~FHH..H.",
+    "FF..FFfF.....~~C~~FFH..==CF..FFF~~F.FFFF",
+    "FF.HFF======..~#~FFH..==FF..F.FFF~~~FFFF",
+    "..FFFFHHFFF=..F=FFFHFF=HF.FF..FFFFF~~FFF",
+    "...F.....F.=======FFF.=..FF......F.F~~FF",
+    "........F.....F.F======............F.~~.",
+    "....F...F......F.=.......F...F........~~",
+    ".........F.......=....................FF",
+    "................FQ......................",
+    "F...............FF......................",
+    ".................F............F........."
+  ],
+  "players": [
+    {
+      "name": "US",
+      "nation": "us",
+      "funds": 4000,
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
+    },
+    {
+      "name": "Germany",
+      "nation": "germany",
+      "funds": 10000,
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank"],
+      "facing": "left"
+    }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 14, "y": 13 }, "owner": 0 },
+    { "pos": { "x": 17, "y": 27 }, "owner": 0 },
+    { "pos": { "x": 6, "y": 20 }, "owner": 0 },
+    { "pos": { "x": 4, "y": 3 }, "owner": 0 },
+    { "pos": { "x": 5, "y": 17 }, "owner": 0 },
+    { "pos": { "x": 15, "y": 20 }, "owner": 0 },
+    { "pos": { "x": 12, "y": 15 }, "owner": 0 },
+    { "pos": { "x": 9, "y": 16 }, "owner": 0 },
+    { "pos": { "x": 26, "y": 1 }, "owner": 0 },
+    { "pos": { "x": 23, "y": 11 }, "owner": 0 },
+    { "pos": { "x": 20, "y": 15 }, "owner": 0 },
+    { "pos": { "x": 25, "y": 20 }, "owner": 0 },
+    { "pos": { "x": 37, "y": 15 }, "owner": 1 },
+    { "pos": { "x": 34, "y": 4 }, "owner": 1 },
+    { "pos": { "x": 31, "y": 14 }, "owner": 1 },
+    { "pos": { "x": 27, "y": 11 }, "owner": 1 },
+    { "pos": { "x": 30, "y": 9 }, "owner": 1 },
+    { "pos": { "x": 33, "y": 9 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 14, "y": 13 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 13, "y": 12 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 14, "y": 12 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 15, "y": 12 } },
+    { "type": "tankDestroyer", "owner": 0, "pos": { "x": 13, "y": 13 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 26, "y": 1 } },
+    { "type": "tankDestroyer", "owner": 0, "pos": { "x": 25, "y": 0 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 23, "y": 11 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 20, "y": 15 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 16, "y": 26 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 17, "y": 26 } },
+    { "type": "halftrack", "owner": 0, "pos": { "x": 18, "y": 26 } },
+    { "type": "heavyTank", "owner": 1, "pos": { "x": 33, "y": 3 }, "fuel": 30 },
+    { "type": "heavyTank", "owner": 1, "pos": { "x": 27, "y": 10 }, "fuel": 30 },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 35, "y": 3 }, "fuel": 40 },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 29, "y": 8 }, "fuel": 40 },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 28, "y": 10 }, "fuel": 40 },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 30, "y": 13 }, "fuel": 40 },
+    { "type": "recon", "owner": 1, "pos": { "x": 32, "y": 8 } },
+    { "type": "halftrack", "owner": 1, "pos": { "x": 30, "y": 8 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 31, "y": 8 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 31, "y": 13 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 27, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 28, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 30, "y": 9 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 35, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 32, "y": 13 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 27, "y": 12 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 32, "y": 14 } }
+  ],
+  "victory": [
+    {
+      "type": "hqCapture"
+    },
+    {
+      "type": "rout"
+    },
+    {
+      "type": "captureProperties",
+      "side": "axis",
+      "properties": [
+        { "x": 14, "y": 13 }
+      ]
+    },
+    {
+      "type": "surviveDays",
+      "side": "allies",
+      "days": 12
+    }
+  ],
+  "weather": {
+    "season": "winter",
+    "forecast": [
+      { "fromDay": 1, "weather": "snow" },
+      { "fromDay": 6, "weather": "clear" }
+    ]
+  }
+}

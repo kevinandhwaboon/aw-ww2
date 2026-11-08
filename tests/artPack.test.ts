@@ -275,3 +275,30 @@ describe("art packs: buildings (08-art-pipeline §15)", () => {
     expect(() => parseArtPack({ name: "x", properties: change })).toThrow(message);
   });
 });
+
+describe("art packs: winter sheets (08-art-pipeline §21)", () => {
+  it("terrain and building sheets can name a winter version with the same layout", () => {
+    const pack = parseArtPack({
+      name: "x",
+      terrain: { path: "t.png", winterPath: "t-winter.png", tiles: { plains: 0 } },
+      properties: { path: "b.png", winterPath: "b-winter.png", columns: ["neutral"], rows: ["city"] },
+    });
+    expect(pack.terrain?.winterPath).toBe("t-winter.png");
+    expect(pack.properties?.winterPath).toBe("b-winter.png");
+  });
+
+  it("a pack without winter sheets has none, so winter maps fall back to its summer art", () => {
+    const pack = parseArtPack({ name: "x", terrain: { path: "t.png", tiles: { plains: 0 } } });
+    expect(pack.terrain?.winterPath).toBeUndefined();
+  });
+
+  it("rejects a winter sheet outside the pack", () => {
+    expect(() => parseArtPack({ name: "x", terrain: { path: "t.png", winterPath: "https://example.com/t.png", tiles: {} } })).toThrow(/winterPath/);
+  });
+
+  it("the default pack ships winter terrain and buildings", () => {
+    const pack = parseArtPack(defaultPack);
+    expect(pack.terrain?.winterPath).toMatch(/terrain-32-winter\.png$/);
+    expect(pack.properties?.winterPath).toMatch(/buildings-32-winter\.png$/);
+  });
+});
