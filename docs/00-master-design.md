@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval) and 11 (landings and drops) done.
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval), 11 (landings and drops) and 12 (victory conditions) done.
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -320,3 +320,4 @@ UI falls into four categories:
 | 2026-11-07 | Landings and drops implemented (milestone 11). Every unit is buildable by default. One Unload action can land both passengers (D3). Landing Craft load and unload only on a Beach or a friendly or neutral Port; Transport Aircraft load only on their owner's airfield. A transport carrying units can't board another (D4). Transport Aircraft drop onto adjacent tiles only, not their own, since one unit per tile holds (05-supply-transport §6). New amphibious map: Beachhead |
 | 2026-11-07 | Aircraft fly over enemy ground units and ships (a departure from the original, where surrounding a plane with Infantry trapped it). Enemy aircraft still block. One unit per tile still holds (02-terrain §5) |
 | 2026-11-07 | The tile info box shows a property's capture points left ("Capture 12/20") and what a transport is carrying. A bunker with foot soldiers inside is drawn garrisoned in their side's colors, Red Alert 2 style, with the soldier hidden inside (08-art-pipeline §15) |
+| 2026-11-07 | Scenario victory conditions implemented (milestone 12): captureProperties, holdProperties and surviveDays. A side wins by defeating everyone on the other side; hold counts start on day 2 and reset when any objective is lost. Objectives get a gold frame, are listed with progress in the HUD and on the results screen. New map: Crossroads (04-economy §8) |

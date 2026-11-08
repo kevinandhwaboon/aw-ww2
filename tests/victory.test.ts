@@ -168,6 +168,82 @@ describe("defeated players (00-master-design §8, as in the original)", () => {
   });
 });
 
+describe("captureProperties (04-economy §8)", () => {
+  // Allied Infantry (0) on a neutral city at (1,0); the Allies already own the city at (0,0).
+  const game = () =>
+    makeGame(["CC.C"], [u("infantry", 0, 1), u("infantry", 1, 3)], {
+      propertyOwners: [{ pos: P(0, 0), owner: 0 }],
+      victory: [{ type: "captureProperties", side: "allies", properties: [P(0, 0), P(1, 0)] }],
+    });
+
+  it("a side wins as soon as it owns every listed property", () => {
+    const { state, events } = must(run(game(), capture(0), endTurn, endTurn), capture(0));
+    expect(state.result).toEqual({ winningSide: "allies", winners: [0], reason: "captureProperties" });
+    expect(events.map((e) => e.type)).toEqual(["propertyCaptured", "playerDefeated", "gameOver"]);
+  });
+
+  it("owning only some of them isn't enough", () => {
+    expect(run(game(), capture(0)).result).toBeNull();
+  });
+
+  it("the other side owning them doesn't win it anything", () => {
+    const axis = makeGame(["CC."], [u("infantry", 0, 2)], {
+      propertyOwners: [{ pos: P(0, 0), owner: 1 }, { pos: P(1, 0), owner: 1 }],
+      victory: [{ type: "captureProperties", side: "allies", properties: [P(0, 0), P(1, 0)] }],
+    });
+    expect(run(axis, endTurn, endTurn).result).toBeNull();
+  });
+});
+
+describe("holdProperties (04-economy §8)", () => {
+  // The Axis own the city at (0,0) and must hold it at the start of 2 days in a row.
+  const game = (units: UnitSetup[] = [u("infantry", 0, 2), u("infantry", 1, 3)]) =>
+    makeGame(["C.=."], units, {
+      propertyOwners: [{ pos: P(0, 0), owner: 1 }],
+      victory: [{ type: "holdProperties", side: "axis", properties: [P(0, 0)], days: 2 }],
+    });
+  const round = [endTurn, endTurn];
+
+  it("a side wins once it has held every listed property at the start of that many days in a row", () => {
+    const day2 = run(game(), ...round);
+    expect(day2.result).toBeNull();
+    expect(day2.holdStreaks).toEqual([1]);
+    const { state, events } = must(run(day2, endTurn), endTurn);
+    expect(state.result).toEqual({ winningSide: "axis", winners: [1], reason: "holdProperties" });
+    expect(state.day).toBe(3);
+    expect(events.map((e) => e.type)).toEqual(["turnEnded", "dayStarted", "playerDefeated", "gameOver"]);
+  });
+
+  it("the days are counted from day 2: owning them when the game starts doesn't count", () => {
+    expect(game().holdStreaks).toEqual([0]);
+  });
+
+  it("taking any one of them away resets the count", () => {
+    // Allied Infantry on the city captures it over days 1 and 2, so the Axis don't own it when day 3 starts.
+    const state = run(game([u("infantry", 0, 0), u("infantry", 1, 3)]), capture(0), endTurn, endTurn, capture(0), endTurn, endTurn);
+    expect(state.result).toBeNull();
+    expect(state.holdStreaks).toEqual([0]);
+  });
+});
+
+describe("surviveDays (04-economy §8)", () => {
+  const game = () => makeGame(["...."], [u("infantry", 0, 0), u("infantry", 1, 3)], { victory: [{ type: "rout" }, { type: "surviveDays", side: "axis", days: 3 }] });
+
+  it("a side wins if it's still in the game when that day starts", () => {
+    const state = run(game(), endTurn, endTurn, endTurn, endTurn);
+    expect(state.day).toBe(3);
+    expect(state.result).toEqual({ winningSide: "axis", winners: [1], reason: "surviveDays" });
+  });
+
+  it("nothing happens before then", () => {
+    expect(run(game(), endTurn, endTurn).result).toBeNull();
+  });
+
+  it("the side can still lose before then", () => {
+    expect(run(game(), endTurn, resign).result).toMatchObject({ winningSide: "allies", reason: "resign" });
+  });
+});
+
 describe("after the game ends", () => {
   it("no more commands are accepted", () => {
     const over = run(onHq(), resign);

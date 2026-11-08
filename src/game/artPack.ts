@@ -28,6 +28,8 @@ const BUILT_IN_COLORS = {
   menuBorder: "#4a3c28",
   menuInk: "#2a2418",
   menuHighlight: "#e8c070",
+  // The frame around a property a scenario objective names (04-economy §8)
+  objective: "#f0d040",
   // A submerged submarine: its sprite is tinted this color, and its badge drawn in it (05-supply-transport §9)
   submerged: "#78b0f0",
   // Effects and floating labels

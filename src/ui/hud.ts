@@ -12,6 +12,7 @@ import { packFileUrl } from "../game/loadArtPack";
 import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
 import { drawUnitMarker, playerColors } from "../game/placeholderUnits";
 import { TILE_SIZE } from "../game/placeholderTiles";
+import { objectiveLines, type ObjectiveLine } from "../game/objectives";
 import { tileInfo } from "../game/tileInfo";
 import { UNIT_GUIDE } from "../game/unitGuide";
 import { menuKeys } from "./menuKeys";
@@ -77,7 +78,8 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
   const flag = el("span", "hud-flag");
   const day = el("span", "hud-day");
   const funds = el("span", "hud-funds");
-  hud.append(flag, day, funds);
+  const objectives = el("div", "hud-objectives");
+  hud.append(flag, day, funds, objectives);
   root.append(hud);
   let shownNation: NationId | undefined;
 
@@ -91,6 +93,9 @@ export function createHud(root: HTMLElement): { update: (state: GameState, curso
       }
       day.textContent = `Day ${state.day}`;
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
+      const lines = objectiveLines(state);
+      objectives.hidden = lines.length === 0;
+      objectives.replaceChildren(...lines.map(objectiveElement));
       hud.classList.toggle("hud-right", cursorOnLeft);
     },
   };
@@ -171,7 +176,27 @@ const DEFEAT_TEXT: Record<DefeatReason, string> = {
   hqCapture: "The enemy HQ was captured",
   rout: "The enemy has no units left",
   resign: "The enemy resigned",
+  captureProperties: "Every objective was captured",
+  holdProperties: "The objectives were held long enough",
+  surviveDays: "They held out to the last day",
 };
+
+/** Why a player is out, for the event log. */
+const OUT_TEXT: Record<DefeatReason, string> = {
+  hqCapture: "HQ captured",
+  rout: "no units left",
+  resign: "resigned",
+  captureProperties: "the enemy captured every objective",
+  holdProperties: "the enemy held the objectives",
+  surviveDays: "the enemy held out",
+};
+
+/** A scenario objective as a line of text in its side's color. */
+function objectiveElement({ player, text }: ObjectiveLine): HTMLElement {
+  const line = el("div", "objective", text);
+  if (player !== null) line.style.color = playerColors(player)[0];
+  return line;
+}
 
 /** The end-of-game screen: who won, why, and how each player finished. */
 export function createResultsScreen(root: HTMLElement): { show: (state: GameState, onNewGame: () => void) => void } {
@@ -191,6 +216,10 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       const title = el("div", "results-title", `Victory: ${winners}`);
       title.style.color = playerColors(result.winners[0] ?? 0)[0];
       const reason = el("div", "results-reason", `${DEFEAT_TEXT[result.reason]} on day ${state.day}.`);
+      const lines = objectiveLines(state);
+      const objectives = el("div", "results-objectives");
+      objectives.hidden = lines.length === 0;
+      objectives.append(el("div", "panel-subtitle", "Objectives"), ...lines.map(objectiveElement));
 
       const table = el("table", "stat-table results-table");
       const header = el("tr");
@@ -221,7 +250,7 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       };
       const buttons = el("div", "results-buttons");
       buttons.append(newGame, viewMap);
-      panel.replaceChildren(title, reason, table, buttons);
+      panel.replaceChildren(title, reason, objectives, table, buttons);
       panel.hidden = false;
       newGame.focus();
       menuKeys(panel, [newGame, viewMap]);
@@ -387,7 +416,7 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
     case "unitSurfaced":
       return `${unitName(e.unitId)} surfaced`;
     case "playerDefeated":
-      return `${name(e.player)} is out (${e.reason === "hqCapture" ? "HQ captured" : e.reason === "rout" ? "no units left" : "resigned"})`;
+      return `${name(e.player)} is out (${OUT_TEXT[e.reason]})`;
     case "gameOver":
       return `Game over: ${e.result.winners.map(name).join(" and ")} won`;
     case "turnEnded":

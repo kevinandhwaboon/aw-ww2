@@ -7,6 +7,7 @@ import * as stats from "../engine/stats";
 import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
+import { objectiveTiles } from "./objectives";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
@@ -788,6 +789,11 @@ export class MapScene extends Phaser.Scene implements MapView {
       flags.fillRect(x + 2, y + 2, 4, 2);
     }
     layer.add(flags);
+
+    // Properties a scenario objective names get a gold frame (04-economy §8).
+    const objectives = this.add.graphics().lineStyle(1, packColorNumber("objective"), 1);
+    for (const { x, y } of objectiveTiles(this.state)) objectives.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    layer.add(objectives);
 
     // Damaged fortifications show their HP like units do, in the tile's bottom-left corner.
     for (const fort of this.state.fortifications) {

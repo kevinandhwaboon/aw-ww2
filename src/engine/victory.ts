@@ -1,11 +1,13 @@
 // Win and defeat (04-economy §8, 00-master-design §8). Each scenario lists its victory conditions;
-// every condition is a rule here, so a new kind (hold objectives, survive N turns) is a new entry.
+// every condition is a rule here, so a new kind is a new entry. A condition that makes a side win
+// does it by defeating everyone on the other side.
 
 import type { GameEvent } from "./commands";
 import { clearAbandonedCaptures } from "./economy";
 import type { Point } from "./map";
 import { tileIndex } from "./movement";
-import type { DefeatReason, GameState, PlayerId, VictoryCondition } from "./state";
+import type { Side } from "./data/nations";
+import { propertyAt, type DefeatReason, type GameState, type PlayerId, type VictoryCondition } from "./state";
 
 /** A property that just changed hands. */
 interface Captured {
@@ -13,13 +15,26 @@ interface Captured {
   readonly previousOwner: PlayerId | null;
 }
 
-/** When a condition is checked, and which players it defeats. */
-interface VictoryRule {
-  afterCapture?(state: GameState, captured: Captured): PlayerId[];
-  atTurnEnd?(state: GameState): PlayerId[];
+/** When a condition is checked, and which players it defeats. `index` is its place in the scenario's list. */
+interface VictoryRule<C extends VictoryCondition> {
+  afterCapture?(state: GameState, captured: Captured, condition: C): PlayerId[];
+  atTurnEnd?(state: GameState, condition: C): PlayerId[];
+  atDayStart?(state: GameState, condition: C, index: number): PlayerId[];
 }
 
-const RULES: Record<VictoryCondition["type"], VictoryRule> = {
+type Rules = { [K in VictoryCondition["type"]]: VictoryRule<Extract<VictoryCondition, { type: K }>> };
+
+const sideOf = (state: GameState, player: PlayerId | null) => (player === null ? undefined : state.players[player]?.side);
+
+/** Everyone still playing who isn't on this side: who loses when the side wins. */
+const everyoneBut = (state: GameState, side: Side) => state.players.filter((p) => !p.defeated && p.side !== side).map((p) => p.id);
+
+/** Whether players on this side own every one of these properties. */
+export function sideOwnsAll(state: GameState, side: Side, properties: readonly Point[]): boolean {
+  return properties.every((pos) => sideOf(state, propertyAt(state, pos)?.owner ?? null) === side);
+}
+
+const RULES: Rules = {
   /** Losing your HQ loses the game at once (04-economy §3). */
   hqCapture: {
     afterCapture(state, { pos, previousOwner }) {
@@ -38,16 +53,39 @@ const RULES: Record<VictoryCondition["type"], VictoryRule> = {
         .map((p) => p.id);
     },
   },
+  /** Owning every listed property wins at once. */
+  captureProperties: {
+    afterCapture(state, _captured, { side, properties }) {
+      return sideOwnsAll(state, side, properties) ? everyoneBut(state, side) : [];
+    },
+  },
+  /** Holding them at the start of enough days in a row wins; the count is kept in holdStreaks. */
+  holdProperties: {
+    atDayStart(state, { side, days }, index) {
+      return (state.holdStreaks[index] ?? 0) >= days ? everyoneBut(state, side) : [];
+    },
+  },
+  /** Still being in the game when the day comes wins. */
+  surviveDays: {
+    atDayStart(state, { side, days }) {
+      const inGame = state.players.some((p) => !p.defeated && p.side === side);
+      return inGame && state.day >= days ? everyoneBut(state, side) : [];
+    },
+  },
 };
 
 type Outcome = { state: GameState; events: GameEvent[] };
 
-function runRules(state: GameState, check: (rule: VictoryRule) => PlayerId[] | undefined): Outcome {
+type Check = (rule: VictoryRule<VictoryCondition>, condition: VictoryCondition, index: number) => PlayerId[] | undefined;
+
+function runRules(state: GameState, check: Check): Outcome {
   let current = state;
   const events: GameEvent[] = [];
-  for (const condition of state.victoryConditions) {
+  for (const [index, condition] of state.victoryConditions.entries()) {
     if (current.result) break;
-    const losers = check(RULES[condition.type]) ?? [];
+    // Each rule only ever receives its own kind of condition.
+    const rule = RULES[condition.type] as VictoryRule<VictoryCondition>;
+    const losers = check(rule, condition, index) ?? [];
     const defeated = defeatPlayers(current, losers, condition.type);
     current = defeated.state;
     events.push(...defeated.events);
@@ -56,11 +94,20 @@ function runRules(state: GameState, check: (rule: VictoryRule) => PlayerId[] | u
 }
 
 export function checkAfterCapture(state: GameState, captured: Captured): Outcome {
-  return runRules(state, (rule) => rule.afterCapture?.(state, captured));
+  return runRules(state, (rule, condition) => rule.afterCapture?.(state, captured, condition));
 }
 
 export function checkAtTurnEnd(state: GameState): Outcome {
-  return runRules(state, (rule) => rule.atTurnEnd?.(state));
+  return runRules(state, (rule, condition) => rule.atTurnEnd?.(state, condition));
+}
+
+/** At the start of each day from day 2: update the hold counts, then check day-based conditions. */
+export function checkAtDayStart(state: GameState): Outcome {
+  const holdStreaks = state.victoryConditions.map((condition, i) =>
+    condition.type === "holdProperties" && sideOwnsAll(state, condition.side, condition.properties) ? (state.holdStreaks[i] ?? 0) + 1 : 0,
+  );
+  const counted = { ...state, holdStreaks };
+  return runRules(counted, (rule, condition, index) => rule.atDayStart?.(counted, condition, index));
 }
 
 /**
