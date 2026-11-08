@@ -119,7 +119,7 @@ Built in milestone 12. Details settled while building it:
 
 A file is refused if an objective isn't a property, the side has no players, or `surviveDays` is earlier than day 2.
 
-- **On screen:** objective properties have a gold frame. The HUD lists each objective with its progress, such as "Axis: hold both marked objectives for 8 days (3/8)". The results screen shows the same list with how each one ended.
+- **On screen:** objective properties have gold corner marks (corners, not a full box, so they never look like the cursor or a selection), and the tile info box says "★ Objective" on them. The HUD lists each objective with its progress, such as "Axis: hold both marked objectives for 8 days (3/8)". The results screen shows the same list with how each one ended.
 
 ## 9. Open questions
 

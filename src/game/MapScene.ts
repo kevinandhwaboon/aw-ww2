@@ -835,9 +835,22 @@ export class MapScene extends Phaser.Scene implements MapView {
     }
     layer.add(flags);
 
-    // Properties a scenario objective names get a gold frame (04-economy §8).
-    const objectives = this.add.graphics().lineStyle(1, packColorNumber("objective"), 1);
-    for (const { x, y } of objectiveTiles(this.state)) objectives.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    // Properties a scenario objective names get gold corner marks (04-economy §8): corners rather
+    // than a full box, so they never read as the cursor or a selection.
+    const objectives = this.add.graphics().fillStyle(packColorNumber("objective"), 1);
+    const arm = 4;
+    for (const { x, y } of objectiveTiles(this.state)) {
+      const left = x * TILE_SIZE;
+      const top = y * TILE_SIZE;
+      const right = left + TILE_SIZE;
+      const bottom = top + TILE_SIZE;
+      for (const [cx, dx] of [[left, 1], [right, -1]] as const) {
+        for (const [cy, dy] of [[top, 1], [bottom, -1]] as const) {
+          objectives.fillRect(dx > 0 ? cx : cx - arm, dy > 0 ? cy : cy - 1, arm, 1);
+          objectives.fillRect(dx > 0 ? cx : cx - 1, dy > 0 ? cy : cy - arm, 1, arm);
+        }
+      }
+    }
     layer.add(objectives);
 
     // Damaged fortifications show their HP like units do, in the tile's bottom-left corner.
