@@ -1,4 +1,4 @@
-// Transport, supply and joining (05-supply-transport §3–4, 04-economy §6). Used both by apply() and
+// Transport, supply and joining (05-supply-transport §3–4, §6, §8, 04-economy §6). Used both by apply() and
 // by the UI for menus, so what the menus offer is exactly what the engine accepts.
 //
 // Passengers live inside their transport (`cargo`), not in GameState.units. So they can't be
@@ -6,9 +6,9 @@
 
 import type { GameEvent } from "./commands";
 import { unitDef } from "./data/units";
-import { inBounds, type Point } from "./map";
+import { inBounds, terrainAt, type Point } from "./map";
 import { tileIndex } from "./movement";
-import { displayHp, unitAt, type GameState, type Unit } from "./state";
+import { displayHp, propertyAt, unitAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
 
 const NEIGHBORS: readonly Point[] = [
@@ -25,14 +25,34 @@ function replaceUnits(state: GameState, remove: Unit, keep: Unit): GameState {
   return { ...state, units: state.units.filter((u) => u.id !== remove.id).map((u) => (u.id === keep.id ? keep : u)) };
 }
 
+/**
+ * Why a Landing Craft can't take units on or off where it stands, or null if it can: it has to be on
+ * a Beach, or on a Port that isn't the enemy's (05-supply-transport §8). Other transports can anywhere.
+ */
+function landingSpotProblem(state: GameState, transport: Unit): string | null {
+  if (!unitDef(transport.type).specialActions.includes("unloadOnBeach")) return null;
+  const terrain = terrainAt(state.map, transport.pos);
+  const owner = propertyAt(state, transport.pos)?.owner ?? null;
+  if (terrain === "beach" || (terrain === "port" && (owner === null || owner === transport.owner))) return null;
+  return "a Landing Craft loads and unloads only on a Beach or a friendly or neutral Port";
+}
+
+/** Transport Aircraft take passengers on only at their owner's airfield, though they drop anywhere (05-supply-transport §6). */
+function airfieldProblem(state: GameState, transport: Unit): string | null {
+  if (!unitDef(transport.type).specialActions.includes("airDrop")) return null;
+  const onOwnAirfield = terrainAt(state.map, transport.pos) === "airfield" && propertyAt(state, transport.pos)?.owner === transport.owner;
+  return onOwnAirfield ? null : "units board a Transport Aircraft only at your own airfield";
+}
+
 /** Why this unit can't board that transport, or null if it can. */
-export function loadProblem(unit: Unit, transport: Unit): string | null {
+export function loadProblem(state: GameState, unit: Unit, transport: Unit): string | null {
   const rules = unitDef(transport.type).transport;
   if (!rules) return "that unit isn't a transport";
   if (transport.owner !== unit.owner) return "you can only board your own transports";
   if (!rules.carries.includes(unit.type)) return "this unit doesn't fit in that transport";
   if (transport.cargo.length >= rules.capacity) return "the transport is full";
-  return null;
+  if (unit.cargo.length > 0) return "a transport carrying units can't board another transport"; // D4
+  return landingSpotProblem(state, transport) ?? airfieldProblem(state, transport);
 }
 
 /** Puts the moved unit inside the transport. Its action is over (05-supply-transport §4). */
@@ -44,8 +64,12 @@ export function applyLoad(state: GameState, unit: Unit, transport: Unit): { stat
   };
 }
 
-/** Tiles this passenger could be unloaded onto: next to the transport, passable for it, and empty. */
+/**
+ * Tiles this passenger could be unloaded onto: next to the transport, passable for it, and empty.
+ * Never the transport's own tile, even for an aircraft, since one unit per tile still holds (02-terrain §5).
+ */
 export function unloadTiles(state: GameState, transport: Unit, passenger: Unit): Point[] {
+  if (landingSpotProblem(state, transport)) return [];
   return neighborsOf(state, transport.pos).filter((p) => {
     const terrain = state.map.terrain[tileIndex(state, p)];
     return terrain !== undefined && !unitAt(state, p) && stats.moveCost(state, passenger, terrain) !== null;

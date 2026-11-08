@@ -45,8 +45,13 @@ export function apply(state: GameState, command: Command): ApplyResult {
 const isPoint = (p: unknown): p is Point =>
   typeof p === "object" && p !== null && Number.isInteger((p as Point).x) && Number.isInteger((p as Point).y);
 
+const isUnloadStep = (step: unknown): boolean => {
+  const s = step as { passenger?: unknown; to?: unknown } | null;
+  return typeof s === "object" && s !== null && Number.isInteger(s.passenger) && isPoint(s.to);
+};
+
 function isAction(action: unknown): action is UnitAction {
-  const a = action as { type?: unknown; target?: unknown; passenger?: unknown; to?: unknown } | null;
+  const a = action as { type?: unknown; target?: unknown; passenger?: unknown; to?: unknown; second?: unknown } | null;
   switch (a?.type) {
     case "wait":
     case "capture":
@@ -61,7 +66,7 @@ function isAction(action: unknown): action is UnitAction {
     case "attackFort":
       return isPoint(a.target);
     case "unload":
-      return Number.isInteger(a.passenger) && isPoint(a.to);
+      return isUnloadStep(a) && (a.second === undefined || isUnloadStep(a.second));
     default:
       return false;
   }
@@ -94,7 +99,7 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     const host = path.length > 0 ? unitAt(state, end) : undefined;
     const code = action.type === "load" ? "cannotLoad" : "cannotJoin";
     if (!host) return reject(code, "move onto the unit first");
-    const problem = action.type === "load" ? loadProblem(moved, host) : joinProblem(moved, host);
+    const problem = action.type === "load" ? loadProblem(state, moved, host) : joinProblem(moved, host);
     if (problem) return reject(code, problem);
     const result = action.type === "load" ? applyLoad(state, moved, host) : applyJoin(state, moved, host);
     return { ok: true, state: clearAbandonedCaptures(result.state), events: [...events, result.event] };
@@ -126,14 +131,20 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   }
 
   if (action.type === "unload") {
-    const passenger = moved.cargo.find((c) => c.id === action.passenger);
-    if (!passenger) return reject("cannotUnload", `Unit ${action.passenger} isn't aboard`);
-    const { to } = action;
-    if (!unloadTiles(afterMove, moved, passenger).some((p) => p.x === to.x && p.y === to.y)) {
-      return reject("cannotUnload", `Can't unload onto (${to.x}, ${to.y})`);
+    // One passenger, or both one after the other: the second can't land where the first did.
+    let current = afterMove;
+    for (const { passenger: passengerId, to } of [action, ...(action.second ? [action.second] : [])]) {
+      const transport = current.units.find((u) => u.id === unitId) ?? moved;
+      const passenger = transport.cargo.find((c) => c.id === passengerId);
+      if (!passenger) return reject("cannotUnload", `Unit ${passengerId} isn't aboard`);
+      if (!unloadTiles(current, transport, passenger).some((p) => p.x === to.x && p.y === to.y)) {
+        return reject("cannotUnload", `Can't unload onto (${to.x}, ${to.y})`);
+      }
+      const unloaded = applyUnload(current, transport, passenger, to);
+      current = unloaded.state;
+      events.push(unloaded.event);
     }
-    const unloaded = applyUnload(afterMove, moved, passenger, to);
-    return { ok: true, state: unloaded.state, events: [...events, unloaded.event] };
+    return { ok: true, state: current, events };
   }
 
   if (action.type === "supply") {

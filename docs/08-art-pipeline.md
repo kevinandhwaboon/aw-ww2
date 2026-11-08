@@ -119,7 +119,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Move range | Tile tint | Blue overlay today |
 | Threat range | Tile tints | Orange for move, red for attack today |
 | Path arrow | About 10 pieces | Straights, corners and 4 arrowheads |
-| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD, SUPPLY, DIVE, SURFACE, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
+| Action menu | Panel frame, pointer, highlight | FIRE, CAPTURE, LOAD, JOIN, UNLOAD (or UNLOAD plus a unit name), SUPPLY, DIVE, SURFACE, WAIT, CANCEL, RESIGN, END TURN, KEEP PLAYING, RESIGN NOW |
 | Forecast panel | Panel frame | "DMG 71-80%" style text |
 | Pixel font | 1 full font | Open-licensed, with letters, digits and % - + ? |
 | Floating numbers | Uses the pixel font | Damage, capture and repair labels |

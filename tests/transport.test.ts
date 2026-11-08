@@ -294,7 +294,7 @@ describe("joining units (04-economy §6, 03-combat §6)", () => {
 });
 
 describe("air-dropped units are remembered for their art (01-units §5, 08-art-pipeline §17)", () => {
-  const game = () => makeGame(["A.."], [u("transportAircraft", 0, 0), u("infantry", 0, 1)]);
+  const game = () => makeGame(["A.."], [u("transportAircraft", 0, 0), u("infantry", 0, 1)], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
 
   it("a unit dropped by a Transport Aircraft is marked as air-dropped", () => {
     const state = run(game(), load(1, [P(0, 0)]), unload(0, 1, P(1, 0)));
