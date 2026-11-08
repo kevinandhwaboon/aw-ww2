@@ -1,7 +1,7 @@
 # Topic Doc 08: Art Assets and Pipeline
 
-**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), terrain, buildings and fortifications are drawn in the game (sections 14–15), and art can be swapped with art packs (section 13). Everything else is still open.
-**Last updated:** 2026-11-06
+**Status:** Asset list complete. US and German land unit sprites are approved and drawn in the game (section 12), terrain, buildings and fortifications are drawn in the game (sections 14–15), and art can be swapped with art packs (section 13). Battle scenes are built with figures drawn in code (section 18). Everything else is still open.
+**Last updated:** 2026-11-07
 **Depends on:** 00-master-design.md (sections 3, 6, 12, 13, 14), 01-units.md, 02-terrain.md.
 
 This doc is written to start a new conversation on its own: it lists everything the game needs drawn, and the questions to answer before generating any of it.
@@ -160,8 +160,9 @@ Today's are simple flashes and tweens.
 
 **Later, not part of this round:**
 - Commander portraits (phase 3).
-- The split-screen battle cutscene (phase 3): terrain backgrounds, large battle sprites, and fire and impact effects.
 - Phone layout (phase 3).
+
+The split-screen battle scene came forward from phase 3 and is built (section 18).
 
 ## 9. Questions for the art conversation
 
@@ -393,3 +394,72 @@ In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (
 - **Terrain and buildings** (`tools/art/terrain32.mjs`, `buildings32.mjs`, `depth32.mjs`): tiles are 32 wide by 64 tall, the bottom 32 rows being the map cell and the top 32 room to rise. They use the same sheet layouts as sections 14–15, so tile numbers don't change. Grass has tufts and flowers, roads have wheel ruts, rivers have sandy banks, and buildings have stone courses and tiled roofs. Sheets: `public/assets/terrain/terrain-32.png` and `buildings-32.png`.
 - **Pack fields:** terrain and building sheets take `tileWidth` (16 or 32). `tileHeight` is the width, or twice it for art that rises into the tile behind.
 
+
+## 18. Battle scenes
+
+**Since 2026-11-07,** every attack plays as a split-screen battle scene before the map updates, in the style of the original game's battle animations. The art is original. The scene only shows what the engine already decided (00-master-design §13): the combat event carries the damage, the counter and who was destroyed, and the scene plays it back.
+
+**Layout.** The screen splits down the middle, with the horizon a little above the middle of each half so formations have room to stand in depth. A unit on Hills stands on the hill's grassy, rocky crest, with the valley far below in the haze behind it: small fields, hedgerows, a road and a village. The side whose army faces right on the map stands on the left half, so the two face each other; if both face the same way, the attacker is on the left. Each half shows the unit's name at the top, its HP and 10 HP pips at the bottom, and a background for the terrain the unit stands on: fields and a treeline for Plains, trees for Forest, a hilltop (see Layout), a hedgerow bank for Bocage, houses for a City, a sawtooth factory, a hangar for an Airfield, a quay and crane for a Port, sand with the sea behind and beach obstacles for a Beach, open water for Sea and Reef. The Factory is a brick hall with a sawtooth roof of skylights, arched windows and a loading door, a banded chimney trailing smoke, a water tower, a gantry crane, crates and a railway siding. Aircraft fight against open sky. A submerged submarine fights underwater.
+
+**Order.** The halves slide in, the attacker fires, its shots fly across and land, HP ticks down as each one lands, and figures fall. Then the defender counterattacks the same way if the engine says it did. The scene fades out and the map shows the result. A unit destroyed in the scene also blows up on the map, so it's clear which one is gone. Z, X, Enter, Space, Escape or a click skips the scene.
+
+**Figures show HP.** A unit shows several figures, fewer as it loses HP: the most it shows, scaled by HP out of 10 and rounded up, so a unit with 1 HP still shows one.
+
+| Unit | Figures at 10 HP |
+|---|---|
+| Infantry | 8 soldiers: the front three kneel, the squad's automatic weapon lies prone at the front, the rest stand |
+| Light and Medium Tank, Tank Destroyer | 5 |
+| Assault Infantry, Recon, Heavy Tank, Fighter, Torpedo Boat | 4 (Assault Infantry: launcher teams of gunner and loader) |
+| Mortar Team, Halftrack, Artillery, Rocket Artillery, Mobile AA, Flak Gun, Bomber, Transport Aircraft | 3 (Mortar Team: crews of loader and assistant) |
+| Destroyer, Submarine, Landing Craft | 2 |
+| Battleship, Bunker | 1 |
+
+Figures fall from the back of the formation first, as the shots that take them land. Soldiers topple over and fade (a prone gunner slumps where he lies); vehicles and guns blow up, go dark and keep burning; aircraft fall out of the sky trailing smoke; ships burn and settle.
+
+**Infantry squads** carry what real squads did: mostly riflemen (Garand or Kar98k; the M1 carbine for paratroopers), the squad's automatic weapon (a BAR or an MG 42) fired prone off its bipod, and submachine guns. A German squad has one MP 40, the squad leader's. A US squad has two Thompsons, drawn as the drum-fed M1928 with its vertical foregrip; paratroopers carry a third. Riflemen fire single shots; the submachine guns and the automatic weapon fire bursts.
+
+**Paratroopers.** US Infantry dropped by a Transport Aircraft (01-units §5) fights as 101st Airborne paratroopers: the tan M1942 jump suit toned with the team color, brown jump boots with a knife strapped to one, bulging cargo pockets, a musette bag instead of a pack, a scrim-netted helmet with the regiment's card suit on it, M1 carbines and the extra Thompson. The suit is the same one the map shows for that unit, picked by unit id: spade, heart, diamond or club.
+
+**Dug in.** Infantry, Assault Infantry and Mortar Teams on a Bunker fight from behind sandbags, with a concrete casemate, camouflage netting and barbed wire behind them.
+
+**Detail.** Battle figures are much larger than map sprites: a standing soldier is about 44 pixels tall, a tank 50 to 90 pixels long. Each unit's animation shows what makes it different:
+
+| Unit | When it fires |
+|---|---|
+| Infantry | The squad aims and fires in a ragged volley. US riflemen eject Garand brass; German riflemen work the Kar98k's bolt between shots; the SMG and the BAR or MG 42 fire bursts |
+| Assault Infantry | The loader slides a rocket into the tube, taps the gunner's helmet and ducks; the rocket leaves with a backblast. Bazooka for the US, Panzerschreck with its blast shield for Germany. With the secondary weapon the gunner slings the launcher and fires his SMG |
+| Mortar Team | The loader lifts a round over the muzzle and lets it drop; both crew duck with their hands over their ears; the round arcs high and falls on the other half |
+| Recon | The gunner behind the jeep's .30 cal (or the sidecar gunner on the German motorcycle) fires bursts |
+| Tanks, Tank Destroyer | The gun recoils, the hull rocks, dust kicks up in front. With the secondary weapon, the hull machine gun fires instead |
+| Artillery | The loader carries a shell up and rams it home, steps back covering his ears, and the gunner pulls the lanyard; the barrel recoils and the gun hops |
+| Rocket Artillery | Six rockets ripple out with smoke trails and leave a cloud behind the launcher: a Calliope rack on a Sherman, or a Nebelwerfer fired from a sandbagged foxhole |
+| Mobile AA, Flak Gun | Barrels fire in turn, aimed high at aircraft and flat at ground targets; the Flak Gun's loader brings the next round and the spent casing flies out |
+| Fighter | Wing guns (and the Bf 109's nose guns) fire tracers |
+| Bomber | The bomb bay opens and bombs fall out of the bottom of the half, then onto the target |
+| Battleship | Turrets fire salvo by salvo, with huge flashes; the ship rolls |
+| Destroyer | Deck guns fire; against a submerged submarine it throws depth charges from the stern |
+| Submarine, Torpedo Boat | Torpedoes run just under the surface with a trail of bubbles |
+
+Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-units), so they only ever take fire.
+
+**What flies.** Every shot leaves the muzzle in the direction the barrel points, and the flash points the same way. Direct fire flies straight across the line between the halves. Indirect fire (mortars, artillery, rockets) is fired high: the round leaves fast along the raised barrel and climbs out of the top of the screen, there's a pause of about a second while it's overhead, and then it drops steeply onto the target from high above. Depth charges arc from the destroyer's stern onto the submarine. Ground fire at aircraft (Mobile AA, Flak Gun, or any other) climbs out of the top of its own half along the barrel and comes up into the other half from below, bursting under the aircraft. Bombs drop out of the bottom of their half and in at the top of the other.
+
+**Landings.** A Landing Craft on a Beach is drawn run aground: sea toward the half's outer edge, sand toward the middle, the stern in the water and the bow ramp down on the sand.
+
+**Nations.** Figures follow the map art (sections 12 and 17), with the details that tell the real equipment apart:
+
+- **Soldiers.** US: the netted M1 helmet, canvas leggings, khaki web belt, a pack with a blanket roll and entrenching tool. Germany: the Stahlhelm, jackboots, Y-straps, the fluted gas-mask canister, a bread bag, and a stick grenade in the belt. Paratroopers carry the M1 carbine and a card suit on the helmet. Tank crews wear US tanker helmets or German headphones.
+- **US vehicles** carry a white star: the Sherman (VVSS bogies, cast turret, .50 cal on the roof, spare track on the glacis), the Stuart (tall and narrow, a trailing idler, a 37mm in its recoil sleeve), the Churchill (track up the hull sides, escape doors), the M10 (open turret with counterweights), the Willys jeep (flat hood and fenders, upright windshield, spare wheel, whip antenna), the M3 halftrack (winch roller, armored windshield shutter), the M16 (Maxson quad .50s with ammunition chests), the M2A1 105mm and the 90mm AA gun, and the Calliope.
+- **German vehicles** carry camouflage and no insignia: the Panzer IV (skirts, eight small road wheels, cupola, long 75 with a muzzle brake, spare road wheels), the Panzer II, the Tiger (Zimmerit, interleaved wheels, smoke dischargers, the 88), the StuG III (low casemate, rounded mantlet, MG shield), the motorcycle with sidecar and its rider in a long coat, the Sd.Kfz. 251, the Flakvierling behind its shield, the leFH 18, the 88 with its shield, and the Nebelwerfer.
+- **Aircraft**: Allied aircraft carry D-Day invasion stripes; the P-51 its exhaust stacks and belly scoop, the Bf 109 its supercharger intake and wing radiators. Ships as in section 17; the LCT carries a tank and troops.
+- Other Allied nations use the US look until they get their own.
+
+**Colors.** Uniforms and hulls are the team color toned toward olive (Allies) or field grey (Germany), so soldiers still read as soldiers. Every other color comes from the art pack: the `battle…` colors in `src/game/artPack.ts` (sky, grass, sea, steel, skin, wood, flash, fire, smoke and so on), which a pack can override like any other color.
+
+**How it's built.** The figures are drawn in code, not from sprite sheets: `src/game/battle/`. Each unit is a *rig*, a function that draws it at any moment of its animation from simple shapes (rectangles, lines, discs, polygons) on a 384×240 canvas, which is scaled up with nearest-neighbor so it stays pixel art. Figures get a dark outline. `plan.ts` and `timeline.ts` decide what happens when, and are tested; `soldiers.ts`, `vehicles.ts` and `airNaval.ts` hold the rigs; `backdrops.ts` the backgrounds; `renderer.ts` puts a frame together. Sprite-sheet battle art in packs can replace rigs unit by unit later (00-master-design §13); nothing in the pack format covers it yet.
+
+**Option.** "Battle scenes" on the map select screen, on by default. `?battle=off` turns them off. Off, attacks play on the map as before.
+
+**Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each (11-tech-setup §7).
+
+**Not done yet:** separate art for UK, Canadian and Soviet units; sound; a faster speed setting; pack-supplied battle sprites.

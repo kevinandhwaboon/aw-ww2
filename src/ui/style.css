@@ -145,6 +145,26 @@ body {
   right: 16px;
 }
 
+/* The scenario's objectives, on their own lines under the day and funds. */
+.hud {
+  flex-wrap: wrap;
+  max-width: 300px;
+}
+
+.hud-objectives {
+  flex-basis: 100%;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.objective + .objective {
+  margin-top: 2px;
+}
+
+.results-objectives {
+  margin: 0 0 12px;
+}
+
 .hud-flag {
   display: flex;
   border: 2px solid var(--panel-ink);
@@ -334,6 +354,8 @@ body {
   overflow: auto;
   text-align: center;
   font-size: 14px;
+  /* Above the HUD and tile info, which stay up while the final map shows behind. */
+  z-index: 2;
 }
 
 .results-back {

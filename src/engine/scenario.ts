@@ -1,7 +1,7 @@
 // The scenario file format (00-master-design §8, 11-tech-setup §4): JSON read from outside the type
 // system, so everything is checked when it's loaded and a bad file fails with a clear message.
 
-import { NATIONS, type NationId } from "./data/nations";
+import { NATIONS, type NationId, type Side } from "./data/nations";
 import { TERRAIN } from "./data/terrain";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { parseAsciiMap, terrainAt, type Point } from "./map";
@@ -86,9 +86,28 @@ function parseUnit(raw: unknown, index: number): UnitSetup {
   };
 }
 
+function side(raw: Json, where: string): Side {
+  const value = raw.side;
+  return value === "allies" || value === "axis" ? value : fail(`${where}: side must be allies or axis`);
+}
+
 function parseVictory(raw: unknown, index: number): VictoryCondition {
-  if (isObject(raw) && (raw.type === "hqCapture" || raw.type === "rout")) return { type: raw.type };
-  return fail(`victory ${index}: must be hqCapture or rout`);
+  const where = `victory ${index}`;
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  const properties = () => list(raw, "properties", where).map((p) => point(p, where));
+  switch (raw.type) {
+    case "hqCapture":
+    case "rout":
+      return { type: raw.type };
+    case "captureProperties":
+      return { type: raw.type, side: side(raw, where), properties: properties() };
+    case "holdProperties":
+      return { type: raw.type, side: side(raw, where), properties: properties(), days: count(raw, "days", where) };
+    case "surviveDays":
+      return { type: raw.type, side: side(raw, where), days: count(raw, "days", where) };
+    default:
+      return fail(`${where}: unknown victory condition ${String(raw.type)}`);
+  }
 }
 
 function parseModifier(raw: unknown, index: number): Modifier {

@@ -215,6 +215,11 @@ describe("built-in scenarios (00-master-design §8)", () => {
     expect(axisOnBunkers.length).toBeGreaterThan(0);
   });
 
+  it("Crossroads uses scenario objectives: the Allies must capture the village, the Axis must hold it (11-tech-setup §6, milestone 12)", () => {
+    const scenario = SCENARIOS.find((s) => s.id === "crossroads");
+    expect(scenario?.setup.victory?.map((v) => v.type)).toEqual(["hqCapture", "rout", "captureProperties", "holdProperties"]);
+  });
+
   it("the demo keeps the US from building Heavy Tanks, as the availability rule requires (01-units §1)", () => {
     const scenario = SCENARIOS.find((s) => s.id === "proving-ground");
     expect(scenario?.setup.players[0]?.buildable).not.toContain("heavyTank");
@@ -264,6 +269,15 @@ describe("the scenario file format", () => {
     expect(battle("left")).toEqual(battle("right"));
   });
 
+  it("the scenario victory conditions are read from the file (04-economy §8)", () => {
+    const victory = [
+      { type: "captureProperties", side: "allies", properties: [P(1, 0)] },
+      { type: "holdProperties", side: "axis", properties: [P(1, 0), P(2, 2)], days: 4 },
+      { type: "surviveDays", side: "axis", days: 10 },
+    ];
+    expect(parseScenario({ ...valid(), victory }).setup.victory).toEqual(victory);
+  });
+
   it.each([
     ["no id", { id: "" }, /"id" must be text/],
     ["a bad map", { map: ["..", "."] }, /Row 1/],
@@ -276,7 +290,13 @@ describe("the scenario file format", () => {
     ["a unit on terrain it can't enter", { map: ["QfS", "...", ".fQ"], units: [{ type: "infantry", owner: 0, pos: P(2, 0) }] }, /can't stand on sea/],
     ["an owner who doesn't exist", { units: [{ type: "infantry", owner: 5, pos: P(1, 1) }] }, /unknown owner/],
     ["a property owner on open ground", { propertyOwners: [{ pos: P(1, 1), owner: 0 }] }, /No property/],
-    ["an unknown victory condition", { victory: [{ type: "conquest" }] }, /must be hqCapture or rout/],
+    ["an unknown victory condition", { victory: [{ type: "conquest" }] }, /unknown victory condition/],
+    ["an objective that isn't a property", { victory: [{ type: "captureProperties", side: "allies", properties: [P(1, 1)] }] }, /isn't a property/],
+    ["an objective with no properties", { victory: [{ type: "captureProperties", side: "allies", properties: [] }] }, /at least one property/],
+    ["an unknown side", { victory: [{ type: "surviveDays", side: "martians", days: 5 }] }, /side must be allies or axis/],
+    ["a side with no players", { victory: [{ type: "surviveDays", side: "axis", days: 5 }], players: [{ name: "A", nation: "us" }, { name: "B", nation: "uk" }] }, /no player on the axis side/],
+    ["a hold with no days", { victory: [{ type: "holdProperties", side: "axis", properties: [P(1, 0)] }] }, /"days" must be a whole number/],
+    ["surviving to day 1", { victory: [{ type: "surviveDays", side: "axis", days: 1 }] }, /day 2 or later/],
     ["negative funds", { players: [{ name: "A", nation: "us", funds: -1 }, { name: "B", nation: "uk" }] }, /whole number/],
     ["a bad modifier", { modifiers: [{ source: "x", stat: "charisma", op: "add", value: 1 }] }, /unknown stat/],
     ["a bad build list", { players: [{ name: "A", nation: "us", buildable: ["dragon"] }, { name: "B", nation: "germany" }] }, /unknown unit type/],

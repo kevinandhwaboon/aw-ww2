@@ -63,6 +63,26 @@ export interface GameSetup {
 
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
+/** Objectives must be properties, and the side they're for must have someone playing it (04-economy §8). */
+function checkVictory(victory: readonly VictoryCondition[], properties: readonly PropertyState[], players: readonly PlayerSetup[]): void {
+  for (const condition of victory) {
+    if (condition.type === "hqCapture" || condition.type === "rout") continue;
+    const { type, side } = condition;
+    if (!players.some((p) => NATIONS[p.nation].side === side)) throw new Error(`${type}: there's no player on the ${side} side`);
+    if (type === "surviveDays") {
+      if (!Number.isInteger(condition.days) || condition.days < 2) throw new Error(`${type}: "days" must be day 2 or later`);
+      continue;
+    }
+    if (condition.properties.length === 0) throw new Error(`${type}: list at least one property`);
+    for (const pos of condition.properties) {
+      if (!properties.some((p) => samePoint(p.pos, pos))) throw new Error(`${type}: (${pos.x}, ${pos.y}) isn't a property`);
+    }
+    if (type === "holdProperties" && (!Number.isInteger(condition.days) || condition.days < 1)) {
+      throw new Error(`${type}: "days" must be 1 or more`);
+    }
+  }
+}
+
 export function createGame(setup: GameSetup): GameState {
   const { map } = setup;
   if (setup.players.length < 2) throw new Error("A game needs at least 2 players");
@@ -107,6 +127,9 @@ export function createGame(setup: GameSetup): GameState {
     });
   }
 
+  const victory = setup.victory ?? DEFAULT_VICTORY;
+  checkVictory(victory, properties, setup.players);
+
   const state: GameState = {
     map: { width: map.width, height: map.height, terrain: [...map.terrain] },
     players: setup.players.map((p, id) => ({
@@ -129,7 +152,8 @@ export function createGame(setup: GameSetup): GameState {
     nextUnitId: units.length,
     modifiers: [...(setup.modifiers ?? [])],
     settings: { ...DEFAULT_SETTINGS, ...setup.settings },
-    victoryConditions: setup.victory ?? DEFAULT_VICTORY,
+    victoryConditions: victory,
+    holdStreaks: victory.map(() => 0),
     result: null,
   };
   // Day 1 is a normal turn: the first player collects income too, as in the original (04-economy §2).

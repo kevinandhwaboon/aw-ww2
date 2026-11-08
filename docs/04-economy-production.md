@@ -99,6 +99,28 @@ Scenarios list their conditions (00-master-design §8). HQ capture and rout alre
 
 Scenarios without an HQ just leave out `hqCapture`. That answers the open question below.
 
+Built in milestone 12. Details settled while building it:
+
+- **Winning is the other side losing.** When one of these conditions is met, every player on the other side is out, so the results screen, rout and resign all work the same way.
+- **Day-based checks come first.** At the start of each day, before anyone's turn starts or income is paid, `holdProperties` and `surviveDays` are checked.
+- **Holding counts from day 2.** Owning the properties when the game starts isn't counted. Losing any one of them, even for part of a day, resets the count to 0 at the next day's start.
+- **Ownership is by side,** so on a 2-vs-2 map an ally's property counts too.
+- **The file format:** each condition lists its `side` ("allies" or "axis") and, where needed, `properties` and `days`:
+
+```json
+"victory": [
+  { "type": "hqCapture" },
+  { "type": "rout" },
+  { "type": "captureProperties", "side": "allies", "properties": [{ "x": 6, "y": 3 }] },
+  { "type": "holdProperties", "side": "axis", "properties": [{ "x": 6, "y": 3 }], "days": 8 },
+  { "type": "surviveDays", "side": "axis", "days": 12 }
+]
+```
+
+A file is refused if an objective isn't a property, the side has no players, or `surviveDays` is earlier than day 2.
+
+- **On screen:** objective properties have a gold frame. The HUD lists each objective with its progress, such as "Axis: hold both marked objectives for 8 days (3/8)". The results screen shows the same list with how each one ended.
+
 ## 9. Open questions
 
 - Tuning income vs. unit costs for small test maps.

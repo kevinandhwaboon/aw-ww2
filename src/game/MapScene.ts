@@ -4,9 +4,12 @@ import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
 import { displayHp, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import * as stats from "../engine/stats";
+import type { BattlePlayer } from "./battle/BattleScene";
+import { planCombat, planFortAttack } from "./battle/plan";
 import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
+import { objectiveTiles } from "./objectives";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
@@ -95,10 +98,16 @@ export class MapScene extends Phaser.Scene implements MapView {
   private forecastPanel: Phaser.GameObjects.Container | undefined;
   private pixelScale = 1;
   private created = false;
+  /** Plays attacks as split-screen battle scenes (08-art-pipeline §18); null plays them on the map. */
+  private battle: BattlePlayer | null = null;
 
   constructor(private readonly options: MapSceneOptions) {
     super("map");
     this.state = options.state;
+  }
+
+  setBattlePlayer(player: BattlePlayer | null): void {
+    this.battle = player;
   }
 
   /**
@@ -611,8 +620,12 @@ export class MapScene extends Phaser.Scene implements MapView {
       if (event.type === "unitMoved") await this.walk(event.unitId, event.path);
       if (event.type === "combat") await this.playCombat(event);
       if (event.type === "fortAttacked") {
-        const shooter = { unitId: event.attackerId, pos: event.attackerPos };
-        await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
+        const plan = this.battle && planFortAttack(this.state, event);
+        if (this.battle && plan) await this.battle.play(plan);
+        else {
+          const shooter = { unitId: event.attackerId, pos: event.attackerPos };
+          await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
+        }
       }
       if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
       if (event.type === "propertyCaptured") await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
@@ -675,11 +688,21 @@ export class MapScene extends Phaser.Scene implements MapView {
     return labels;
   }
 
-  /** The attack, then the counter if there was one, then any promotions (00-master-design §13). */
+  /**
+   * The attack, then the counter if there was one, then any promotions (00-master-design §13): as a
+   * battle scene when they're on, otherwise on the map. After a battle scene, a destroyed unit
+   * still blows up on the map so it's clear which one is gone.
+   */
   private async playCombat(event: Extract<GameEvent, { type: "combat" }>): Promise<void> {
     const { attacker, defender, attack, counter } = event;
-    await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
-    if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
+    if (this.battle) {
+      await this.battle.play(planCombat(this.state, event));
+      const lost = [attacker, defender].filter((u) => u.destroyed).map((u) => this.explode({ pos: u.pos, unitId: u.unitId }));
+      await Promise.all(lost);
+    } else {
+      await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
+      if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
+    }
     for (const unit of [attacker, defender]) {
       if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), packColor("labelGold"));
     }
@@ -788,6 +811,11 @@ export class MapScene extends Phaser.Scene implements MapView {
       flags.fillRect(x + 2, y + 2, 4, 2);
     }
     layer.add(flags);
+
+    // Properties a scenario objective names get a gold frame (04-economy §8).
+    const objectives = this.add.graphics().lineStyle(1, packColorNumber("objective"), 1);
+    for (const { x, y } of objectiveTiles(this.state)) objectives.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    layer.add(objectives);
 
     // Damaged fortifications show their HP like units do, in the tile's bottom-left corner.
     for (const fort of this.state.fortifications) {

@@ -1,0 +1,48 @@
+{
+  "id": "crossroads",
+  "name": "Crossroads",
+  "description": "The Axis hold a crossroads village. The Allies win by taking both marked buildings; the Axis win by keeping both for 8 days in a row, so even a brief Allied foothold resets their count.",
+  "map": [
+    "FF..H....b..FF",
+    "F...H..=..b..F",
+    ".f...F.=..F.f.",
+    "...b..C=...b..",
+    ".Q==========Q.",
+    "..b...=.C..F..",
+    ".f..F.=...b.f.",
+    "F...b.=..H...F",
+    "FF....H.....FF"
+  ],
+  "players": [
+    { "name": "Allies", "nation": "us", "funds": 9000 },
+    { "name": "Axis", "nation": "germany", "funds": 5000, "facing": "left" }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 1, "y": 4 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 2 }, "owner": 0 },
+    { "pos": { "x": 1, "y": 6 }, "owner": 0 },
+    { "pos": { "x": 12, "y": 4 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 2 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 6 }, "owner": 1 },
+    { "pos": { "x": 6, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 8, "y": 5 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 2, "y": 3 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 2, "y": 5 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 3, "y": 4 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 2, "y": 4 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 0, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 6, "y": 3 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 8, "y": 5 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 4 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 10, "y": 4 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 13, "y": 3 } }
+  ],
+  "victory": [
+    { "type": "hqCapture" },
+    { "type": "rout" },
+    { "type": "captureProperties", "side": "allies", "properties": [{ "x": 6, "y": 3 }, { "x": 8, "y": 5 }] },
+    { "type": "holdProperties", "side": "axis", "properties": [{ "x": 6, "y": 3 }, { "x": 8, "y": 5 }], "days": 8 }
+  ]
+}

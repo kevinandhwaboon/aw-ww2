@@ -20,7 +20,7 @@ import {
 } from "./transport";
 import { diveProblem, surfaceProblem } from "./submarine";
 import { startTurn } from "./turn";
-import { checkAfterCapture, checkAtTurnEnd, defeatPlayers } from "./victory";
+import { checkAfterCapture, checkAtDayStart, checkAtTurnEnd, defeatPlayers } from "./victory";
 
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
@@ -195,12 +195,16 @@ function resign(state: GameState): ApplyResult {
 
 function passTurn(state: GameState, events: GameEvent[]): ApplyResult {
   const next = nextActivePlayer(state);
-  let day = state.day;
+  let current = state;
   if (next <= state.currentPlayer) {
-    day += 1;
-    events = [...events, { type: "dayStarted", day }];
+    // A new day: day-based victory conditions are checked before anyone's turn starts (04-economy §8).
+    const day = state.day + 1;
+    const checked = checkAtDayStart({ ...state, day });
+    events = [...events, { type: "dayStarted", day }, ...checked.events];
+    if (checked.state.result) return { ok: true, state: checked.state, events };
+    current = checked.state;
   }
-  const started = startTurn({ ...state, day, currentPlayer: next });
+  const started = startTurn({ ...current, currentPlayer: next });
   return { ok: true, state: started.state, events: [...events, ...started.events] };
 }
 

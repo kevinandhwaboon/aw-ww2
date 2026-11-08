@@ -14,8 +14,16 @@ export type UnitId = number;
 /** Internal HP of a full-health unit. Displayed HP is internal ÷ 10, rounded up (03-combat §1). */
 export const MAX_HP = 100;
 
-/** Something a scenario can be won by (00-master-design §8). Rules are in engine/victory.ts. */
-export type VictoryCondition = { readonly type: "hqCapture" } | { readonly type: "rout" };
+/** Something a scenario can be won by (00-master-design §8, 04-economy §8). Rules are in engine/victory.ts. */
+export type VictoryCondition =
+  | { readonly type: "hqCapture" }
+  | { readonly type: "rout" }
+  /** `side` wins as soon as it owns every listed property. */
+  | { readonly type: "captureProperties"; readonly side: Side; readonly properties: readonly Point[] }
+  /** `side` wins once it has owned every listed property at the start of `days` days in a row. */
+  | { readonly type: "holdProperties"; readonly side: Side; readonly properties: readonly Point[]; readonly days: number }
+  /** `side` wins if it still has a player in the game when day `days` starts. */
+  | { readonly type: "surviveDays"; readonly side: Side; readonly days: number };
 
 /** The default for a scenario that doesn't say otherwise (04-economy §8). */
 export const DEFAULT_VICTORY: readonly VictoryCondition[] = [{ type: "hqCapture" }, { type: "rout" }];
@@ -126,6 +134,11 @@ export interface GameState {
   readonly modifiers: readonly Modifier[];
   readonly settings: Settings;
   readonly victoryConditions: readonly VictoryCondition[];
+  /**
+   * For each victory condition, by index: the days in a row a holdProperties condition's side has
+   * owned all its properties at the start of the day. Always 0 for other conditions.
+   */
+  readonly holdStreaks: readonly number[];
   /** Set once the game is over; no more commands are accepted after that. */
   readonly result: GameResult | null;
 }

@@ -8,6 +8,7 @@ import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
 import { unitAt, type GameState } from "./engine/state";
 import { packColor } from "./game/artPack";
+import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
@@ -30,12 +31,14 @@ export interface SessionOptions {
   readonly setup: GameSetup;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
+  /** Attacks play as split-screen battle scenes (08-art-pipeline §18) instead of on the map. */
+  readonly battleScenes: boolean;
   /** Also shows the unit and debug panels (11-tech-setup §7). */
   readonly debug: boolean;
   readonly onNewGame: () => void;
 }
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNewGame }: SessionOptions): void {
+export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, onNewGame }: SessionOptions): void {
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -63,6 +66,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
       showCursorInfo();
     },
   });
+
+  const battle = new BattleScene();
+  scene.setBattlePlayer(battleScenes ? battle : null);
 
   const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
   scene.setHandlers({
@@ -165,7 +171,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, debug, onNew
     pixelArt: true,
     backgroundColor: packColor("uiBg"),
     scale: { mode: Phaser.Scale.NONE },
-    scene,
+    scene: [scene, battle],
   });
 
   render();

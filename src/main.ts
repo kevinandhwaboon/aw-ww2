@@ -10,6 +10,8 @@ import "./ui/style.css";
 //   ?seed=123            fixes the luck rolls
 //   ?luck=off            turns luck off
 //   ?handoff=off         skips the pass-the-device screen
+//   ?battle=off          plays attacks on the map instead of as battle scenes
+//   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 //   ?debug=on            shows the unit and debug panels
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +21,11 @@ const gameRoot = document.getElementById("game");
 const uiRoot = document.getElementById("ui");
 if (!gameRoot || !uiRoot) throw new Error("index.html is missing #game or #ui");
 
-const defaults: GameOptions = { luck: params.get("luck") !== "off", passDevice: params.get("handoff") !== "off" };
+const defaults: GameOptions = {
+  luck: params.get("luck") !== "off",
+  passDevice: params.get("handoff") !== "off",
+  battleScenes: params.get("battle") !== "off",
+};
 
 function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions): void {
   startSession({
@@ -31,6 +37,7 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
       settings: { ...scenario.setup.settings, luck: options.luck },
     },
     passDevice: options.passDevice,
+    battleScenes: options.battleScenes,
     debug: params.get("debug") === "on",
     onNewGame: () => window.location.reload(),
   });
@@ -39,5 +46,8 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
 await loadArtPack(params.get("pack") ?? "default");
 
 const direct = SCENARIOS.find((s) => s.id === params.get("map"));
-if (direct) start(gameRoot, uiRoot, direct, defaults);
+if (params.get("battle") === "demo") {
+  const { startBattlePreview } = await import("./game/battle/preview");
+  startBattlePreview(gameRoot, params);
+} else if (direct) start(gameRoot, uiRoot, direct, defaults);
 else showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options));
