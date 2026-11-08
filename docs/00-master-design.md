@@ -155,7 +155,7 @@ UI falls into four categories:
 | Map-anchored | Cursor, movement/attack range highlights, path arrow, unit HP numbers, damage popups | **Canvas (Phaser)** |
 | In-battle contextual menus | Fire / Capture / Wait / Load, turn menu (Resign / End Turn), damage forecast | **Canvas (Phaser)**, pixel style |
 | HUD | Current player's flag, day counter, funds, on the side of the map away from the cursor | **HTML overlay** |
-| Tile info | Terrain name, defense stars, a property's capture points left, the name of any unit on the tile, and what a transport is carrying, in a bottom corner away from the cursor | **HTML overlay** |
+| Tile info | Terrain name, defense stars, whether the tile is a scenario objective, a property's capture points left, the name of any unit on the tile with its fuel and ammo left (shown for every side; a value that is out, or fuel within two turns of running dry, is in the accent color), and what a transport is carrying, in a bottom corner away from the cursor | **HTML overlay** |
 | Full screens | Title, scenario select, briefing, results, settings | **HTML overlay** |
 
 - HTML UI is styled retro: a shared pixel font (open-licensed), pixel-art panel frames via CSS `border-image`, crisp image scaling, and a shared palette with the canvas UI.
@@ -329,3 +329,4 @@ UI falls into four categories:
 | 2026-11-08 | Non-combat cut-in scenes: a capture shows the squad storming the building, the count dropping as each soldier gets in, and the flags changing when it completes; foot soldiers going into a bunker show them running in and the bunker garrisoned. Same "Battle scenes" option and skip keys. The developer chose no other non-combat scenes (building, loading, supply, diving, fuel) (08-art-pipeline §19) |
 | 2026-11-08 | Scene feedback: every vehicle and gun unit shows 5 at full HP; rocket units have a forward observer with binoculars; indirect rounds show only over the firing half going up and the target's half coming down; City captures show a town square; Airfield captures show the runway; only the first capture turn storms the building, later turns raise the captor's flag to match the points taken; Transport Aircraft unloading plays as a static-line paratrooper jump (08-art-pipeline §18–20) |
 | 2026-11-08 | Battle scenes: tanks and tank destroyers are drawn as 3D models turned 5° toward the viewer, looking down about 24°, so turret roofs and fronts show; chosen over 10°, 15°, 20° and 47° samples. Everything else stays side-on for now (08-art-pipeline §18) |
+| 2026-11-08 | Objective marker changed from a gold frame to gold corner marks, since a full box read as a second cursor. The tile info box marks objectives and shows a unit's fuel and ammo left, for every side (04-economy §8, 00-master-design §12) |

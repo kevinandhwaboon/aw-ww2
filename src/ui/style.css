@@ -81,8 +81,24 @@ body {
 }
 
 .tile-capture,
-.tile-cargo {
+.tile-cargo,
+.tile-supply {
   font-size: 13px;
+}
+
+.tile-supply {
+  display: flex;
+  gap: 1em;
+}
+
+.tile-low {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.tile-objective {
+  font-size: 13px;
+  font-weight: bold;
 }
 
 .panel-title {

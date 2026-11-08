@@ -32,10 +32,15 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   const panel = el("div", "panel tile-info");
   const name = el("div", "panel-title");
   const defense = el("div", "tile-defense");
+  const objectiveLine = el("div", "tile-objective", "★ Objective");
   const captureLine = el("div", "tile-capture");
   const unitLine = el("div", "tile-unit");
+  const supplyLine = el("div", "tile-supply");
+  const fuelText = el("span");
+  const ammoText = el("span");
+  supplyLine.append(fuelText, ammoText);
   const cargoLine = el("div", "tile-cargo");
-  panel.append(name, defense, captureLine, unitLine, cargoLine);
+  panel.append(name, defense, objectiveLine, captureLine, unitLine, supplyLine, cargoLine);
   root.append(panel);
 
   return {
@@ -46,6 +51,14 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       unitLine.hidden = !info.unit;
       unitLine.textContent = info.unit?.name ?? "";
       unitLine.style.color = info.unit ? playerColors(info.unit.owner)[0] : "";
+      objectiveLine.hidden = !info.objective;
+      const unit = info.unit;
+      supplyLine.hidden = !unit;
+      fuelText.textContent = unit ? `Fuel ${unit.fuel.left}/${unit.fuel.max}` : "";
+      fuelText.classList.toggle("tile-low", unit?.fuel.low === true);
+      ammoText.hidden = !unit?.ammo;
+      ammoText.textContent = unit?.ammo ? `Ammo ${unit.ammo.left}/${unit.ammo.max}` : "";
+      ammoText.classList.toggle("tile-low", unit?.ammo?.low === true);
       captureLine.hidden = !info.capture;
       captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
       const cargo = info.unit?.cargo;
