@@ -12,6 +12,13 @@ export interface GameOptions {
   readonly passDevice: boolean;
   /** Attacks play as split-screen battle scenes (08-art-pipeline §18). */
   readonly battleScenes: boolean;
+  /** Player ids the computer plays (09-ai §5). On the map select, null means every player but the first. */
+  readonly computer: readonly number[] | null;
+}
+
+/** Who the computer plays unless the player says otherwise: everyone but the first player. */
+export function defaultComputerPlayers(scenario: Scenario): number[] {
+  return scenario.setup.players.map((_, id) => id).filter((id) => id > 0);
 }
 
 type OnStart = (scenario: Scenario, options: GameOptions) => void;
@@ -30,7 +37,7 @@ export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[
     close();
     showMapSelect(root, scenarios, defaults, onStart);
   });
-  panel.append(el("h1", "title-name", "WW2 Tactics"), el("div", "title-sub", "Working title · Two players, one device"), play);
+  panel.append(el("h1", "title-name", "WW2 Tactics"), el("div", "title-sub", "Working title · Play the computer, or a friend on one device"), play);
   node.append(panel);
   play.focus();
   menuKeys(panel, [play]);
@@ -78,6 +85,20 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     name.textContent = scenario.name;
     details.textContent = `${matchup(scenario)} · ${map.width}×${map.height} · ${units?.length ?? 0} units`;
     description.textContent = scenario.description;
+    showPlayers(scenario);
+  }
+
+  const players = el("div", "player-options");
+  let computerBoxes: HTMLInputElement[] = [];
+  /** One "Computer plays …" box per player of the chosen map. */
+  function showPlayers(scenario: Scenario): void {
+    const chosenIds = defaults.computer ?? defaultComputerPlayers(scenario);
+    players.replaceChildren();
+    computerBoxes = scenario.setup.players.map((player, id) => {
+      const box = checkbox(`Computer plays ${player.name} (${NATIONS[player.nation].name})`, chosenIds.includes(id));
+      players.append(box.row);
+      return box.input;
+    });
   }
 
   const luck = checkbox("Luck in combat", defaults.luck);
@@ -87,7 +108,8 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
   start.addEventListener("click", () => {
     if (!chosen) return;
     close();
-    onStart(chosen, { luck: luck.input.checked, passDevice: passDevice.input.checked, battleScenes: battleScenes.input.checked });
+    const computer = computerBoxes.flatMap((box, id) => (box.checked ? [id] : []));
+    onStart(chosen, { luck: luck.input.checked, passDevice: passDevice.input.checked, battleScenes: battleScenes.input.checked, computer });
   });
 
   panel.append(
@@ -96,6 +118,8 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     name,
     details,
     description,
+    el("div", "panel-subtitle", "Players"),
+    players,
     el("div", "panel-subtitle", "Options"),
     luck.row,
     passDevice.row,
@@ -111,7 +135,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     () => {
       const mapRows = rows.map(({ row }) => row);
       const onList = mapRows.some((row) => row === document.activeElement);
-      return onList ? mapRows : [chosenRow(), luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
+      return onList ? mapRows : [chosenRow(), ...computerBoxes, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
     },
     () => {
       close();

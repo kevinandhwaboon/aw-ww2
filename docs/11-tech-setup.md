@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops) and 12 (victory conditions) are done.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (first AI) are done. Milestone 13 (CO hooks) was skipped for now on 2026-11-09 to get single-player sooner; it is still to do.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -210,5 +210,5 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON). Since 2026-11-01 these only appear with `?debug=on`.
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?battle=off` plays attacks on the map instead of as battle scenes.
+- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?ai=1` has the computer play those players (`?ai=0,1` for AI vs AI, `?ai=none` for all human), `?battle=off` plays attacks on the map instead of as battle scenes.
 - Battle preview: `?battle=demo` plays a battle scene for every unit in turn, `&a=mortar&d=infantry` just that matchup, `&at=forest&dt=beach` sets each side's terrain, `&para=1` makes the attacking squad paratroopers with that card suit. `&storm=all` (or `capture`, `garrison`) shows the capture and bunker scenes instead, and `&t=end` holds each at its outcome. `&drop=on` shows airborne drops. `&t=fire` (or `&t=hit`, or a time in ms) shows every matchup frozen side by side, `&zoom=0,150,192,72` enlarges that part of each, `&scale=1` sets the size, `&flip=on` swaps the nations, and `&axis=japan` puts Japan on the Axis side in place of Germany (08-art-pipeline §18).

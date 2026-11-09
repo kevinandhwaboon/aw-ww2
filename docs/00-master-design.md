@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval), 11 (landings and drops) and 12 (victory conditions) done.
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (the Greedy AI) done. Milestone 13 (CO hooks) is still to do.
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -198,7 +198,7 @@ UI falls into four categories:
 
 ## 15. AI opponent
 
-- Not in the MVP. MVP is hot-seat PvP.
+- Not in the MVP. MVP is hot-seat PvP. The first AI, Greedy, was built on 2026-11-09 (09-ai).
 - **Pluggable from the start:** an AI receives game state and returns commands through the same interface a human uses.
 - Long-term: AIs that mimic real commanders' tendencies, and users can write their own custom AIs as plain JS/TS modules.
 - Must stay efficient enough for theater-scale unit counts.
@@ -223,7 +223,7 @@ UI falls into four categories:
 | 06-commanders.md | TBD |
 | 07-ui-ux.md | TBD: screen flows, controls, mobile |
 | 08-art-pipeline.md | **Asset list done**; how to make the art is undecided |
-| 09-ai.md | **v0 decided**: AI interface, rules for AIs, the first Greedy AI |
+| 09-ai.md | **v0 built**: AI interface, rules for AIs, the first Greedy AI |
 | 10-scenarios-normandy.md | **First theater map (v0)**: southern England and Normandy, 92 × 78; balance untested |
 | 11-tech-setup.md | **Decided**: tooling, repo layout, engine boundary, testing, phased build plan |
 | 12-weather.md | **v0 decided**: Clear and Snow, set per scenario as a forecast; snow uses the original's movement costs |
@@ -344,5 +344,8 @@ UI falls into four categories:
 | 2026-11-08 | Iwo Jima map (14-scenarios-pacific): February 1945, 36 × 26. The US starts with its first wave ashore and wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ; Japan, dug into bunkers, wins by holding out to day 15. A US anchorage off the south-east corner stands in for the fleet's transport area |
 | 2026-11-09 | Battle scenes: every naval unit is one larger ship, a 3D model turned 5° like the land machines, with more detail; the US Battleship becomes an Iowa-class battleship. Waves run along every hull from bow to stern, with a bow wave and a wake, so ships always look under way (08-art-pipeline §18) |
 | 2026-11-09 | Naval fire takes time to arrive in battle scenes: shells leave the screen and fall in over a second later, torpedoes run slower, depth charges sink before they go off. A Destroyer uses depth charges on any submarine, surfaced or not (it used its deck gun on a surfaced one), at the developer's request (08-art-pipeline §18) |
+| 2026-11-09 | Phone game-pad layout, a prototype (§12): on a small touch screen held upright (or with `?pad=on`), the top of the screen is a 3:2 game screen the width of the phone, drawn in the phone's own pixels at about 15 squares across, with day and funds above it and square info below; the bottom is an on-screen pad with Up, Down, Left, Right and the Z and X buttons, which send the same keys as the keyboard. Holding a direction repeats it. `?pad=off` turns it off |
+| 2026-11-09 | Single-player: the Greedy AI (09-ai §4) is built, ahead of milestone 13 (CO hooks), which is still to do. The map select has a "Computer plays …" box per player, and by default the computer plays everyone but the first player. AIs live in `src/ai/` under the engine's purity rules, see the state with the RNG hidden, and choose from the engine's new `legalCommands`. A rejected command, a crash or 300 commands in one turn ends the AI's turn and is logged as an AI bug |
+| 2026-11-09 | Greedy's scores are in funds and its weights are data (`src/ai/weights.ts`), so tuning and future commander personalities are data edits. Details not in the original design (09-ai §4 "As built"): capturers spread out over properties, indirect fire heads for firing positions, aircraft and ships head home on low fuel, submarines never dive, and it never builds Landing Craft or Transport Aircraft (D9). AI vs AI games end with a winner on every land map; maps that need landings stall until the AI learns them |
 | 2026-11-09 | Carrier added (01-units §4, 05-supply-transport §10). It carries 2 Fighters or Bombers and each turn either moves or launches, not both; it can launch both aircraft in one turn, and they fly off and attack that same turn (a departure from the original). Aircraft aboard get fuel and ammo free and 1 HP a day at the normal repair price. Unarmed; aircraft aboard sink with it. Iwo Jima loses the anchorage Airfield and gets two Carriers with two Bombers each instead |
 | 2026-11-09 | Carrier built: engine launch order and Carrier service, Essex (US/UK) and Shōkaku (Japan) map sprites and battle-scene models, the Launch item in a Carrier's menu (the aircraft comes out on the Carrier's tile, then moves and acts like any unit), and Iwo Jima's two Carriers with two Bombers each. Scenarios can now start units aboard a transport (`cargo` on a unit) |

@@ -349,9 +349,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.game.events.on("blur", () => this.handlers?.onPeekEnd()); // a release we'd otherwise never see
     // Not Phaser's keyboard events: they replay earlier keys when several land in one frame.
     window.addEventListener("keydown", (event) => this.onKey(event));
-    window.addEventListener("keyup", (event) => {
-      if (event.key === "x" || event.key === "X") this.handlers?.onPeekEnd();
-    });
+    window.addEventListener("keyup", (event) => this.releaseKey(event.key));
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;
@@ -434,39 +432,47 @@ export class MapScene extends Phaser.Scene implements MapView {
   private onKey(event: KeyboardEvent): void {
     // While an HTML menu has focus, the keyboard belongs to it. Cmd/Ctrl+Z is Undo, not Z.
     if (document.activeElement instanceof HTMLButtonElement || event.metaKey || event.ctrlKey) return;
+    if (this.pressKey(event.key, event.repeat)) event.preventDefault();
+  }
+
+  /** A key press from the keyboard or the on-screen pad. Returns whether the map used it. */
+  pressKey(key: string, repeat: boolean): boolean {
     const arrows: Record<string, Point> = {
       ArrowUp: { x: 0, y: -1 },
       ArrowDown: { x: 0, y: 1 },
       ArrowLeft: { x: -1, y: 0 },
       ArrowRight: { x: 1, y: 0 },
     };
-    const step = arrows[event.key];
+    const step = arrows[key];
     if (step) {
-      event.preventDefault();
       if (this.menu) {
         if (step.y !== 0) this.highlightMenuItem((this.menu.selected + step.y + this.menu.items.length) % this.menu.items.length);
       } else if (this.handlers) {
         this.setCursor(this.handlers.nextCursor(this.cursorTile, step));
       }
-      return;
+      return true;
     }
-    if (["z", "Z", "Enter", " "].includes(event.key)) {
-      event.preventDefault();
-      if (event.repeat) return; // holding Z must not open a menu and then pick from it
+    if (["z", "Z", "Enter", " "].includes(key)) {
+      if (repeat) return true; // holding Z must not open a menu and then pick from it
       const item = this.menu?.items[this.menu.selected];
       if (item) this.handlers?.onMenuChoice(item.id);
       else this.handlers?.onConfirm(this.cursorTile);
-      return;
+      return true;
     }
-    if (event.key === "x" || event.key === "X") {
-      event.preventDefault();
-      if (!event.repeat) this.handlers?.onPeekStart(this.cursorTile);
-      return;
+    if (key === "x" || key === "X") {
+      if (!repeat) this.handlers?.onPeekStart(this.cursorTile);
+      return true;
     }
-    if (event.key === "Escape" || event.key === "Backspace") {
-      event.preventDefault();
+    if (key === "Escape" || key === "Backspace") {
       this.handlers?.onCancel();
+      return true;
     }
+    return false;
+  }
+
+  /** A key let go: letting go of X ends a peek at a unit's range. */
+  releaseKey(key: string): void {
+    if (key === "x" || key === "X") this.handlers?.onPeekEnd();
   }
 
   /** Moves the cursor. Unless it followed the mouse, the view pans to keep it on screen. */

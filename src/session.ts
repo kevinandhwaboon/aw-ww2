@@ -2,6 +2,7 @@
 // commands to the engine and plays back what happened.
 
 import Phaser from "phaser";
+import { aiStep, type AiPlayer } from "./ai/player";
 import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
@@ -12,7 +13,8 @@ import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
-import { viewSize } from "./game/viewport";
+import { handheldViewSize, viewSize } from "./game/viewport";
+import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
 import {
   createBanner,
@@ -35,10 +37,17 @@ export interface SessionOptions {
   readonly battleScenes: boolean;
   /** Also shows the unit and debug panels (11-tech-setup §7). */
   readonly debug: boolean;
+  /** The AI playing each player, by player id; null for a human (09-ai §5). */
+  readonly ais: readonly (AiPlayer | null)[];
+  /** Phone held upright: a handheld-style screen with an on-screen game pad under it. */
+  readonly pad: boolean;
   readonly onNewGame: () => void;
 }
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, onNewGame }: SessionOptions): void {
+/** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
+const AI_PAUSE_MS = 250;
+
+export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): void {
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -71,12 +80,21 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   scene.setBattlePlayer(battleScenes ? battle : null);
 
   const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
+  /** During the computer's turn the map can be looked at, but no orders given (09-ai §5). */
+  const aiTurn = () => state.result === null && ais[state.currentPlayer] != null;
+  const humans = setup.players.filter((_, id) => ais[id] == null).length;
   scene.setHandlers({
     onCursorMove: (tile) => controller.onCursorMove(tile),
     nextCursor: (from, step) => controller.nextCursor(from, step),
-    onConfirm: (tile) => controller.onConfirm(tile),
-    onCancel: () => controller.onCancel(),
-    onMenuChoice: (id) => controller.onMenuChoice(id),
+    onConfirm: (tile) => {
+      if (!aiTurn()) controller.onConfirm(tile);
+    },
+    onCancel: () => {
+      if (!aiTurn()) controller.onCancel();
+    },
+    onMenuChoice: (id) => {
+      if (!aiTurn()) controller.onMenuChoice(id);
+    },
     onPeekStart: (tile) => controller.onPeekStart(tile),
     onPeekEnd: () => controller.onPeekEnd(),
   });
@@ -119,7 +137,8 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       const earned = income ? ` +${income.amount.toLocaleString("en-US")}` : "";
       scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
-      if (passDevice) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
+      // The pass-the-device screen only matters between two people (09-ai §5).
+      if (passDevice && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
     render();
@@ -127,7 +146,40 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       controller.finish();
       results.show(state, onNewGame);
     }
+    if (aiTurn()) void runAi();
     return true;
+  }
+
+  let aiRunning = false;
+
+  /**
+   * Plays the computer's turns, one command at a time, each animated like a human's. A misbehaving
+   * AI has its turn ended for it, and the problem is logged (09-ai §3).
+   */
+  async function runAi(): Promise<void> {
+    if (aiRunning) return;
+    aiRunning = true;
+    controller.reset();
+    try {
+      let sent = 0;
+      for (let ai = ais[state.currentPlayer]; ai && !state.result; ai = ais[state.currentPlayer]) {
+        const step = await aiStep(state, ai, sent);
+        const command = step.command;
+        if (step.bug) {
+          console.error(`AI bug: ${step.bug}`);
+          debugPanel?.logNote(`AI bug: ${step.bug}`);
+        }
+        if (command.type === "move") {
+          const unit = state.units.find((u) => u.id === command.unitId);
+          if (unit) scene.setCursor(unit.pos);
+          await new Promise((resolve) => setTimeout(resolve, AI_PAUSE_MS));
+        }
+        sent = command.type === "endTurn" ? 0 : sent + 1;
+        await dispatch(command);
+      }
+    } finally {
+      aiRunning = false;
+    }
   }
 
   function undo(): void {
@@ -150,9 +202,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "BUTTON"].includes(event.target.tagName)) return;
     if (event.key === "u" || event.key === "U" || ((event.metaKey || event.ctrlKey) && event.key === "z")) {
       event.preventDefault();
-      undo();
+      if (!aiTurn()) undo();
     } else if (event.key === "e" || event.key === "E") {
-      controller.endTurn();
+      if (!aiTurn()) controller.endTurn();
     }
   });
 
@@ -160,7 +212,13 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * Whole-number zoom so pixels stay crisp (00-master-design §14), filling the window, but never so
    * small that squares are hard to read: past that the view scrolls (00-master-design §12).
    */
-  const fitWindow = () => viewSize({ width: window.innerWidth, height: window.innerHeight }, { width, height });
+  // With the game pad the screen is a box above the pad, drawn in the phone's own pixels.
+  if (pad) mountPad(uiRoot, padInput(scene));
+  const fitWindow = () =>
+    pad
+      ? handheldViewSize(gameRoot.getBoundingClientRect(), { width, height }, window.devicePixelRatio)
+      : viewSize({ width: window.innerWidth, height: window.innerHeight }, { width, height });
+  const canvasZoom = () => (pad ? 1 / window.devicePixelRatio : 1); // canvas pixels per CSS pixel
 
   // The canvas is as big as it shows on screen and the scene's camera does the enlarging, so art
   // finer than one pixel per map pixel (32-pixel units) keeps its detail (08-art-pipeline §17).
@@ -174,16 +232,18 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     height: view.height,
     pixelArt: true,
     backgroundColor: packColor("uiBg"),
-    scale: { mode: Phaser.Scale.NONE },
+    scale: { mode: Phaser.Scale.NONE, zoom: canvasZoom() },
     scene: [scene, battle],
   });
 
   render();
+  if (aiTurn()) void runAi();
   window.addEventListener("resize", () => {
     const next = fitWindow();
     if (next.zoom === view.zoom && next.width === view.width && next.height === view.height) return;
     view = next;
     game.scale.resize(view.width, view.height);
+    game.scale.setZoom(canvasZoom());
     scene.setPixelScale(view.zoom);
   });
 }
@@ -192,4 +252,32 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
 function turnStartTile(state: GameState, player: number): Point {
   const hq = state.properties.find((p) => p.owner === player && terrainAt(state.map, p.pos) === "hq");
   return hq?.pos ?? state.units.find((u) => u.owner === player)?.pos ?? { x: 0, y: 0 };
+}
+
+/**
+ * Where an on-screen pad button goes: to the menu that has the focus, as the key it stands for,
+ * otherwise straight to the map. A button left focused on a screen that's now hidden doesn't count.
+ */
+function padInput(scene: MapScene): PadInput {
+  const focusedMenu = (): HTMLElement | null => {
+    const focused = document.activeElement;
+    if (!(focused instanceof HTMLElement) || focused === document.body) return null;
+    if (focused.getClientRects().length > 0) return focused;
+    focused.blur();
+    return null;
+  };
+  const send = (target: HTMLElement, type: "keydown" | "keyup", key: string, repeat: boolean) =>
+    target.dispatchEvent(new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true }));
+  return {
+    press(key, repeat) {
+      const menu = focusedMenu();
+      if (menu) send(menu, "keydown", key, repeat);
+      else scene.pressKey(key, repeat);
+    },
+    release(key) {
+      const menu = focusedMenu();
+      if (menu) send(menu, "keyup", key, false);
+      else scene.releaseKey(key);
+    },
+  };
 }
