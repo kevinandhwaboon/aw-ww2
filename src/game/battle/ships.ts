@@ -4,7 +4,7 @@
 
 import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type V3 } from "./angled/mesh";
 import {
-  beamAt, daihatsu, fletcher, gato, gyoraitei, iBoat, iowa, kagero, lct, ptBoat, sBoot, typeVII, waterline, yamato, zerstorer,
+  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, iowa, kagero, lct, ptBoat, sBoot, shokaku, typeVII, waterline, yamato, zerstorer,
   type Launch, type Salvo, type ShipModel,
 } from "./angled/shipModels";
 import { C, mix, type Painter } from "./paint";
@@ -297,3 +297,17 @@ export const torpedoBoatRig: Rig = shipRig({
   },
 });
 
+
+// ---- Carrier: unarmed; aircraft parked aft on the flight deck ----
+
+function carrier(look: Look): ShipModel {
+  return memo(`cv|${team(look)}`, () => (kitOf(look) === "jp" ? shokaku(look.team) : essex(look.team)));
+}
+
+export const carrierRig: Rig = shipRig({
+  hit: { x: 0, y: -20 },
+  style: { speed: 16, bowWave: 0.9 },
+  model: (_pose, look) => carrier(look),
+  rest: (look) => carrier(look),
+  muzzle: () => [0, 0, 20],
+});

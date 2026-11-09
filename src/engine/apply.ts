@@ -15,6 +15,9 @@ import {
   applySupply,
   applyUnload,
   joinProblem,
+  launchable,
+  launchProblem,
+  launchState,
   loadProblem,
   supplyTargets,
   unloadTiles,
@@ -32,6 +35,8 @@ export function apply(state: GameState, command: Command): ApplyResult {
   switch (type) {
     case "move":
       return move(state, command as Extract<Command, { type: "move" }>);
+    case "launch":
+      return launch(state, command as Extract<Command, { type: "launch" }>);
     case "build":
       return build(state, command as Extract<Command, { type: "build" }>);
     case "endTurn":
@@ -82,6 +87,9 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   if (!unit) return reject("unitNotFound", `No unit with id ${String(unitId)}`);
   if (unit.owner !== state.currentPlayer) return reject("notYourUnit", `Unit ${unitId} belongs to player ${unit.owner}`);
   if (unit.hasActed) return reject("unitAlreadyActed", `Unit ${unitId} has already acted this turn`);
+  if (unit.launched === true && path.length > 0) {
+    return reject("unitAlreadyActed", "a Carrier that launched aircraft this turn can't move (05-supply-transport §10)");
+  }
 
   // Load and Join end on a friendly unit; every other action needs an empty tile.
   const boarding = action.type === "load" || action.type === "join";
@@ -168,6 +176,38 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   if (problem) return reject("invalidTarget", `Can't attack unit ${action.target}: ${problem}`);
   const combat = resolveCombat(afterMove, moved, defender);
   return { ok: true, state: clearAbandonedCaptures(combat.state), events: [...events, combat.event] };
+}
+
+/**
+ * An aircraft takes off from a Carrier and makes a normal move from the Carrier's tile
+ * (05-supply-transport §10). The Carrier can't move for the rest of the turn; once nothing aboard
+ * can still take off, it's done for the turn.
+ */
+function launch(state: GameState, command: Extract<Command, { type: "launch" }>): ApplyResult {
+  const { carrierId, unitId, path, action } = command;
+  if (!Number.isInteger(carrierId) || !Number.isInteger(unitId)) return reject("invalidCommand", "launch needs a carrierId and a unitId");
+  if (!Array.isArray(path) || !path.every(isPoint)) return reject("invalidCommand", "path must be a list of {x, y} points");
+  const carrier = state.units.find((u) => u.id === carrierId);
+  if (!carrier) return reject("unitNotFound", `No unit with id ${String(carrierId)}`);
+  const problem = launchProblem(state, carrier, unitId);
+  if (problem) return reject("cannotLaunch", `Can't launch: ${problem}`);
+  const end = path[path.length - 1];
+  if (!end) return reject("cannotLaunch", "Can't launch: the aircraft has to fly off the Carrier");
+  if (end.x === carrier.pos.x && end.y === carrier.pos.y) return reject("cannotLaunch", "Can't launch: the aircraft has to leave the Carrier's tile");
+
+  const out = launchState(state, carrierId, unitId);
+  if (!out) return reject("cannotLaunch", "Can't launch: that aircraft isn't aboard");
+  const moved = move(out, { type: "move", unitId, path, action });
+  if (!moved.ok) return moved;
+
+  const units = moved.state.units
+    .map((u) => (u.id === carrierId && launchable(u).length === 0 ? { ...u, hasActed: true } : u))
+    .sort((a, b) => a.id - b.id);
+  return {
+    ok: true,
+    state: { ...moved.state, units },
+    events: [{ type: "unitLaunched", unitId, carrierId, pos: carrier.pos }, ...moved.events],
+  };
 }
 
 function build(state: GameState, command: Extract<Command, { type: "build" }>): ApplyResult {

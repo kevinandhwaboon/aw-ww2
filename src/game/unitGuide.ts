@@ -31,4 +31,5 @@ export const UNIT_GUIDE: Readonly<Record<UnitTypeId, UnitGuide>> = {
   submarine: { role: "Ambushes ships", strongVs: ["battleship", "landingCraft"], weakVs: ["destroyer", "bomber"] },
   landingCraft: { role: "Unarmed. Carries land units to the beach", strongVs: [], weakVs: ["submarine", "torpedoBoat", "bomber"] },
   torpedoBoat: { role: "Cheap ship killer", strongVs: ["landingCraft"], weakVs: ["destroyer", "bomber"] },
+  carrier: { role: "Unarmed. Carries 2 aircraft, which take off and strike the same turn", strongVs: [], weakVs: ["submarine", "bomber"] },
 };

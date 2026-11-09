@@ -13,12 +13,12 @@ export const UNIT_TYPE_IDS = [
   // Air (phase 2)
   "fighter", "bomber", "transportAircraft",
   // Naval (phase 2)
-  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat",
+  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
 ] as const;
 export type UnitTypeId = (typeof UNIT_TYPE_IDS)[number];
 
 export type UnitCategory = "land" | "air" | "naval";
-export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach";
+export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch";
 
 export interface UnitDef {
   readonly name: string;
@@ -51,6 +51,9 @@ export interface UnitDef {
 
 /** Units that Halftracks and Transport Aircraft can carry (01-units §5). */
 export const FOOT_UNITS = ["infantry", "assaultInfantry", "mortar"] as const satisfies readonly UnitTypeId[];
+
+/** What a Carrier can carry: combat aircraft, not Transport Aircraft (05-supply-transport §10). */
+export const CARRIER_AIRCRAFT = ["fighter", "bomber"] as const satisfies readonly UnitTypeId[];
 
 /** Everything a Landing Craft can carry: any land unit (01-units §5). */
 export const LAND_UNITS = [
@@ -179,6 +182,11 @@ export const UNITS = {
     ...BASE, phase: 2, name: "Torpedo Boat", category: "naval", cost: 8000, movePoints: 7, movementType: "sea",
     vision: 3, maxFuel: 60, fuelPerDay: 1, primaryWeapon: { name: "Torpedoes", maxAmmo: 4 },
     secondaryWeapon: { name: "MG" },
+  },
+  carrier: {
+    ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 30000, movePoints: 5, movementType: "sea",
+    vision: 2, maxFuel: 99, fuelPerDay: 1, range: null,
+    transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
   },
 } as const satisfies Record<UnitTypeId, UnitDef>;
 

@@ -407,6 +407,8 @@ function describeEvent(state: GameState, previous: GameState, e: GameEvent): str
     }
     case "unitLoaded":
       return `${unitName(e.unitId)} boarded ${unitName(e.transportId)}`;
+    case "unitLaunched":
+      return `${unitName(e.unitId)} took off from ${unitName(e.carrierId)}`;
     case "unitUnloaded":
       return `${unitName(e.unitId)} unloaded at (${e.pos.x}, ${e.pos.y})`;
     case "unitJoined":

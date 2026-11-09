@@ -7,7 +7,7 @@ import { SEASONS, WEATHER_IDS, type Season, type WeatherId } from "./data/weathe
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { parseAsciiMap, terrainAt, type Point } from "./map";
 import { MODIFIABLE_STATS, type Modifier, type ModifiableStat } from "./modifiers";
-import { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
+import { createGame, type CargoSetup, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
 import type { Settings, VictoryCondition, WeatherPlan } from "./state";
 
 export interface Scenario {
@@ -84,7 +84,14 @@ function parseUnit(raw: unknown, index: number): UnitSetup {
     owner: count(raw, "owner", where),
     pos: point(raw.pos, where),
     ...optionalCounts(raw, ["hp", "fuel", "ammo", "kills"], where),
+    ...(raw.cargo === undefined ? {} : { cargo: list(raw, "cargo", where).map((c, i) => parseCargo(c, `${where} cargo ${i}`)) }),
   };
+}
+
+function parseCargo(raw: unknown, where: string): CargoSetup {
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  if (!isUnitType(raw.type)) return fail(`${where}: unknown unit type ${String(raw.type)}`);
+  return { type: raw.type, ...optionalCounts(raw, ["hp", "fuel", "ammo", "kills"], where) };
 }
 
 function side(raw: Json, where: string): Side {

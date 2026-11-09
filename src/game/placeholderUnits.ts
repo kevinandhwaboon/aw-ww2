@@ -12,7 +12,7 @@ export const UNIT_CODES: Record<UnitTypeId, string> = {
   lightTank: "LT", mediumTank: "MT", heavyTank: "HV", tankDestroyer: "TD",
   artillery: "AR", rocketArtillery: "RK", mobileAA: "AA", flakGun: "FK",
   fighter: "FT", bomber: "BM", transportAircraft: "TA",
-  battleship: "BB", destroyer: "DD", submarine: "SS", landingCraft: "LC", torpedoBoat: "TB",
+  battleship: "BB", destroyer: "DD", submarine: "SS", landingCraft: "LC", torpedoBoat: "TB", carrier: "CV",
 };
 
 

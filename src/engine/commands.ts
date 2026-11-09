@@ -62,6 +62,17 @@ export type Command =
    * `path` lists the tiles stepped onto, excluding the start; empty = act without moving.
    */
   | { readonly type: "move"; readonly unitId: UnitId; readonly path: readonly Point[]; readonly action: UnitAction }
+  /**
+   * An aircraft takes off from a Carrier that hasn't moved this turn, then moves and acts like any
+   * move (05-supply-transport §10). `path` starts next to the Carrier and can't be empty.
+   */
+  | {
+      readonly type: "launch";
+      readonly carrierId: UnitId;
+      readonly unitId: UnitId;
+      readonly path: readonly Point[];
+      readonly action: UnitAction;
+    }
   /** Build a unit on an empty production property the current player owns. */
   | { readonly type: "build"; readonly unitType: UnitTypeId; readonly pos: Point }
   | { readonly type: "endTurn" }
@@ -111,11 +122,13 @@ export type GameEvent =
     }
   | { readonly type: "unitLoaded"; readonly unitId: UnitId; readonly transportId: UnitId }
   | { readonly type: "unitUnloaded"; readonly unitId: UnitId; readonly transportId: UnitId; readonly pos: Point }
+  /** An aircraft took off from a Carrier at `pos`; its move follows (05-supply-transport §10). */
+  | { readonly type: "unitLaunched"; readonly unitId: UnitId; readonly carrierId: UnitId; readonly pos: Point }
   /** `hp` is the merged unit's internal HP; `refund` is funds returned for excess HP. */
   | { readonly type: "unitJoined"; readonly unitId: UnitId; readonly targetId: UnitId; readonly hp: number; readonly refund: number }
   /** `funds` is the player's total afterwards. */
   | { readonly type: "incomeReceived"; readonly player: PlayerId; readonly amount: number; readonly funds: number }
-  /** `hp` is displayed HP restored. */
+  /** `hp` is displayed HP restored. The unit may be an aircraft aboard a Carrier (05-supply-transport §10). */
   | { readonly type: "unitRepaired"; readonly unitId: UnitId; readonly hp: number; readonly cost: number }
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
   | { readonly type: "unitDived"; readonly unitId: UnitId }
@@ -148,6 +161,7 @@ export type RejectionCode =
   | "cannotBuild"
   | "cannotLoad"
   | "cannotUnload"
+  | "cannotLaunch"
   | "cannotJoin"
   | "cannotSupply"
   | "cannotDive"

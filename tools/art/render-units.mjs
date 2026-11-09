@@ -102,10 +102,10 @@ for (const { id, units, extra, teams: names } of big) {
   console.log(`${id}: ${shown.length} land units rendered at 32x32`);
 }
 
-// ---- 32x32 aircraft and ships. Rows: FT, BM, TA and BB, DD, SS, LC, TB; empty where a nation has none.
+// ---- 32x32 aircraft and ships. Rows: FT, BM, TA and BB, DD, SS, LC, TB, CV; empty where a nation has none.
 const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval } = await import("./air-naval32.mjs");
 const airRows = ["FT", "BM", "TA"];
-const navalRows = ["BB", "DD", "SS", "LC", "TB"];
+const navalRows = ["BB", "DD", "SS", "LC", "TB", "CV"];
 for (const { id, air, naval, teams: names } of [
   { id: "us", air: usAir, naval: usNaval, teams: ["olive", "red", "blue"] },
   { id: "de", air: deAir, naval: deNaval, teams: ["grey", "olive", "red", "blue"] },

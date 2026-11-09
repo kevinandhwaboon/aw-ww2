@@ -23,7 +23,7 @@
     "SSSSSS__..=..__SSSSSSSSSSSSSSSSSSSSS",
     "SSSS__.X==.__SSSSSSSSSSSSSSSSSSSSSSS",
     "SSS_HX==.__SSSSSSSSSSSSSSSSS......SS",
-    "SS_H.HX._SSSSSSSSSSSSSSSSSSSP...A.SS",
+    "SS_H.HX._SSSSSSSSSSSSSSSSSSSP.....SS",
     "SS_HCH__SSSSSSSSSSSSSSSSSSSS..f...SS",
     "SS_HH_SSSSSSSSSSSSSSSSSSSSSS...Q..SS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSS.P....SS",
@@ -55,7 +55,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ],
       "facing": "left"
     },
@@ -78,7 +79,6 @@
   "propertyOwners": [
     { "pos": { "x": 31, "y": 22 }, "owner": 0 },
     { "pos": { "x": 30, "y": 21 }, "owner": 0 },
-    { "pos": { "x": 32, "y": 20 }, "owner": 0 },
     { "pos": { "x": 28, "y": 20 }, "owner": 0 },
     { "pos": { "x": 29, "y": 23 }, "owner": 0 },
     { "pos": { "x": 4, "y": 21 }, "owner": 1 },
@@ -108,6 +108,24 @@
     { "type": "destroyer", "owner": 0, "pos": { "x": 24, "y": 15 } },
     { "type": "landingCraft", "owner": 0, "pos": { "x": 17, "y": 19 } },
     { "type": "landingCraft", "owner": 0, "pos": { "x": 22, "y": 18 } },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 26, "y": 15 },
+      "cargo": [
+        { "type": "bomber" },
+        { "type": "bomber" }
+      ]
+    },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 24, "y": 17 },
+      "cargo": [
+        { "type": "bomber" },
+        { "type": "bomber" }
+      ]
+    },
     { "type": "infantry", "owner": 0, "pos": { "x": 30, "y": 20 } },
     { "type": "artillery", "owner": 0, "pos": { "x": 31, "y": 21 } },
     { "type": "halftrack", "owner": 0, "pos": { "x": 32, "y": 22 } },
@@ -136,12 +154,8 @@
     { "type": "lightTank", "owner": 1, "pos": { "x": 16, "y": 9 } }
   ],
   "victory": [
-    {
-      "type": "hqCapture"
-    },
-    {
-      "type": "rout"
-    },
+    { "type": "hqCapture" },
+    { "type": "rout" },
     {
       "type": "captureProperties",
       "side": "allies",

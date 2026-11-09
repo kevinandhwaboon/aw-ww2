@@ -91,6 +91,40 @@ function ship(frame, o) {
   return finish(s);
 }
 
+/**
+ * A carrier: a hull band under a flat flight deck that runs almost bow to stern, a dashed white
+ * centerline, aircraft parked aft, and the island on the near (starboard) side. Same rock, bow
+ * wave and wake as the other ships.
+ */
+function carrier(frame, o) {
+  const s = sprite();
+  const y = (v) => v + frame;
+  const deck = 11, beam = 10, side = 4;
+  const near = deck + beam;
+  s.poly([[2, y(near)], [27, y(near)], [31, y(near - 3)], [29, y(near + side)], [3, y(near + side)]], "team", 3);
+  if (o.sideFunnels) for (const fx of o.sideFunnels) s.oval(fx, y(near + 1), 1.4, 1.6, "team", 2).shadow();
+  s.poly([[1, y(deck)], [27, y(deck)], [31, y(deck + 3)], [31, y(near - 3)], [27, y(near)], [1, y(near)]], o.deck, 1);
+  for (let x = 3; x <= 28; x += 4) s.fill(x, y(deck + 5), x + 1, y(deck + 5), "card", 0);
+  for (const ex of o.elevators) s.fill(ex, y(deck + 2), ex + 2, y(deck + 3), o.deck, 3);
+  // Aircraft parked aft: fuselage along the deck, wings across it.
+  for (const [px, py] of [[4, deck + 2], [4, deck + 7], [9, deck + 2], [9, deck + 7]]) {
+    s.rect(px - 1, y(py + 1), px + 2, y(py + 1), "team", 0);
+    s.fill(px + 1, y(py), px + 1, y(py + 2), "team", 0);
+  }
+  // The island standing up from the near deck edge, with its funnel and mast.
+  const [ix0, ix1] = o.island;
+  s.rect(ix0, y(near - 7), ix1, y(near - 1), "team", 1, true).shadow();
+  s.fill(ix0 + 1, y(near - 5), ix1 - 1, y(near - 5), "glass", 0);
+  s.rect(ix0 + 1, y(near - 9), ix1 - 2, y(near - 7), "team", 0, true).shadow();
+  if (o.funnel !== undefined) s.oval(o.funnel, y(near - 8), 1.6, 1.4, "team", 3).shadow();
+  s.shape().line(ix0 + 2, y(near - 10), ix0 + 2, y(near - 10 - o.mast), "metal", 2);
+  s.shape();
+  const water = near + side + 1;
+  for (let x = 0; x <= 31; x++) if ((x + frame) % 3 !== 0 && (x < 5 || x > 26)) s.dot(x, water, "card", 0);
+  for (let x = 0; x < 3; x++) if ((x + frame) % 2 === 0) s.dot(x, water - 2 - ((x + frame) % 3), "card", 0);
+  return finish(s);
+}
+
 // ---- US aircraft ----
 const p51 = (f) => plane(f, {
   tail: 2, nose: 27, girth: 3, fin: 7, canopy: [17, 20], noseProp: 4,
@@ -148,6 +182,8 @@ const ptBoat = (f) => ship(f, {
   blocks: [[14, 14, 19, 19]], turrets: [[10, 17, 2, 1.2], [23, 17, 2, 1.2]], masts: [[16, 14, 5]],
 });
 
+const essex = (f) => carrier(f, { deck: "metal", elevators: [12, 25], island: [16, 22], funnel: 21, mast: 3 });
+
 // ---- German ships ----
 const zClass = (f) => ship(f, {
   stern: 1, bow: 31, deck: 14, beam: 5, side: 3,
@@ -203,6 +239,8 @@ const gyoraitei = (f) => ship(f, {
   blocks: [[15, 14, 19, 19]], turrets: [[11, 17, 2, 1.2]], masts: [[17, 14, 4]],
 });
 
+const shokaku = (f) => carrier(f, { deck: "wood", elevators: [11, 17, 25], island: [21, 25], mast: 3, sideFunnels: [15, 18] });
+
 export const usAir = [
   { code: "FT", name: "Fighter", real: "P-51 Mustang", frames: frames(p51) },
   { code: "BM", name: "Bomber", real: "B-26 Marauder", frames: frames(b26) },
@@ -214,6 +252,7 @@ export const usNaval = [
   { code: "SS", name: "Submarine", real: "Gato class", frames: frames(gato) },
   { code: "LC", name: "Landing Craft", real: "LCT", frames: frames(lct) },
   { code: "TB", name: "Torpedo Boat", real: "PT boat", frames: frames(ptBoat) },
+  { code: "CV", name: "Carrier", real: "Essex class", frames: frames(essex) },
 ];
 export const deAir = [
   { code: "FT", name: "Fighter", real: "Bf 109", frames: frames(bf109) },
@@ -237,6 +276,7 @@ export const jpNaval = [
   { code: "SS", name: "Submarine", real: "I-boat (Type B1)", frames: frames(iBoat) },
   { code: "LC", name: "Landing Craft", real: "Daihatsu", frames: frames(daihatsu) },
   { code: "TB", name: "Torpedo Boat", real: "Gyoraitei", frames: frames(gyoraitei) },
+  { code: "CV", name: "Carrier", real: "Shōkaku class", frames: frames(shokaku) },
 ];
 
 for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {

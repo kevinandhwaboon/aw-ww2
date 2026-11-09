@@ -1,4 +1,4 @@
-// Transport, supply and joining (05-supply-transport §3–4, §6, §8, 04-economy §6). Used both by apply() and
+// Transport, supply, joining and Carrier launches (05-supply-transport §3–4, §6, §8, §10, 04-economy §6). Used both by apply() and
 // by the UI for menus, so what the menus offer is exactly what the engine accepts.
 //
 // Passengers live inside their transport (`cargo`), not in GameState.units. So they can't be
@@ -69,7 +69,8 @@ export function applyLoad(state: GameState, unit: Unit, transport: Unit): { stat
  * Never the transport's own tile, even for an aircraft, since one unit per tile still holds (02-terrain §5).
  */
 export function unloadTiles(state: GameState, transport: Unit, passenger: Unit): Point[] {
-  if (landingSpotProblem(state, transport)) return [];
+  // A Carrier's aircraft launch instead (05-supply-transport §10).
+  if (isCarrier(transport) || landingSpotProblem(state, transport)) return [];
   return neighborsOf(state, transport.pos).filter((p) => {
     const terrain = state.map.terrain[tileIndex(state, p)];
     return terrain !== undefined && !unitAt(state, p) && stats.moveCost(state, passenger, terrain) !== null;
@@ -145,4 +146,38 @@ export function applyJoin(state: GameState, unit: Unit, target: Unit): { state: 
     state: { ...joined, players: joined.players.map((p) => (p.id === unit.owner ? { ...p, funds: p.funds + refund } : p)) },
     event: { type: "unitJoined", unitId: unit.id, targetId: target.id, hp: merged.hp, refund },
   };
+}
+
+// ---- Carriers (05-supply-transport §10) ----
+
+const isCarrier = (unit: Unit) => unitDef(unit.type).specialActions.includes("launch");
+
+/** Aircraft aboard this Carrier that can take off now: not ones that landed this turn. */
+export function launchable(carrier: Unit): Unit[] {
+  return isCarrier(carrier) ? carrier.cargo.filter((c) => !c.hasActed) : [];
+}
+
+/** Why this aircraft can't take off from that Carrier now, or null if it can. */
+export function launchProblem(state: GameState, carrier: Unit, passengerId: number): string | null {
+  if (!isCarrier(carrier)) return "only a Carrier launches aircraft";
+  if (carrier.owner !== state.currentPlayer) return "that Carrier isn't yours";
+  if (carrier.hasActed) return "a Carrier that has moved this turn can't launch";
+  const passenger = carrier.cargo.find((c) => c.id === passengerId);
+  if (!passenger) return "that aircraft isn't aboard";
+  if (passenger.hasActed) return "an aircraft that landed this turn can't take off until next turn";
+  return null;
+}
+
+/**
+ * The game with the aircraft out on the Carrier's tile, ready to move, and the Carrier marked as
+ * launched so it can't move this turn. The aircraft is listed last, so it's drawn over the Carrier.
+ * Not a legal state on its own (two units share a tile): the launch move takes the aircraft away.
+ */
+export function launchState(state: GameState, carrierId: number, passengerId: number): GameState | null {
+  const carrier = state.units.find((u) => u.id === carrierId);
+  const passenger = carrier?.cargo.find((c) => c.id === passengerId);
+  if (!carrier || !passenger) return null;
+  const emptied: Unit = { ...carrier, cargo: carrier.cargo.filter((c) => c.id !== passengerId), launched: true };
+  const aircraft: Unit = { ...passenger, pos: carrier.pos, hasActed: false };
+  return { ...state, units: [...state.units.filter((u) => u.id !== carrierId).concat(emptied).sort((a, b) => a.id - b.id), aircraft] };
 }

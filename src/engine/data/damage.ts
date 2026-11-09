@@ -3,7 +3,7 @@
 //   "55"  = primary weapon (uses ammo)
 //   "55*" = secondary weapon (machine gun etc., unlimited)
 //   "—"   = cannot attack
-// Unarmed units (Halftrack, Transport Aircraft, Landing Craft) have no rows.
+// Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no rows.
 
 import type { UnitTypeId } from "./units";
 
@@ -55,29 +55,29 @@ const VS_LAND: Record<ArmedUnitId, string> = {
 // 03-combat §5b: vs. air, naval and fortifications
 const VS_OTHER_COLUMNS = [
   "fighter", "bomber", "transportAircraft", "battleship", "destroyer", "submarine",
-  "landingCraft", "torpedoBoat", "fort",
+  "landingCraft", "torpedoBoat", "carrier", "fort",
 ] as const satisfies readonly DamageTarget[];
 
-//                     Ftr  Bmr  Trn  BB   DD   Sub  LC   TB   Fort
+//                     Ftr  Bmr  Trn  BB   DD   Sub  LC   TB   CV   Fort
 const VS_OTHER: Record<ArmedUnitId, string> = {
-  infantry:        "—    —    —    —    —    —    —    —    5*",
-  assaultInfantry: "—    —    —    —    —    —    —    —    65",
-  mortar:          "—    —    —    —    —    —    25   25   20",
-  recon:           "—    —    —    —    —    —    —    —    —",
-  lightTank:       "—    —    —    1    3    1    8    15   10",
-  mediumTank:      "—    —    —    1    5    1    10   20   15",
-  heavyTank:       "—    —    —    10   30   10   35   40   40",
-  tankDestroyer:   "—    —    —    5    10   5    15   25   30",
-  artillery:       "—    —    —    40   50   60   55   60   50",
-  rocketArtillery: "—    —    —    55   65   85   60   75   55",
-  mobileAA:        "65   75   90   —    —    —    —    —    —",
-  flakGun:         "100  100  110  —    —    —    —    —    —",
-  fighter:         "55   100  100  —    —    —    5    10   —",
-  bomber:          "—    —    —    75   85   95   95   95   55",
-  battleship:      "—    —    —    50   85   95   95   95   55",
-  destroyer:       "55*  65*  105* 10   40   90   50   85   20",
-  submarine:       "—    —    —    55   25   55   95   75   —",
-  torpedoBoat:     "—    —    —    35   30   40   75   55   —",
+  infantry:        "—    —    —    —    —    —    —    —    —    5*",
+  assaultInfantry: "—    —    —    —    —    —    —    —    —    65",
+  mortar:          "—    —    —    —    —    —    25   25   —    20",
+  recon:           "—    —    —    —    —    —    —    —    —    —",
+  lightTank:       "—    —    —    1    3    1    8    15   1    10",
+  mediumTank:      "—    —    —    1    5    1    10   20   1    15",
+  heavyTank:       "—    —    —    10   30   10   35   40   10   40",
+  tankDestroyer:   "—    —    —    5    10   5    15   25   5    30",
+  artillery:       "—    —    —    40   50   60   55   60   45   50",
+  rocketArtillery: "—    —    —    55   65   85   60   75   60   55",
+  mobileAA:        "65   75   90   —    —    —    —    —    —    —",
+  flakGun:         "100  100  110  —    —    —    —    —    —    —",
+  fighter:         "55   100  100  —    —    —    5    10   —    —",
+  bomber:          "—    —    —    75   85   95   95   95   85   55",
+  battleship:      "—    —    —    50   85   95   95   95   60   55",
+  destroyer:       "55*  65*  105* 10   40   90   50   85   10   20",
+  submarine:       "—    —    —    55   25   55   95   75   75   —",
+  torpedoBoat:     "—    —    —    35   30   40   75   55   45   —",
 };
 
 type ChartRow = Readonly<Partial<Record<DamageTarget, DamageEntry>>>;

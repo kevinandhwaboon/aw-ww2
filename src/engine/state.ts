@@ -82,6 +82,11 @@ export interface Unit {
   readonly airDropped?: true;
   /** A submarine below the surface (05-supply-transport §9). Missing until it first dives. */
   readonly submerged?: boolean;
+  /**
+   * A Carrier that has launched aircraft this turn, so it can't move (05-supply-transport §10).
+   * Cleared at the start of its owner's turn.
+   */
+  readonly launched?: true;
 }
 
 export interface PropertyState {

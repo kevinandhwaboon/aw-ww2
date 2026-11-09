@@ -59,8 +59,9 @@
 | Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
 | Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / (rare) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
+| Carrier | Mobile airfield | Carries 2 Fighters or Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Unarmed: it needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
-Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is added.
+Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US and UK, the Shōkaku for Japan (08-art-pipeline §17, §18).
 
 ## 5. Transport rules (summary; details in 05-supply-transport)
 
@@ -69,6 +70,7 @@ Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is 
 | Halftrack | 1 | Infantry, Assault Infantry, Mortar Team | Adjacent land tile |
 | Transport Aircraft | 2 | Infantry, Assault Infantry, Mortar Team | Airborne drop (below) |
 | Landing Craft | 2 | Any land unit | Standing on a Beach or Port tile, onto adjacent land tiles (05-supply-transport §8) |
+| Carrier | 2 | Fighter, Bomber | Launch: the aircraft flies off and acts that turn, if the Carrier hasn't moved (05-supply-transport §10) |
 
 **Airborne drops (Transport Aircraft):**
 - There is no separate Paratrooper unit. Any foot unit can be air-dropped.
@@ -95,7 +97,7 @@ Carrier: not included (mainly a Pacific unit). Revisit if a Pacific scenario is 
 | Anti-tank gun | Cut | Overlaps with Tank Destroyer and Assault Infantry |
 | Separate Paratrooper unit | Cut | Any foot unit can be air-dropped |
 | Glider | Deferred | Possible scenario-specific addition |
-| Carrier | Deferred | Pacific only |
+| Carrier | Added 2026-11-09 | Deferred until a Pacific map existed; Iwo Jima now does |
 | Fighter-Bomber | Cut | Fighters get weak ground attack; Bombers cover ground strike |
 
 ## 7a. Rocket artillery availability (historical note)
@@ -142,6 +144,7 @@ These are starting points for the first playable build, based on the original ga
 | Submarine | 20,000 | 5 | 5 | 60 | 1 (5 dived) | Torpedoes (6) | — | 1 | — |
 | Landing Craft | 12,000 | 6 | 1 | 99 | 1 | — | — | — | 2 land |
 | Torpedo Boat | 8,000 | 7 | 3 | 60 | 1 | Torpedoes (4) | MG | 1 | — |
+| Carrier | 30,000 | 5 | 2 | 99 | 1 | — | — | — | 2 air (Fighter, Bomber) |
 
 Fighter ground attack (strafing) uses the same guns, with very low damage values in the damage chart.
 
@@ -179,4 +182,4 @@ All values pass through the modifier layer (master doc section 7).
 - Movement type list and terrain costs (02-terrain).
 - Damage chart, including vs. fortifications and obstacles (03-combat).
 - Can Heavy Tank fuel use or Rocket Artillery fragility be expressed through existing stats, or do they need special rules?
-- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor. Decided so far: the US has no Heavy Tank; Germany has no Battleship or Landing Craft; Japan has no Heavy Tank (08-art-pipeline §17).
+- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor. Decided so far: the US has no Heavy Tank; Germany has no Battleship, Landing Craft or Carrier; Japan has no Heavy Tank (08-art-pipeline §17).

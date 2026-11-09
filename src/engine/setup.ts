@@ -3,7 +3,7 @@
 
 import { NATIONS, type NationId } from "./data/nations";
 import { terrainDef } from "./data/terrain";
-import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
+import { UNIT_TYPE_IDS, UNITS, type UnitDef, type UnitTypeId } from "./data/units";
 import { inBounds, type GameMap, type Point } from "./map";
 import type { Modifier } from "./modifiers";
 import { seedRng } from "./rng";
@@ -39,15 +39,21 @@ export interface PlayerSetup {
   readonly facing?: Facing;
 }
 
-export interface UnitSetup {
+/** A unit starting aboard a transport, e.g. a Bomber on a Carrier (05-supply-transport §10). */
+export interface CargoSetup {
   readonly type: UnitTypeId;
-  readonly owner: PlayerId;
-  readonly pos: Point;
   /** Internal HP, default 100. */
   readonly hp?: number;
   readonly fuel?: number;
   readonly ammo?: number;
   readonly kills?: number;
+}
+
+export interface UnitSetup extends CargoSetup {
+  readonly owner: PlayerId;
+  readonly pos: Point;
+  /** Units starting aboard; they must be ones this unit can carry, within its capacity. */
+  readonly cargo?: readonly CargoSetup[];
 }
 
 export interface GameSetup {
@@ -110,26 +116,40 @@ export function createGame(setup: GameSetup): GameState {
   }
 
   const units: Unit[] = [];
+  // Units on the map get ids in list order; passengers come after them.
+  let nextId = (setup.units ?? []).length;
+  const makeUnit = (u: CargoSetup, owner: PlayerId, pos: Point, id: number, cargo: Unit[]): Unit => {
+    const where = `${u.type} at (${pos.x}, ${pos.y})`;
+    const def = UNITS[u.type];
+    const hp = u.hp ?? MAX_HP;
+    if (!Number.isInteger(hp) || hp < 1 || hp > MAX_HP) throw new Error(`Unit ${where} has invalid HP ${hp}`);
+    return {
+      id,
+      type: u.type,
+      owner,
+      pos,
+      hp,
+      fuel: u.fuel ?? def.maxFuel,
+      ammo: u.ammo ?? def.primaryWeapon?.maxAmmo ?? 0,
+      kills: u.kills ?? 0,
+      hasActed: false,
+      cargo,
+    };
+  };
   for (const [index, u] of (setup.units ?? []).entries()) {
     const where = `${u.type} at (${u.pos.x}, ${u.pos.y})`;
     const def = UNITS[u.type];
     if (!inBounds(map, u.pos)) throw new Error(`Unit ${where} is outside the map`);
     if (!isPlayer(u.owner)) throw new Error(`Unit ${where} has unknown owner ${u.owner}`);
     if (units.some((other) => samePoint(other.pos, u.pos))) throw new Error(`Two units at (${u.pos.x}, ${u.pos.y})`);
-    const hp = u.hp ?? MAX_HP;
-    if (!Number.isInteger(hp) || hp < 1 || hp > MAX_HP) throw new Error(`Unit ${where} has invalid HP ${hp}`);
-    units.push({
-      id: index,
-      type: u.type,
-      owner: u.owner,
-      pos: u.pos,
-      hp,
-      fuel: u.fuel ?? def.maxFuel,
-      ammo: u.ammo ?? def.primaryWeapon?.maxAmmo ?? 0,
-      kills: u.kills ?? 0,
-      hasActed: false,
-      cargo: [],
-    });
+    const aboard = u.cargo ?? [];
+    const transport: UnitDef["transport"] = def.transport;
+    if (aboard.length > (transport?.capacity ?? 0)) throw new Error(`Unit ${where} can't carry ${aboard.length} units`);
+    for (const c of aboard) {
+      if (!transport?.carries.includes(c.type)) throw new Error(`Unit ${where} can't carry a ${c.type}`);
+    }
+    const cargo = aboard.map((c) => makeUnit(c, u.owner, u.pos, nextId++, []));
+    units.push(makeUnit(u, u.owner, u.pos, index, cargo));
   }
 
   const weather = setup.weather ?? DEFAULT_WEATHER;
@@ -158,7 +178,7 @@ export function createGame(setup: GameSetup): GameState {
     day: 1,
     currentPlayer: 0,
     rng: seedRng(setup.seed),
-    nextUnitId: units.length,
+    nextUnitId: nextId,
     modifiers: [...(setup.modifiers ?? [])],
     settings: { ...DEFAULT_SETTINGS, ...setup.settings },
     weather,

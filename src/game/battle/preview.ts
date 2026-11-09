@@ -59,6 +59,8 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "destroyer", d: "submarine", at: "sea", dt: "sea", submerged: true, counter: "primary" },
   { a: "submarine", d: "battleship", at: "sea", dt: "sea" },
   { a: "torpedoBoat", d: "landingCraft", at: "sea", dt: "beach" },
+  { a: "bomber", d: "carrier", at: "sea", dt: "sea" },
+  { a: "fighter", d: "carrier", at: "sea", dt: "sea" },
   { a: "infantry", d: "bunker", dt: "bunker" },
   { a: "mediumTank", d: "infantry", dt: "bunker", weapon: "secondary", counter: "secondary" },
   { a: "mobileAA", d: "bomber", counter: "primary" },
@@ -71,7 +73,7 @@ let axis: NationId = "germany";
 function planFor(m: Matchup, flip: boolean): BattlePlan {
   const attackerNation: NationId = flip ? axis : "us";
   const defenderNation: NationId = flip ? "us" : axis;
-  const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"].includes(k);
+  const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier"].includes(k);
   const left = {
     half: "left" as const,
     kind: m.a,

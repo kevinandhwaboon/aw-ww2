@@ -1,6 +1,6 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11).
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09).
 **Last updated:** 2026-11-07
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
@@ -81,7 +81,17 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 - **Submerged:** burns 5 fuel per day instead of 1, and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
 - **Hidden or not:** in the original a submerged submarine is hidden unless an enemy is adjacent. We have no fog of war and both players share one screen, so submerged submarines are shown to everyone with a marker **(D5)**: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5).
 
-## 10. Open questions
+## 10. Carriers (decided and built 2026-11-09)
+
+- **Capacity:** 2 air units, Fighters or Bombers. Transport Aircraft can't board. Unarmed.
+- **Land (Load):** an aircraft moves onto its own player's Carrier with free space, wherever the Carrier is. This ends the aircraft's action. An aircraft that boarded this turn can't launch until next turn.
+- **Move or launch, not both:** each turn a Carrier either moves or launches. Once it has moved it can't launch; once it has launched it can't move.
+- **Launch:** an aircraft flies off from the Carrier's tile with its full movement and can attack that same turn, like any unit starting its turn there. Both aircraft can launch in the same turn, one after the other. A departure from the original, where carried aircraft were unloaded onto an adjacent tile and couldn't act that turn: the carrier's point was striking from beyond the enemy's reach.
+- **Service at turn start:** aircraft on board burn no daily fuel, get full fuel and ammo free, and are repaired **1 displayed HP** for 10% of their cost, with the same affordability and order rules as property repair (04-economy §5). Land airfields still repair 2 HP, so they stay worth taking.
+- **Sunk:** aircraft on board are lost with it and don't count as kills (§4). The Carrier itself burns fuel and sinks at 0 like any ship (§7).
+- **Building:** at Ports, like other ships.
+
+## 11. Open questions
 
 - Should passenger fuel or ammo top up when a transport sits on a property? Working answer: no.
 
