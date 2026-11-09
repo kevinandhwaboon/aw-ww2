@@ -492,3 +492,178 @@ body {
   font-size: 13px;
   cursor: pointer;
 }
+
+/* ---- Phone game-pad layout (phone prototype, 00-master-design §12) ----
+   Top to bottom: day and funds, a 3:2 game screen the width of the phone, square info, the pad. */
+body.pad-layout {
+  --pad-safe-top: env(safe-area-inset-top, 0px);
+  --pad-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --pad-status-h: 60px;
+  --pad-screen-top: calc(var(--pad-safe-top) + var(--pad-status-h));
+  --pad-screen-h: calc(100vw * 2 / 3);
+  --pad-info-h: 84px;
+  --pad-top: calc(var(--pad-screen-top) + var(--pad-screen-h) + var(--pad-info-h));
+  --pad-body: #3b3f2a;
+  --pad-body-edge: #23261a;
+  --pad-key: #1d1f17;
+  --pad-key-pressed: #4a4e38;
+  --pad-ink: #e9e2c8;
+  --pad-action: #8a3324;
+  --pad-action-pressed: #b0503a;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pad-layout #game {
+  inset: var(--pad-screen-top) 0 auto 0;
+  height: var(--pad-screen-h);
+  background: #000;
+}
+
+.pad-layout .hud,
+.pad-layout .hud-right {
+  left: 8px;
+  right: 8px;
+  top: calc(var(--pad-safe-top) + 6px);
+  max-width: none;
+  height: calc(var(--pad-status-h) - 12px);
+  font-size: 14px;
+  padding: 4px 10px;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.pad-layout .hud-flag canvas {
+  width: 32px;
+}
+
+.pad-layout .hud-objectives {
+  display: none;
+}
+
+.pad-layout .tile-info,
+.pad-layout .tile-info-right {
+  top: calc(var(--pad-screen-top) + var(--pad-screen-h) + 6px);
+  bottom: auto;
+  left: 8px;
+  right: auto;
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+  max-height: calc(var(--pad-info-h) - 12px);
+  overflow: hidden;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* Menus open over the game screen, never over the pad that drives them. */
+.pad-layout .build-menu {
+  top: calc(var(--pad-safe-top) + 6px);
+  z-index: 2;
+  transform: translateX(-50%);
+  max-height: calc(var(--pad-top) - var(--pad-safe-top) - 12px);
+}
+
+.pad-layout .banner {
+  top: calc(var(--pad-screen-top) + var(--pad-screen-h) / 2);
+  font-size: 20px;
+}
+
+.pad {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--pad-top);
+  bottom: 0;
+  padding: 12px 20px calc(var(--pad-safe-bottom) + 12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--pad-body);
+  border-top: 4px solid var(--pad-body-edge);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.pad-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--pad-ink);
+  font-weight: bold;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.pad-label {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.pad-hint {
+  font-size: 10px;
+  font-weight: normal;
+  opacity: 0.85;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The direction pad: a cross of four arms around a hub. */
+.pad-dpad {
+  position: relative;
+  width: min(44vw, 180px);
+  aspect-ratio: 1;
+  display: grid;
+  grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
+}
+
+.pad-dpad .pad-btn {
+  background: var(--pad-key);
+  border: 2px solid var(--pad-body-edge);
+}
+
+.pad-dpad .pad-btn.pressed,
+.pad-hub {
+  background: var(--pad-key-pressed);
+}
+
+.pad-up { grid-area: 1 / 2; border-radius: 8px 8px 0 0; }
+.pad-left { grid-area: 2 / 1; border-radius: 8px 0 0 8px; }
+.pad-right { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
+.pad-down { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
+.pad-hub { grid-area: 2 / 2; background: var(--pad-key); }
+
+/* Z and X: two round buttons set on a slant, Z higher and on the right. */
+.pad-actions {
+  position: relative;
+  width: min(42vw, 176px);
+  aspect-ratio: 1;
+}
+
+.pad-actions .pad-btn {
+  position: absolute;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pad-action);
+  border: 3px solid var(--pad-body-edge);
+  box-shadow: 0 4px 0 var(--pad-body-edge);
+}
+
+.pad-actions .pad-btn.pressed {
+  background: var(--pad-action-pressed);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--pad-body-edge);
+}
+
+.pad-actions .pad-label {
+  font-size: 26px;
+}
+
+.pad-z { right: 0; top: 4%; }
+.pad-x { left: 0; bottom: 4%; }

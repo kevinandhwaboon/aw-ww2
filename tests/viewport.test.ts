@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampScroll, inLeftHalf, MIN_ZOOM, revealScroll, viewSize } from "../src/game/viewport";
+import { clampScroll, handheldViewSize, inLeftHalf, MIN_ZOOM, revealScroll, viewSize } from "../src/game/viewport";
 
 // Map sizes in map pixels: 16 per square.
 const small = { width: 15 * 16, height: 10 * 16 }; // 240×160, today's maps
@@ -20,6 +20,21 @@ describe("zoom and view size (00-master-design §12)", () => {
   it("only the side that overflows is cut to the window", () => {
     const wide = { width: 100 * 16, height: 10 * 16 };
     expect(viewSize(laptop, wide)).toEqual({ zoom: 3, width: 1440, height: 480 });
+  });
+});
+
+describe("phone game-pad layout (00-master-design §12, phone prototype)", () => {
+  // An iPhone held upright: 393 CSS pixels wide, 3 screen pixels per CSS pixel, a 3:2 screen box.
+  const phoneBox = { width: 393, height: 262 };
+
+  it("the screen shows about 15 squares across, drawn sharp in the phone's own pixels", () => {
+    const view = handheldViewSize(phoneBox, large, 3);
+    expect(view).toEqual({ zoom: 5, width: 1179, height: 786 });
+    expect(view.width / view.zoom / 16).toBeCloseTo(14.7, 1);
+  });
+
+  it("a small map fits whole and the canvas shrinks to it", () => {
+    expect(handheldViewSize(phoneBox, { width: 13 * 16, height: 9 * 16 }, 3)).toEqual({ zoom: 5, width: 1040, height: 720 });
   });
 });
 
