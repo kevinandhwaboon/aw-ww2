@@ -1,7 +1,8 @@
 // Sample images for the three-quarter battle view prototype: `?battle=demo&angled=on`. Not part of
 // the game. Shows the old side view next to the three-quarter view, a battle scene mocked up in
 // the three-quarter view, a close-up of the turrets, every other machine (`&sample=machines`) and the
-// bunker (`&sample=bunker`).
+// bunker (`&sample=bunker`). `&sample=polish` puts tanks as they are now next to the polish
+// prototype (08-art-pipeline §18).
 
 import { packColor } from "../../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../../pixelFont";
@@ -11,8 +12,9 @@ import { C, Painter, teamShades } from "../paint";
 import type { Look, Pose } from "../rig";
 import type { Rig } from "../rig";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "../vehicles";
-import { drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
-import { panzerIV, sherman, tiger, type Model } from "./models";
+import { drawGroundShadow, drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
+import { chiHa, panzerIV, sherman, stug, tiger, type Model } from "./models";
+import { mix } from "../colors";
 
 const US = { team: teamShades(0, "us"), nation: "us", paratrooper: false, suit: 0, submerged: false, dugIn: false, beached: false } as const satisfies Look;
 const DE = { team: teamShades(1, "germany"), nation: "germany", paratrooper: false, suit: 0, submerged: false, dugIn: false, beached: false } as const satisfies Look;
@@ -29,14 +31,14 @@ function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContex
 }
 
 /** Draws a figure on its own canvas, then onto the scene with a dark outline. */
-function stamp(target: CanvasRenderingContext2D, x: number, y: number, draw: (p: Painter) => void): void {
+function stamp(target: CanvasRenderingContext2D, x: number, y: number, draw: (p: Painter) => void, outline = C("battleInk")): void {
   const [fig, fctx] = canvas(320, 200);
   fctx.translate(160, 140);
   draw(new Painter(fctx));
   const [sil, sctx] = canvas(320, 200);
   sctx.drawImage(fig, 0, 0);
   sctx.globalCompositeOperation = "source-in";
-  sctx.fillStyle = C("battleInk");
+  sctx.fillStyle = outline;
   sctx.fillRect(0, 0, 320, 200);
   for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) target.drawImage(sil, Math.round(x) - 160 + ox, Math.round(y) - 140 + oy);
   target.drawImage(fig, Math.round(x) - 160, Math.round(y) - 140);
@@ -54,14 +56,20 @@ let view: View = BATTLE_VIEW;
 const degreesOf = (v: View) => Math.round((-v.yaw * 180) / Math.PI);
 const turned = (degrees: number): View => ({ ...BATTLE_VIEW, yaw: (-degrees * Math.PI) / 180 });
 
-function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, x: number, y: number, flip: boolean, firing = false, scale = 1): void {
+/** How a sample tank is drawn: as in the game now, or with the polish prototype. */
+type Finish = "now" | "polish";
+
+function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, x: number, y: number, flip: boolean, firing = false, scale = 1, finish: Finish = "now"): void {
+  const polish = finish === "polish";
+  if (polish) castShadow(target, model, x, y, flip, scale);
+  else nowShadow(target, model, x, y, scale);
   stamp(target, x, y, (p) => {
-    drawMesh(p, model.faces, view, 0, 0, flip, scale);
+    drawMesh(p, model.faces, view, 0, 0, flip, scale, polish);
     for (const at of [...(model.commander ? [model.commander] : []), ...(model.crew ?? [])]) {
       const c = screenPoint(at, view, 0, 0, flip, scale);
       head(p, c.x, c.y, look);
     }
-  });
+  }, polish ? mix(look.team.deep, C("battleShadeTint"), 0.6) : C("battleInk"));
   if (firing) {
     const p = new Painter(target);
     const m = screenPoint(model.muzzle, view, x, y, flip, scale);
@@ -70,6 +78,26 @@ function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, 
     p.line(m.x, m.y, m.x + dir * 13, m.y + 3, C("battleFire"), 2);
     p.disc(m.x + dir * 2, m.y - 4, 4, C("battleSmoke"));
   }
+}
+
+/** The faint oval the game draws under each vehicle now (renderer.ts), sized to the model. */
+function nowShadow(target: CanvasRenderingContext2D, model: Model, x: number, y: number, scale: number): void {
+  const xs = model.faces.flatMap((f) => f.points.map((q) => q[0]));
+  const half = ((Math.max(...xs) - Math.min(...xs)) / 2) * scale;
+  target.save();
+  target.globalAlpha = 0.28;
+  new Painter(target).ellipse(x - 2, y, half * 0.8, 3, C("battleInk"));
+  target.restore();
+}
+
+/** Polish: the model's own shape cast on the ground, one flat color, laid under the figure. */
+function castShadow(target: CanvasRenderingContext2D, model: Model, x: number, y: number, flip: boolean, scale: number): void {
+  const [layer, lctx] = canvas(320, 200);
+  drawGroundShadow(new Painter(lctx), model.faces, view, 160, 140, C("battleShadeTint"), flip, scale);
+  target.save();
+  target.globalAlpha = 0.5;
+  target.drawImage(layer, Math.round(x) - 160, Math.round(y) - 140);
+  target.restore();
 }
 
 function text(ctx: CanvasRenderingContext2D, words: string, x: number, y: number, scale: number, color: string, align: "left" | "right" | "center" = "left"): void {
@@ -108,13 +136,13 @@ function comparison(): HTMLCanvasElement {
 }
 
 /** Sample 2: a battle scene in the three-quarter view: five Shermans firing on five Tigers. */
-function battle(): HTMLCanvasElement {
+function battle(finish: Finish = "now"): HTMLCanvasElement {
   const [c, ctx] = canvas(SCENE.width, SCENE.height);
   ground(ctx);
   const left: [number, number][] = [[52, 166], [124, 180], [44, 194], [116, 208], [56, 222]];
   const right: [number, number][] = [[58, 164], [126, 178], [52, 194], [120, 208], [62, 222]];
-  left.forEach(([x, y], i) => angledTank(ctx, sherman(US.team), US, x, y - 6, false, i === 3));
-  right.forEach(([x, y]) => angledTank(ctx, tiger(DE.team), DE, SCENE.width - x, y - 6, true));
+  left.forEach(([x, y], i) => angledTank(ctx, sherman(US.team), US, x, y - 6, false, i === 3, 1, finish));
+  right.forEach(([x, y]) => angledTank(ctx, tiger(DE.team), DE, SCENE.width - x, y - 6, true, false, 1, finish));
   const p = new Painter(ctx);
   p.rect(SCENE.half - 1, 0, 2, SCENE.height, C("battleInk"));
   for (const [x0, owner, name, align] of [[0, 0, "MEDIUM TANK", "left"], [SCENE.half, 1, "HEAVY TANK", "right"]] as const) {
@@ -128,11 +156,40 @@ function battle(): HTMLCanvasElement {
 }
 
 /** Sample 3: the turrets up close, a Sherman and a Tiger facing each other. */
-function closeUp(): HTMLCanvasElement {
+function closeUp(finish: Finish = "now"): HTMLCanvasElement {
   const [c, ctx] = canvas(SCENE.width, SCENE.height);
   ground(ctx);
-  angledTank(ctx, sherman(US.team), US, 96, 196, false, false, 1.7);
-  angledTank(ctx, tiger(DE.team), DE, 290, 200, true, false, 1.5);
+  angledTank(ctx, sherman(US.team), US, 96, 196, false, false, 1.7, finish);
+  angledTank(ctx, tiger(DE.team), DE, 290, 200, true, false, 1.5, finish);
+  return c;
+}
+
+const JP = { ...US, team: teamShades(1, "japan"), nation: "japan" } as const satisfies Look;
+
+/** Polish sample: five tanks, as they are now on the left and polished on the right. */
+function polishPairs(): HTMLCanvasElement {
+  const rows: [string, Model, Look][] = [
+    ["SHERMAN", sherman(US.team), US],
+    ["PANZER IV", panzerIV(DE.team), DE],
+    ["TIGER", tiger(DE.team), DE],
+    ["STUG III", stug(DE.team), DE],
+    ["CHI-HA", chiHa(JP.team), JP],
+  ];
+  const rowH = 74;
+  const [c, ctx] = canvas(SCENE.width, 18 + rows.length * rowH);
+  ctx.fillStyle = C("battleGrass");
+  ctx.fillRect(0, 0, c.width, c.height);
+  const p = new Painter(ctx);
+  p.rect(0, 0, c.width, 16, C("battlePanel"));
+  p.rect(SCENE.half - 1, 0, 2, c.height, C("battlePanel"));
+  text(ctx, "NOW", SCENE.half / 2, 4, 2, C("labelText"), "center");
+  text(ctx, "POLISH", SCENE.half + SCENE.half / 2, 4, 2, C("labelGold"), "center");
+  rows.forEach(([name, model, look], i) => {
+    const y = 18 + i * rowH + rowH - 12;
+    text(ctx, name, 4, y - rowH + 16, 1, C("labelText"));
+    angledTank(ctx, model, look, SCENE.half / 2 - 8, y, false, false, 1, "now");
+    angledTank(ctx, model, look, SCENE.half + SCENE.half / 2 - 8, y, false, false, 1, "polish");
+  });
   return c;
 }
 
@@ -188,9 +245,17 @@ export function showAngledSamples(root: HTMLElement, params: URLSearchParams): v
   const deg = Number(params.get("deg") ?? NaN);
   view = Number.isFinite(deg) ? turned(deg) : BATTLE_VIEW;
   root.style.cssText = `display:flex;flex-wrap:wrap;gap:8px;padding:8px;overflow:auto;height:100vh;box-sizing:border-box;background:${packColor("uiBg")}`;
-  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", battle], ["closeup", closeUp], ["angles", angles], ["machines", machines], ["bunker", fort]];
-  for (const [name, make] of samples) {
-    if (only && only !== name) continue;
+  const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", () => battle()], ["closeup", () => closeUp()], ["angles", angles], ["machines", machines], ["bunker", fort]];
+  // The polish prototype: only on request, each picture before and after.
+  const polish: [string, () => HTMLCanvasElement][] = [
+    ["polish-pairs", polishPairs],
+    ["polish-closeup-now", () => closeUp("now")],
+    ["polish-closeup", () => closeUp("polish")],
+    ["polish-battle-now", () => battle("now")],
+    ["polish-battle", () => battle("polish")],
+  ];
+  for (const [name, make] of only === "polish" ? polish : samples) {
+    if (only && only !== "polish" && only !== name) continue;
     const source = make();
     const [view, vctx] = canvas(source.width * scale, source.height * scale);
     vctx.drawImage(source, 0, 0, source.width * scale, source.height * scale);

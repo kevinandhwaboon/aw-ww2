@@ -7,7 +7,7 @@ import type { UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { figureCount, fireKind, planCombat, planFortAttack, squadWeapon, type BattlePlan } from "../src/game/battle/plan";
 import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt } from "../src/game/battle/timeline";
-import { BATTLE_VIEW, project } from "../src/game/battle/angled/mesh";
+import { BATTLE_VIEW, project, rampShade, RAMP_STEPS } from "../src/game/battle/angled/mesh";
 import { TANK_MODELS } from "../src/game/battle/angled/models";
 import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys } from "../src/game/battle/angled/vehicleModels";
 import { FALL_MS, fallAt } from "../src/game/battle/fall";
@@ -325,5 +325,34 @@ describe("soldiers falling in battle scenes (08-art-pipeline §18)", () => {
     expect(fallAt(100, false).alpha).toBe(1);
     expect(fallAt(FALL_MS, false).alpha).toBe(0);
     expect(fallAt(FALL_MS, true).alpha).toBe(0);
+  });
+});
+
+describe("polish prototype (08-art-pipeline §18 Polish)", () => {
+  const shadeTint = "#1c2048";
+  const lightTint = "#eef0e6";
+  const red = "#a04838";
+  const lum = (c: string) => {
+    const n = parseInt(c.slice(1), 16);
+    return ((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11;
+  };
+
+  it("polish shades each color in exactly five steps, from facing away to facing the light", () => {
+    const shades = Array.from({ length: 101 }, (_, i) => rampShade(red, i / 100, shadeTint, lightTint));
+    expect(new Set(shades).size).toBe(RAMP_STEPS);
+    const steps = [...new Set(shades)];
+    for (let i = 1; i < steps.length; i++) expect(lum(steps[i] ?? "")).toBeGreaterThan(lum(steps[i - 1] ?? ""));
+  });
+
+  it("polish shadows lean cool (toward the shade tint) instead of just getting darker", () => {
+    const dark = rampShade(red, 0, shadeTint, lightTint);
+    const n = parseInt(dark.slice(1), 16);
+    const [r, b] = [(n >> 16) & 255, n & 255];
+    // The base red has far more red than blue; its shadow has moved toward blue.
+    expect(b / r).toBeGreaterThan(0x38 / 0xa0);
+  });
+
+  it("a face lit halfway keeps the color as it is", () => {
+    expect(rampShade(red, 0.5, shadeTint, lightTint)).toBe(red);
   });
 });

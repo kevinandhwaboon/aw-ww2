@@ -476,6 +476,16 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each. `&axis=japan` puts Japan in Germany's place (11-tech-setup §7).
 
+**Polish (prototype, 2026-11-09, not in the game yet).** A finishing pass for the 3D machine models, tried on the tanks, after the developer compared our tanks with detailed fan pixel art. Nothing in the game changes until it's switched on.
+
+- **Five shades per color:** each face takes one of five steps by how much light it gets. Shadows lean toward a cool navy (`battleShadeTint`) and lit faces toward a pale light (`battleLightTint`), instead of only getting darker or lighter. A face lit halfway keeps its color.
+- **Plate edges:** a bright line along every edge facing the light (the lit lip of each plate, a wheel's rim) and a dark crease along edges facing down (the shadow under an overhang). Long thin faces such as barrel facets get neither, or they'd look striped.
+- **Rivets:** a light head over a dark underside, every 6 pixels along the top of each big upright plate.
+- **Cast shadow:** the model's own shape flattened onto the ground, pushed forward and toward the viewer by its height, in the shade tint at half strength. It mirrors with the figure, as its lighting does. It replaces the faint oval.
+- **Outline:** the team's darkest shade toward the shade tint, instead of near-black.
+
+`?battle=demo&angled=on&sample=polish` shows five tanks now and polished side by side, the close-up and the battle mock-up before and after. Images: `docs/art/polish/`.
+
 **Not done yet:** separate art for UK, Canadian and Soviet units; sound; a faster speed setting; pack-supplied battle sprites.
 
 ## 19. Storming scenes: captures and bunkers

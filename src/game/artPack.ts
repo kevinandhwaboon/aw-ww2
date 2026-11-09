@@ -94,6 +94,9 @@ const BUILT_IN_COLORS = {
   battleBrass: "#e0b040",
   battleStar: "#f4f0e4",
   battleInk: "#141418",
+  // Battle scenes, polish prototype (08-art-pipeline §18): shadows lean toward the shade tint, lit faces toward the light tint
+  battleShadeTint: "#1c2048",
+  battleLightTint: "#eef0e6",
   // Battle scenes: effects and panels
   battleFlash: "#fff8c0",
   battleFire: "#ff8020",
