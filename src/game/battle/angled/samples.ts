@@ -11,6 +11,8 @@ import { drawBackdrop, SCENE } from "../backdrops";
 import { C, Painter, teamShades } from "../paint";
 import type { Look, Pose } from "../rig";
 import type { Rig } from "../rig";
+import { commander } from "../vehicles";
+import { tankCommander } from "../crew";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "../vehicles";
 import { drawGroundShadow, drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
 import { chiHa, panzerIV, sherman, stug, tiger, type Model } from "./models";
@@ -44,13 +46,6 @@ function stamp(target: CanvasRenderingContext2D, x: number, y: number, draw: (p:
   target.drawImage(fig, Math.round(x) - 160, Math.round(y) - 140);
 }
 
-/** A crewman's head in the hatch: a US tanker helmet or German headphones. */
-function head(p: Painter, x: number, y: number, look: Look): void {
-  p.rect(x - 2, y - 6, 5, 6, C("battleSkin"));
-  p.px(x + 1, y - 4, C("battleInk"));
-  p.rect(x - 3, y - 8, 7, 3, look.nation === "germany" ? C("battleRubber") : C("battleLeather"));
-}
-
 /** The view the samples use; `&deg=10` turns the figures 10 degrees toward the viewer. */
 let view: View = BATTLE_VIEW;
 const degreesOf = (v: View) => Math.round((-v.yaw * 180) / Math.PI);
@@ -65,9 +60,22 @@ function angledTank(target: CanvasRenderingContext2D, model: Model, look: Look, 
   else nowShadow(target, model, x, y, scale);
   stamp(target, x, y, (p) => {
     drawMesh(p, model.faces, view, 0, 0, flip, scale, polish);
-    for (const at of [...(model.commander ? [model.commander] : []), ...(model.crew ?? [])]) {
+    const crew: (readonly [readonly [number, number, number], boolean])[] = [...(model.commander ? [[model.commander, true] as const] : []), ...(model.crew ?? []).map((c) => [c, false] as const)];
+    for (const [at, hatch] of crew) {
       const c = screenPoint(at, view, 0, 0, flip, scale);
-      head(p, c.x, c.y, look);
+      if (finish === "now") {
+        // As the game draws him now (vehicles.ts).
+        commander(p, Math.round(c.x) - 2, Math.round(c.y), look);
+        continue;
+      }
+      // Polish: the commander in his hatch, drawn at 1x and scaled with the model, mirrored with it.
+      const [cc, cctx] = canvas(32, 32);
+      tankCommander(new Painter(cctx), 16, 24, look, { hatch });
+      p.ctx.save();
+      p.ctx.translate(Math.round(c.x), Math.round(c.y));
+      p.ctx.scale(flip ? -scale : scale, scale);
+      p.ctx.drawImage(cc, -16, -24);
+      p.ctx.restore();
     }
   }, polish ? mix(look.team.deep, C("battleShadeTint"), 0.6) : C("battleInk"));
   if (firing) {

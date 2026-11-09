@@ -483,6 +483,7 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 - **Rivets:** a light head over a dark underside, every 6 pixels along the top of each big upright plate.
 - **Cast shadow:** the model's own shape flattened onto the ground, pushed forward and toward the viewer by its height, in the shade tint at half strength. It mirrors with the figure, as its lighting does. It replaces the faint oval.
 - **Outline:** the team's darkest shade toward the shade tint, instead of near-black.
+- **Commanders** (`src/game/battle/crew.ts`) stand up out of a hatch ring with its lid swung open behind them: shoulders and chest in the tanker's jacket (US tan zip jacket, German black wrap jacket, Japanese khaki), one arm out over the rim, and goggles pushed up on the brow. US: the M1938 tanker helmet, a ribbed padded dome with ear flaps. Germany: the side cap under a headphone band and earpiece, with a throat microphone; no cap badge. Japan: the cork tanker's helmet with its ribs and short peak. Open-topped vehicles' crews (M10, Ho-Ni) are drawn the same way without the hatch. About 20 pixels tall, against 8 now.
 
 `?battle=demo&angled=on&sample=polish` shows five tanks now and polished side by side, the close-up and the battle mock-up before and after. Images: `docs/art/polish/`.
 

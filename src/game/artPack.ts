@@ -97,6 +97,8 @@ const BUILT_IN_COLORS = {
   // Battle scenes, polish prototype (08-art-pipeline §18): shadows lean toward the shade tint, lit faces toward the light tint
   battleShadeTint: "#1c2048",
   battleLightTint: "#eef0e6",
+  // Goggle lenses on tank commanders (polish prototype)
+  battleLens: "#8cc0dc",
   // Battle scenes: effects and panels
   battleFlash: "#fff8c0",
   battleFire: "#ff8020",

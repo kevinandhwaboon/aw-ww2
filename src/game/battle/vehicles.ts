@@ -35,7 +35,7 @@ export function star(p: Painter, cx: number, cy: number): void {
  * A crewman's head in the hatch: a US tanker helmet, German headphones over a side cap, or the
  * Japanese padded tanker's helmet with its peak.
  */
-function commander(p: Painter, x: number, y: number, look: Look): void {
+export function commander(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x, y - 6, 5, 6, C("battleSkin"));
   p.px(x + 3, y - 4, C("battleInk"));
   if (kitOf(look) === "jp") {
