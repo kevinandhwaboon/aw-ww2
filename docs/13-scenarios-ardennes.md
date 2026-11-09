@@ -10,7 +10,7 @@
 
 ![Overview](maps/bastogne.png)
 
-Blue properties are US, red German, grey neutral. The inner mark shows the kind: yellow factory, white airfield, black HQ. Dark squares are starting units.
+Army green properties are US, red German, grey neutral. The inner mark shows the kind: yellow factory, white airfield, black HQ. Dark squares are starting units.
 
 ### The history it follows
 

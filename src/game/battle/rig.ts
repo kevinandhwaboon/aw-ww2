@@ -62,6 +62,10 @@ export interface Rig {
   gearStays?(look: Look): boolean;
 }
 
+/** Whose equipment a figure carries: Japan's, Germany's, or the US look every other Allied nation shares. */
+export type Kit = "us" | "de" | "jp";
+export const kitOf = (look: Pick<Look, "nation">): Kit => (look.nation === "germany" ? "de" : look.nation === "japan" ? "jp" : "us");
+
 export const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 /** 0 before a, 1 after b, a straight ramp between. */
 export const seg = (t: number | null, a: number, b: number): number => (t === null ? 0 : clamp01((t - a) / (b - a)));

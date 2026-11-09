@@ -3,15 +3,31 @@
   "unitSheets": [
     {
       "nation": "us",
-      "team": "blue",
-      "path": "../../units/us-land-32-blue.png",
+      "team": "olive",
+      "path": "../../units/us-land-32-olive.png",
       "frameSize": 32,
       "frames": 2,
       "rows": [
-        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-        null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
       ],
-      "paratroopers": [13, 14, 15, 16]
+      "paratroopers": [
+        13,
+        14,
+        15,
+        16
+      ]
     },
     {
       "nation": "us",
@@ -20,20 +36,75 @@
       "frameSize": 32,
       "frames": 2,
       "rows": [
-        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-        null, "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
       ],
-      "paratroopers": [13, 14, 15, 16]
+      "paratroopers": [
+        13,
+        14,
+        15,
+        16
+      ]
     },
     {
-      "nation": "germany",
+      "nation": "us",
       "team": "blue",
-      "path": "../../units/de-land-32-blue.png",
+      "path": "../../units/us-land-32-blue.png",
       "frameSize": 32,
       "frames": 2,
       "rows": [
-        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-        "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ],
+      "paratroopers": [
+        13,
+        14,
+        15,
+        16
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "olive",
+      "path": "../../units/de-land-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
       ]
     },
     {
@@ -43,8 +114,131 @@
       "frameSize": 32,
       "frames": 2,
       "rows": [
-        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-        "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun"
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-land-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "olive",
+      "path": "../../units/jp-land-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "red",
+      "path": "../../units/jp-land-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "blue",
+      "path": "../../units/jp-land-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-air-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-air-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
       ]
     },
     {
@@ -53,47 +247,23 @@
       "path": "../../units/us-air-32-blue.png",
       "frameSize": 32,
       "frames": 2,
-      "rows": ["fighter", "bomber", "transportAircraft"]
-    },
-    {
-      "nation": "us",
-      "team": "blue",
-      "path": "../../units/us-naval-32-blue.png",
-      "frameSize": 32,
-      "frames": 2,
-      "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
-    },
-    {
-      "nation": "us",
-      "team": "red",
-      "path": "../../units/us-air-32-red.png",
-      "frameSize": 32,
-      "frames": 2,
-      "rows": ["fighter", "bomber", "transportAircraft"]
-    },
-    {
-      "nation": "us",
-      "team": "red",
-      "path": "../../units/us-naval-32-red.png",
-      "frameSize": 32,
-      "frames": 2,
-      "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
     },
     {
       "nation": "germany",
-      "team": "blue",
-      "path": "../../units/de-air-32-blue.png",
+      "team": "olive",
+      "path": "../../units/de-air-32-olive.png",
       "frameSize": 32,
       "frames": 2,
-      "rows": ["fighter", "bomber", "transportAircraft"]
-    },
-    {
-      "nation": "germany",
-      "team": "blue",
-      "path": "../../units/de-naval-32-blue.png",
-      "frameSize": 32,
-      "frames": 2,
-      "rows": [null, "destroyer", "submarine", null, "torpedoBoat"]
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
     },
     {
       "nation": "germany",
@@ -101,7 +271,115 @@
       "path": "../../units/de-air-32-red.png",
       "frameSize": 32,
       "frames": 2,
-      "rows": ["fighter", "bomber", "transportAircraft"]
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-air-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "olive",
+      "path": "../../units/jp-air-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "red",
+      "path": "../../units/jp-air-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "blue",
+      "path": "../../units/jp-air-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-naval-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-naval-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "blue",
+      "path": "../../units/us-naval-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "olive",
+      "path": "../../units/de-naval-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        null,
+        "destroyer",
+        "submarine",
+        null,
+        "torpedoBoat"
+      ]
     },
     {
       "nation": "germany",
@@ -109,7 +387,69 @@
       "path": "../../units/de-naval-32-red.png",
       "frameSize": 32,
       "frames": 2,
-      "rows": [null, "destroyer", "submarine", null, "torpedoBoat"]
+      "rows": [
+        null,
+        "destroyer",
+        "submarine",
+        null,
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-naval-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        null,
+        "destroyer",
+        "submarine",
+        null,
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "olive",
+      "path": "../../units/jp-naval-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "red",
+      "path": "../../units/jp-naval-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "blue",
+      "path": "../../units/jp-naval-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ]
     }
   ],
   "terrain": {
@@ -119,12 +459,51 @@
     "tileWidth": 32,
     "tileHeight": 64,
     "tiles": {
-      "plains": [0, 1, 2], "forest": [3, 4], "hills": [5, 6], "bocage": [7, 8],
-      "sea": [9], "reef": [10], "beach": [11, 12],
-      "bunker": [13], "rubble": [14], "obstacle": [15]
+      "plains": [
+        0,
+        1,
+        2
+      ],
+      "forest": [
+        3,
+        4
+      ],
+      "hills": [
+        5,
+        6
+      ],
+      "bocage": [
+        7,
+        8
+      ],
+      "sea": [
+        9
+      ],
+      "reef": [
+        10
+      ],
+      "beach": [
+        11,
+        12
+      ],
+      "bunker": [
+        13
+      ],
+      "rubble": [
+        14
+      ],
+      "obstacle": [
+        15
+      ]
     },
-    "connected": { "road": 16, "river": 32 },
-    "bridges": { "horizontal": 48, "vertical": 49 },
+    "connected": {
+      "road": 16,
+      "river": 32
+    },
+    "bridges": {
+      "horizontal": 48,
+      "vertical": 49
+    },
     "shore": 50
   },
   "properties": {
@@ -132,7 +511,21 @@
     "winterPath": "../../terrain/buildings-32-winter.png",
     "tileWidth": 32,
     "tileHeight": 64,
-    "columns": ["neutral", "blue", "red", "green", "gold"],
-    "rows": ["city", "factory", "airfield", "port", "hq", "bunker"]
+    "columns": [
+      "neutral",
+      "olive",
+      "red",
+      "blue",
+      "green",
+      "gold"
+    ],
+    "rows": [
+      "city",
+      "factory",
+      "airfield",
+      "port",
+      "hq",
+      "bunker"
+    ]
   }
 }

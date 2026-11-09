@@ -13,9 +13,10 @@ export const palette = {
 };
 
 // Owner ramps, in sheet column order. Neutral is weathered slate.
-export const columns = ["neutral", "blue", "red", "green", "gold"];
+export const columns = ["neutral", "olive", "red", "blue", "green", "gold"];
 export const ramps = {
   neutral: { L: "#c4c6c8", M: "#8e9296", D: "#5e6266" },
+  olive: { L: "#8ea25e", M: "#64783a", D: "#435428" },
   blue: { L: "#7fb0e8", M: "#3f74c4", D: "#274a8c" },
   red: { L: "#ec8a70", M: "#c4482f", D: "#842c20" },
   green: { L: "#94d47c", M: "#4e9c40", D: "#2e6228" },

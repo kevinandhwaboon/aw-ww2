@@ -1,13 +1,14 @@
 // Battle figures on foot (08-art-pipeline §18): rifle squads, bazooka and Panzerschreck teams, and
 // mortar crews. A standing soldier is about 44 pixels tall, nearly three map squares, so helmets,
 // weapons and webbing read clearly: the US M1 helmet, Garand, Thompson and BAR; the German
-// Stahlhelm, Kar98k, MP 40 and MG 42.
+// Stahlhelm, Kar98k, MP 40 and MG 42; the Japanese Type 90 helmet with its neck flaps, the Arisaka with
+// its long bayonet, the Type 100 and the Type 99 light machine gun.
 
 import { fallAt, FALL_MS } from "./fall";
 import { squadWeapon } from "./plan";
 import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING, figureTiming } from "./timeline";
-import { along, justFired, kick, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
+import { along, justFired, kick, kitOf, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
 export type Stance = "stand" | "kneel" | "crouch" | "run";
 
@@ -86,7 +87,23 @@ function suit(p: Painter, x: number, y: number, which: number): void {
 
 function helmet(p: Painter, hx: number, hy: number, look: Look): void {
   const t = look.team;
-  if (look.nation === "germany") {
+  if (look.nation === "japan") {
+    // Type 90: a low round dome with a narrow rim, and the cloth neck flaps of the cap under it
+    // hanging down behind the ears.
+    const flap = mix(t.cloth, C("battleSand"), 0.3);
+    p.rect(hx - 3, hy - 2, 4, 7, flap);
+    p.rect(hx - 3, hy + 4, 3, 1, shade(flap, 0.8));
+    p.px(hx - 1, hy + 1, shade(flap, 0.8));
+    p.px(hx - 1, hy + 3, shade(flap, 0.8));
+    p.rect(hx, hy - 6, 6, 1, t.lo);
+    p.rect(hx - 1, hy - 5, 8, 2, t.lo);
+    p.rect(hx - 2, hy - 3, 9, 1, t.lo);
+    p.rect(hx - 2, hy - 2, 10, 1, t.deep);
+    p.rect(hx + 1, hy - 6, 3, 1, t.mid);
+    p.px(hx, hy - 5, t.mid);
+    p.px(hx + 1, hy + 3, C("battleLeather"));
+    p.px(hx + 2, hy + 4, C("battleLeather"));
+  } else if (look.nation === "germany") {
     // Stahlhelm: a tall crown, a short visor, and a skirt that flares over the ears and neck.
     p.rect(hx, hy - 7, 6, 1, t.lo);
     p.rect(hx - 1, hy - 6, 8, 3, t.lo);
@@ -156,8 +173,14 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
   const skin = C("battleSkin");
   const boot = C("battleRubber");
   const de = look.nation === "germany";
-  const webbing = de ? C("battleLeather") : mix(C("battleSand"), C("battleOlive"), 0.35);
+  const jp = look.nation === "japan";
+  const webbing = de || jp ? C("battleLeather") : mix(C("battleSand"), C("battleOlive"), 0.35);
   const l = f.lean;
+  // Japanese puttees: cloth wound round the shin, its turns showing as slanted lines.
+  const puttees = (lx: number, ly: number, h: number) => {
+    p.rect(lx, ly, 5, h, cloth);
+    for (let k = 1; k < h; k += 2) p.line(lx, ly + k + 1, lx + 4, ly + k, clothLo);
+  };
 
   arm(p, f.backShoulder, o.back ?? { x: f.backShoulder.x - 1, y: f.hip + 1 }, clothLo);
 
@@ -177,6 +200,9 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
       p.rect(x - 4, y - 11, 5, 7, boot);
       p.rect(x + 1, y - 11, 5, 7, boot);
       p.px(x + 2, y - 10, shade(boot, 2));
+    } else if (jp) {
+      puttees(x + 1, y - 10, 6);
+      p.rect(x - 4, y - 9, 5, 5, clothLo);
     } else if (para) {
       // Brown jump boots laced high, a knife strapped to one, and a bulging cargo pocket.
       p.rect(x - 4, y - 10, 5, 6, C("battleLeather"));
@@ -198,7 +224,8 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
         p.line(x + kx, f.hip + ky, x + fx, y - 3 + fy, color, 4);
         const bootColor = para ? C("battleLeather") : boot;
         p.rect(x + fx - 2, y - 4 + fy, 7, 4, bootColor);
-        if (!de && !para) p.rect(x + fx - 1, y - 8 + fy, 4, 4, C("battleSand"));
+        if (jp) p.line(x + fx - 1, y - 6 + fy, x + fx + 2, y - 7 + fy, clothLo);
+        else if (!de && !para) p.rect(x + fx - 1, y - 8 + fy, 4, 4, C("battleSand"));
       };
       leg(fkx, fky, ffx, ffy, clothLo);
       leg(nkx, nky, nfx, nfy, cloth);
@@ -212,6 +239,7 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
     p.rect(x + 6, y - 4, 9, 4, boot);
     p.rect(x + 6, y - 1, 9, 1, shade(boot, 1.6));
     if (de) p.rect(x + 6, y - 9, 5, 5, boot);
+    else if (jp) puttees(x + 6, y - 9, 5);
     else if (para) {
       p.rect(x + 6, y - 9, 5, 5, C("battleLeather"));
       p.rect(x + 2, f.hip + 1, 6, 4, clothLo);
@@ -225,8 +253,15 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
   }
 
   // Kit on the back. US: pack with a blanket roll, an entrenching tool, a canteen.
-  // Germany: the fluted gas-mask canister, a bread bag and a spade.
-  if (de) {
+  // Germany: the fluted gas-mask canister, a bread bag and a spade. Japan: a small pack with the
+  // blanket rolled in a horseshoe over it, and a canteen.
+  if (jp) {
+    p.rect(x - 9 + l, f.top + 3, 4, 9, clothLo);
+    p.rect(x - 10 + l, f.top + 1, 5, 2, mix(C("battleSand"), cloth, 0.5));
+    p.rect(x - 10 + l, f.top + 1, 1, 8, mix(C("battleSand"), cloth, 0.5));
+    p.rect(x - 9 + l, f.hip - 5, 3, 5, mix(C("battleKhaki"), C("battleSteel"), 0.4));
+    p.px(x - 8 + l, f.hip - 6, C("battleInk"));
+  } else if (de) {
     p.rect(x - 9 + l, f.top + 4, 4, 11, C("battleSteel"));
     for (let k = 1; k < 11; k += 2) p.rect(x - 9 + l, f.top + 4 + k, 4, 1, C("battleSteelDark"));
     p.rect(x - 8 + l, f.hip - 4, 4, 6, C("battleOlive"));
@@ -266,6 +301,12 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
     p.px(tx + 6, f.hip - 5, shade(webbing, 1.5));
     p.line(tx + 2, f.hip - 1, tx + 2, f.hip - 9, C("battleWood"));
     p.rect(tx + 1, f.hip - 12, 3, 4, C("battleSteelDark"));
+  } else if (jp) {
+    // Two leather cartridge boxes on the front of the belt, and the bayonet's scabbard at the hip.
+    p.rect(tx + 3, f.hip - 4, 3, 2, webbing);
+    p.rect(tx + 7, f.hip - 4, 3, 2, webbing);
+    p.px(tx + 4, f.hip - 4, shade(webbing, 1.5));
+    p.line(tx + 1, f.hip - 1, tx - 1, f.hip + 6, shade(webbing, 0.8), 2);
   } else {
     // Suspenders, cartridge belt pockets, and a grenade hooked on the strap.
     p.line(tx + 4, f.top + 1, tx + 4, f.hip - 3, webbing);
@@ -319,7 +360,7 @@ export function earsCovered(f: Frame): SoldierOptions {
 
 // ---- Small arms ----
 
-export type GunKind = "garand" | "kar98" | "carbine" | "thompson" | "mp40" | "bar" | "mg42";
+export type GunKind = "garand" | "kar98" | "carbine" | "thompson" | "mp40" | "bar" | "mg42" | "arisaka" | "type100" | "type99";
 
 /** Each gun's length from butt to muzzle, and where the hands go on it. */
 export const GUN: Record<GunKind, { readonly length: number; readonly trigger: number; readonly fore: number }> = {
@@ -330,7 +371,13 @@ export const GUN: Record<GunKind, { readonly length: number; readonly trigger: n
   mp40: { length: 22, trigger: 9, fore: 14 },
   bar: { length: 33, trigger: 10, fore: 19 },
   mg42: { length: 32, trigger: 8, fore: 14 },
+  arisaka: { length: 31, trigger: 10, fore: 20 },
+  type100: { length: 24, trigger: 9, fore: 16 },
+  type99: { length: 31, trigger: 9, fore: 15 },
 };
+
+/** The bolt-action rifles, whose firer works the bolt between shots. */
+const BOLT_ACTION: readonly GunKind[] = ["kar98", "arisaka"];
 
 /** A long arm with its butt at (x, y), pointing along `angle`. Returns the muzzle. */
 export function drawGun(p: Painter, x: number, y: number, angle: number, kind: GunKind, look: Look, recoil = 0): Pt {
@@ -356,8 +403,9 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
   switch (kind) {
     case "garand":
     case "kar98":
+    case "arisaka":
     case "carbine": {
-      const long = kind === "kar98";
+      const long = kind === "kar98" || kind === "arisaka";
       const end = GUN[kind].length;
       seg2(0, 1, 4, C("battleInk"), 1);
       seg2(1, 9, 3, wood, 1);
@@ -373,6 +421,13 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
         seg2(18, 24, 1, steelHi, 1);
       }
       if (long) dot(13, 2, steelHi);
+      if (kind === "arisaka") {
+        // The sliding dust cover over the bolt, and the long Type 30 bayonet fixed under the muzzle.
+        seg2(10, 14, 1, steelHi, -1);
+        dot(end - 2, 1, steel);
+        seg2(end - 1, end + 11, 1, C("battleSteel"), 1);
+        dot(end + 11, 1, C("battleStar"));
+      }
       // Sling.
       seg2(4, end - 8, 1, C("battleLeather"), 3);
       break;
@@ -419,6 +474,38 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
       // Bipod folded down to the ground near the muzzle.
       const leg = q(29, 0);
       p.line(leg.x, leg.y, leg.x - 2, leg.y + 7, steel);
+      p.line(leg.x, leg.y, leg.x + 2, leg.y + 7, steelHi);
+      break;
+    }
+    case "type100": {
+      // Type 100: a rifle-style wooden stock, a magazine out to the left side, a perforated jacket.
+      seg2(0, 1, 4, C("battleInk"), 1);
+      seg2(1, 10, 3, wood, 1);
+      seg2(2, 9, 1, woodHi, 0);
+      seg2(10, 14, 2, wood);
+      seg2(12, 18, 2, steel);
+      const mag = q(14, 1);
+      p.rect(mag.x - 1, mag.y, 2, 4, steel);
+      seg2(18, 24, 2, steelHi);
+      for (let d = 19; d < 24; d += 2) dot(d, 0, steel);
+      break;
+    }
+    case "type99": {
+      // Type 99: a wooden butt, the curved box magazine standing up out of the top, a finned barrel,
+      // a carrying handle, a cone flash hider and the bipod down to the ground.
+      seg2(0, 9, 3, wood, 1);
+      seg2(2, 8, 1, woodHi, 0);
+      seg2(9, 17, 3, steel);
+      for (let k = 0; k < 5; k++) {
+        const m = q(11 + k * 0.4, -2 - k);
+        p.rect(m.x, m.y, 3, 1, k === 4 ? steelHi : steel);
+      }
+      seg2(17, 28, 2, steel);
+      for (let d = 18; d < 26; d += 2) dot(d, -1, steelHi);
+      dot(19, -2, steel);
+      seg2(28, 31, 3, steel);
+      const leg = q(25, 1);
+      p.line(leg.x, leg.y, leg.x - 3, leg.y + 7, steel);
       p.line(leg.x, leg.y, leg.x + 2, leg.y + 7, steelHi);
       break;
     }
@@ -469,11 +556,11 @@ const INFANTRY_STANCE: readonly ("kneel" | "stand" | "prone")[] = ["kneel", "kne
 const stanceOf = (index: number) => INFANTRY_STANCE[index] ?? "stand";
 
 export function squadGun(index: number, look: Look): GunKind {
-  const de = look.nation === "germany";
+  const kit = kitOf(look);
   const weapon = squadWeapon(index, look.nation, look.paratrooper);
-  if (weapon === "smg") return de ? "mp40" : "thompson";
-  if (weapon === "lmg") return de ? "mg42" : "bar";
-  return de ? "kar98" : look.paratrooper ? "carbine" : "garand";
+  if (weapon === "smg") return kit === "de" ? "mp40" : kit === "jp" ? "type100" : "thompson";
+  if (weapon === "lmg") return kit === "de" ? "mg42" : kit === "jp" ? "type99" : "bar";
+  return kit === "de" ? "kar98" : kit === "jp" ? "arisaka" : look.paratrooper ? "carbine" : "garand";
 }
 
 /** How the gun sits: butt position and angle, aiming or held at port arms. */
@@ -507,7 +594,7 @@ function drawProne(p: Painter, look: Look, butt: Pt, angle: number, kind: GunKin
   p.rect(-14, -10, 16, 8, t.cloth);
   p.rect(-14, -10, 16, 2, shade(t.cloth, 1.15));
   p.rect(-12, -13, 10, 4, look.nation === "germany" ? C("battleSteel") : t.clothLo);
-  p.rect(-14, -3, 16, 2, look.nation === "germany" ? C("battleLeather") : mix(C("battleSand"), C("battleOlive"), 0.35));
+  p.rect(-14, -3, 16, 2, kitOf(look) === "us" ? mix(C("battleSand"), C("battleOlive"), 0.35) : C("battleLeather"));
   // Head low behind the sights.
   const hx = 1;
   const hy = -17;
@@ -526,7 +613,7 @@ function drawProne(p: Painter, look: Look, butt: Pt, angle: number, kind: GunKin
 function drawRifleman(p: Painter, pose: Pose, look: Look, g: ReturnType<typeof gunPose>): void {
   const shots = shotsFor(pose, look);
   const fired = justFired(pose.ct, shots, 50);
-  const recoil = g.kind === "garand" || g.kind === "kar98" || g.kind === "carbine" ? kick(pose.ct, shots[0] ?? 0, 40, 160) * 2 : fired >= 0 ? 1 : 0;
+  const recoil = g.kind === "garand" || g.kind === "carbine" || BOLT_ACTION.includes(g.kind) ? kick(pose.ct, shots[0] ?? 0, 40, 160) * 2 : fired >= 0 ? 1 : 0;
   if (g.stance === "prone") {
     drawProne(p, look, g.butt, g.angle, g.kind, recoil);
     return;
@@ -534,8 +621,8 @@ function drawRifleman(p: Painter, pose: Pose, look: Look, g: ReturnType<typeof g
   const spec = GUN[g.kind];
   const trigger = along(g.butt.x, g.butt.y, g.angle, spec.trigger - recoil);
   const fore = along(g.butt.x, g.butt.y, g.angle, spec.fore - recoil);
-  // A German rifleman works the Kar98k's bolt between shots.
-  const bolt = g.kind === "kar98" && pose.ct !== null ? seg(pose.ct, 280, 360) - seg(pose.ct, 440, 520) : 0;
+  // A German or Japanese rifleman works his rifle's bolt between shots.
+  const bolt = BOLT_ACTION.includes(g.kind) && pose.ct !== null ? seg(pose.ct, 280, 360) - seg(pose.ct, 440, 520) : 0;
   const back = g.aiming ? { x: lerp(trigger.x, trigger.x + 3, bolt), y: lerp(trigger.y + 2, trigger.y - 3, bolt) } : { x: trigger.x, y: trigger.y + 1 };
   drawSoldier(p, 0, g.bob, g.stance, look, {
     lean: g.aiming ? 1 : 0,
@@ -546,9 +633,9 @@ function drawRifleman(p: Painter, pose: Pose, look: Look, g: ReturnType<typeof g
       drawGun(p, g.butt.x, g.butt.y, g.angle, g.kind, look, recoil);
     },
   });
-  // Brass: the Garand flicks its casing up and back; the Kar98k drops it as the bolt opens.
-  if (pose.ct !== null && (g.kind === "garand" || g.kind === "kar98")) {
-    const ejectAt = g.kind === "kar98" ? 380 : 220;
+  // Brass: the Garand flicks its casing up and back; a bolt-action rifle drops it as the bolt opens.
+  if (pose.ct !== null && (g.kind === "garand" || BOLT_ACTION.includes(g.kind))) {
+    const ejectAt = g.kind === "garand" ? 220 : 380;
     const u = seg(pose.ct, ejectAt, ejectAt + 260);
     if (u > 0 && u < 1) {
       const from = along(g.butt.x, g.butt.y, g.angle, 13);
@@ -578,12 +665,17 @@ export const infantryRig: Rig = {
 
 // ---- Assault Infantry: a launcher gunner and his loader ----
 
+/** Bazooka, Panzerschreck or Type 4 tube length, and the gunner's submachine gun. */
+const launcherLength = (look: Look) => ({ us: 38, de: 34, jp: 36 })[kitOf(look)];
+const assaultSmg = (look: Look): GunKind => ({ us: "thompson", de: "mp40", jp: "type100" } as const)[kitOf(look)];
+
 export const assaultRig: Rig = {
   body: "soldier",
   hit: { x: -6, y: -18 },
   gearStays: (look) => look.dugIn,
   draw(p, pose, look) {
     const de = look.nation === "germany";
+    const jp = look.nation === "japan";
     const ct = pose.fire === "bazooka" ? pose.ct : null;
     const shotAt = FIRE_TIMING.bazooka.shots[0] ?? 700;
     const recoil = kick(ct, shotAt, 40, 200) * 2;
@@ -591,7 +683,7 @@ export const assaultRig: Rig = {
     const g = soldierFrame(0, 0, "kneel", 1);
     const tubeY = g.top + 2;
     const tubeBack = -15 - recoil;
-    const tubeLen = de ? 34 : 38;
+    const tubeLen = launcherLength(look);
     const reload = seg(ct, 0, 380);
     const tap = ct !== null && ct > 380 && ct < 560;
     const ducking = ct !== null && ct >= 520;
@@ -629,7 +721,7 @@ export const assaultRig: Rig = {
 
     // The gunner kneels with the launcher on his shoulder, or fires his submachine gun.
     if (smg) {
-      const kind: GunKind = de ? "mp40" : "thompson";
+      const kind = assaultSmg(look);
       const fired = justFired(pose.ct, FIRE_TIMING.mg.shots, 50) >= 0 ? 1 : 0;
       const butt = { x: g.backShoulder.x - 1 - fired, y: g.top + 5 };
       falling(p, pose.down, 0, () => drawSoldier(p, 0, 0, "kneel", look, {
@@ -639,7 +731,7 @@ export const assaultRig: Rig = {
         front: { x: butt.x + GUN[kind].fore, y: butt.y + 2 },
         weapon: () => {
           // The launcher slung across his back while he fights with the SMG.
-          p.line(-14, g.top - 2, 8, g.top + 12, de ? C("battleSteelDark") : look.team.lo, 3);
+          p.line(-14, g.top - 2, 8, g.top + 12, de || jp ? C("battleSteelDark") : look.team.lo, 3);
           drawGun(p, butt.x, butt.y, 0, kind, look);
         },
       }));
@@ -652,11 +744,21 @@ export const assaultRig: Rig = {
       back: { x: tubeBack + 17, y: tubeY + 4 },
       front: { x: tubeBack + 25, y: tubeY + 4 },
       weapon: () => {
-        const steel = de ? C("battleSteelDark") : look.team.lo;
+        const steel = de || jp ? C("battleSteelDark") : look.team.lo;
         const thick = de ? 4 : 3;
         p.rect(tubeBack, tubeY - 1, tubeLen, thick, steel);
         p.rect(tubeBack, tubeY - 1, tubeLen, 1, shade(steel, 1.35));
-        if (de) {
+        if (jp) {
+          // Type 4 70mm: a slim tube with a pistol grip and trigger, a rear ring, and a bipod near
+          // the front resting on the ground.
+          p.rect(tubeBack - 1, tubeY - 2, 2, 5, C("battleSteel"));
+          p.rect(tubeBack + 18, tubeY + 2, 2, 4, C("battleWood"));
+          p.rect(tubeBack + 24, tubeY + 2, 2, 3, C("battleSteel"));
+          p.rect(tubeBack + 28, tubeY - 3, 2, 2, C("battleSteel"));
+          const legAt = { x: tubeBack + tubeLen - 7, y: tubeY + 2 };
+          p.line(legAt.x, legAt.y, legAt.x - 3, 0, C("battleSteelDark"));
+          p.line(legAt.x, legAt.y, legAt.x + 3, 0, C("battleSteel"));
+        } else if (de) {
           // Panzerschreck: a thick tube, a blast shield with a window in front of the gunner's
           // face, a guard ring at the back and a front sight.
           p.rect(tubeBack - 1, tubeY - 2, 3, 6, C("battleSteel"));
@@ -685,10 +787,9 @@ export const assaultRig: Rig = {
   muzzle(pose, _shot, look): Muzzle {
     const g = soldierFrame(0, 0, "kneel", 1);
     if (pose.fire === "mg") {
-      const kind: GunKind = look.nation === "germany" ? "mp40" : "thompson";
-      return { x: g.backShoulder.x - 1 + GUN[kind].length, y: g.top + 5, angle: 0 };
+      return { x: g.backShoulder.x - 1 + GUN[assaultSmg(look)].length, y: g.top + 5, angle: 0 };
     }
-    return { x: (look.nation === "germany" ? 34 : 38) - 15, y: g.top + 2, angle: 0 };
+    return { x: launcherLength(look) - 15, y: g.top + 2, angle: 0 };
   },
 };
 

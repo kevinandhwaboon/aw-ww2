@@ -1,10 +1,11 @@
 // 3D models for tanks and tank destroyers in battle scenes, drawn turned 5° toward the viewer (see
 // mesh.ts, 08-art-pipeline §18). Each is built from the shapes that make the real vehicle
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
-// StuG III. `recoil` slides the gun back along its barrel when it fires.
+// StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. `recoil` slides the gun
+// back along its barrel when it fires.
 
 import { C, mix, type TeamShades } from "../colors";
-import { barrel, box, circle, decalY, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
+import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
 
 export interface Model {
   readonly faces: readonly Face[];
@@ -300,12 +301,128 @@ export function stug(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: [-12, 6, 32], muzzle: [55 - recoil, 0, 24.5], mg: [8, -3, 33] };
 }
 
+// ---- Japan ----
+
+/**
+ * Bellcrank suspension on the near side: road wheels in pairs, each pair on a crank with its spring
+ * tube running along the hull, and small return rollers above.
+ */
+function bellcranks(pairs: readonly number[], y: number, spread: number, r: number, rollers: readonly number[]): Face[] {
+  const f: Face[] = [];
+  for (const b of pairs) {
+    f.push(...box(b - spread - 1, b + spread + 1, y - 0.8, y, r + 0.5, r + 2.5, steelDark()));
+    f.push(...roadWheel(b - spread, y, r, r - 0.3));
+    f.push(...roadWheel(b + spread, y, r, r - 0.3));
+  }
+  f.push(...box(pairs[0] ?? 0, pairs[pairs.length - 1] ?? 0, y - 1.2, y - 0.8, r + 3, r + 4, steelDark()));
+  for (const x of rollers) f.push(...wheel(x, y, r * 2 + 2.5, 1.4, 1, steel(), steelDark()));
+  return f;
+}
+
+/** Rivet heads in a row along a hull side. */
+function rivets(y: number, x0: number, x1: number, z: number, t: TeamShades): Face[] {
+  const f: Face[] = [];
+  for (let x = x0; x <= x1; x += 4) f.push(decalY(y, [[x, z], [x + 1, z], [x + 1, z + 1], [x, z + 1]], t.lo));
+  return f;
+}
+
+/** Type 95 Ha-Go: small and tall, a big muffler on the hull side, a little turret set left with the 37mm. */
+export function haGo(t: TeamShades, recoil = 0): Model {
+  const f: Face[] = [];
+  f.push(...running(-25, 25, 9, 8, 13, t.lo));
+  f.push(...wheel(23, -13.6, 6, 3.8, 1.2, steelDark(), steel()));
+  f.push(...wheel(-23, -13.6, 5, 3.4, 1.2, steel(), steelDark()));
+  f.push(...bellcranks([-11, 9], -13.8, 4.2, 3.6, [-12, 0, 12]));
+  // A tall hull with a stepped, sloped front and the driver's bulge; the hull MG sticks out of it.
+  f.push(...extrudeY(-13, 13, [[-25, 9], [25, 9], [26, 13], [18, 16], [15, 22], [-23, 22], [-25, 19]], t.mid));
+  f.push(...rivets(-13.05, -21, 13, 20, t));
+  f.push(...box(15, 21, 2, 10, 16, 21, t.mid));
+  f.push(...barrel(20, 26, 6, 18.5, 0.7, steelDark()));
+  // The exhaust muffler along the near side, over the tracks.
+  f.push(...extrudeX(-22, -4, circle(-14.6, 18, 1.8, 8), steelDark()));
+  // The small turret, offset to the left, with the 37mm in front and an MG out of the back.
+  const turret: Poly = [[-9, -5], [5, -5], [8, -2], [8, 8], [5, 11], [-9, 11], [-11, 8], [-11, -2]];
+  const roof: Poly = [[-8, -4], [4, -4], [7, -1], [7, 7], [4, 10], [-8, 10], [-10, 7], [-10, -1]];
+  f.push(...loftZ(22, turret, 31, roof, t.mid));
+  f.push(...box(7, 10, -1, 5, 24, 29, t.lo));
+  f.push(...barrel(9 - recoil, 24 - recoil, 2, 26.5, 1.1, steelDark()));
+  f.push(...barrel(-16, -10, 7, 26, 0.6, steelDark()));
+  f.push(...loftZ(31, circle(-3, 3, 3.4, 8), 33, circle(-3, 3, 3, 8), t.lo));
+  return { faces: f, commander: [-3, 3, 33], muzzle: [24 - recoil, 2, 26.5], mg: [26, 6, 18.5] };
+}
+
+/** The Chi-Ha's chassis: six road wheels on bellcranks, a riveted hull with a sloped front. */
+function chiHaHull(t: TeamShades): Face[] {
+  const f: Face[] = [];
+  f.push(...running(-32, 32, 10, 10, 16, t.lo));
+  f.push(...wheel(30, -16.6, 6.5, 4.2, 1.2, steelDark(), steel()));
+  f.push(...wheel(-30, -16.6, 5.5, 3.8, 1.2, steel(), steelDark()));
+  f.push(...bellcranks([-17, 0, 17], -16.8, 4.4, 3.8, [-22, -8, 8, 22]));
+  f.push(...extrudeY(-16, 16, [[-31, 10], [32, 10], [33, 14], [22, 18], [19, 23], [-29, 23], [-31, 20]], t.mid));
+  f.push(...rivets(-16.05, -28, 16, 21, t));
+  f.push(...rivets(-16.05, -28, 28, 12, t));
+  // The engine deck louvres and the exhaust muffler across the back.
+  for (let x = -27; x < -15; x += 3) f.push(...box(x, x + 1.4, -10, 10, 23, 23.5, t.lo));
+  f.push(...extrudeY(-12, 12, circle(-32.5, 19, 2, 8), steelDark()));
+  return f;
+}
+
+/**
+ * Type 97 Shinhoto Chi-Ha: the Chi-Ha chassis and a bigger turret with the long 47mm, and the curved
+ * handrail antenna round the turret roof.
+ */
+export function chiHa(t: TeamShades, recoil = 0): Model {
+  const f = chiHaHull(t);
+  f.push(...box(19, 25, 2, 11, 17, 22, t.mid));
+  f.push(...barrel(24, 30, 7, 19.5, 0.7, steelDark()));
+  const turret: Poly = [[-12, -10], [8, -10], [12, -6], [12, 6], [8, 10], [-12, 10], [-15, 6], [-15, -6]];
+  const roof: Poly = [[-11, -9], [7, -9], [10, -5], [10, 5], [7, 9], [-11, 9], [-13, 5], [-13, -5]];
+  f.push(...loftZ(23, turret, 33, roof, t.mid));
+  f.push(...rivets(-10.05, -10, 6, 31, t));
+  f.push(...box(11, 15, -4, 4, 25, 31, t.lo));
+  f.push(...barrel(14 - recoil, 48 - recoil, 0, 28, 1.3, steelDark()));
+  f.push(...barrel(-19, -14, 4, 28, 0.6, steelDark()));
+  f.push(...loftZ(33, circle(-4, 3, 3.6, 8), 35, circle(-4, 3, 3.2, 8), t.lo));
+  // The handrail antenna: a hoop on posts, open at the front.
+  const hoop: V3[] = Array.from({ length: 9 }, (_, i) => {
+    const a = Math.PI * 0.28 + (i / 8) * Math.PI * 1.44;
+    return [-2 + Math.cos(a) * 15, Math.sin(a) * 12, 35.5] as V3;
+  });
+  for (let i = 0; i + 1 < hoop.length; i++) {
+    const a = hoop[i];
+    const b = hoop[i + 1];
+    if (a && b) f.push(...beam(a, b, 0.7, 0.7, steelDark()));
+  }
+  for (const end of [hoop[0], hoop[hoop.length - 1]]) if (end) f.push(...box(end[0] - 0.4, end[0] + 0.4, end[1] - 0.4, end[1] + 0.4, 33, 35.5, steelDark()));
+  return { faces: f, commander: [-4, 3, 35], muzzle: [48 - recoil, 0, 28], mg: [30, 7, 19.5] };
+}
+
+/** Type 1 Ho-Ni I: the Chi-Ha chassis with an open three-sided shield round a 75mm field gun. */
+export function hoNi(t: TeamShades, recoil = 0): Model {
+  const f = chiHaHull(t);
+  const shield: Poly = [[-12, -12], [8, -12], [14, -7], [14, 7], [8, 12], [-12, 12]];
+  const shieldTop: Poly = [[-11, -10], [6, -10], [11, -6], [11, 6], [6, 10], [-11, 10]];
+  f.push(...loftZ(23, shield, 34, shieldTop, t.mid));
+  f.push({ points: shieldTop.map(([x, y]) => [x * 0.86, y * 0.8, 34.1] as V3), color: C("battleInk"), decal: true, facing: [0, 0, 1] });
+  f.push(...rivets(-11.05, -9, 7, 32, t));
+  f.push(...box(12, 16, -3, 3, 26, 31, steelDark()));
+  f.push(...barrel(14 - recoil, 50 - recoil, 0, 28.5, 1.4, steelDark()));
+  f.push(...barrel(47 - recoil, 51 - recoil, 0, 28.5, 1.9, steelDark()));
+  return { faces: f, commander: null, crew: [[-5, -3, 35], [3, 4, 35]], muzzle: [51 - recoil, 0, 28.5], mg: [44, 0, 28.5] };
+}
+
 export type TankKind = "light" | "medium" | "heavy" | "td";
 
-/** Each nation's model for each tank kind. Other Allied nations use the US models (08-art-pipeline §18). */
-export const TANK_MODELS: Record<TankKind, { us: (t: TeamShades, recoil?: number) => Model; de: (t: TeamShades, recoil?: number) => Model }> = {
-  light: { us: stuart, de: panzerII },
-  medium: { us: sherman, de: panzerIV },
-  heavy: { us: churchill, de: tiger },
-  td: { us: m10, de: stug },
+type MakeModel = (t: TeamShades, recoil?: number) => Model;
+
+/**
+ * Each nation's model for each tank kind. Other Allied nations use the US models (08-art-pipeline
+ * §18). Japan fielded no heavy tank, so its scenarios never offer one; the Chi-Ha stands in if one
+ * is ever drawn.
+ */
+export const TANK_MODELS: Record<TankKind, { us: MakeModel; de: MakeModel; jp: MakeModel }> = {
+  light: { us: stuart, de: panzerII, jp: haGo },
+  medium: { us: sherman, de: panzerIV, jp: chiHa },
+  heavy: { us: churchill, de: tiger, jp: chiHa },
+  td: { us: m10, de: stug, jp: hoNi },
 };

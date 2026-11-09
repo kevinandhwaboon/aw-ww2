@@ -1,0 +1,160 @@
+{
+  "id": "iwo-jima",
+  "name": "Iwo Jima",
+  "description": "February 1945. US Marines storm the black sand beaches of a small volcanic island, under the guns of Mount Suribachi. Japan's garrison is dug into bunkers and caves from end to end. The US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ. Japan wins by holding out to the start of day 15.",
+  "map": [
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSSSS.......SSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSS.HHxHHCxHH.SSSSSSS",
+    "SSSSSSSSSSSSSSSSS.x.QH=XF.H.xHSSSSSS",
+    "SSSSSSSSSSSSSSSS.xHXF==f.H=F.x.SSSSS",
+    "SSSSSSSSSSSSSSS.CH.x=C.x===HHXH.SSSS",
+    "SSSSSSSSSSSSSS..xX.=.HH==AxXH.HHSSSS",
+    "SSSSSSSSSSSSS..FHH.=.X=FHH..Cx.SSSSS",
+    "SSSSSSSSSSSS_..Xx==AH==HHH.x._SSSSSS",
+    "SSSSSSSSSSSS_.x.=X.==.FC.XF__SSSSSSS",
+    "SSSSSSSSSSS_....==X.X.X.x__SSSSSSSSS",
+    "SSSSSSSSSSS_XF.=..F..x.__SSSSSSSSSSS",
+    "SSSSSSSSSS_..A=X....___SSSSSSSSSSSSS",
+    "SSSSSSSSSS_.==X...__SSSSSSSSSSSSSSSS",
+    "SSSSSSSSS_X.=...._SSSSSSSSSSSSSSSSSS",
+    "SSSSSSSS_X.=...__SSSSSSSSSSSSSSSSSSS",
+    "SSSSSS__..=..__SSSSSSSSSSSSSSSSSSSSS",
+    "SSSS__.X==.__SSSSSSSSSSSSSSSSSSSSSSS",
+    "SSS_HX==.__SSSSSSSSSSSSSSSSS......SS",
+    "SS_H.HX._SSSSSSSSSSSSSSSSSSSP...A.SS",
+    "SS_HCH__SSSSSSSSSSSSSSSSSSSS..f...SS",
+    "SS_HH_SSSSSSSSSSSSSSSSSSSSSS...Q..SS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSS.P....SS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  ],
+  "players": [
+    {
+      "name": "US",
+      "nation": "us",
+      "funds": 6000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun",
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat"
+      ],
+      "facing": "left"
+    },
+    {
+      "name": "Japan",
+      "nation": "japan",
+      "funds": 3000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "lightTank",
+        "mediumTank",
+        "artillery",
+        "rocketArtillery",
+        "flakGun"
+      ]
+    }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 31, "y": 22 }, "owner": 0 },
+    { "pos": { "x": 30, "y": 21 }, "owner": 0 },
+    { "pos": { "x": 32, "y": 20 }, "owner": 0 },
+    { "pos": { "x": 28, "y": 20 }, "owner": 0 },
+    { "pos": { "x": 29, "y": 23 }, "owner": 0 },
+    { "pos": { "x": 4, "y": 21 }, "owner": 1 },
+    { "pos": { "x": 13, "y": 13 }, "owner": 1 },
+    { "pos": { "x": 19, "y": 9 }, "owner": 1 },
+    { "pos": { "x": 25, "y": 7 }, "owner": 1 },
+    { "pos": { "x": 21, "y": 6 }, "owner": 1 },
+    { "pos": { "x": 23, "y": 10 }, "owner": 1 },
+    { "pos": { "x": 16, "y": 6 }, "owner": 1 },
+    { "pos": { "x": 24, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 28, "y": 8 }, "owner": 1 },
+    { "pos": { "x": 23, "y": 5 }, "owner": 1 },
+    { "pos": { "x": 20, "y": 4 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 8, "y": 20 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 9, "y": 19 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 11, "y": 18 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 12, "y": 18 } },
+    { "type": "assaultInfantry", "owner": 0, "pos": { "x": 10, "y": 19 } },
+    { "type": "assaultInfantry", "owner": 0, "pos": { "x": 13, "y": 17 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 14, "y": 17 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 7, "y": 21 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 15, "y": 21 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 18, "y": 22 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 20, "y": 17 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 24, "y": 15 } },
+    { "type": "landingCraft", "owner": 0, "pos": { "x": 17, "y": 19 } },
+    { "type": "landingCraft", "owner": 0, "pos": { "x": 22, "y": 18 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 30, "y": 20 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 31, "y": 21 } },
+    { "type": "halftrack", "owner": 0, "pos": { "x": 32, "y": 22 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 5, "y": 19 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 4, "y": 20 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 6, "y": 19 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 6, "y": 20 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 10, "y": 15 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 12, "y": 12 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 14, "y": 14 } },
+    { "type": "flakGun", "owner": 1, "pos": { "x": 15, "y": 11 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 17, "y": 10 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 18, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 20, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 22, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 21, "y": 8 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 25, "y": 10 } },
+    { "type": "rocketArtillery", "owner": 1, "pos": { "x": 22, "y": 6 } },
+    { "type": "rocketArtillery", "owner": 1, "pos": { "x": 26, "y": 5 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 24, "y": 7 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 23, "y": 9 } },
+    { "type": "flakGun", "owner": 1, "pos": { "x": 19, "y": 7 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 17, "y": 7 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 21, "y": 9 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 18, "y": 9 } },
+    { "type": "lightTank", "owner": 1, "pos": { "x": 16, "y": 9 } }
+  ],
+  "victory": [
+    {
+      "type": "hqCapture"
+    },
+    {
+      "type": "rout"
+    },
+    {
+      "type": "captureProperties",
+      "side": "allies",
+      "properties": [
+        { "x": 4, "y": 21 },
+        { "x": 13, "y": 13 },
+        { "x": 19, "y": 9 }
+      ]
+    },
+    {
+      "type": "surviveDays",
+      "side": "axis",
+      "days": 15
+    }
+  ]
+}

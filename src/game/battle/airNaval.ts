@@ -1,6 +1,7 @@
 // Battle figures for aircraft and ships (08-art-pipeline §18). Aircraft are seen side-on with the
 // near wing below the fuselage; ships side-on at the waterline. US: P-51, B-26, C-47, USS Texas,
-// Fletcher, Gato, LCT, PT boat. Germany: Bf 109, Ju 88, Ju 52, Z-class, Type VII, S-boot.
+// Fletcher, Gato, LCT, PT boat. Germany: Bf 109, Ju 88, Ju 52, Z-class, Type VII, S-boot. Japan:
+// A6M Zero, G4M, Ki-57 and the Yamato; its smaller ships share the common hulls without US markings.
 
 import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING } from "./timeline";
@@ -8,6 +9,13 @@ import { star } from "./vehicles";
 import { justFired, kick, type Look, type Pose, type Rig } from "./rig";
 
 const de = (look: Look) => look.nation === "germany";
+const jp = (look: Look) => look.nation === "japan";
+
+/** The hinomaru: a red disc in a thin white ring, Japan's aircraft marking (never the rising-sun ensign). */
+function sun(p: Painter, cx: number, cy: number, r: number): void {
+  p.disc(cx, cy, r + 1, C("battleStar"));
+  p.disc(cx, cy, r, C("battleSun"));
+}
 
 const bob = (pose: Pose, period: number, amp: number) => Math.round(Math.sin(pose.t / period + pose.index * 1.7) * amp);
 
@@ -41,7 +49,26 @@ export const fighterRig: Rig = {
     const shake = pose.fire === "planeGuns" && justFired(pose.ct, FIRE_TIMING.planeGuns.shots, 40) >= 0 ? 1 : 0;
     p.ctx.save();
     p.ctx.translate(-shake, y);
-    if (de(look)) {
+    if (jp(look)) {
+      // A6M Zero: slender, a long glazed canopy, a big round radial cowling, hinomaru on body and wing.
+      p.poly([[-26, 0], [-25, -10], [-20, -10], [-16, -3]], T.mid);
+      p.poly([[-27, -1], [-20, -3], [4, -5], [16, -5], [21, -4], [21, 3], [14, 4], [-20, 2], [-27, 1]], T.mid);
+      p.rect(-20, 1, 34, 2, T.lo);
+      p.rect(-18, -4, 34, 1, T.hi);
+      p.poly([[-2, -5], [1, -10], [12, -10], [14, -5]], C("battleSkyLow"));
+      for (const fx of [2, 6, 10]) p.line(fx, -10, fx, -5, T.deep);
+      p.rect(-30, -1, 9, 2, T.lo);
+      sun(p, -12, 0, 2);
+      p.poly([[-6, 2], [12, 2], [9, 8], [-8, 7]], T.mid);
+      p.line(-6, 2, 12, 2, T.hi);
+      sun(p, 2, 5, 2);
+      // The cowling: a dark ring round the radial engine, and the exhaust behind it.
+      p.rect(21, -5, 4, 9, C("battleSteelDark"));
+      p.rect(21, -5, 4, 1, shade(C("battleSteelDark"), 1.5));
+      p.px(19, 2, C("battleSteelDark"));
+      p.poly([[25, -2], [28, 0], [25, 2]], C("battleSteel"));
+      prop(p, 28, 0, 10, pose.t);
+    } else if (de(look)) {
       // Bf 109: slim and angular, a framed canopy, a spiral on the spinner.
       p.poly([[-26, 0], [-24, -10], [-20, -10], [-17, -3]], T.mid);
       p.poly([[-27, -1], [-20, -3], [6, -4], [18, -4], [24, -2], [24, 2], [16, 3], [-20, 2], [-27, 1]], T.mid);
@@ -90,6 +117,7 @@ export const fighterRig: Rig = {
   muzzle(pose, shot, look) {
     const y = bob(pose, 330, 2);
     if (de(look) && shot % 2 === 0) return { x: 24, y: y - 3 };
+    if (jp(look) && shot % 2 === 0) return { x: 20, y: y - 5 };
     return { x: 13, y: y + 5 };
   },
 };
@@ -110,7 +138,14 @@ export const bomberRig: Rig = {
     p.poly([[-46, -2], [-34, -7], [24, -8], [36, -6], [42, -2], [42, 4], [30, 7], [-30, 5], [-46, 1]], T.mid);
     p.rect(-34, -7, 58, 1, T.hi);
     p.rect(-30, 4, 60, 2, T.lo);
-    if (de(look)) {
+    if (jp(look)) {
+      // G4M: a round cigar of a fuselage, a glazed nose, a glazed tail-gun cone, the hinomaru.
+      p.ellipse(38, 0, 6, 6, C("battleSkyLow"));
+      for (const gx of [35, 39]) p.line(gx, -5, gx, 5, T.deep);
+      p.poly([[-46, -2], [-52, 0], [-46, 2]], C("battleSkyLow"));
+      p.disc(-6, -8, 3, C("battleSkyLow"));
+      sun(p, -22, 0, 3);
+    } else if (de(look)) {
       // Ju 88: the glazed "beetle's eye" nose and a gondola under it.
       p.ellipse(38, 0, 7, 6, C("battleSkyLow"));
       for (const gx of [34, 37, 40]) p.line(gx, -5, gx, 5, T.deep);
@@ -134,7 +169,8 @@ export const bomberRig: Rig = {
     p.poly([[-14, 3], [22, 3], [18, 14], [-18, 12]], T.mid);
     p.line(-14, 3, 22, 3, T.hi);
     p.poly([[4, 2], [26, 2], [28, 6], [26, 10], [4, 10]], T.lo);
-    if (de(look)) p.disc(27, 6, 4, C("battleSteelDark"));
+    if (de(look) || jp(look)) p.disc(27, 6, 4, C("battleSteelDark"));
+    if (jp(look)) sun(p, 0, 9, 2);
     p.poly([[26, 3], [30, 6], [26, 9]], C("battleSteel"));
     prop(p, 30, 6, 12, pose.t);
     p.ctx.restore();
@@ -166,6 +202,11 @@ export const transportRig: Rig = {
       p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
       p.disc(6, 19, 3, C("battleRubber"));
       mottle(p, -30, -6, 50, look);
+    } else if (jp(look)) {
+      // Ki-57: a row of cabin windows, radial engines, the hinomaru.
+      for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
+      sun(p, -30, 0, 3);
+      p.disc(25, 6, 4, C("battleSteelDark"));
     } else {
       // C-47: rounded nose, a row of cabin windows, the cargo door, invasion stripes, a white star.
       for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
@@ -189,6 +230,46 @@ const shipBob = (pose: Pose) => bob(pose, 600, 1);
 
 const BB_TURRETS = [52, 34, -36, -54] as const;
 const bbTurretY = (x: number) => (x === 52 || x === -54 ? -18 : -13);
+/** The Yamato's three triple turrets: two forward, the second firing over the first, and one aft. */
+const YAMATO_TURRETS = [56, 36, -50] as const;
+const yamatoTurretY = (x: number) => (x === 36 ? -19 : -13);
+
+/** Yamato: a long flush deck, a tall stepped tower bridge, one big raked funnel, three triple 46cm turrets. */
+function yamato(p: Painter, look: Look, ct: number | null): void {
+  const T = look.team;
+  const shots = FIRE_TIMING.navalGuns.shots;
+  p.poly([[-84, -9], [74, -9], [90, -14], [84, 2], [-80, 2]], T.mid);
+  p.rect(-84, -9, 158, 1, T.hi);
+  p.rect(-82, -2, 164, 4, T.lo);
+  for (let x = -64; x < 64; x += 8) p.rect(x, -6, 3, 2, C("battleInk"));
+  // The tower bridge, stepped and narrowing, with its rangefinder arms at the top.
+  p.rect(4, -22, 24, 13, T.mid);
+  p.rect(8, -32, 16, 10, T.mid);
+  p.rect(10, -42, 12, 10, T.mid);
+  p.rect(12, -50, 8, 8, T.mid);
+  p.rect(6, -52, 20, 2, T.lo);
+  for (const [y, w] of [[-29, 12], [-39, 8], [-47, 4]] as const) p.rect(16 - w / 2, y, w, 2, C("battleInk"));
+  p.line(16, -52, 16, -62, C("battleSteelDark"));
+  // The raked funnel, and the aft mast.
+  p.poly([[-14, -9], [-12, -30], [-2, -30], [2, -9]], T.lo);
+  p.rect(-12, -31, 10, 2, C("battleInk"));
+  p.line(-28, -9, -28, -38, C("battleSteelDark"));
+  p.line(-34, -30, -22, -30, C("battleSteelDark"));
+  // Secondary turrets amidships.
+  for (const x of [26, -22]) {
+    p.rect(x + 3, -15, 10, 1, C("battleSteelDark"));
+    p.poly([[x - 5, -10], [x - 4, -14], [x + 4, -14], [x + 5, -10]], T.mid);
+  }
+  YAMATO_TURRETS.forEach((x, i) => {
+    const ty = yamatoTurretY(x);
+    const firing = shots.findIndex((s) => ct !== null && ct >= s && ct < s + 260);
+    const recoil = firing === i ? 3 : 0;
+    if (ty < -13) p.rect(x - 6, ty + 4, 12, -13 - ty, T.lo);
+    for (const dy of [-1, 1, 3]) p.rect(x + 5 - recoil, ty + dy, 24, 1, C("battleSteelDark"));
+    p.poly([[x - 10, ty + 5], [x - 9, ty - 2], [x + 7, ty - 3], [x + 10, ty + 5]], T.mid);
+    p.rect(x - 8, ty - 3, 15, 1, T.hi);
+  });
+}
 
 export const battleshipRig: Rig = {
   body: "ship",
@@ -200,6 +281,11 @@ export const battleshipRig: Rig = {
     const roll = Math.max(...shots.map((s) => kick(ct, s, 60, 300)));
     p.ctx.save();
     p.ctx.translate(0, shipBob(pose) + Math.round(roll));
+    if (jp(look)) {
+      yamato(p, look, ct);
+      p.ctx.restore();
+      return;
+    }
     p.poly([[-82, -9], [72, -9], [86, -13], [82, 2], [-78, 2]], T.mid);
     p.rect(-82, -9, 154, 1, T.hi);
     p.rect(-80, -2, 160, 4, T.lo);
@@ -230,7 +316,11 @@ export const battleshipRig: Rig = {
     });
     p.ctx.restore();
   },
-  muzzle(pose, shot) {
+  muzzle(pose, shot, look) {
+    if (jp(look)) {
+      const jx = YAMATO_TURRETS[Math.min(shot, YAMATO_TURRETS.length - 1)] ?? 56;
+      return { x: jx + 29, y: yamatoTurretY(jx) + 1 + shipBob(pose) };
+    }
     const x = BB_TURRETS[Math.min(shot, BB_TURRETS.length - 1)] ?? 52;
     return { x: x + 24, y: bbTurretY(x) + 1 + shipBob(pose) };
   },
@@ -255,7 +345,7 @@ export const destroyerRig: Rig = {
     p.line(6, -26, 14, -26, C("battleSteelDark"));
     p.poly([[-2, -7], [0, -20], [6, -20], [6, -7]], T.lo);
     p.poly([[-16, -7], [-14, -19], [-8, -19], [-8, -7]], T.lo);
-    if (!de(look)) p.rect(-14, -19, 6, 2, C("battleInk"));
+    if (!de(look) && !jp(look)) p.rect(-14, -19, 6, 2, C("battleInk"));
     // Torpedo tubes and depth-charge racks.
     p.rect(-30, -10, 12, 3, C("battleSteelDark"));
     for (let i = 0; i < 3; i++) p.rect(-48 + i * 3, -10, 2, 3, C("battleSteelDark"));
@@ -300,7 +390,7 @@ export const submarineRig: Rig = {
     p.line(5, -13, 5, -20, C("battleSteelDark"));
     p.rect(20, -7, 8, 1, C("battleSteelDark"));
     p.rect(18, -6, 4, 2, T.lo);
-    if (!de(look)) p.rect(-2, -11, 10, 1, C("battleInk"));
+    if (!de(look) && !jp(look)) p.rect(-2, -11, 10, 1, C("battleInk"));
     p.ctx.restore();
   },
   muzzle(pose) {

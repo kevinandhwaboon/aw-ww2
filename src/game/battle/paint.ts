@@ -95,7 +95,7 @@ export function teamShades(owner: number | null, nation: NationId | null): TeamS
     return { hi: shade(stone, 1.2), mid: stone, lo: shade(stone, 0.75), deep: shade(stone, 0.5), cloth: stone, clothLo: shade(stone, 0.75) };
   }
   const [fill] = playerColors(owner);
-  const drab = packColor(nation === "germany" ? "battleFieldGrey" : "battleOlive");
+  const drab = packColor(nation === "germany" ? "battleFieldGrey" : nation === "japan" ? "battleKhaki" : "battleOlive");
   const body = mix(fill, drab, 0.35);
   const cloth = mix(fill, drab, 0.6);
   return {

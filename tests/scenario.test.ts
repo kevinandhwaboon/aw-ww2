@@ -245,6 +245,66 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
+  describe("Iwo Jima (14-scenarios-pacific)", () => {
+    const iwo = SCENARIOS.find((s) => s.id === "iwo-jima");
+    if (!iwo) throw new Error("missing scenario");
+    const { map, units, victory, players, propertyOwners } = iwo.setup;
+    const objectives = victory?.find((v) => v.type === "captureProperties")?.properties ?? [];
+    const [suribachi, airfield1, airfield2] = objectives;
+    if (!suribachi || !airfield1 || !airfield2) throw new Error("missing objectives");
+    const neighbors = (p: Point) => [[0, 1], [1, 0], [0, -1], [-1, 0]].map(([dx, dy]) => terrainAt(map, P(p.x + (dx ?? 0), p.y + (dy ?? 0))));
+
+    it("the US fights Japan", () => {
+      expect(players.map((p) => p.nation)).toEqual(["us", "japan"]);
+    });
+
+    it("the US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, all held by Japan at the start", () => {
+      expect(victory).toContainEqual({ type: "captureProperties", side: "allies", properties: [suribachi, airfield1, airfield2] });
+      expect([airfield1, airfield2].map((p) => terrainAt(map, p))).toEqual(["airfield", "airfield"]);
+      for (const p of objectives) expect(propertyOwners).toContainEqual({ pos: p, owner: 1 });
+    });
+
+    it("Japan wins by holding out to the start of day 15", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "axis", days: 15 });
+    });
+
+    it("Mount Suribachi is a peak at the south-west tip, ringed by hills", () => {
+      expect(suribachi.x).toBeLessThan(map.width / 4);
+      expect(suribachi.y).toBeGreaterThan(map.height * 0.7);
+      expect(neighbors(suribachi).filter((t) => t === "hills").length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("the US first wave starts ashore on the black sand beaches, with the fleet offshore", () => {
+      const ashore = units?.filter((u) => u.owner === 0 && UNITS[u.type].category === "land" && terrainAt(map, u.pos) === "beach") ?? [];
+      expect(ashore.length).toBeGreaterThanOrEqual(6);
+      const fleet = units?.filter((u) => u.owner === 0 && UNITS[u.type].category === "naval").map((u) => u.type) ?? [];
+      expect(fleet).toEqual(expect.arrayContaining(["battleship", "destroyer", "landingCraft"]));
+    });
+
+    it("Japan's soldiers start dug into bunkers, and bunkers never stand on the sand", () => {
+      const infantry = units?.filter((u) => u.owner === 1 && u.type === "infantry") ?? [];
+      expect(infantry.filter((u) => terrainAt(map, u.pos) === "bunker").length).toBeGreaterThanOrEqual(infantry.length * 0.75);
+      for (let i = 0; i < map.terrain.length; i++) {
+        if (map.terrain[i] !== "bunker") continue;
+        expect(map.terrain[i]).not.toBe("beach");
+      }
+    });
+
+    it("Japan builds only land units it fielded: no aircraft, ships or Heavy Tanks (01-units §1)", () => {
+      const japan = players[1]?.buildable ?? [];
+      expect(japan.some((t) => UNITS[t].category !== "land")).toBe(false);
+      expect(japan).not.toContain("heavyTank");
+    });
+
+    it("US tanks landed on the beaches can drive to Japan's HQ in the north", () => {
+      const tank = units?.find((u) => u.owner === 0 && u.type === "mediumTank");
+      const [hq] = properties(iwo, "hq", 1);
+      if (!tank || !hq) throw new Error("missing tank or HQ");
+      expect(connected(map, "tracks", tank.pos, hq.pos)).toBe(true);
+      expect(hq.pos.y).toBeLessThan(map.height / 3);
+    });
+  });
+
   it("the coastal map gives each side a port and starts both with a Destroyer and a Submarine (11-tech-setup §6, milestone 10)", () => {
     const scenario = SCENARIOS.find((s) => s.id === "narrow-sea");
     if (!scenario) throw new Error("missing scenario");

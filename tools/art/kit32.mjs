@@ -15,6 +15,7 @@ const MATERIALS = {
   leather: ["B", "b", "x", "x", "x"],
   canvas: ["i", "a", "A", "A", "x"],
   star: ["S", "S", "S", "S", "S"],
+  sun: ["e", "e", "e", "e", "e"],
   card: ["S", "S", "S", "S", "S"],
   ink: ["k", "k", "k", "k", "k"],
   glass: ["c", "c", "c", "c", "c"],
@@ -29,7 +30,9 @@ export const fixedColors = {
 
 /** Five-tone team ramps. */
 export const teamRamps = {
-  olive: { H: "#c8c886", L: "#a3a55c", M: "#7a8040", D: "#535a2e", N: "#363c1e" },
+  // Army green: the US color since 2026-11-08 (08-art-pipeline §12).
+  olive: { H: "#b8c890", L: "#8ea25e", M: "#64783a", D: "#435428", N: "#2a3818" },
+  khaki: { H: "#e2d29a", L: "#c4ae6c", M: "#9a8648", D: "#6c5c30", N: "#463a1e" },
   grey: { H: "#c6ccc2", L: "#a2a89e", M: "#747b72", D: "#4e554f", N: "#333834" },
   blue: { H: "#a8d0f8", L: "#7fb0e8", M: "#4a7fcc", D: "#2c5296", N: "#1a3264" },
   red: { H: "#f8b49c", L: "#ec8a70", M: "#c9503a", D: "#8c3022", N: "#5a1c14" },
@@ -135,7 +138,7 @@ export function finish(s, inner = true) {
     if (neighbors.some((n) => !n || (inner && n.part < c.part))) return "K";
     const ramp = MATERIALS[c.mat];
     if (!ramp) throw new Error(`unknown material ${c.mat}`);
-    if (c.mat === "star" || c.mat === "card" || c.mat === "ink" || c.mat === "glass") return ramp[0];
+    if (c.mat === "star" || c.mat === "sun" || c.mat === "card" || c.mat === "ink" || c.mat === "glass") return ramp[0];
     let tone = c.tone;
     const ul = at(x - 1, y - 1), dr = at(x + 1, y + 1);
     if (!ul || ul.part !== c.part) tone -= 1;
@@ -200,6 +203,20 @@ export function wheelsInWells(s, wheels, frame) {
 export function star(s, x, y) {
   for (const [dx, dy] of [[3, 0], [2, 1], [3, 1], [4, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [1, 4], [2, 4], [4, 4], [5, 4]]) {
     s.dot(x + dx, y + dy, "star", 0);
+  }
+}
+
+/**
+ * The hinomaru, Japan's aircraft marking: a red disc in a thin white ring, painted into the current
+ * shape. The plain national disc only; the rising-sun ensign is never drawn (08-art-pipeline §12).
+ */
+export function hinomaru(s, cx, cy, r = 2.5) {
+  for (let y = Math.floor(cy - r - 1); y <= Math.ceil(cy + r + 1); y++) {
+    for (let x = Math.floor(cx - r - 1); x <= Math.ceil(cx + r + 1); x++) {
+      const d = Math.hypot(x - cx, y - cy);
+      if (d <= r) s.dot(x, y, "sun", 0);
+      else if (d <= r + 1) s.dot(x, y, "star", 0);
+    }
   }
 }
 

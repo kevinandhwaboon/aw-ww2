@@ -15,7 +15,7 @@
   ],
   "players": [
     {
-      "name": "US Army",
+      "name": "US",
       "nation": "us",
       "funds": 8000,
       "buildable": [

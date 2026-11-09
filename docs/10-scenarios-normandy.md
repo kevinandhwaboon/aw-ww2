@@ -10,7 +10,7 @@
 
 ![Overview](maps/normandy.png)
 
-Blue properties are Allied, red German, grey neutral. The inner mark shows the kind: yellow factory, white airfield, cyan port, black HQ. Dark squares are starting units.
+Army green properties are Allied, red German, grey neutral. The inner mark shows the kind: yellow factory, white airfield, cyan port, black HQ. Dark squares are starting units.
 
 ### Area and scale
 

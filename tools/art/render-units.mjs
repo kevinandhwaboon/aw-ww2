@@ -72,9 +72,12 @@ for (const { id, units, natural } of nations) {
 const { fixedColors, teamRamps } = await import("./kit32.mjs");
 const { units: us32, paratroopers } = await import("./us-units32.mjs");
 const { units: de32 } = await import("./de-units32.mjs");
+const { units: jp32 } = await import("./jp-units32.mjs");
+// Each nation's natural color first (used for the docs preview), then the player colors.
 const big = [
-  { id: "us", units: us32, extra: paratroopers, teams: ["olive", "blue", "red"] },
-  { id: "de", units: de32, extra: [], teams: ["grey", "blue", "red"] },
+  { id: "us", units: us32, extra: paratroopers, teams: ["olive", "red", "blue"] },
+  { id: "de", units: de32, extra: [], teams: ["grey", "olive", "red", "blue"] },
+  { id: "jp", units: jp32, extra: [], teams: ["khaki", "olive", "red", "blue"] },
 ];
 for (const { id, units, extra, teams: names } of big) {
   // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits).
@@ -100,12 +103,13 @@ for (const { id, units, extra, teams: names } of big) {
 }
 
 // ---- 32x32 aircraft and ships. Rows: FT, BM, TA and BB, DD, SS, LC, TB; empty where a nation has none.
-const { usAir, usNaval, deAir, deNaval } = await import("./air-naval32.mjs");
+const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval } = await import("./air-naval32.mjs");
 const airRows = ["FT", "BM", "TA"];
 const navalRows = ["BB", "DD", "SS", "LC", "TB"];
 for (const { id, air, naval, teams: names } of [
-  { id: "us", air: usAir, naval: usNaval, teams: ["olive", "blue", "red"] },
-  { id: "de", air: deAir, naval: deNaval, teams: ["grey", "blue", "red"] },
+  { id: "us", air: usAir, naval: usNaval, teams: ["olive", "red", "blue"] },
+  { id: "de", air: deAir, naval: deNaval, teams: ["grey", "olive", "red", "blue"] },
+  { id: "jp", air: jpAir, naval: jpNaval, teams: ["khaki", "olive", "red", "blue"] },
 ]) {
   for (const [kind, list, order] of [["air", air, airRows], ["naval", naval, navalRows]]) {
     const rows = order.map((code) => list.find((u) => u.code === code));

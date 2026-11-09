@@ -148,6 +148,25 @@ describe("the packs that ship with the game", () => {
     }
     expect(drawn("germany").has("battleship")).toBe(false);
   });
+
+  it("Japan has art for every land, air and naval unit it fielded, but no Heavy Tank (01-units §1)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "japan").flatMap((s) => s.rows));
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank");
+  });
+
+  it("every nation's sheets come in each built-in player color, so any player can field any nation (08-art-pipeline §12)", () => {
+    const pack = parseArtPack(defaultPack);
+    for (const nation of ["us", "germany", "japan"] as const) {
+      for (const { team } of BUILT_IN_PACK.players.slice(0, 3)) {
+        expect(findUnitArt(pack, nation, BUILT_IN_PACK.players.findIndex((p) => p.team === team), "infantry"), `${nation} ${team}`).not.toBeNull();
+      }
+    }
+  });
+
+  it("the first player, the US on every built-in map, is army green (08-art-pipeline §12)", () => {
+    expect(BUILT_IN_PACK.players[0]?.team).toBe("olive");
+  });
 });
 
 describe("finding a unit's art", () => {
@@ -166,13 +185,13 @@ describe("finding a unit's art", () => {
   });
 
   it("an air-dropped Infantry is drawn as a paratrooper, its suit picked by unit id (08-art-pipeline §17)", () => {
-    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ paratroopers: [5, 6, 7, 8] })] });
+    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ team: "olive", paratroopers: [5, 6, 7, 8] })] });
     expect(findUnitArt(airborne, "us", 0, "infantry", { id: 9, airDropped: true })?.row).toBe(6);
     expect(findUnitArt(airborne, "us", 0, "infantry", { id: 12, airDropped: true })?.row).toBe(5);
   });
 
   it("Infantry that wasn't air-dropped, or a sheet without paratroopers, keeps the normal Infantry look", () => {
-    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ paratroopers: [5, 6, 7, 8] })] });
+    const airborne = parseArtPack({ name: "x", unitSheets: [sheet({ team: "olive", paratroopers: [5, 6, 7, 8] })] });
     expect(findUnitArt(airborne, "us", 0, "infantry", { id: 9 })?.row).toBe(0);
     expect(findUnitArt(pack, "us", 0, "infantry", { id: 9, airDropped: true })?.row).toBe(0);
   });

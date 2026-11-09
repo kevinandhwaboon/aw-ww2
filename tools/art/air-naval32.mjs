@@ -1,7 +1,8 @@
 // Aircraft and ships at 32x32, top-down 3/4 view, facing right, two idle frames each
 // (docs/08-art-pipeline.md §17). Aircraft bob and their propellers spin; ships rock and their
-// bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4).
-import { finish, sprite, star } from "./kit32.mjs";
+// bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4). Japanese
+// aircraft carry the hinomaru; ships carry no marking.
+import { finish, hinomaru, sprite, star } from "./kit32.mjs";
 
 const frames = (draw) => [draw(0), draw(1)];
 
@@ -28,6 +29,7 @@ function plane(frame, o) {
   if (o.ribs) for (let x = o.tail + 3; x < o.nose - 3; x += 2) s.line(x, y(c - o.girth + 1), x, y(c + o.girth - 1), "team", 2);
   if (o.windows) for (let x = o.windows[0]; x <= o.windows[1]; x += 2) s.dot(x, y(c - 1), "glass", 0);
   if (o.camo) camo(s, o.camo.map(([a, b, cc, d]) => [a, y(b), cc, y(d)]));
+  if (o.bodySun) hinomaru(s, o.bodySun[0], y(c), 1.5);
   s.fill(o.canopy[0], y(c - o.girth + 1), o.canopy[1], y(c - 1), "glass", 0);
   if (o.glassNose) s.fill(o.nose - 3, y(c - 1), o.nose - 1, y(c), "glass", 0);
   // Fin standing up from the tail.
@@ -35,6 +37,7 @@ function plane(frame, o) {
   // Near wing and tailplane, in front of the fuselage.
   s.poly(o.nearWing.map(([px, py]) => [px, y(py)]), "team", 1);
   if (o.star) star(s, o.star[0], y(o.star[1]));
+  if (o.sun) hinomaru(s, o.sun[0], y(o.sun[1]), o.sun[2] ?? 2.5);
   if (o.wingCamo) camo(s, o.wingCamo.map(([a, b, cc, d]) => [a, y(b), cc, y(d)]));
   s.poly([[o.tail + 1, y(c + 2)], [o.tail + 6, y(c + 2)], [o.tail + 5, y(c + 6)], [o.tail + 1, y(c + 6)]], "team", 1);
   if (o.gear) for (const gx of o.gear) s.rect(gx, y(c + 3), gx + 1, y(c + 5), "rubber", 3);
@@ -160,6 +163,46 @@ const eBoat = (f) => ship(f, {
   blocks: [[18, 13, 22, 19]], turrets: [[9, 17, 2, 1.2], [25, 17, 2, 1.2]], camo: [[11, 17, 14, 18]], masts: [[20, 13, 5]],
 });
 
+// ---- Japanese aircraft ----
+const zero = (f) => plane(f, {
+  tail: 2, nose: 27, girth: 3, fin: 6, canopy: [14, 20], noseProp: 4,
+  farWing: [[11, 12], [21, 12], [18, 5], [15, 5]], nearWing: [[10, 16], [22, 16], [19, 28], [14, 28]], sun: [16, 22], bodySun: [7],
+});
+const betty = (f) => plane(f, {
+  tail: 1, nose: 30, girth: 4, fin: 8, canopy: [22, 25], glassNose: true,
+  farWing: [[12, 11], [22, 11], [19, 3], [16, 3]], nearWing: [[11, 17], [23, 17], [20, 30], [15, 30]], sun: [17, 25, 2],
+  farEngine: [17], nearEngine: [17], bodySun: [7],
+});
+const ki57 = (f) => plane(f, {
+  tail: 1, nose: 29, girth: 4, fin: 8, canopy: [24, 26], windows: [9, 19],
+  farWing: [[11, 11], [22, 11], [19, 3], [16, 3]], nearWing: [[10, 17], [23, 17], [20, 30], [15, 30]], sun: [16, 26, 2],
+  farEngine: [17], nearEngine: [17],
+});
+
+// ---- Japanese ships ----
+const yamato = (f) => ship(f, {
+  stern: 1, bow: 31, deck: 12, beam: 8, side: 4,
+  turrets: [[23, 16, 5, 2.6], [19, 15, 4, 2.4], [6, 16, 4, 2.6]],
+  blocks: [[12, 9, 16, 18]], funnels: [[11, 14]], masts: [[14, 9, 9], [9, 12, 5]],
+});
+const kagero = (f) => ship(f, {
+  stern: 2, bow: 31, deck: 14, beam: 5, side: 3,
+  turrets: [[25, 16, 3, 1.8], [7, 16, 3, 1.8], [10, 16, 3, 1.8]],
+  blocks: [[20, 13, 23, 18]], funnels: [[17, 16], [13, 16]], masts: [[21, 13, 7]],
+});
+const iBoat = (f) => ship(f, {
+  stern: 1, bow: 31, deck: 17, beam: 4, side: 2,
+  blocks: [[12, 12, 16, 19]], turrets: [[22, 18, 2, 1.3]], masts: [[14, 12, 6]],
+});
+const daihatsu = (f) => ship(f, {
+  stern: 4, bow: 28, deck: 14, beam: 7, side: 4, wellDeck: [10, 25],
+  blocks: [[4, 12, 9, 19]], masts: [[6, 12, 4]],
+});
+const gyoraitei = (f) => ship(f, {
+  stern: 6, bow: 28, deck: 16, beam: 4, side: 3,
+  blocks: [[15, 14, 19, 19]], turrets: [[11, 17, 2, 1.2]], masts: [[17, 14, 4]],
+});
+
 export const usAir = [
   { code: "FT", name: "Fighter", real: "P-51 Mustang", frames: frames(p51) },
   { code: "BM", name: "Bomber", real: "B-26 Marauder", frames: frames(b26) },
@@ -183,6 +226,19 @@ export const deNaval = [
   { code: "TB", name: "Torpedo Boat", real: "S-boot (E-boat)", frames: frames(eBoat) },
 ];
 
-for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval]) for (const f of u.frames) {
+export const jpAir = [
+  { code: "FT", name: "Fighter", real: "A6M Zero", frames: frames(zero) },
+  { code: "BM", name: "Bomber", real: "G4M (Betty)", frames: frames(betty) },
+  { code: "TA", name: "Transport Aircraft", real: "Ki-57 (Topsy)", frames: frames(ki57) },
+];
+export const jpNaval = [
+  { code: "BB", name: "Battleship", real: "Yamato class", frames: frames(yamato) },
+  { code: "DD", name: "Destroyer", real: "Kagero class", frames: frames(kagero) },
+  { code: "SS", name: "Submarine", real: "I-boat (Type B1)", frames: frames(iBoat) },
+  { code: "LC", name: "Landing Craft", real: "Daihatsu", frames: frames(daihatsu) },
+  { code: "TB", name: "Torpedo Boat", real: "Gyoraitei", frames: frames(gyoraitei) },
+];
+
+for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {
   if (f.length !== 32 || f.some((r) => r.length !== 32)) throw new Error(`${u.code}: not 32x32`);
 }
