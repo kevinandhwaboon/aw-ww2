@@ -19,7 +19,7 @@ export interface DamageEntry {
 export const ARMED_UNIT_IDS = [
   "infantry", "assaultInfantry", "mortar", "recon", "lightTank", "mediumTank", "heavyTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
-  "fighter", "bomber", "battleship", "destroyer", "submarine", "torpedoBoat",
+  "fighter", "bomber", "diveBomber", "torpedoBomber", "battleship", "destroyer", "submarine", "torpedoBoat",
 ] as const satisfies readonly UnitTypeId[];
 type ArmedUnitId = (typeof ARMED_UNIT_IDS)[number];
 
@@ -46,6 +46,8 @@ const VS_LAND: Record<ArmedUnitId, string> = {
   flakGun:         NONE_VS_LAND,
   fighter:         "15   15   15   10   8    5    2    1    3    10   10   3    8",
   bomber:          "110  110  110  105  105  105  105  95   105  105  105  95   105",
+  diveBomber:      "55   55   55   55   55   55   50   45   50   55   55   45   50",
+  torpedoBomber:   NONE_VS_LAND,
   battleship:      "95   90   95   90   80   85   80   55   80   80   85   85   90",
   destroyer:       "50   45   50   40   35   30   20   5    20   40   50   30   45",
   submarine:       NONE_VS_LAND,
@@ -54,30 +56,32 @@ const VS_LAND: Record<ArmedUnitId, string> = {
 
 // 03-combat §5b: vs. air, naval and fortifications
 const VS_OTHER_COLUMNS = [
-  "fighter", "bomber", "transportAircraft", "battleship", "destroyer", "submarine",
+  "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber", "battleship", "destroyer", "submarine",
   "landingCraft", "torpedoBoat", "carrier", "fort",
 ] as const satisfies readonly DamageTarget[];
 
-//                     Ftr  Bmr  Trn  BB   DD   Sub  LC   TB   CV   Fort
+//                     Ftr  Bmr  Trn  Dive TBmr BB   DD   Sub  LC   TB   CV   Fort
 const VS_OTHER: Record<ArmedUnitId, string> = {
-  infantry:        "—    —    —    —    —    —    —    —    —    5*",
-  assaultInfantry: "—    —    —    —    —    —    —    —    —    65",
-  mortar:          "—    —    —    —    —    —    25   25   —    20",
-  recon:           "—    —    —    —    —    —    —    —    —    —",
-  lightTank:       "—    —    —    1    3    1    8    15   1    10",
-  mediumTank:      "—    —    —    1    5    1    10   20   1    15",
-  heavyTank:       "—    —    —    10   30   10   35   40   10   40",
-  tankDestroyer:   "—    —    —    5    10   5    15   25   5    30",
-  artillery:       "—    —    —    40   50   60   55   60   45   50",
-  rocketArtillery: "—    —    —    55   65   85   60   75   60   55",
-  mobileAA:        "65   75   90   —    —    —    —    —    —    —",
-  flakGun:         "100  100  110  —    —    —    —    —    —    —",
-  fighter:         "55   100  100  —    —    —    5    10   —    —",
-  bomber:          "—    —    —    75   85   95   95   95   85   55",
-  battleship:      "—    —    —    50   85   95   95   95   60   55",
-  destroyer:       "55*  65*  105* 10   40   90   50   85   10   20",
-  submarine:       "—    —    —    55   25   55   95   75   75   —",
-  torpedoBoat:     "—    —    —    35   30   40   75   55   45   —",
+  infantry:        "—    —    —    —    —    —    —    —    —    —    —    5*",
+  assaultInfantry: "—    —    —    —    —    —    —    —    —    —    —    65",
+  mortar:          "—    —    —    —    —    —    —    —    25   25   —    20",
+  recon:           "—    —    —    —    —    —    —    —    —    —    —    —",
+  lightTank:       "—    —    —    —    —    1    3    1    8    15   1    10",
+  mediumTank:      "—    —    —    —    —    1    5    1    10   20   1    15",
+  heavyTank:       "—    —    —    —    —    10   30   10   35   40   10   40",
+  tankDestroyer:   "—    —    —    —    —    5    10   5    15   25   5    30",
+  artillery:       "—    —    —    —    —    40   50   60   55   60   45   50",
+  rocketArtillery: "—    —    —    —    —    55   65   85   60   75   60   55",
+  mobileAA:        "65   75   90   75   75   —    —    —    —    —    —    —",
+  flakGun:         "100  100  110  100  100  —    —    —    —    —    —    —",
+  fighter:         "55   100  100  100  100  —    —    —    5    10   —    —",
+  bomber:          "—    —    —    —    —    75   85   95   95   95   85   55",
+  diveBomber:      "—    —    —    —    —    40   45   50   50   50   45   30",
+  torpedoBomber:   "—    —    —    —    —    120  120  —    120  120  120  —",
+  battleship:      "—    —    —    —    —    50   85   95   95   95   60   55",
+  destroyer:       "55*  65*  105* 65*  65*  10   40   90   50   85   10   20",
+  submarine:       "—    —    —    —    —    55   25   55   95   75   75   —",
+  torpedoBoat:     "—    —    —    —    —    35   30   40   75   55   45   —",
 };
 
 type ChartRow = Readonly<Partial<Record<DamageTarget, DamageEntry>>>;

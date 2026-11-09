@@ -135,10 +135,11 @@ const units = [
   // Offshore: battleships and destroyers for the bombardment, and Landing Craft for the next waves.
   us("battleship", 15, 21), us("battleship", 18, 22), us("destroyer", 20, 17), us("destroyer", 24, 15),
   us("landingCraft", 17, 19), us("landingCraft", 22, 18),
-  // Two Carriers between the beaches and the anchorage, each with two Bombers that can reach the
-  // bunkers round Airfield No. 2 on the first day (05-supply-transport §10).
-  us("carrier", 26, 15, { cargo: [{ type: "bomber" }, { type: "bomber" }] }),
-  us("carrier", 24, 17, { cargo: [{ type: "bomber" }, { type: "bomber" }] }),
+  // Two Carriers between the beaches and the anchorage, each with two Dive Bombers that can reach
+  // the bunkers round Airfield No. 2 on the first day (05-supply-transport §10). Japan has no ships
+  // here, so no Torpedo Bombers.
+  us("carrier", 26, 15, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
+  us("carrier", 23, 16, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
   // Waiting at the anchorage to go ashore.
   us("infantry", 30, 20), us("artillery", 31, 21), us("halftrack", 32, 22),
   // Mount Suribachi's garrison.
@@ -172,7 +173,7 @@ const scenario = {
       funds: 6000,
       buildable: [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
-        "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft",
+        "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
         "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
       ],
       facing: "left",

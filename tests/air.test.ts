@@ -183,10 +183,10 @@ describe("airfields (04-economy §1, §5)", () => {
     expect(byId(nextRound(state).state, 0)?.fuel).toBe(45);
   });
 
-  it("airfields build Fighters, Bombers and Transport Aircraft, which can't act until next turn", () => {
+  it("airfields build Fighters, Bombers, Transport Aircraft, Dive Bombers and Torpedo Bombers, which can't act until next turn", () => {
     const state = owned("A", u("infantry", 1, 0, { pos: P(0, 0) }));
     const empty: GameState = { ...state, units: [] };
-    expect(buildOptions(empty, P(0, 0)).map((o) => o.type)).toEqual(["transportAircraft", "fighter", "bomber"]);
+    expect(buildOptions(empty, P(0, 0)).map((o) => o.type)).toEqual(["transportAircraft", "diveBomber", "torpedoBomber", "fighter", "bomber"]);
     const built = run(empty, { type: "build", unitType: "bomber", pos: P(0, 0) });
     expect(built.units[0]).toMatchObject({ type: "bomber", hasActed: true, fuel: 99, ammo: 9 });
   });

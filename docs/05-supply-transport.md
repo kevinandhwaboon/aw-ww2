@@ -83,13 +83,13 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 ## 10. Carriers (decided and built 2026-11-09)
 
-- **Capacity:** 2 air units, Fighters or Bombers. Transport Aircraft can't board. Unarmed.
+- **Capacity:** 2 air units: Fighters, Dive Bombers or Torpedo Bombers (01-units §3). Bombers and Transport Aircraft can't board. Unarmed. (Bombers could board until 2026-11-09; that made Carriers too strong.)
 - **Land (Load):** an aircraft moves onto its own player's Carrier with free space, wherever the Carrier is. This ends the aircraft's action. An aircraft that boarded this turn can't launch until next turn.
 - **Move or launch, not both:** each turn a Carrier either moves or launches. Once it has moved it can't launch; once it has launched it can't move.
 - **Launch:** an aircraft flies off from the Carrier's tile with its full movement and can attack that same turn, like any unit starting its turn there. Both aircraft can launch in the same turn, one after the other. A departure from the original, where carried aircraft were unloaded onto an adjacent tile and couldn't act that turn: the carrier's point was striking from beyond the enemy's reach.
 - **Service at turn start:** aircraft on board burn no daily fuel, get full fuel and ammo free, and are repaired **1 displayed HP** for 10% of their cost, with the same affordability and order rules as property repair (04-economy §5). Land airfields still repair 2 HP, so they stay worth taking.
 - **Sunk:** aircraft on board are lost with it and don't count as kills (§4). The Carrier itself burns fuel and sinks at 0 like any ship (§7).
-- **Building:** at Ports, like other ships.
+- **Building:** at Ports, like other ships. A Carrier is built empty: its aircraft are built at airfields and flown aboard by the player.
 
 ## 11. Open questions
 

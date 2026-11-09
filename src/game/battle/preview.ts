@@ -59,7 +59,11 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "destroyer", d: "submarine", at: "sea", dt: "sea", submerged: true, counter: "primary" },
   { a: "submarine", d: "battleship", at: "sea", dt: "sea" },
   { a: "torpedoBoat", d: "landingCraft", at: "sea", dt: "beach" },
-  { a: "bomber", d: "carrier", at: "sea", dt: "sea" },
+  { a: "torpedoBomber", d: "carrier", at: "sea", dt: "sea" },
+  { a: "torpedoBomber", d: "battleship", at: "sea", dt: "sea" },
+  { a: "diveBomber", d: "infantry", dt: "bunker" },
+  { a: "diveBomber", d: "destroyer", at: "sea", dt: "sea", counter: "secondary" },
+  { a: "fighter", d: "torpedoBomber" },
   { a: "fighter", d: "carrier", at: "sea", dt: "sea" },
   { a: "infantry", d: "bunker", dt: "bunker" },
   { a: "mediumTank", d: "infantry", dt: "bunker", weapon: "secondary", counter: "secondary" },
@@ -96,7 +100,7 @@ function planFor(m: Matchup, flip: boolean): BattlePlan {
     paratrooper: false,
     suit: 0,
   };
-  const air = (k: FigureKind) => k === "fighter" || k === "bomber" || k === "transportAircraft";
+  const air = (k: FigureKind) => k === "fighter" || k === "bomber" || k === "transportAircraft" || k === "diveBomber" || k === "torpedoBomber";
   const strikes: BattlePlan["strikes"][number][] = [
     { from: "left", fire: fireKind(m.a, m.weapon ?? "primary", m.d), hpBefore: 10, hpAfter: m.counter ? 6 : 3, atAir: air(m.d) },
   ];

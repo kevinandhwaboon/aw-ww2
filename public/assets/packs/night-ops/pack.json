@@ -38,7 +38,7 @@
       "path": "../../units/us-air-32-olive.png",
       "frameSize": 32,
       "frames": 2,
-      "rows": ["fighter", "bomber", "transportAircraft"]
+      "rows": ["fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber"]
     },
     {
       "nation": "us",

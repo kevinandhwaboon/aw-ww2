@@ -11,7 +11,7 @@ export const UNIT_TYPE_IDS = [
   // Land (phase 2)
   "flakGun",
   // Air (phase 2)
-  "fighter", "bomber", "transportAircraft",
+  "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
   // Naval (phase 2)
   "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
 ] as const;
@@ -52,8 +52,11 @@ export interface UnitDef {
 /** Units that Halftracks and Transport Aircraft can carry (01-units §5). */
 export const FOOT_UNITS = ["infantry", "assaultInfantry", "mortar"] as const satisfies readonly UnitTypeId[];
 
-/** What a Carrier can carry: combat aircraft, not Transport Aircraft (05-supply-transport §10). */
-export const CARRIER_AIRCRAFT = ["fighter", "bomber"] as const satisfies readonly UnitTypeId[];
+/**
+ * What a Carrier can carry: Fighters and the carrier aircraft (Dive and Torpedo Bombers), not
+ * Bombers or Transport Aircraft (05-supply-transport §10).
+ */
+export const CARRIER_AIRCRAFT = ["fighter", "diveBomber", "torpedoBomber"] as const satisfies readonly UnitTypeId[];
 
 /** Everything a Landing Craft can carry: any land unit (01-units §5). */
 export const LAND_UNITS = [
@@ -156,6 +159,14 @@ export const UNITS = {
     movementType: "air", vision: 2, maxFuel: 99, fuelPerDay: 4, range: null,
     transport: { capacity: 2, carries: FOOT_UNITS }, specialActions: ["airDrop"],
   },
+  diveBomber: {
+    ...BASE, phase: 2, name: "Dive Bomber", category: "air", cost: 14000, movePoints: 6, movementType: "air",
+    vision: 2, maxFuel: 99, fuelPerDay: 5, primaryWeapon: { name: "Bomb", maxAmmo: 2 },
+  },
+  torpedoBomber: {
+    ...BASE, phase: 2, name: "Torpedo Bomber", category: "air", cost: 16000, movePoints: 6, movementType: "air",
+    vision: 2, maxFuel: 99, fuelPerDay: 5, primaryWeapon: { name: "Torpedo", maxAmmo: 1 },
+  },
 
   // ---- Naval, phase 2 ----
   battleship: {
@@ -184,7 +195,7 @@ export const UNITS = {
     secondaryWeapon: { name: "MG" },
   },
   carrier: {
-    ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 30000, movePoints: 5, movementType: "sea",
+    ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 40000, movePoints: 5, movementType: "sea",
     vision: 2, maxFuel: 99, fuelPerDay: 1, range: null,
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
   },

@@ -4,10 +4,10 @@ import { UNITS, UNIT_TYPE_IDS } from "../src/engine/data/units";
 const phase1 = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 describe("unit roster (01-units)", () => {
-  it("has 13 land, 3 air and 6 naval unit types (01-units §2–4)", () => {
+  it("has 13 land, 5 air and 6 naval unit types (01-units §2–4)", () => {
     const count = (category: string) => UNIT_TYPE_IDS.filter((id) => UNITS[id].category === category).length;
     expect(count("land")).toBe(13);
-    expect(count("air")).toBe(3);
+    expect(count("air")).toBe(5);
     expect(count("naval")).toBe(6);
   });
 

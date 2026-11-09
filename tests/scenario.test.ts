@@ -281,23 +281,23 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(fleet).toEqual(expect.arrayContaining(["battleship", "destroyer", "landingCraft"]));
     });
 
-    it("two US Carriers start offshore, each carrying two Bombers, and the US has no airfield of its own (05-supply-transport §10)", () => {
+    it("two US Carriers start offshore, each carrying two Dive Bombers, and the US has no airfield of its own (05-supply-transport §10)", () => {
       const carriers = units?.filter((u) => u.owner === 0 && u.type === "carrier") ?? [];
       expect(carriers).toHaveLength(2);
       for (const c of carriers) {
         expect(terrainAt(map, c.pos)).toBe("sea");
-        expect(c.cargo?.map((x) => x.type)).toEqual(["bomber", "bomber"]);
+        expect(c.cargo?.map((x) => x.type)).toEqual(["diveBomber", "diveBomber"]);
       }
       expect(properties(iwo, "airfield", 0)).toHaveLength(0);
     });
 
-    it("each Carrier's Bombers can reach a bunker on the first day, but no Japanese gun can reach the Carriers", () => {
+    it("each Carrier's Dive Bombers can reach a bunker on the first day, but no Japanese gun can reach the Carriers", () => {
       const carriers = units?.filter((u) => u.type === "carrier") ?? [];
       const bunkers = map.terrain.flatMap((t, i) => (t === "bunker" ? [P(i % map.width, Math.floor(i / map.width))] : []));
       const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
       const guns = units?.filter((u) => u.owner === 1 && UNITS[u.type].range !== null) ?? [];
       for (const c of carriers) {
-        expect(bunkers.some((b) => dist(c.pos, b) <= UNITS.bomber.movePoints + 1)).toBe(true);
+        expect(bunkers.some((b) => dist(c.pos, b) <= UNITS.diveBomber.movePoints + 1)).toBe(true);
         for (const g of guns) expect(dist(c.pos, g.pos)).toBeGreaterThan(UNITS[g.type].range?.max ?? 0);
       }
     });

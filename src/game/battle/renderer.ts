@@ -6,7 +6,7 @@ import { UNITS } from "../../engine/data/units";
 import { terrainName, unitName } from "../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../pixelFont";
 import { playerColors } from "../placeholderUnits";
-import { bomberRig, fighterRig, transportRig } from "./airNaval";
+import { bomberRig, diveBomberRig, fighterRig, torpedoBomberRig, transportRig } from "./airNaval";
 import { battleshipRig, carrierRig, destroyerRig, landingCraftRig, submarineRig, torpedoBoatRig } from "./ships";
 import { backdropView, drawBackdrop, SCENE, type BackdropView } from "./backdrops";
 import { polished } from "./angled/mesh";
@@ -35,6 +35,8 @@ const RIGS: Record<FigureKind, Rig> = {
   fighter: fighterRig,
   bomber: bomberRig,
   transportAircraft: transportRig,
+  diveBomber: diveBomberRig,
+  torpedoBomber: torpedoBomberRig,
   battleship: battleshipRig,
   destroyer: destroyerRig,
   submarine: submarineRig,
@@ -70,6 +72,8 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   fighter: [pt(100, 118), pt(146, 76), pt(58, 160), pt(56, 58)],
   bomber: [pt(100, 104), pt(118, 172), pt(76, 52)],
   transportAircraft: [pt(100, 104), pt(118, 172), pt(76, 52)],
+  diveBomber: [pt(100, 110), pt(120, 170), pt(74, 56)],
+  torpedoBomber: [pt(100, 120), pt(122, 176), pt(76, 64)],
   // Each naval unit is one ship.
   battleship: [pt(98, 204)],
   destroyer: [pt(98, 204)],
@@ -85,7 +89,7 @@ const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
 const SHADOW: Record<FigureKind, number> = {
   infantry: 11, assaultInfantry: 26, mortar: 24, recon: 26, halftrack: 34, lightTank: 28, mediumTank: 34,
   heavyTank: 42, tankDestroyer: 34, artillery: 30, rocketArtillery: 32, mobileAA: 34, flakGun: 34,
-  fighter: 0, bomber: 0, transportAircraft: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0,
+  fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0,
   bunker: 40,
 };
 
@@ -104,23 +108,23 @@ const CHARGE_THROW_MS = 520;
 /** Where a depth charge goes into the water: spread in a pattern around the submarine, not all on it. */
 const chargeX = (shot: Pick<Shot, "fireAt"> & { readonly target: Pt }): number => Math.round(shot.target.x + (hash(shot.fireAt, 11) - 0.5) * 40);
 
-type Missile = "bullet" | "shell" | "rocket" | "lob" | "rocketLob" | "bomb" | "torpedo" | "charge" | "naval";
+type Missile = "bullet" | "shell" | "rocket" | "lob" | "rocketLob" | "bomb" | "torpedo" | "airTorpedo" | "charge" | "naval";
 const MISSILE: Record<FireKind, Missile> = {
   rifle: "bullet", mg: "bullet", aaGuns: "bullet", planeGuns: "bullet", bazooka: "rocket", tankGun: "shell",
   flak: "shell", deckGun: "naval", navalGuns: "naval", mortar: "lob", howitzer: "lob", rockets: "rocketLob",
-  bombs: "bomb", depthCharges: "charge", torpedo: "torpedo",
+  bombs: "bomb", diveBomb: "bomb", aerialTorpedo: "airTorpedo", depthCharges: "charge", torpedo: "torpedo",
 };
 type Blast = "small" | "medium" | "large";
 const BLAST: Record<FireKind, Blast> = {
   rifle: "small", mg: "small", aaGuns: "small", planeGuns: "small", bazooka: "medium", tankGun: "medium",
   flak: "medium", deckGun: "medium", mortar: "medium", howitzer: "large", rockets: "large", bombs: "large",
-  navalGuns: "large", depthCharges: "large", torpedo: "large",
+  diveBomb: "large", aerialTorpedo: "large", navalGuns: "large", depthCharges: "large", torpedo: "large",
 };
 const BLAST_MS: Record<Blast, number> = { small: 260, medium: 650, large: 950 };
 /** Muzzle flash size in pixels; 0 for weapons that don't flash. */
 const FLASH: Record<FireKind, number> = {
   rifle: 3, mg: 3, aaGuns: 3, planeGuns: 3, bazooka: 5, tankGun: 8, flak: 8, deckGun: 6, mortar: 5,
-  howitzer: 11, rockets: 5, bombs: 0, navalGuns: 13, depthCharges: 3, torpedo: 0,
+  howitzer: 11, rockets: 5, bombs: 0, diveBomb: 0, aerialTorpedo: 0, navalGuns: 13, depthCharges: 3, torpedo: 0,
 };
 /** Weapons whose blast kicks up dust along the ground in front of them. */
 const GROUND_BLAST = new Set<FireKind>(["tankGun", "howitzer", "flak"]);
@@ -643,7 +647,7 @@ export class BattleRenderer {
     if (age < 0 || age > BLAST_MS[BLAST[shot.fire]]) return;
     const surface = shot.atAir
       ? "air"
-      : shot.targetBody === "ship" || shot.fire === "torpedo" || shot.fire === "depthCharges"
+      : shot.targetBody === "ship" || shot.fire === "torpedo" || shot.fire === "aerialTorpedo" || shot.fire === "depthCharges"
         ? "water"
         : shot.targetBody === "machine"
           ? "metal"
@@ -661,7 +665,7 @@ export class BattleRenderer {
    */
   private missileAt(shot: PlannedShot, u: number, kind: Missile): { at: Pt; dir: Pt; fade?: number } | null {
     const m = shot.muzzle;
-    const target = kind === "torpedo" ? { x: shot.target.x, y: shot.targetBase.y + 2 } : shot.target;
+    const target = kind === "torpedo" || kind === "airTorpedo" ? { x: shot.target.x, y: shot.targetBase.y + 2 } : shot.target;
     const side = target.x > m.x ? 1 : -1;
     if (kind === "bomb") {
       if (u < 0.42) {
@@ -671,6 +675,17 @@ export class BattleRenderer {
       if (u < 0.58) return null;
       const k = (u - 0.58) / 0.42;
       return { at: { x: lerp(target.x - side * 30, target.x, k), y: lerp(SCENE.top - 12, target.y, k * k) }, dir: { x: 0.3 * side, y: 1 } };
+    }
+    if (kind === "airTorpedo") {
+      // Dropped low over the water: it falls out of the bottom of the shooter's half, then runs in
+      // just under the surface from the edge of the target's half.
+      if (u < 0.3) {
+        const k = u / 0.3;
+        return { at: { x: m.x + side * 20 * k, y: lerp(m.y, SCENE.bottom + 10, k * k) }, dir: { x: side, y: 1 } };
+      }
+      if (u < 0.4) return null;
+      const k = (u - 0.4) / 0.6;
+      return { at: { x: lerp(SCENE.half + side * 4, target.x, k), y: target.y }, dir: { x: side, y: 0 } };
     }
     if (shot.upward) {
       // Out along the barrel until it leaves the shooter's half, then up from under the target.
@@ -791,7 +806,12 @@ export class BattleRenderer {
     } else if (kind === "bomb") {
       p.ellipse(at.x, at.y, 2, 4, C("battleSteelDark"));
       p.rect(at.x - 2, at.y - 6, 4, 1, C("battleSteelDark"));
-    } else if (kind === "torpedo") {
+    } else if (kind === "airTorpedo" && dir.y > 0) {
+      // Falling from the aircraft, still level: a long dark body with a fin at the back.
+      p.rect(at.x - 5, at.y - 1, 10, 2, C("battleSteelDark"));
+      p.rect(dir.x > 0 ? at.x - 6 : at.x + 5, at.y - 2, 1, 4, C("battleSteelDark"));
+      p.rect(at.x - 5, at.y - 1, 10, 1, C("battleSteel"));
+    } else if (kind === "torpedo" || kind === "airTorpedo") {
       // A dark shape just under the surface and a line of bubbles behind it.
       p.rect(at.x - 4, at.y, 8, 2, C("battleSeaDeep"));
       const side = dir.x > 0 ? 1 : -1;

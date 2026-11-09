@@ -26,10 +26,12 @@ export const UNIT_GUIDE: Readonly<Record<UnitTypeId, UnitGuide>> = {
   fighter: { role: "Hunts aircraft", strongVs: ["bomber", "transportAircraft"], weakVs: ["mobileAA", "flakGun"] },
   bomber: { role: "Heavy strikes on land and sea", strongVs: ["mediumTank", "heavyTank", "battleship"], weakVs: ["fighter", "flakGun"] },
   transportAircraft: { role: "Unarmed. Flies foot units in", strongVs: [], weakVs: ["fighter", "flakGun"] },
+  diveBomber: { role: "Light strikes on land and sea. Flies from Carriers. 2 bombs", strongVs: ["infantry", "artillery", "rocketArtillery"], weakVs: ["fighter", "flakGun"] },
+  torpedoBomber: { role: "Sinks ships. Flies from Carriers. 1 torpedo", strongVs: ["battleship", "carrier", "destroyer"], weakVs: ["fighter", "flakGun"] },
   battleship: { role: "Long-range naval guns", strongVs: ["infantry", "destroyer"], weakVs: ["submarine", "bomber"] },
   destroyer: { role: "Escort. Hunts submarines", strongVs: ["submarine", "torpedoBoat"], weakVs: ["battleship", "bomber"] },
   submarine: { role: "Ambushes ships", strongVs: ["battleship", "landingCraft"], weakVs: ["destroyer", "bomber"] },
   landingCraft: { role: "Unarmed. Carries land units to the beach", strongVs: [], weakVs: ["submarine", "torpedoBoat", "bomber"] },
   torpedoBoat: { role: "Cheap ship killer", strongVs: ["landingCraft"], weakVs: ["destroyer", "bomber"] },
-  carrier: { role: "Unarmed. Carries 2 aircraft, which take off and strike the same turn", strongVs: [], weakVs: ["submarine", "bomber"] },
+  carrier: { role: "Unarmed. Carries 2 Fighters, Dive or Torpedo Bombers, which take off and strike the same turn", strongVs: [], weakVs: ["submarine", "torpedoBomber"] },
 };
