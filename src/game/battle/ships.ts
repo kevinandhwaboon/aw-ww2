@@ -2,7 +2,7 @@
 // viewer like the land machines (angled/shipModels.ts). Waves run along the hull from bow to stern,
 // with a bow wave in front and a wake behind, so the ship always looks under way.
 
-import { BATTLE_VIEW, drawMesh, screenPoint, type V3 } from "./angled/mesh";
+import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type V3 } from "./angled/mesh";
 import {
   beamAt, daihatsu, fletcher, gato, gyoraitei, iBoat, iowa, kagero, lct, ptBoat, sBoot, typeVII, waterline, yamato, zerstorer,
   type Launch, type Salvo, type ShipModel,
@@ -144,6 +144,8 @@ function shipRig(opts: {
   /** Ships run aground or under the sea sit still; the rest bob on the swell. */
   still?(look: Look): boolean;
   muzzle(pose: Pose, shot: number, look: Look, m: ShipModel): V3;
+  /** A point further along the barrel that fires, so the shot leaves the way the barrel points. */
+  aim?(pose: Pose, shot: number, look: Look, m: ShipModel): V3 | undefined;
 }): Rig {
   const oyOf = (pose: Pose, look: Look, m: ShipModel) => m.lift + (opts.still?.(look) ? 0 : bob(pose)) + Math.round(opts.roll?.(pose) ?? 0);
   return {
@@ -165,8 +167,10 @@ function shipRig(opts: {
     },
     muzzle(pose, shot, look): Muzzle {
       const m = opts.rest(look);
-      const at = screenPoint(opts.muzzle(pose, shot, look, m), V, 0, oyOf(pose, look, m));
-      return { x: at.x, y: at.y };
+      const from = opts.muzzle(pose, shot, look, m);
+      const at = screenPoint(from, V, 0, oyOf(pose, look, m));
+      const aim = opts.aim?.(pose, shot, look, m);
+      return aim ? { x: at.x, y: at.y, angle: screenAngle(from, aim, V) } : { x: at.x, y: at.y };
     },
   };
 }
@@ -199,6 +203,7 @@ export const battleshipRig: Rig = shipRig({
     return Math.max(...FIRE_TIMING.navalGuns.shots.map((s) => kick(ct, s, 60, 300)));
   },
   muzzle: (_pose, shot, _look, m) => m.at[`gun${Math.min(shot, 2)}`] ?? [80, 0, 18],
+  aim: (_pose, shot, _look, m) => m.at[`aim${Math.min(shot, 2)}`],
 });
 
 // ---- Destroyer: the forward guns fire in turn; depth charges roll off the stern ----
