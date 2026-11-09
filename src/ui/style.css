@@ -587,6 +587,15 @@ body.pad-layout {
   touch-action: none;
 }
 
+.pad-problem {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 6px;
+  color: var(--pad-ink);
+  font-size: 11px;
+}
+
 .pad-btn {
   display: flex;
   flex-direction: column;

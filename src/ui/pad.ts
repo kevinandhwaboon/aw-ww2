@@ -41,12 +41,27 @@ const ACTIONS: readonly PadKey[] = [
 export function mountPad(root: HTMLElement, input: PadInput): void {
   document.body.classList.add("pad-layout");
   const pad = el("div", "pad");
+  // If a press ever fails, the reason shows on the pad instead of the button silently doing nothing.
+  const problem = el("div", "pad-problem");
+  problem.hidden = true;
+  const safely = (action: () => void) => {
+    try {
+      action();
+    } catch (error) {
+      problem.textContent = `Button error: ${error instanceof Error ? error.message : String(error)}`;
+      problem.hidden = false;
+    }
+  };
+  const guarded: PadInput = {
+    press: (key, repeat) => safely(() => input.press(key, repeat)),
+    release: (key) => safely(() => input.release(key)),
+  };
   const dpad = el("div", "pad-dpad");
-  for (const k of DIRECTIONS) dpad.append(padButton(k, input));
+  for (const k of DIRECTIONS) dpad.append(padButton(k, guarded));
   dpad.append(el("div", "pad-hub"));
   const actions = el("div", "pad-actions");
-  for (const k of ACTIONS) actions.append(padButton(k, input));
-  pad.append(dpad, actions);
+  for (const k of ACTIONS) actions.append(padButton(k, guarded));
+  pad.append(problem, dpad, actions);
   root.append(pad);
 }
 
@@ -62,8 +77,8 @@ function padButton(spec: PadKey, input: PadInput): HTMLElement {
     if (down) return;
     down = true;
     button.classList.add("pressed");
-    if ("vibrate" in navigator) navigator.vibrate(8); // Android only; iPhones have no web vibration
     input.press(spec.key, false);
+    buzz();
     if (!spec.repeats) return;
     const again = () => {
       input.press(spec.key, true);
@@ -92,4 +107,16 @@ function padButton(spec: PadKey, input: PadInput): HTMLElement {
   button.addEventListener("mouseleave", stop);
   button.addEventListener("contextmenu", (event) => event.preventDefault());
   return button;
+}
+
+/**
+ * A short buzz on phones that allow it (Android). iPhones don't, and some browsers throw instead of
+ * ignoring it, so it goes after the press and can never stop one.
+ */
+function buzz(): void {
+  try {
+    if ("vibrate" in navigator) navigator.vibrate(8);
+  } catch {
+    // No buzz on this phone.
+  }
 }
