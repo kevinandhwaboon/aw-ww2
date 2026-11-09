@@ -1,0 +1,245 @@
+{
+  "id": "the-slot",
+  "name": "The Slot",
+  "description": "An island campaign in the style of the Solomons, not a real battle. The US holds the south, Japan the north, with the same forces. A fast channel, the Slot, runs between the two capitals past a neutral island whose airfield covers both halves; open ocean on the flanks gives carriers room to strike from the side. Take the enemy's HQ.",
+  "map": [
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSS_______SSSSSSSSSSS",
+    "SSSSSSSSSS_.F.Q.H._SSSSSSSSSS",
+    "SSSSSSSSS_HC=====fF_SSSSSSrSS",
+    "SSSSSSSSS_.F..=..F._SSSSSSSSS",
+    "SSrSSSSSSSS_P_=_P_SSSSSrSSSSS",
+    "SSSSSSSSSSSSSSSSSSSSSSSS__SSS",
+    "SSSSSSSSSSSSSSSSSSSS_SS_.A_SS",
+    "SSSSSS_SSSSSSSSSSSS_FSSS__SSS",
+    "SSSSSSF_SSSSSSSSSSSS__SSSSSSS",
+    "SSSSSSSSSSSSSSSSSSS_.._SSSSSS",
+    "SrSSSSS___SSSSSSSS_C=FH_SSSSS",
+    "SSSSSS_..H_SSSSSSS_H=.F_SSSSS",
+    "SSSSrS_C=F_SSSSSSS_.=C_SSSSSS",
+    "SSSSSS_F=._SSSSSSSS___SSSSSSS",
+    "SSSSSSS_P_SSSSSSSSSSSSSSSSSrS",
+    "SSSSSSSSSSSSS___SSSSSSSSSSSSS",
+    "SSSSSSSSSSSS_F=._SSSSSS_SSSSS",
+    "SSSS_PSSSSS_C.A.C_SSSSSP_SSSS",
+    "SSSSS_SSSSSS_.=F_SSSSSSSSSSSS",
+    "SSSSSSSSSSSSS___SSSSSSSSSSSSS",
+    "SrSSSSSSSSSSSSSSSSS_P_SSSSSSS",
+    "SSSSSSS___SSSSSSSS_.=F_SSSSSS",
+    "SSSSSS_C=._SSSSSSS_F=C_SrSSSS",
+    "SSSSS_F.=H_SSSSSSS_H.._SSSSSS",
+    "SSSSS_HF=C_SSSSSSSS___SSSSSrS",
+    "SSSSSS_.._SSSSSSSSSSSSSSSSSSS",
+    "SSSSSSS__SSSSSSSSSSSS_FSSSSSS",
+    "SSS__SSSF_SSSSSSSSSSSS_SSSSSS",
+    "SS_A._SS_SSSSSSSSSSSSSSSSSSSS",
+    "SSS__SSSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSrSSSSS_P_=_P_SSSSSSSSrSS",
+    "SSSSSSSSS_.F..=..F._SSSSSSSSS",
+    "SSrSSSSSS_Ff=====CH_SSSSSSSSS",
+    "SSSSSSSSSS_.H.Q.F._SSSSSSSSSS",
+    "SSSSSSSSSSS_______SSSSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  ],
+  "players": [
+    {
+      "name": "US",
+      "nation": "us",
+      "funds": 5000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun",
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber",
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
+    },
+    {
+      "name": "Japan",
+      "nation": "japan",
+      "funds": 5000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun",
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber",
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ],
+      "facing": "left"
+    }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 14, "y": 34 }, "owner": 0 },
+    { "pos": { "x": 14, "y": 2 }, "owner": 1 },
+    { "pos": { "x": 11, "y": 33 }, "owner": 0 },
+    { "pos": { "x": 17, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 12, "y": 31 }, "owner": 0 },
+    { "pos": { "x": 16, "y": 5 }, "owner": 1 },
+    { "pos": { "x": 16, "y": 31 }, "owner": 0 },
+    { "pos": { "x": 12, "y": 5 }, "owner": 1 },
+    { "pos": { "x": 17, "y": 33 }, "owner": 0 },
+    { "pos": { "x": 11, "y": 3 }, "owner": 1 },
+    { "pos": { "x": 7, "y": 23 }, "owner": 0 },
+    { "pos": { "x": 21, "y": 13 }, "owner": 1 },
+    { "pos": { "x": 9, "y": 25 }, "owner": 0 },
+    { "pos": { "x": 19, "y": 11 }, "owner": 1 },
+    { "pos": { "x": 20, "y": 21 }, "owner": 0 },
+    { "pos": { "x": 8, "y": 15 }, "owner": 1 },
+    { "pos": { "x": 21, "y": 23 }, "owner": 0 },
+    { "pos": { "x": 7, "y": 13 }, "owner": 1 },
+    { "pos": { "x": 3, "y": 29 }, "owner": 0 },
+    { "pos": { "x": 25, "y": 7 }, "owner": 1 }
+  ],
+  "units": [
+    { "type": "infantry", "owner": 0, "pos": { "x": 13, "y": 32 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 15, "y": 32 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 13, "y": 34 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 15, "y": 34 } },
+    { "type": "mobileAA", "owner": 0, "pos": { "x": 10, "y": 32 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 8, "y": 24 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 7, "y": 24 } },
+    { "type": "flakGun", "owner": 0, "pos": { "x": 7, "y": 26 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 19, "y": 22 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 20, "y": 23 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 4, "y": 29 } },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 2, "y": 26 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "diveBomber" }
+      ]
+    },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 3, "y": 24 } },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 25, "y": 28 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "torpedoBomber" }
+      ]
+    },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 24, "y": 27 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 12, "y": 29 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 16, "y": 29 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 11, "y": 27 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 17, "y": 27 } },
+    { "type": "torpedoBoat", "owner": 0, "pos": { "x": 13, "y": 27 } },
+    { "type": "torpedoBoat", "owner": 0, "pos": { "x": 15, "y": 27 } },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 12, "y": 30 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 16, "y": 30 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    },
+    { "type": "infantry", "owner": 1, "pos": { "x": 15, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 13, "y": 4 } },
+    { "type": "mediumTank", "owner": 1, "pos": { "x": 15, "y": 2 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 13, "y": 2 } },
+    { "type": "mobileAA", "owner": 1, "pos": { "x": 18, "y": 4 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 20, "y": 12 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 21, "y": 12 } },
+    { "type": "flakGun", "owner": 1, "pos": { "x": 21, "y": 10 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 9, "y": 14 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 8, "y": 13 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 24, "y": 7 } },
+    {
+      "type": "carrier",
+      "owner": 1,
+      "pos": { "x": 26, "y": 10 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "diveBomber" }
+      ]
+    },
+    { "type": "destroyer", "owner": 1, "pos": { "x": 25, "y": 12 } },
+    {
+      "type": "carrier",
+      "owner": 1,
+      "pos": { "x": 3, "y": 8 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "torpedoBomber" }
+      ]
+    },
+    { "type": "destroyer", "owner": 1, "pos": { "x": 4, "y": 9 } },
+    { "type": "battleship", "owner": 1, "pos": { "x": 16, "y": 7 } },
+    { "type": "battleship", "owner": 1, "pos": { "x": 12, "y": 7 } },
+    { "type": "destroyer", "owner": 1, "pos": { "x": 17, "y": 9 } },
+    { "type": "destroyer", "owner": 1, "pos": { "x": 11, "y": 9 } },
+    { "type": "torpedoBoat", "owner": 1, "pos": { "x": 15, "y": 9 } },
+    { "type": "torpedoBoat", "owner": 1, "pos": { "x": 13, "y": 9 } },
+    {
+      "type": "landingCraft",
+      "owner": 1,
+      "pos": { "x": 16, "y": 6 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 1,
+      "pos": { "x": 12, "y": 6 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    }
+  ],
+  "victory": [
+    { "type": "hqCapture" },
+    { "type": "rout" }
+  ]
+}

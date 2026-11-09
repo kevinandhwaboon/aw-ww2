@@ -115,7 +115,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
-  it.each(["twin-bridges", "contested-skies", "narrow-sea"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
+  it.each(["twin-bridges", "contested-skies", "narrow-sea", "the-slot"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
     if (!scenario) throw new Error("missing scenario");
     const { map, units, propertyOwners } = scenario.setup;
@@ -323,6 +323,92 @@ describe("built-in scenarios (00-master-design §8)", () => {
       if (!tank || !hq) throw new Error("missing tank or HQ");
       expect(connected(map, "tracks", tank.pos, hq.pos)).toBe(true);
       expect(hq.pos.y).toBeLessThan(map.height / 3);
+    });
+  });
+
+  describe("The Slot (14-scenarios-pacific §2)", () => {
+    const slot = SCENARIOS.find((s) => s.id === "the-slot");
+    if (!slot) throw new Error("missing scenario");
+    const { map, units, players, propertyOwners } = slot.setup;
+    const centre = P((map.width - 1) / 2, (map.height - 1) / 2);
+    const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const neutral = (terrain: string) =>
+      map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []))
+        .filter((p) => !(propertyOwners ?? []).some((o) => o.pos.x === p.x && o.pos.y === p.y));
+
+    it("the US holds the south and Japan the north, with the same build lists", () => {
+      expect(players.map((p) => p.nation)).toEqual(["us", "japan"]);
+      const [us, japan] = [0, 1].map((owner) => properties(slot, "hq", owner)[0]?.pos.y ?? 0);
+      expect(us).toBeGreaterThan(map.height * 0.8);
+      expect(japan).toBeLessThan(map.height * 0.2);
+      expect(players[0]?.buildable).toEqual(players[1]?.buildable);
+      expect(players[1]?.buildable).not.toContain("heavyTank");
+    });
+
+    it("each side has an HQ island with two Ports, a secondary city, a forward port and an airstrip", () => {
+      for (const owner of [0, 1]) {
+        expect(properties(slot, "port", owner), `player ${owner} ports`).toHaveLength(3);
+        expect(properties(slot, "airfield", owner), `player ${owner} airfields`).toHaveLength(1);
+        expect(properties(slot, "city", owner), `player ${owner} cities`).toHaveLength(4);
+      }
+    });
+
+    it("the neutral centre island has an airfield on the centre square, and two neutral anchorages lie the same distance from both HQs", () => {
+      expect(neutral("airfield")).toEqual([centre]);
+      const anchorages = neutral("port");
+      expect(anchorages).toHaveLength(2);
+      const hqs = [0, 1].map((owner) => properties(slot, "hq", owner)[0]?.pos ?? centre);
+      for (const a of anchorages) expect(dist(a, hqs[0] ?? centre)).toBe(dist(a, hqs[1] ?? centre));
+    });
+
+    it("the Slot, between the island chains, has no reefs, and ships can sail it from the US ports to Japan's without leaving it", () => {
+      const inSlot = (p: Point) => p.x >= 6 && p.x <= map.width - 7;
+      const tiles = map.terrain.map((t, i) => ({ t, p: P(i % map.width, Math.floor(i / map.width)) })).filter(({ p }) => inSlot(p));
+      expect(tiles.filter(({ t }) => t === "reef")).toEqual([]);
+      const [usPort] = properties(slot, "port", 0);
+      const [jpPort] = properties(slot, "port", 1);
+      if (!usPort || !jpPort) throw new Error("missing ports");
+      const seen = new Set([`${usPort.pos.x},${usPort.pos.y}`]);
+      const queue = [usPort.pos];
+      for (let p = queue.shift(); p; p = queue.shift()) {
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+          const q = P(p.x + dx, p.y + dy);
+          if (q.y < 0 || q.y >= map.height || !inSlot(q) || seen.has(`${q.x},${q.y}`)) continue;
+          if (TERRAIN[terrainAt(map, q)].moveCost.sea === null) continue;
+          seen.add(`${q.x},${q.y}`);
+          queue.push(q);
+        }
+      }
+      expect(seen.has(`${jpPort.pos.x},${jpPort.pos.y}`)).toBe(true);
+    });
+
+    it("both sides start with 2 Carriers, 2 Battleships, 4 Destroyers, 2 Torpedo Boats and 2 loaded Landing Craft", () => {
+      for (const owner of [0, 1]) {
+        const count = (type: string) => (units ?? []).filter((u) => u.owner === owner && u.type === type).length;
+        expect([count("carrier"), count("battleship"), count("destroyer"), count("torpedoBoat"), count("landingCraft")]).toEqual([2, 2, 4, 2, 2]);
+        for (const lc of (units ?? []).filter((u) => u.owner === owner && u.type === "landingCraft")) {
+          expect(lc.cargo?.map((c) => c.type)).toEqual(["infantry", "infantry"]);
+        }
+      }
+    });
+
+    it("the Carriers start out on the open-ocean flanks, each with a Fighter and a strike aircraft aboard (05-supply-transport §10)", () => {
+      for (const c of (units ?? []).filter((u) => u.type === "carrier")) {
+        expect(c.pos.x < 6 || c.pos.x > map.width - 7, `carrier at ${c.pos.x},${c.pos.y}`).toBe(true);
+        expect(c.cargo?.[0]?.type).toBe("fighter");
+        expect(["diveBomber", "torpedoBomber"]).toContain(c.cargo?.[1]?.type);
+      }
+    });
+
+    it("nothing can strike an enemy on the first day, so moving first is no ambush", () => {
+      const all = (units ?? []).flatMap((u) => [{ ...u, type: u.type }, ...(u.cargo ?? []).map((c) => ({ ...c, owner: u.owner, pos: u.pos }))]);
+      for (const a of all) {
+        const range = UNITS[a.type].range;
+        if (!range) continue;
+        for (const b of all.filter((u) => u.owner !== a.owner)) {
+          expect(dist(a.pos, b.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs ${b.type} at ${b.pos.x},${b.pos.y}`).toBeGreaterThan(UNITS[a.type].movePoints + range.max);
+        }
+      }
     });
   });
 

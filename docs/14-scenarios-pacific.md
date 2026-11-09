@@ -1,7 +1,7 @@
 # Topic Doc 14: Pacific Scenarios
 
-**Status:** first Pacific map built (v0). Balance untested.
-**Last updated:** 2026-11-08
+**Status:** two Pacific maps built (v0): Iwo Jima and The Slot. Balance untested.
+**Last updated:** 2026-11-09
 **Depends on:** 00-master-design.md §6 and §8, 01-units.md, 04-economy-production.md §8 (victory conditions), 05-supply-transport.md (landings), 08-art-pipeline.md (Japanese art).
 
 ---
@@ -68,7 +68,61 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 - `tools/maps/iwo-jima.mjs` builds the scenario file from the island polygon and lists of features, properties and units. Rerun it after editing; `tools/maps/overview.mjs iwo-jima` redraws the picture above.
 - Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-15 rule, Suribachi's place and hills, the first wave on the beaches with the fleet offshore, the Japanese in bunkers, Japan's build list, the two Carriers with their Dive Bombers and no US airfield, that the Dive Bombers can reach a bunker on day 1 while no Japanese gun reaches the Carriers, and that US tanks can drive from the beaches to Japan's HQ.
 
-## 2. Known gaps
+## 2. The Slot (`the-slot`)
+
+![Overview](maps/the-slot.png)
+
+Same key as above: army green properties are US, red Japanese, grey neutral.
+
+### What it is
+
+An island campaign in the style of the Solomons, **not a historical map**. The US holds the south, Japan the north, with the same islands and the same forces: the north is the south turned 180° about the centre square, so neither side has a better position. Only moving first differs, and no unit starts within reach of an enemy, so the first player can't open with a strike.
+
+### Area
+
+- **29 × 37 squares**, north up. The odd size gives the map a centre square for the central airfield.
+- **The Slot**: a channel of open sea down the middle, between two chains of islands, from one side's HQ island to the other's. No reefs, so ships move at full speed, but it runs right past the central airfield, so it's exposed to air attack. It splits into two passages round the central island.
+- **The flanks**: open ocean east and west of the chains, with scattered Reefs (ships pay 2 to cross one). Room for carriers to work round the side and strike from out of the Slot's line.
+
+### Places (each side; the other side's are the same turned round)
+
+| Place | Where (US) | Properties |
+|---|---|---|
+| HQ island | The south end, across the Slot's mouth | HQ, Factory, City, and two Ports facing up the Slot (the major port) |
+| Secondary city | The western chain | Two Cities |
+| Forward port | The eastern chain | Port, City |
+| Airstrip outpost | An islet in the south-west ocean | Airfield, the side's only one at the start |
+
+- Each side's secondary city faces the enemy's forward port across the map: the US city and Japan's forward port are both on the western chain, Japan's city and the US forward port both on the eastern.
+- **The neutral centre**: the central island in the middle of the Slot, with an **Airfield** on the centre square and two Cities; from there aircraft reach both halves. Two **anchorages**, neutral Ports on islets out on the west and east flanks level with the centre, each the same distance from both HQs. Taken by Infantry put ashore, they refuel and repair ships far from home (04-economy §5).
+- **Income:** each side starts with 10 properties; 5 are neutral.
+
+### Starting forces (each side)
+
+- **Fleet:** two Carriers, one out on each flank ocean, each with a Destroyer escort and a Fighter aboard, plus a Dive Bomber on one and a Torpedo Bomber on the other. At the mouth of the Slot: two Battleships, two Destroyers and two Torpedo Boats. Two Landing Craft off the ports, each with two Infantry aboard.
+- **Garrisons:** the HQ island has two Infantry, a Medium Tank, an Artillery and a Mobile AA; the secondary city two Infantry and a Flak Gun; the forward port an Infantry and an Artillery; the airstrip an Infantry.
+- **Cruisers:** the concept called for four cruisers and some destroyers. The game has no Cruiser: our Destroyer already plays the original's Cruiser role (anti-air, hunts submarines), so the four cruisers are four Destroyers, and the destroyers' torpedo work is done by two Torpedo Boats.
+- **Funds:** 5,000 each.
+
+### Build lists
+
+- The same for both: every unit except the Heavy Tank, which Japan never fielded (01-units §1).
+
+### Victory
+
+- Capture the enemy's HQ, or rout them (the standard conditions). Resign is always available.
+
+### How it's made
+
+- `tools/maps/the-slot.mjs` builds the scenario file. Every island, property and unit is written once, for the south and the centre, and stamped again turned round for the north, so the map can't drift out of symmetry. Rerun it after editing; `tools/maps/overview.mjs the-slot` redraws the picture.
+- Tests (`tests/scenario.test.ts`, "The Slot"): the map, units and owners rotate onto each other exactly; the US is in the south and Japan in the north with the same build lists; each side has its HQ island ports, city, forward port and airstrip; the neutral airfield is on the centre square and the anchorages are the same distance from both HQs; the Slot has no reefs and ships can sail it from port to port; the starting fleets match; the Carriers start on the flanks with their aircraft; and nothing can strike an enemy on day 1.
+
+### Known gaps
+
+- Balance is a first guess, especially the size of the starting fleets against 5,000 funds and the value of the central airfield.
+- The Greedy AI never uses Landing Craft (09-ai, D9), so against the computer the islands only change hands where its Infantry can walk. The map plays best hot-seat for now.
+
+## 3. Known gaps (Iwo Jima)
 
 - Carrier numbers are a first guess, to tune after playtests. Japan has no way to reach Carriers out of artillery range, as historically.
 - Balance is a first guess: whether 14 days is enough for the US, and whether Japan's income is too high for a garrison that was cut off.
