@@ -328,9 +328,9 @@ describe("soldiers falling in battle scenes (08-art-pipeline §18)", () => {
   });
 });
 
-describe("polish prototype (08-art-pipeline §18 Polish)", () => {
+describe("polish (08-art-pipeline §18 Polish)", () => {
   const shadeTint = "#1c2048";
-  const lightTint = "#eef0e6";
+  const lightTint = "#fff0c8";
   const red = "#a04838";
   const lum = (c: string) => {
     const n = parseInt(c.slice(1), 16);
@@ -350,6 +350,20 @@ describe("polish prototype (08-art-pipeline §18 Polish)", () => {
     const [r, b] = [(n >> 16) & 255, n & 255];
     // The base red has far more red than blue; its shadow has moved toward blue.
     expect(b / r).toBeGreaterThan(0x38 / 0xa0);
+  });
+
+  it("a fully lit red face stays red rather than washing out to pink (saturation kept)", () => {
+    const sat = (c: string) => {
+      const n = parseInt(c.slice(1), 16);
+      const v = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => x / 255);
+      const max = Math.max(...v);
+      const min = Math.min(...v);
+      const l = (max + min) / 2;
+      return max === min ? 0 : (max - min) / (l > 0.5 ? 2 - max - min : max + min);
+    };
+    const lit = rampShade(red, 1, shadeTint, lightTint);
+    expect(lum(lit)).toBeGreaterThan(lum(red));
+    expect(sat(lit)).toBeGreaterThanOrEqual(sat(red) - 0.02);
   });
 
   it("a face lit halfway keeps the color as it is", () => {

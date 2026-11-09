@@ -15,7 +15,7 @@ import { commander } from "../vehicles";
 import { tankCommander } from "../crew";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "../vehicles";
 import { drawGroundShadow, drawMesh, screenPoint, BATTLE_VIEW, type View } from "./mesh";
-import { chiHa, panzerIV, sherman, stug, tiger, type Model } from "./models";
+import { chiHa, churchill, haGo, hoNi, m10, panzerII, panzerIV, sherman, stuart, stug, tiger, type Model } from "./models";
 import { mix } from "../colors";
 
 const US = { team: teamShades(0, "us"), nation: "us", paratrooper: false, suit: 0, submerged: false, dugIn: false, beached: false } as const satisfies Look;
@@ -174,15 +174,8 @@ function closeUp(finish: Finish = "now"): HTMLCanvasElement {
 
 const JP = { ...US, team: teamShades(1, "japan"), nation: "japan" } as const satisfies Look;
 
-/** Polish sample: five tanks, as they are now on the left and polished on the right. */
-function polishPairs(): HTMLCanvasElement {
-  const rows: [string, Model, Look][] = [
-    ["SHERMAN", sherman(US.team), US],
-    ["PANZER IV", panzerIV(DE.team), DE],
-    ["TIGER", tiger(DE.team), DE],
-    ["STUG III", stug(DE.team), DE],
-    ["CHI-HA", chiHa(JP.team), JP],
-  ];
+/** Polish sample: tanks without polish on the left and polished on the right. */
+function polishPairs(rows: readonly [string, Model, Look][]): HTMLCanvasElement {
   const rowH = 74;
   const [c, ctx] = canvas(SCENE.width, 18 + rows.length * rowH);
   ctx.fillStyle = C("battleGrass");
@@ -190,7 +183,7 @@ function polishPairs(): HTMLCanvasElement {
   const p = new Painter(ctx);
   p.rect(0, 0, c.width, 16, C("battlePanel"));
   p.rect(SCENE.half - 1, 0, 2, c.height, C("battlePanel"));
-  text(ctx, "NOW", SCENE.half / 2, 4, 2, C("labelText"), "center");
+  text(ctx, "WITHOUT", SCENE.half / 2, 4, 2, C("labelText"), "center");
   text(ctx, "POLISH", SCENE.half + SCENE.half / 2, 4, 2, C("labelGold"), "center");
   rows.forEach(([name, model, look], i) => {
     const y = 18 + i * rowH + rowH - 12;
@@ -256,7 +249,21 @@ export function showAngledSamples(root: HTMLElement, params: URLSearchParams): v
   const samples: [string, () => HTMLCanvasElement][] = [["compare", comparison], ["battle", () => battle()], ["closeup", () => closeUp()], ["angles", angles], ["machines", machines], ["bunker", fort]];
   // The polish prototype: only on request, each picture before and after.
   const polish: [string, () => HTMLCanvasElement][] = [
-    ["polish-pairs", polishPairs],
+    ["polish-pairs", () => polishPairs([
+      ["SHERMAN", sherman(US.team), US],
+      ["PANZER IV", panzerIV(DE.team), DE],
+      ["TIGER", tiger(DE.team), DE],
+      ["STUG III", stug(DE.team), DE],
+      ["CHI-HA", chiHa(JP.team), JP],
+    ])],
+    ["polish-pairs-2", () => polishPairs([
+      ["STUART", stuart(US.team), US],
+      ["CHURCHILL", churchill(US.team), US],
+      ["M10", m10(US.team), US],
+      ["PANZER II", panzerII(DE.team), DE],
+      ["HA-GO", haGo(JP.team), JP],
+      ["HO-NI I", hoNi(JP.team), JP],
+    ])],
     ["polish-closeup-now", () => closeUp("now")],
     ["polish-closeup", () => closeUp("polish")],
     ["polish-battle-now", () => battle("now")],

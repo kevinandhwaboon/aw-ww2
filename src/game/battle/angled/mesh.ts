@@ -3,12 +3,26 @@
 // Shapes are boxes, extrusions and lofts; they're turned toward the viewer, lit, and painted back
 // to front as crisp pixel polygons.
 
-import { C, mix, shade } from "../colors";
+import { brighten, C, mix, shade } from "../colors";
 
 /** What drawing a mesh needs: crisp polygons and lines (the battle Painter provides both). */
 export interface PolyPainter {
   poly(points: readonly (readonly [number, number])[], color: string): void;
   line(x0: number, y0: number, x1: number, y1: number, color: string, width?: number): void;
+  /**
+   * Set on a painter collecting ground shadows: drawing a mesh on it paints the shadow the mesh
+   * casts, in this color, instead of the mesh.
+   */
+  readonly shadowColor?: string;
+}
+
+let polishOn = true;
+/** Polish is on unless `?polish=off` (08-art-pipeline §18 "Polish"). Drawing only. */
+export function setPolish(on: boolean): void {
+  polishOn = on;
+}
+export function polished(): boolean {
+  return polishOn;
 }
 
 export type V3 = readonly [number, number, number];
@@ -210,20 +224,20 @@ const LIGHT: V3 = (() => {
   return [l[0] / len, l[1] / len, l[2] / len];
 })();
 
-// ---- Polish (prototype, 08-art-pipeline §18 "Polish") ----
+// ---- Polish (08-art-pipeline §18 "Polish") ----
 
 /** How many shades each color gets in polish mode. */
 export const RAMP_STEPS = 5;
 
 /**
  * Polish shading: a face's color in one of five shades, picked by how much light it gets. Shadows
- * lean toward a cool shade tint and lit faces toward a warm light tint, instead of only getting
- * darker or lighter, so shading stays clean rather than muddy.
+ * lean toward a cool shade tint; lit faces get lighter without losing saturation and turn a little
+ * toward the light tint's warm hue. Shading stays clean rather than muddy or washed out.
  */
 export function rampShade(color: string, lit: number, shadeTint: string, lightTint: string): string {
   const step = Math.round(Math.max(0, Math.min(1, lit)) * (RAMP_STEPS - 1));
   const [toward, amount] = RAMP[step] ?? RAMP[0] ?? (["shade", 0] as const);
-  return mix(color, toward === "shade" ? shadeTint : lightTint, amount);
+  return toward === "shade" ? mix(color, shadeTint, amount) : brighten(color, amount, lightTint);
 }
 
 /** The five shades, darkest first: how far each moves toward the shade or the light tint. */
@@ -276,7 +290,7 @@ function polishEdges(p: PolyPainter, poly: readonly Pt2[], color: string, area: 
   const shadeTint = C("battleShadeTint");
   const lightTint = C("battleLightTint");
   // Small parts (wheels, hinges) get a softer highlight, or they turn into noise.
-  const hi = mix(color, lightTint, area > 40 ? 0.42 : 0.32);
+  const hi = brighten(color, area > 40 ? 0.42 : 0.32, lightTint);
   const lo = mix(color, shadeTint, 0.45);
   const line = (a: Pt2, b: Pt2, c: string) => p.line(Math.round(a[0]), Math.round(a[1]), Math.round(b[0]), Math.round(b[1]), c);
   for (const e of edgesOf(poly)) {
@@ -315,10 +329,14 @@ export function drawGroundShadow(p: PolyPainter, faces: readonly Face[], view: V
 /**
  * Paints faces back to front at (ox, oy). `flip` mirrors the result so a figure on the right half
  * faces left. Edges are inked a shade darker so the shapes read as pixel art, not flat polygons.
- * `polish` (a prototype, off in the game) shades in five tinted steps and adds plate-edge
+ * `polish` (on unless `?polish=off`) shades in five tinted steps and adds plate-edge
  * highlights, creases and rivets instead.
  */
-export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1, polish = false): void {
+export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1, polish = polishOn): void {
+  if (p.shadowColor !== undefined) {
+    drawGroundShadow(p, faces, view, ox, oy, p.shadowColor, flip, scale);
+    return;
+  }
   const cp = Math.cos(view.pitch);
   const sp = Math.sin(view.pitch);
   const toward: V3 = [0, -cp, sp];

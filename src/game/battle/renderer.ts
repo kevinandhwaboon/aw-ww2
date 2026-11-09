@@ -9,7 +9,8 @@ import { playerColors } from "../placeholderUnits";
 import { bomberRig, fighterRig, transportRig } from "./airNaval";
 import { battleshipRig, carrierRig, destroyerRig, landingCraftRig, submarineRig, torpedoBoatRig } from "./ships";
 import { backdropView, drawBackdrop, SCENE, type BackdropView } from "./backdrops";
-import { C, mix, Painter, teamShades } from "./paint";
+import { polished } from "./angled/mesh";
+import { C, mix, Painter, ShadowPainter, teamShades } from "./paint";
 import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
 import { clamp01, lerp, seg, type Look, type Pose, type Pt, type Rig } from "./rig";
 import { assaultRig, infantryRig, mortarRig } from "./soldiers";
@@ -176,6 +177,9 @@ export class BattleRenderer {
   private readonly figCanvas: HTMLCanvasElement;
   private readonly sil: CanvasRenderingContext2D;
   private readonly silCanvas: HTMLCanvasElement;
+  /** Polish: the machines' cast shadows for one half, gathered before they're laid on the ground. */
+  private readonly shade: ShadowPainter;
+  private readonly shadeCanvas: HTMLCanvasElement;
   private readonly text = new Map<string, HTMLCanvasElement>();
 
   constructor(
@@ -192,6 +196,9 @@ export class BattleRenderer {
     const [sc, sctx] = canvas(FIGURE_BOX.w, FIGURE_BOX.h);
     this.silCanvas = sc;
     this.sil = sctx;
+    const [hc, hctx] = canvas(SCENE.width, SCENE.height);
+    this.shadeCanvas = hc;
+    this.shade = new ShadowPainter(hctx, C("battleShadeTint"));
     this.timeline = buildTimeline(plan);
     this.halves = { left: this.halfView(plan.left), right: this.halfView(plan.right) };
     this.shots = this.timeline.shots.map((s) => this.planShot(s));
@@ -331,7 +338,8 @@ export class BattleRenderer {
     drawBackdrop(this.p, h.x0, h.data.terrain, h.view, t, h.dir);
 
     const order = Array.from({ length: h.figures }, (_, i) => i).sort((a, b) => this.slot(h, a).y - this.slot(h, b).y);
-    if (SHADOW[h.data.kind] > 0) {
+    if (SHADOW[h.data.kind] > 0 && h.rig.body === "machine" && polished()) this.castShadows(h, order, t);
+    else if (SHADOW[h.data.kind] > 0) {
       ctx.save();
       ctx.globalAlpha = 0.28;
       for (const i of order) {
@@ -346,6 +354,37 @@ export class BattleRenderer {
     for (const i of order) this.drawWreckage(h, i, t);
     this.drawShooterEffects(h, t);
     for (const shot of this.shots) if (shot.from !== h.data.half) this.drawImpact(shot, t);
+    ctx.restore();
+  }
+
+  /**
+   * Polish (08-art-pipeline §18): each machine casts its own shape on the ground, in the shade tint
+   * at half strength, gathered on one layer first so overlapping shadows don't darken twice. A
+   * wreck keeps its shadow.
+   */
+  private castShadows(h: HalfView, order: readonly number[], t: number): void {
+    const s = this.shade.ctx;
+    s.clearRect(0, 0, SCENE.width, SCENE.height);
+    for (const i of order) {
+      const at = this.slot(h, i);
+      const died = h.deaths.get(i);
+      const pose = this.pose(h, i, t);
+      s.save();
+      s.translate(at.x, at.y);
+      s.scale(h.dir, 1);
+      h.rig.draw(this.shade, died === undefined || t < died ? pose : { ...pose, fire: null, ct: null, down: t - died }, h.look);
+      s.restore();
+    }
+    // Whatever was drawn (sprites included, should a rig paint one directly) becomes plain shadow.
+    s.save();
+    s.globalCompositeOperation = "source-in";
+    s.fillStyle = this.shade.shadowColor;
+    s.fillRect(0, 0, SCENE.width, SCENE.height);
+    s.restore();
+    const { ctx } = this.p;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(this.shadeCanvas, 0, 0);
     ctx.restore();
   }
 
