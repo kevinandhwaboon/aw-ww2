@@ -10,6 +10,7 @@ import iwoJima from "./iwo-jima.json";
 import narrowSea from "./narrow-sea.json";
 import normandy from "./normandy.json";
 import provingGround from "./proving-ground.json";
+import theSlot from "./the-slot.json";
 import twinBridges from "./twin-bridges.json";
 
-export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, crossroads, contestedSkies, narrowSea, beachhead, normandy, bastogne, iwoJima, provingGround].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [twinBridges, bocageCountry, crossroads, contestedSkies, narrowSea, beachhead, normandy, bastogne, iwoJima, theSlot, provingGround].map(parseScenario);
