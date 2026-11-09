@@ -3,12 +3,26 @@
 // Shapes are boxes, extrusions and lofts; they're turned toward the viewer, lit, and painted back
 // to front as crisp pixel polygons.
 
-import { mix, shade } from "../colors";
+import { brighten, C, mix, shade } from "../colors";
 
 /** What drawing a mesh needs: crisp polygons and lines (the battle Painter provides both). */
 export interface PolyPainter {
   poly(points: readonly (readonly [number, number])[], color: string): void;
   line(x0: number, y0: number, x1: number, y1: number, color: string, width?: number): void;
+  /**
+   * Set on a painter collecting ground shadows: drawing a mesh on it paints the shadow the mesh
+   * casts, in this color, instead of the mesh.
+   */
+  readonly shadowColor?: string;
+}
+
+let polishOn = true;
+/** Polish is on unless `?polish=off` (08-art-pipeline §18 "Polish"). Drawing only. */
+export function setPolish(on: boolean): void {
+  polishOn = on;
+}
+export function polished(): boolean {
+  return polishOn;
 }
 
 export type V3 = readonly [number, number, number];
@@ -210,11 +224,119 @@ const LIGHT: V3 = (() => {
   return [l[0] / len, l[1] / len, l[2] / len];
 })();
 
+// ---- Polish (08-art-pipeline §18 "Polish") ----
+
+/** How many shades each color gets in polish mode. */
+export const RAMP_STEPS = 5;
+
+/**
+ * Polish shading: a face's color in one of five shades, picked by how much light it gets. Shadows
+ * lean toward a cool shade tint; lit faces get lighter without losing saturation and turn a little
+ * toward the light tint's warm hue. Shading stays clean rather than muddy or washed out.
+ */
+export function rampShade(color: string, lit: number, shadeTint: string, lightTint: string): string {
+  const step = Math.round(Math.max(0, Math.min(1, lit)) * (RAMP_STEPS - 1));
+  const [toward, amount] = RAMP[step] ?? RAMP[0] ?? (["shade", 0] as const);
+  return toward === "shade" ? mix(color, shadeTint, amount) : brighten(color, amount, lightTint);
+}
+
+/** The five shades, darkest first: how far each moves toward the shade or the light tint. */
+const RAMP: readonly (readonly ["shade" | "light", number])[] = [["shade", 0.5], ["shade", 0.25], ["light", 0], ["light", 0.2], ["light", 0.4]];
+
+/** Toward the light on screen (up and a little left): edges facing it catch a highlight. */
+const LIGHT_2D = (() => {
+  const v = [-0.4, -1];
+  const len = Math.hypot(v[0] ?? 0, v[1] ?? 0);
+  return [(v[0] ?? 0) / len, (v[1] ?? 0) / len] as const;
+})();
+
+type Pt2 = readonly [number, number];
+
+/** Each edge of a screen polygon with its outward normal and a point 0.5 pixel inside, for drawing on the face's own pixels. */
+function edgesOf(poly: readonly Pt2[]): { a: Pt2; b: Pt2; nx: number; ny: number; len: number }[] {
+  const cx = poly.reduce((s, q) => s + q[0], 0) / poly.length;
+  const cy = poly.reduce((s, q) => s + q[1], 0) / poly.length;
+  const out: { a: Pt2; b: Pt2; nx: number; ny: number; len: number }[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    if (!a || !b) continue;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    if (len < 1) continue;
+    let nx = dy / len;
+    let ny = -dx / len;
+    if (((a[0] + b[0]) / 2 - cx) * nx + ((a[1] + b[1]) / 2 - cy) * ny < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+    const inset = (q: Pt2): Pt2 => [q[0] - nx * 0.6, q[1] - ny * 0.6];
+    out.push({ a: inset(a), b: inset(b), nx, ny, len });
+  }
+  return out;
+}
+
+/**
+ * Polish details for one face: a bright line on the edges that face the light (the lit lip of each
+ * plate), a dark crease along the edges that face down (the shadow under each overhang), and rivet
+ * heads along the top of each big upright plate.
+ */
+function polishEdges(p: PolyPainter, poly: readonly Pt2[], color: string, area: number, upright: boolean): void {
+  if (area < 5) return;
+  // Long thin faces (the facets of a barrel) would turn into stripes: their shade is enough.
+  const longest = Math.max(...edgesOf(poly).map((e) => e.len), 1);
+  if (area / longest < 2.6) return;
+  const shadeTint = C("battleShadeTint");
+  const lightTint = C("battleLightTint");
+  // Small parts (wheels, hinges) get a softer highlight, or they turn into noise.
+  const hi = brighten(color, area > 40 ? 0.42 : 0.32, lightTint);
+  const lo = mix(color, shadeTint, 0.45);
+  const line = (a: Pt2, b: Pt2, c: string) => p.line(Math.round(a[0]), Math.round(a[1]), Math.round(b[0]), Math.round(b[1]), c);
+  for (const e of edgesOf(poly)) {
+    const toLight = e.nx * LIGHT_2D[0] + e.ny * LIGHT_2D[1];
+    if (toLight > 0.55 && (area > 40 || e.len >= 2)) line(e.a, e.b, hi);
+    else if (e.ny > 0.6 && area > 30) line(e.a, e.b, lo);
+  }
+  // Rivets: a light head over a dark underside, every 6 pixels along the top edge, a little inside.
+  if (!upright || area < 140) return;
+  for (const e of edgesOf(poly)) {
+    if (e.ny > -0.85 || e.len < 12) continue;
+    for (let d = 4; d < e.len - 3; d += 6) {
+      const u = d / e.len;
+      const x = Math.round(e.a[0] + (e.b[0] - e.a[0]) * u - e.nx * 2.5);
+      const y = Math.round(e.a[1] + (e.b[1] - e.a[1]) * u - e.ny * 2.5);
+      p.line(x, y, x, y, hi);
+      p.line(x, y + 1, x, y + 1, lo);
+    }
+  }
+}
+
+/**
+ * The shadow a model casts on the ground in polish mode: every face flattened onto the ground and
+ * pushed forward and toward the viewer by its height, as one solid shape. The caller draws it in a
+ * single color on its own layer and lays it under the figure, so overlapping faces don't darken
+ * twice. A mirrored figure's shadow mirrors with it, as its lighting does.
+ */
+export function drawGroundShadow(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, color: string, flip = false, scale = 1): void {
+    for (const face of faces) {
+    if (face.decal) continue;
+    const pts = face.points.map((q) => project([q[0] + 0.5 * q[2], q[1] - 0.8 * q[2], 0], view));
+    p.poly(pts.map((q) => [ox + (flip ? -q.x : q.x) * scale, oy + q.y * scale] as const), color);
+  }
+}
+
 /**
  * Paints faces back to front at (ox, oy). `flip` mirrors the result so a figure on the right half
  * faces left. Edges are inked a shade darker so the shapes read as pixel art, not flat polygons.
+ * `polish` (on unless `?polish=off`) shades in five tinted steps and adds plate-edge
+ * highlights, creases and rivets instead.
  */
-export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1): void {
+export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox: number, oy: number, flip = false, scale = 1, polish = polishOn): void {
+  if (p.shadowColor !== undefined) {
+    drawGroundShadow(p, faces, view, ox, oy, p.shadowColor, flip, scale);
+    return;
+  }
   const cp = Math.cos(view.pitch);
   const sp = Math.sin(view.pitch);
   const toward: V3 = [0, -cp, sp];
@@ -231,7 +353,7 @@ export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox:
     .sort((a, b) => (a.face.decal === b.face.decal ? b.depth - a.depth : a.face.decal ? 1 : -1));
   for (const { face, n, pts } of drawn) {
     const lit = Math.max(0, n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]);
-    const color = face.decal ? face.color : shade(face.color, 0.62 + 0.5 * lit);
+    const color = face.decal ? face.color : polish ? rampShade(face.color, lit, C("battleShadeTint"), C("battleLightTint")) : shade(face.color, 0.62 + 0.5 * lit);
     const poly = pts.map((q) => [ox + (flip ? -q.x : q.x) * scale, oy + q.y * scale] as const);
     p.poly(poly, color);
     // Ink the edges of the bigger faces only; small parts would turn into noise.
@@ -241,7 +363,12 @@ export function drawMesh(p: PolyPainter, faces: readonly Face[], view: View, ox:
       const b = poly[(i + 1) % poly.length];
       if (a && b) area += a[0] * b[1] - b[0] * a[1];
     }
-    if (!face.decal && Math.abs(area) / 2 > 40) {
+    area = Math.abs(area) / 2;
+    if (polish) {
+      if (!face.decal) polishEdges(p, poly, color, area, Math.abs(n[2]) < 0.5);
+      continue;
+    }
+    if (!face.decal && area > 40) {
       const edge = shade(color, 0.8);
       for (let i = 0; i < poly.length; i++) {
         const a = poly[i];

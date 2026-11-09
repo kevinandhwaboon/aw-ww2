@@ -4,6 +4,7 @@ import { SCENARIOS } from "./scenarios";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showTitleScreen, type GameOptions } from "./ui/screens";
 import { greedyAi } from "./ai/greedy";
+import { setPolish } from "./game/battle/angled/mesh";
 import "./ui/style.css";
 
 // URL options for testing (11-tech-setup §7):
@@ -13,12 +14,14 @@ import "./ui/style.css";
 //   ?handoff=off         skips the pass-the-device screen
 //   ?battle=off          plays attacks on the map instead of as battle scenes
 //   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
+//   ?polish=off          battle machines drawn without the polish pass (08-art-pipeline §18)
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 //   ?debug=on            shows the unit and debug panels
 //   ?ai=1                the computer plays these players (comma-separated ids; ?ai=0,1 watches AI vs AI,
 //                        ?ai=none is all human). Without it, the computer plays everyone but the first player.
 //   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
 const params = new URLSearchParams(window.location.search);
+setPolish(params.get("polish") !== "off");
 const seedParam = Number(params.get("seed") ?? NaN);
 const aiParam = params.get("ai");
 const computerParam = aiParam === null ? null : aiParam === "none" ? [] : aiParam.split(",").map(Number).filter(Number.isInteger);

@@ -7,7 +7,8 @@
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
-import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type Face, type V3 } from "./angled/mesh";
+import { BATTLE_VIEW, drawMesh, polished, screenAngle, screenPoint, type Face, type V3 } from "./angled/mesh";
+import { tankCommander } from "./crew";
 import { TANK_MODELS, type Model, type TankKind } from "./angled/models";
 import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys, type Built } from "./angled/vehicleModels";
 import { C, mix, shade, type Painter } from "./paint";
@@ -35,7 +36,7 @@ export function star(p: Painter, cx: number, cy: number): void {
  * A crewman's head in the hatch: a US tanker helmet, German headphones over a side cap, or the
  * Japanese padded tanker's helmet with its peak.
  */
-function commander(p: Painter, x: number, y: number, look: Look): void {
+export function commander(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x, y - 6, 5, 6, C("battleSkin"));
   p.px(x + 3, y - 4, C("battleInk"));
   if (kitOf(look) === "jp") {
@@ -86,9 +87,13 @@ export function tankRig(kind: TankKind): Rig {
       const rock = gun ? Math.round(kick(pose.ct, shotAt, 60, 200)) : 0;
       const model = tankModel(kind, look, recoil);
       drawMesh(p, model.faces, BATTLE_VIEW, -rock, -MODEL_LIFT);
-      for (const at of [...(model.commander ? [model.commander] : []), ...(model.crew ?? [])]) {
+      const polish = polished();
+      const crew = [...(model.commander ? [{ at: model.commander, hatch: true }] : []), ...(model.crew ?? []).map((at) => ({ at, hatch: false }))];
+      for (const { at, hatch } of crew) {
         const head = screenPoint(at, BATTLE_VIEW, -rock, -MODEL_LIFT);
-        commander(p, Math.round(head.x) - 2, Math.round(head.y), look);
+        // Polish: the commander up out of his hatch in tanker headgear (crew.ts).
+        if (polish) tankCommander(p, Math.round(head.x), Math.round(head.y), look, { hatch });
+        else commander(p, Math.round(head.x) - 2, Math.round(head.y), look);
       }
     },
     muzzle(pose, _shot, look): Muzzle {

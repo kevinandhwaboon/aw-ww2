@@ -25,6 +25,36 @@ export function mix(a: string, b: string, t: number): string {
   return `#${hex(r1 + (r2 - r1) * t)}${hex(g1 + (g2 - g1) * t)}${hex(b1 + (b2 - b1) * t)}`;
 }
 
+function toHsl(color: string): [number, number, number] {
+  const [r, g, b] = rgb(color).map((v) => v / 255) as [number, number, number];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+
+function fromHsl(h: number, s: number, l: number): string {
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return `#${hex(f(0) * 255)}${hex(f(8) * 255)}${hex(f(4) * 255)}`;
+}
+
+/**
+ * Lit, keeping the color's saturation: lightness moves `amount` of the way to white and the hue
+ * turns a few degrees toward `toward`'s hue, so a lit red stays red rather than washing out to pink.
+ */
+export function brighten(color: string, amount: number, toward: string): string {
+  const [h, s, l] = toHsl(color);
+  const [th] = toHsl(toward);
+  const turn = ((th - h + 540) % 360) - 180;
+  return fromHsl((h + Math.sign(turn) * Math.min(Math.abs(turn), 14 * amount * 2.5) + 360) % 360, s, l + (1 - l) * amount * 0.75);
+}
+
 /** The shades one side's battle figures are painted in. */
 export interface TeamShades {
   readonly hi: string;

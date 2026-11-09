@@ -85,6 +85,22 @@ export class Painter {
   }
 }
 
+/**
+ * Collects the ground shadows of whatever 3D models a rig draws (08-art-pipeline §18 "Polish"):
+ * meshes drawn on it paint their cast shadow in `shadowColor`; sprites (crews, flashes) draw nothing.
+ */
+export class ShadowPainter extends Painter {
+  constructor(ctx: CanvasRenderingContext2D, readonly shadowColor: string) {
+    super(ctx);
+  }
+  override rect(): void {}
+  override line(): void {}
+  override ellipse(): void {}
+  override barrel(x: number, y: number): { x: number; y: number } {
+    return { x, y };
+  }
+}
+
 // ---- Colors ----
 
 export { C, mix, shade, type TeamShades } from "./colors";

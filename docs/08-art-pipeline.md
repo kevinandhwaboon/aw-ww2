@@ -476,6 +476,17 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each. `&axis=japan` puts Japan in Germany's place (11-tech-setup §7).
 
+**Polish (since 2026-11-09).** A finishing pass on every 3D machine model (tanks, other land machines, the bunker, ships), at the developer's request after comparing our tanks with detailed fan pixel art. `?polish=off` turns it off.
+
+- **Five shades per color:** each face takes one of five steps by how much light it gets. Shadows lean toward a cool navy (`battleShadeTint`). Lit faces get lighter without losing saturation and turn a few degrees toward the warm hue of `battleLightTint`, so a lit red stays red instead of going pink. A face lit halfway keeps its color.
+- **Plate edges:** a bright line along every edge facing the light (the lit lip of each plate, a wheel's rim) and a dark crease along edges facing down (the shadow under an overhang). Long thin faces such as barrel facets get neither, or they'd look striped.
+- **Rivets:** a light head over a dark underside, every 6 pixels along the top of each big upright plate.
+- **Cast shadow:** the model's own shape flattened onto the ground, pushed forward and toward the viewer by its height, in the shade tint at half strength. It mirrors with the figure, as its lighting does. For machines it replaces the faint oval; soldiers keep the oval, and aircraft and ships cast none. A wreck keeps its shadow.
+- **Outline:** the team's darkest shade toward the shade tint, instead of near-black.
+- **Commanders** (`src/game/battle/crew.ts`) stand up out of a hatch ring with its lid swung open behind them: shoulders and chest in the tanker's jacket (US tan zip jacket, German black wrap jacket, Japanese khaki), one arm out over the rim, and goggles pushed up on the brow. US: the M1938 tanker helmet, a ribbed padded dome with ear flaps. Germany: the side cap under a headphone band and earpiece, with a throat microphone; no cap badge. Japan: the cork tanker's helmet with its ribs and short peak. Open-topped vehicles' crews (M10, Ho-Ni) are drawn the same way without the hatch. About 20 pixels tall, against 8 before. Only tanks and tank destroyers have them; other machines' crews are unchanged.
+
+`?battle=demo&angled=on&sample=polish` shows every tank without and with polish side by side, the close-up and the battle mock-up before and after. `?battle=demo&t=fire` and the same with `&polish=off` compare every matchup. Images: `docs/art/polish/`.
+
 **Not done yet:** separate art for UK, Canadian and Soviet units; sound; a faster speed setting; pack-supplied battle sprites.
 
 ## 19. Storming scenes: captures and bunkers
