@@ -1,17 +1,15 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
-import { attackTargets, fortTargets } from "../src/engine/combat";
+import { legalCommands } from "../src/engine/legal";
 import type { Command, GameEvent } from "../src/engine/commands";
 import { UNITS } from "../src/engine/data/units";
-import { buildOptions, buildProblem, captureProblem } from "../src/engine/economy";
+import { buildOptions, buildProblem } from "../src/engine/economy";
 import type { Point } from "../src/engine/map";
-import { canEndOn, reachableTiles, cheapestPath } from "../src/engine/movement";
 import { createGame, type UnitSetup } from "../src/engine/setup";
 import { parseAsciiMap, terrainAt } from "../src/engine/map";
 import { CAPTURE_POINTS, MAX_HP, propertyAt, type GameState } from "../src/engine/state";
 import * as stats from "../src/engine/stats";
-import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "../src/engine/transport";
 import { deepFreeze, makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -385,45 +383,6 @@ describe("repair and resupply (04-economy §5)", () => {
 });
 
 describe("random playthroughs", () => {
-  /** Every legal command for the current player: a representative sample of what the UI can send. */
-  function legalCommands(state: GameState): Command[] {
-    const commands: Command[] = [endTurn];
-    for (const unit of state.units) {
-      if (unit.owner !== state.currentPlayer || unit.hasActed) continue;
-      const reach = reachableTiles(state, unit);
-      for (const i of reach.keys()) {
-        const dest = P(i % state.map.width, Math.floor(i / state.map.width));
-        const path = cheapestPath(state, reach, dest) ?? [];
-        const moved = { ...unit, pos: dest };
-        if (!canEndOn(state, unit, dest)) {
-          const host = state.units.find((u) => u.pos.x === dest.x && u.pos.y === dest.y);
-          if (host && loadProblem(state, moved, host) === null) commands.push({ type: "move", unitId: unit.id, path, action: { type: "load" } });
-          if (host && joinProblem(moved, host) === null) commands.push({ type: "move", unitId: unit.id, path, action: { type: "join" } });
-          continue;
-        }
-        const afterMove = { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) };
-        if (supplyTargets(afterMove, moved).length > 0) commands.push({ type: "move", unitId: unit.id, path, action: { type: "supply" } });
-        for (const target of fortTargets(afterMove, moved, path.length > 0)) {
-          commands.push({ type: "move", unitId: unit.id, path, action: { type: "attackFort", target } });
-        }
-        for (const passenger of moved.cargo) {
-          for (const to of unloadTiles(afterMove, moved, passenger)) {
-            commands.push({ type: "move", unitId: unit.id, path, action: { type: "unload", passenger: passenger.id, to } });
-          }
-        }
-        commands.push(wait(unit.id, path));
-        if (captureProblem(state, moved) === null) commands.push(capture(unit.id, path));
-        for (const target of attackTargets(state, moved, path.length > 0)) commands.push(attack(unit.id, target.id, path));
-      }
-    }
-    for (const property of state.properties) {
-      for (const option of buildOptions(state, property.pos)) {
-        if (option.affordable) commands.push(build(option.type, property.pos));
-      }
-    }
-    return commands;
-  }
-
   const MAP = parseAsciiMap(["f.C.F.=.C", ".F.ob..C.", "C..HX=.F.", ".=.C..F.f"]);
   const start = (seed: number) => createGame({
     map: MAP,

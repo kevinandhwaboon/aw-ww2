@@ -25,8 +25,8 @@ export default tseslint.config(
   },
   {
     // The rules engine stays pure: no rendering, no DOM, no hidden randomness or clock
-    // (00-master-design §11, CLAUDE.md).
-    files: ["src/engine/**/*.ts"],
+    // (00-master-design §11, CLAUDE.md). AIs follow the same rules so AI games replay exactly (09-ai §3).
+    files: ["src/engine/**/*.ts", "src/ai/**/*.ts"],
     languageOptions: { globals: {} },
     rules: {
       "no-restricted-imports": [
@@ -34,13 +34,14 @@ export default tseslint.config(
         {
           patterns: [
             { group: ["phaser", "phaser/*"], message: "The engine must not depend on Phaser." },
-            { group: ["**/game/**", "**/ui/**", "**/main"], message: "The engine must not import presentation code." },
+            { group: ["**/game/**", "**/ui/**", "**/main", "**/session"], message: "The engine must not import presentation code." },
           ],
         },
       ],
       "no-restricted-properties": [
         "error",
         { object: "Math", property: "random", message: "Use the seeded RNG in GameState." },
+        { object: "performance", property: "now", message: "The engine must be deterministic; no clock access." },
       ],
       "no-restricted-globals": [
         "error",

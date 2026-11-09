@@ -2,6 +2,7 @@
 // commands to the engine and plays back what happened.
 
 import Phaser from "phaser";
+import { aiStep, type AiPlayer } from "./ai/player";
 import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
@@ -36,12 +37,17 @@ export interface SessionOptions {
   readonly battleScenes: boolean;
   /** Also shows the unit and debug panels (11-tech-setup §7). */
   readonly debug: boolean;
+  /** The AI playing each player, by player id; null for a human (09-ai §5). */
+  readonly ais: readonly (AiPlayer | null)[];
   /** Phone held upright: a handheld-style screen with an on-screen game pad under it. */
   readonly pad: boolean;
   readonly onNewGame: () => void;
 }
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, pad, onNewGame }: SessionOptions): void {
+/** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
+const AI_PAUSE_MS = 250;
+
+export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): void {
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -74,12 +80,21 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   scene.setBattlePlayer(battleScenes ? battle : null);
 
   const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
+  /** During the computer's turn the map can be looked at, but no orders given (09-ai §5). */
+  const aiTurn = () => state.result === null && ais[state.currentPlayer] != null;
+  const humans = setup.players.filter((_, id) => ais[id] == null).length;
   scene.setHandlers({
     onCursorMove: (tile) => controller.onCursorMove(tile),
     nextCursor: (from, step) => controller.nextCursor(from, step),
-    onConfirm: (tile) => controller.onConfirm(tile),
-    onCancel: () => controller.onCancel(),
-    onMenuChoice: (id) => controller.onMenuChoice(id),
+    onConfirm: (tile) => {
+      if (!aiTurn()) controller.onConfirm(tile);
+    },
+    onCancel: () => {
+      if (!aiTurn()) controller.onCancel();
+    },
+    onMenuChoice: (id) => {
+      if (!aiTurn()) controller.onMenuChoice(id);
+    },
     onPeekStart: (tile) => controller.onPeekStart(tile),
     onPeekEnd: () => controller.onPeekEnd(),
   });
@@ -122,7 +137,8 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       const earned = income ? ` +${income.amount.toLocaleString("en-US")}` : "";
       scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
-      if (passDevice) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
+      // The pass-the-device screen only matters between two people (09-ai §5).
+      if (passDevice && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
     render();
@@ -130,7 +146,40 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       controller.finish();
       results.show(state, onNewGame);
     }
+    if (aiTurn()) void runAi();
     return true;
+  }
+
+  let aiRunning = false;
+
+  /**
+   * Plays the computer's turns, one command at a time, each animated like a human's. A misbehaving
+   * AI has its turn ended for it, and the problem is logged (09-ai §3).
+   */
+  async function runAi(): Promise<void> {
+    if (aiRunning) return;
+    aiRunning = true;
+    controller.reset();
+    try {
+      let sent = 0;
+      for (let ai = ais[state.currentPlayer]; ai && !state.result; ai = ais[state.currentPlayer]) {
+        const step = await aiStep(state, ai, sent);
+        const command = step.command;
+        if (step.bug) {
+          console.error(`AI bug: ${step.bug}`);
+          debugPanel?.logNote(`AI bug: ${step.bug}`);
+        }
+        if (command.type === "move") {
+          const unit = state.units.find((u) => u.id === command.unitId);
+          if (unit) scene.setCursor(unit.pos);
+          await new Promise((resolve) => setTimeout(resolve, AI_PAUSE_MS));
+        }
+        sent = command.type === "endTurn" ? 0 : sent + 1;
+        await dispatch(command);
+      }
+    } finally {
+      aiRunning = false;
+    }
   }
 
   function undo(): void {
@@ -153,9 +202,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "BUTTON"].includes(event.target.tagName)) return;
     if (event.key === "u" || event.key === "U" || ((event.metaKey || event.ctrlKey) && event.key === "z")) {
       event.preventDefault();
-      undo();
+      if (!aiTurn()) undo();
     } else if (event.key === "e" || event.key === "E") {
-      controller.endTurn();
+      if (!aiTurn()) controller.endTurn();
     }
   });
 
@@ -188,6 +237,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   });
 
   render();
+  if (aiTurn()) void runAi();
   window.addEventListener("resize", () => {
     const next = fitWindow();
     if (next.zoom === view.zoom && next.width === view.width && next.height === view.height) return;
