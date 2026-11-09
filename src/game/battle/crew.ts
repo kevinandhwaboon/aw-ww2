@@ -1,20 +1,24 @@
-// A tank commander standing up in his hatch, for the polish prototype (08-art-pipeline §18
-// "Polish"). He comes up out of a hatch ring, its lid swung open behind him, shoulders and one arm
-// out over the rim, wearing his nation's tanker headgear with goggles pushed up:
-// US: the M1938 tanker helmet, its padded ribs and ear flaps. Germany: the side cap under
-// headphones, goggles on the cap and a throat microphone. Japan: the cork tanker's helmet with its
-// ribs and short peak. Faces right; the hatch rim's centre is at (x, y).
+// A tank commander standing up in his hatch (08-art-pipeline §18 "Polish"). He comes up out of a
+// hatch ring, its lid swung open behind him, shoulders and one arm out over the rim, wearing his
+// nation's tanker headgear with goggles pushed up: US: the M1938 tanker helmet, its padded ribs and
+// ear flaps. Germany: the side cap under headphones, goggles on the cap and a throat microphone.
+// Japan: the cork tanker's helmet with its ribs and short peak. Faces right; the hatch rim's
+// centre is at (x, y). The same crewman in a steel helmet mans guns (`headgear: "helmet"`).
 
 import { C, mix, shade, type Painter } from "./paint";
 import { kitOf, type Look } from "./rig";
+import { helmet } from "./soldiers";
 
 export interface CommanderOptions {
   /** Draw the hatch ring and its open lid: false for crew in an open-topped turret. */
   readonly hatch: boolean;
+  /** Tanker headgear with goggles (the default), or a soldier's steel helmet for gun crews. */
+  readonly headgear?: "tanker" | "helmet";
 }
 
-/** The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki. */
-function jacketOf(look: Look): string {
+/** The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki. Gun crews wear the uniform. */
+function jacketOf(look: Look, headgear: "tanker" | "helmet"): string {
+  if (headgear === "helmet") return look.team.cloth;
   const kit = kitOf(look);
   if (kit === "de") return mix(C("battleInk"), C("battleFieldGrey"), 0.3);
   if (kit === "jp") return C("battleKhaki");
@@ -26,7 +30,8 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
   const ink = C("battleInk");
   const skin = C("battleSkin");
   const skinLo = shade(skin, 0.78);
-  const jacket = jacketOf(look);
+  const headgear = opts.headgear ?? "tanker";
+  const jacket = jacketOf(look, headgear);
   const jacketHi = shade(jacket, 1.25);
   const jacketLo = shade(jacket, 0.72);
   const rim = look.team.lo;
@@ -51,8 +56,8 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
   p.rect(x + 3, y - 5, 1, 5, jacketLo);
   // The collar, and the jacket's front: the US zip, the German wrap's lapel.
   p.rect(x - 1, y - 6, 3, 1, kit === "de" ? jacketHi : jacketLo);
-  if (kit === "us") p.rect(x + 1, y - 5, 1, 4, jacketLo);
-  if (kit === "de") p.line(x - 1, y - 5, x + 2, y - 2, jacketHi);
+  if (headgear === "tanker" && kit === "us") p.rect(x + 1, y - 5, 1, 4, jacketLo);
+  if (headgear === "tanker" && kit === "de") p.line(x - 1, y - 5, x + 2, y - 2, jacketHi);
   // The near arm, out over the rim with the hand resting on it.
   p.rect(x + 3, y - 5, 3, 2, jacket);
   p.rect(x + 5, y - 4, 2, 3, jacketLo);
@@ -75,7 +80,11 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     p.px(lx, ly, C("battleLens"));
     p.px(lx + 1, ly, C("battleLightTint"));
   };
-  if (kit === "de") {
+  if (headgear === "helmet") {
+    // A soldier's steel helmet, as the infantry wear it (soldiers.ts), over a face 6 wide.
+    p.px(x + 3, y - 13, skin);
+    helmet(p, x - 2, y - 13, look);
+  } else if (kit === "de") {
     // Side cap, then the headphone band over it and an earpiece over the ear.
     const cap = mix(C("battleInk"), C("battleFieldGrey"), 0.25);
     p.rect(x - 3, y - 16, 6, 3, cap);

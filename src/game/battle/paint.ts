@@ -3,7 +3,8 @@
 
 import { packColor } from "../artPack";
 import { playerColors } from "../placeholderUnits";
-import { mix, shade, type TeamShades } from "./colors";
+import { polished } from "./angled/mesh";
+import { brighten, mix, shade, type TeamShades } from "./colors";
 import type { NationId } from "../../engine/data/nations";
 
 export class Painter {
@@ -114,6 +115,19 @@ export function teamShades(owner: number | null, nation: NationId | null): TeamS
   const drab = packColor(nation === "germany" ? "battleFieldGrey" : nation === "japan" ? "battleKhaki" : "battleOlive");
   const body = mix(fill, drab, 0.35);
   const cloth = mix(fill, drab, 0.6);
+  if (polished()) {
+    // Polish (08-art-pipeline §18): shadows lean toward the cool shade tint, the light keeps its color.
+    const cool = packColor("battleShadeTint");
+    const light = packColor("battleLightTint");
+    return {
+      hi: brighten(body, 0.36, light),
+      mid: body,
+      lo: mix(shade(body, 0.82), cool, 0.2),
+      deep: mix(shade(body, 0.6), cool, 0.3),
+      cloth,
+      clothLo: mix(shade(cloth, 0.82), cool, 0.2),
+    };
+  }
   return {
     hi: shade(body, 1.3),
     mid: body,

@@ -107,3 +107,60 @@ export const C = (key: ColorKey): string => {
   const sky = weather.snowing ? SNOWING[key] : undefined;
   return packColor(sky ?? winter ?? key);
 };
+
+/**
+ * Polish for sprite figures (08-art-pipeline §18 "Polish"): lights the figure's own edges in place.
+ * A pixel whose top is open sky and whose body continues below catches the light; one whose
+ * bottom is open shades toward `shade`. Left and right edges do the same, more gently. Lines one
+ * pixel thick (rifles, straps) are left alone, so they don't wash out. `data` is RGBA, `w` wide.
+ */
+/** Edge colors already worked out, by tints, then by color and edge: figures reuse a few dozen colors. */
+const RIM_CACHE = new Map<string, Map<number, number>>();
+
+export function rimLight(data: Uint8ClampedArray, w: number, h: number, light: string, shadeTint: string): void {
+  // 0 empty, 1 part-covered, 2 solid; one pixel of empty border round the outside.
+  const bw = w + 2;
+  const cover = new Uint8Array(bw * (h + 2));
+  let any = false;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const alpha = data[(y * w + x) * 4 + 3] ?? 0;
+      if (alpha === 0) continue;
+      cover[(y + 1) * bw + x + 1] = alpha === 255 ? 2 : 1;
+      any = true;
+    }
+  }
+  if (!any) return;
+  const tints = `${light}${shadeTint}`;
+  let cache = RIM_CACHE.get(tints);
+  if (!cache) {
+    cache = new Map<number, number>();
+    RIM_CACHE.set(tints, cache);
+  }
+  const recolor = (i: number, mode: number) => {
+    const r = data[i] ?? 0;
+    const g = data[i + 1] ?? 0;
+    const b = data[i + 2] ?? 0;
+    const key = ((r << 16) | (g << 8) | b) * 4 + mode;
+    let out = cache.get(key);
+    if (out === undefined) {
+      const color = `#${hex(r)}${hex(g)}${hex(b)}`;
+      const c = rgb(mode === 0 ? brighten(color, 0.38, light) : mode === 1 ? mix(color, shadeTint, 0.38) : mode === 2 ? brighten(color, 0.2, light) : mix(color, shadeTint, 0.22));
+      out = (c[0] << 16) | (c[1] << 8) | c[2];
+      cache.set(key, out);
+    }
+    data[i] = (out >> 16) & 255;
+    data[i + 1] = (out >> 8) & 255;
+    data[i + 2] = out & 255;
+  };
+  for (let y = 0; y < h; y++) {
+    let k = (y + 1) * bw + 1;
+    for (let x = 0; x < w; x++, k++) {
+      if (cover[k] !== 2) continue;
+      const up = cover[k - bw];
+      const down = cover[k + bw];
+      const mode = up === 0 && down === 2 ? 0 : down === 0 && up === 2 ? 1 : cover[k - 1] === 0 && cover[k + 1] === 2 ? 2 : cover[k + 1] === 0 && cover[k - 1] === 2 ? 3 : -1;
+      if (mode >= 0) recolor((y * w + x) * 4, mode);
+    }
+  }
+}

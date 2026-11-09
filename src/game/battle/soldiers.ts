@@ -85,7 +85,8 @@ function suit(p: Painter, x: number, y: number, which: number): void {
   });
 }
 
-function helmet(p: Painter, hx: number, hy: number, look: Look): void {
+/** A soldier's steel helmet over a face whose top-left is (hx, hy): M1, Stahlhelm or Type 90. */
+export function helmet(p: Painter, hx: number, hy: number, look: Look): void {
   const t = look.team;
   if (look.nation === "japan") {
     // Type 90: a low round dome with a narrow rim, and the cloth neck flaps of the cap under it
