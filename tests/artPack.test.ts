@@ -149,6 +149,14 @@ describe("the packs that ship with the game", () => {
     expect(drawn("germany").has("battleship")).toBe(false);
   });
 
+  it("the US and Japan have Carrier art and Germany has none (01-units §4)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = (nation: string) => new Set(pack.unitSheets.filter((s) => s.nation === nation).flatMap((s) => s.rows));
+    expect(drawn("us").has("carrier")).toBe(true);
+    expect(drawn("japan").has("carrier")).toBe(true);
+    expect(drawn("germany").has("carrier")).toBe(false);
+  });
+
   it("Japan has art for every land, air and naval unit it fielded, but no Heavy Tank (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "japan").flatMap((s) => s.rows));

@@ -20,7 +20,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 - **36 × 26 squares**, about 300 m each. North is up. The island runs from Mount Suribachi at the south-west tip to Kitano Point and Tachiiwa Point in the north-east, about 27 squares long.
 - The outline is a polygon traced from the real map in `tools/maps/iwo-jima.mjs`. The neck behind the landing beaches is 3 to 4 squares wide, as the real one was under a kilometre.
-- **The US anchorage** is a block of land in the south-east corner. It stands for the transport and carrier groups offshore, which the game can't show as ships that build units: it holds the US HQ, a Factory and two Ports. The carriers are real Carriers offshore (below); the anchorage Airfield that stood in for them is removed (decided 2026-11-09, not built yet). It's about 12 squares, two Landing Craft turns, from the beaches.
+- **The US anchorage** is a block of land in the south-east corner. It stands for the transport and carrier groups offshore, which the game can't show as ships that build units: it holds the US HQ, a Factory and two Ports. The carriers are real Carriers offshore (below); the anchorage Airfield that stood in for them is gone (2026-11-09). It's about 12 squares, two Landing Craft turns, from the beaches.
 
 ### Places
 
@@ -33,7 +33,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 | Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
 
 - **Mount Suribachi's summit is a City,** standing for the observation post on the crater rim, so it can be captured: taking it plays the capture scene with the US flag going up, as on 23 February. It's ringed by Hills and bunkers.
-- **Income:** the US starts with 5 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
+- **Income:** the US starts with 4 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
 
 ### Terrain
 
@@ -45,7 +45,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 ### Starting forces
 
-- **US** (6,000 funds): the first wave already ashore on the beaches: four Infantry, two Assault Infantry and two Medium Tanks. Offshore: two Battleships, two Destroyers and two Landing Craft for the next waves, and two Carriers, each carrying two Bombers. With no airfield of its own, the US can't build aircraft until it takes Airfield No. 1 or No. 2, so lost Bombers aren't replaced before then. At the anchorage: an Infantry, an Artillery and a Halftrack waiting to be ferried in.
+- **US** (6,000 funds): the first wave already ashore on the beaches: four Infantry, two Assault Infantry and two Medium Tanks. Offshore: two Battleships, two Destroyers and two Landing Craft for the next waves, and two Carriers, each carrying two Bombers, between the beaches and the anchorage (at 26,15 and 24,17): close enough for their Bombers to reach the bunkers round Airfield No. 2 on day 1, out of reach of every Japanese gun at the start. With no airfield of its own, the US can't build aircraft until it takes Airfield No. 1 or No. 2, so lost Bombers aren't replaced before then. At the anchorage: an Infantry, an Artillery and a Halftrack waiting to be ferried in.
 - **Japan** (3,000 funds), its foot soldiers almost all in bunkers: Mount Suribachi's garrison (two Infantry, a Mortar, an Artillery); the airfield line (three Infantry, Assault Infantry, a Mortar, a Flak Gun); the northern main line (four Infantry, Assault Infantry, two Rocket Artillery, an Artillery, a Mortar, a Flak Gun); and Baron Nishi's 26th Tank Regiment near Airfield No. 2 (two Medium Tanks and a Light Tank).
 
 ### Build lists
@@ -66,7 +66,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 ### How it's made
 
 - `tools/maps/iwo-jima.mjs` builds the scenario file from the island polygon and lists of features, properties and units. Rerun it after editing; `tools/maps/overview.mjs iwo-jima` redraws the picture above.
-- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-15 rule, Suribachi's place and hills, the first wave on the beaches with the fleet offshore, the Japanese in bunkers, Japan's build list, and that US tanks can drive from the beaches to Japan's HQ.
+- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-15 rule, Suribachi's place and hills, the first wave on the beaches with the fleet offshore, the Japanese in bunkers, Japan's build list, the two Carriers with their Bombers and no US airfield, that the Bombers can reach a bunker on day 1 while no Japanese gun reaches the Carriers, and that US tanks can drive from the beaches to Japan's HQ.
 
 ## 2. Known gaps
 

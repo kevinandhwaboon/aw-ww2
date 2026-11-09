@@ -92,6 +92,7 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   submarine: 1,
   landingCraft: 1,
   torpedoBoat: 1,
+  carrier: 1,
   bunker: 1,
 };
 
@@ -164,6 +165,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
     case "halftrack":
     case "transportAircraft":
     case "landingCraft":
+    case "carrier":
       return "mg";
   }
 }

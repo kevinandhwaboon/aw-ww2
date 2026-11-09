@@ -15,8 +15,9 @@ export const CARRIER_REPAIR_HP = 1;
 
 /** The player's units and their passengers are ready again; Carriers may move or launch again. */
 function readyUp(unit: Unit): Unit {
-  const { launched: _launched, ...rest } = unit;
-  return { ...rest, hasActed: false, cargo: unit.cargo.map((c) => (c.hasActed ? { ...c, hasActed: false } : c)) };
+  const ready: Unit = { ...unit, hasActed: false, cargo: unit.cargo.map((c) => (c.hasActed ? { ...c, hasActed: false } : c)) };
+  delete (ready as { launched?: true }).launched;
+  return ready;
 }
 
 /** Runs the start of state.currentPlayer's turn. */

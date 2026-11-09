@@ -1,6 +1,6 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided but not built yet.
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09).
 **Last updated:** 2026-11-07
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
@@ -81,7 +81,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 - **Submerged:** burns 5 fuel per day instead of 1, and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
 - **Hidden or not:** in the original a submerged submarine is hidden unless an enemy is adjacent. We have no fog of war and both players share one screen, so submerged submarines are shown to everyone with a marker **(D5)**: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5).
 
-## 10. Carriers (decided 2026-11-09, not built yet)
+## 10. Carriers (decided and built 2026-11-09)
 
 - **Capacity:** 2 air units, Fighters or Bombers. Transport Aircraft can't board. Unarmed.
 - **Land (Load):** an aircraft moves onto its own player's Carrier with free space, wherever the Carrier is. This ends the aircraft's action. An aircraft that boarded this turn can't launch until next turn.

@@ -2,7 +2,8 @@
 // 08-art-pipeline §18). Each naval unit is one ship. US: an Iowa-class battleship, a Fletcher, a Gato,
 // an LCT carrying two Shermans and an Elco PT boat. Germany: a 1936A Zerstörer, a Type VII U-boat, an
 // S-boot, and the LCT hull carrying two Panzer IVs. Japan: the Yamato, a Kagero, a B1-type I-boat
-// with its aircraft hangar, a Daihatsu carrying a Ha-Go, and a small torpedo boat. Ships carry no
+// with its aircraft hangar, a Daihatsu carrying a Ha-Go, and a small torpedo boat. Carriers: the
+// Essex class for the US and UK, the Shōkaku for Japan; Germany has none. Ships carry no
 // insignia (08-art-pipeline §12).
 //
 // Model axes as for the tanks: x toward the bow, y to port (the near side is y negative), z up, with
@@ -995,16 +996,16 @@ export function essex(T: TeamShades): ShipModel {
   for (const x of [-92, -84, 86]) flight.push(...beam([x, -6, x > 0 ? 13.5 : 11], [x, -10, top - 1.2], 0.8, 0.8, steelDark()));
   const over: Face[] = [...deckMarks(-92, 84, 13.6, top + 0.02, [40, -28], deck)];
   // The island on the starboard (near) side.
-  over.push(...box(-6, 30, -14.4, -10, top, top + 7, U), ...box(4, 24, -14, -10.4, top + 7, top + 12, U));
-  over.push(...windows(-14.05, 5, 23, top + 9.6, 1.1), ...box(8, 20, -13.6, -10.8, top + 12, top + 14, T.lo));
-  over.push(...shift(funnel(-2, top + 7, 4.4, 9, 1.5, U, steelDark(), 0.5), 0, -12.2, 0));
-  over.push(...beam([14, -12.2, top + 14], [14, -12.2, top + 28], 0.8, 0.8, steelDark()), ...beam([14, -16, top + 24], [14, -8, top + 24], 0.6, 0.6, steelDark()));
-  over.push(...box(13, 15, -15, -9.4, top + 20, top + 21, steel()));
+  over.push(...box(-6, 30, -14.4, -10, top, top + 10, U), ...box(4, 24, -14, -10.4, top + 10, top + 16, U));
+  over.push(...windows(-14.05, 5, 23, top + 13, 1.1), ...box(8, 20, -13.6, -10.8, top + 16, top + 18, T.lo));
+  over.push(...shift(funnel(-2, top + 10, 4.6, 10, 1.5, U, steelDark(), 0.5), 0, -12.2, 0));
+  over.push(...beam([14, -12.2, top + 18], [14, -12.2, top + 33], 0.8, 0.8, steelDark()), ...beam([14, -16, top + 29], [14, -8, top + 29], 0.6, 0.6, steelDark()));
+  over.push(...box(13, 15, -15, -9.4, top + 24, top + 25, steel()));
   for (const x of [38, -14]) over.push(...twinMount(x, -12.2, top, U, x < 0));
   // 40mm quads in sponsons just under the flight deck edge.
   for (const x of [66, 4, -40, -66]) over.push(...aaTub(x, -15.5, top - 3.4, T.lo, 4, 2.2).faces);
   // Aircraft parked aft, wings folded.
-  const plane = mix(T.hi, C("battleSteel"), 0.35);
+  const plane = mix(T.mid, C("battleSteel"), 0.45);
   for (const [x, y] of [[-58, -5], [-58, 5], [-70, -5], [-70, 5], [-82, -5], [-82, 5]] as const) over.push(...parkedPlane(x, y, top, plane));
   return {
     layers: [base, houses, flight, over],
@@ -1043,13 +1044,13 @@ export function shokaku(T: TeamShades): ShipModel {
     over.push(...box(x - 2.4, x + 0.4, -19.6, -17.4, 11.4, 12.6, steelDark()));
   }
   // The small island forward, with its bridge, rangefinder and mast.
-  over.push(...box(26, 38, -14, -10.4, top, top + 6, U), ...box(28, 36, -13.6, -10.8, top + 6, top + 9.5, U));
-  over.push(...windows(-13.65, 28.5, 35.5, top + 7.6, 0.9, 2), ...box(30, 34, -14.6, -9.8, top + 9.5, top + 10.6, T.lo));
-  over.push(...beam([31, -12.2, top + 10.6], [30, -12.2, top + 22], 0.7, 0.7, steelDark()), ...beam([30.2, -15.4, top + 19], [30.2, -9, top + 19], 0.5, 0.5, steelDark()));
+  over.push(...box(26, 38, -14, -10.4, top, top + 8, U), ...box(28, 36, -13.6, -10.8, top + 8, top + 12, U));
+  over.push(...windows(-13.65, 28.5, 35.5, top + 10, 0.9, 2), ...box(30, 34, -14.6, -9.8, top + 12, top + 13.2, T.lo));
+  over.push(...beam([31, -12.2, top + 13.2], [30, -12.2, top + 25], 0.7, 0.7, steelDark()), ...beam([30.2, -15.4, top + 22], [30.2, -9, top + 22], 0.5, 0.5, steelDark()));
   // Twin 12.7cm mounts in sponsons below the deck edge, and 25mm triples.
   for (const x of [60, 24, -40, -64]) over.push(...twinMount(x, -15, top - 4.6, U, x < 0, 0.9));
   for (const x of [44, 8, -26, -52]) over.push(...aaTub(x, -15.2, top - 3, T.lo, 3, 1.8).faces);
-  const plane = mix(C("battleKhaki"), T.hi, 0.3);
+  const plane = mix(C("battleKhaki"), T.mid, 0.35);
   for (const [x, y] of [[-56, -5], [-56, 5], [-68, -5], [-68, 5], [-80, -5], [-80, 5]] as const) over.push(...parkedPlane(x, y, top, plane));
   return {
     layers: [base, houses, flight, over],

@@ -61,7 +61,7 @@
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
 | Carrier | Mobile airfield | Carries 2 Fighters or Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Unarmed: it needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
-Carrier: added 2026-11-09 for the Pacific (decided, not built yet). Only the US, UK and Japan get Carrier art (none drawn yet).
+Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US and UK, the Shōkaku for Japan (08-art-pipeline §17, §18).
 
 ## 5. Transport rules (summary; details in 05-supply-transport)
 

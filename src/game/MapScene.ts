@@ -98,6 +98,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   private unitImages = new Map<UnitId, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
   private garrisoned = new Set<UnitId>();
   private previewed: UnitId | undefined;
+  /** A state drawn in place of the game's, e.g. an aircraft out on its Carrier while it's launched. */
+  private preview: GameState | undefined;
   private menu:
     | { container: Phaser.GameObjects.Container; items: readonly MenuItem[]; rect: Phaser.Geom.Rectangle; selected: number }
     | undefined;
@@ -387,6 +389,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   setState(state: GameState): void {
     this.state = state;
     this.previewed = undefined;
+    this.preview = undefined;
     this.renderState();
   }
 
@@ -546,9 +549,16 @@ export class MapScene extends Phaser.Scene implements MapView {
     await this.walk(unitId, fullPath);
   }
 
+  showPreviewState(state: GameState | null): void {
+    if (state === null && this.preview === undefined) return;
+    this.previewed = undefined;
+    this.preview = state ?? undefined;
+    this.renderState();
+  }
+
   resetPreview(): void {
     if (this.previewed === undefined) return;
-    const unit = this.state.units.find((u) => u.id === this.previewed);
+    const unit = (this.preview ?? this.state).units.find((u) => u.id === this.previewed);
     const sprite = this.unitSprites.get(this.previewed);
     if (unit && sprite) sprite.setPosition(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
     // Back inside its bunker, a garrisoned soldier is hidden again.
@@ -664,6 +674,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     setBattleWeather({ season: this.state.weather.season, snowing: weatherOn(this.state) === "snow" });
     for (const event of events) {
       await this.revealTiles(this.eventTiles(event), PAN_MS.action);
+      if (event.type === "unitLaunched" && !this.unitSprites.has(event.unitId)) {
+        // Takes off from the Carrier's tile, unless the launch preview already put it there.
+        const aircraft = this.state.units.find((u) => u.id === event.carrierId)?.cargo.find((c) => c.id === event.unitId);
+        if (aircraft) this.addUnitSprite({ ...aircraft, pos: event.pos, hasActed: false });
+      }
       if (event.type === "unitMoved") {
         await this.walk(event.unitId, event.path);
         await this.playGarrison(event.unitId, event.path[0] ?? null, event.path[event.path.length - 1], events);
@@ -727,6 +742,7 @@ export class MapScene extends Phaser.Scene implements MapView {
       case "captureProgress":
       case "propertyCaptured":
       case "unitOutOfFuel":
+      case "unitLaunched":
         return [event.pos];
       case "unitJoined": {
         const target = this.state.units.find((u) => u.id === event.targetId);
@@ -741,8 +757,9 @@ export class MapScene extends Phaser.Scene implements MapView {
   private repairLabels(events: readonly GameEvent[]): Promise<void>[] {
     const repaired = new Set<UnitId>();
     const labels: Promise<void>[] = [];
+    // Aircraft aboard a Carrier are serviced there, so their labels show over the Carrier.
     const over = (unitId: UnitId, text: string, color: string) => {
-      const unit = this.state.units.find((u) => u.id === unitId);
+      const unit = this.state.units.find((u) => u.id === unitId || u.cargo.some((c) => c.id === unitId));
       if (unit) labels.push(this.floatLabel(unit.pos, text, color));
     };
     for (const event of events) {
@@ -852,7 +869,18 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   // ---- Rendering game state ----
 
+  /** Draws the game state, or the preview state while one is shown. */
   private renderState(): void {
+    const real = this.state;
+    this.state = this.preview ?? real;
+    try {
+      this.drawState();
+    } finally {
+      this.state = real;
+    }
+  }
+
+  private drawState(): void {
     const layer = this.stateLayer;
     if (!layer) return;
     layer.removeAll(true);
@@ -906,37 +934,42 @@ export class MapScene extends Phaser.Scene implements MapView {
       layer.add(this.add.image(fort.pos.x * TILE_SIZE, (fort.pos.y + 1) * TILE_SIZE, badge).setOrigin(0, 1));
     }
 
-    for (const unit of this.state.units) {
-      const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
-      // A soldier in a garrisoned bunker is drawn as the bunker itself; only its badges show.
-      const inside = this.garrisoned.has(unit.id);
-      const shadow = inside ? null : this.unitShadow(unit);
-      if (shadow) sprite.add(shadow);
-      const image = this.unitImage(unit).setVisible(!inside);
-      sprite.add(image);
-      this.unitImages.set(unit.id, image);
+    for (const unit of this.state.units) this.addUnitSprite(unit);
+  }
 
-      const hp = displayHp(unit.hp);
-      if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
-      if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
-        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", packColor("labelText"), packColor("labelOutline"))).setOrigin(0, 1));
-      }
-      // Aircraft and ships within two turns of running dry show a warning.
-      const burn = stats.fuelPerDay(this.state, unit);
-      if (burn > 0 && unit.fuel <= burn * 2) {
-        sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", packColor("labelWarning"), packColor("labelOutline"))).setOrigin(0, 1));
-      }
-      // A transport carrying units shows a small marker.
-      if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));
-      // So does a submerged submarine, in the same corner, which a submarine never otherwise uses.
-      if (unit.submerged === true) sprite.add(this.add.image(0, 0, this.texture("submerged", drawSubmergedBadge)).setOrigin(0));
-      const { level } = veterancyFor(unit.kills);
-      if (level !== "rookie") {
-        sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));
-      }
-      layer.add(sprite);
-      this.unitSprites.set(unit.id, sprite);
+  /** A unit's sprite with its badges, added to the state layer. */
+  private addUnitSprite(unit: Unit): void {
+    const layer = this.stateLayer;
+    if (!layer) return;
+    const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
+    // A soldier in a garrisoned bunker is drawn as the bunker itself; only its badges show.
+    const inside = this.garrisoned.has(unit.id);
+    const shadow = inside ? null : this.unitShadow(unit);
+    if (shadow) sprite.add(shadow);
+    const image = this.unitImage(unit).setVisible(!inside);
+    sprite.add(image);
+    this.unitImages.set(unit.id, image);
+
+    const hp = displayHp(unit.hp);
+    if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
+    if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
+      sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", packColor("labelText"), packColor("labelOutline"))).setOrigin(0, 1));
     }
+    // Aircraft and ships within two turns of running dry show a warning.
+    const burn = stats.fuelPerDay(this.state, unit);
+    if (burn > 0 && unit.fuel <= burn * 2) {
+      sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", packColor("labelWarning"), packColor("labelOutline"))).setOrigin(0, 1));
+    }
+    // A transport carrying units shows a small marker.
+    if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));
+    // So does a submerged submarine, in the same corner, which a submarine never otherwise uses.
+    if (unit.submerged === true) sprite.add(this.add.image(0, 0, this.texture("submerged", drawSubmergedBadge)).setOrigin(0));
+    const { level } = veterancyFor(unit.kills);
+    if (level !== "rookie") {
+      sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));
+    }
+    layer.add(sprite);
+    this.unitSprites.set(unit.id, sprite);
   }
 
   /**

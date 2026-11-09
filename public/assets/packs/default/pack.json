@@ -336,7 +336,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     },
     {
@@ -350,7 +351,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     },
     {
@@ -364,7 +366,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     },
     {
@@ -420,7 +423,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     },
     {
@@ -434,7 +438,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     },
     {
@@ -448,7 +453,8 @@
         "destroyer",
         "submarine",
         "landingCraft",
-        "torpedoBoat"
+        "torpedoBoat",
+        "carrier"
       ]
     }
   ],

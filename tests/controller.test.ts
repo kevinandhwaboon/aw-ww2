@@ -25,6 +25,7 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
     forecast: null as readonly string[] | null,
     cursor: null as Point | null,
     commands: [] as Command[],
+    preview: null as GameState | null,
   };
   const built = { options: null as readonly BuildOption[] | null, pick: null as ((type: UnitTypeId) => void) | null };
   const view: MapView = {
@@ -34,6 +35,7 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
     clearPath: () => undefined,
     previewMove: () => Promise.resolve(),
     resetPreview: () => undefined,
+    showPreviewState: (preview) => { seen.preview = preview; },
     openMenu: (_, items, selected = 0) => { seen.menu = items; seen.menuSelected = selected; },
     closeMenu: () => { seen.menu = null; },
     setCursor: (tile) => { seen.cursor = tile; },
@@ -763,5 +765,93 @@ describe("cursor limits (11-tech-setup §3c)", () => {
     const { controller, seen } = await twoTargets();
     controller.onCancel();
     expect(seen.cursor).toEqual(P(1, 1));
+  });
+});
+
+describe("launching from a Carrier (05-supply-transport §10)", () => {
+  const bombers = [{ type: "bomber" as const }, { type: "bomber" as const }];
+  /** A US Carrier at sea carrying two Bombers (ids 2 and 3), a German tank ashore (id 1). */
+  const carrierGame = (cargo: UnitSetup["cargo"] = bombers) =>
+    setup(["SSSS......"], [{ type: "carrier", owner: 0, pos: P(1, 0), cargo }, { type: "mediumTank", owner: 1, pos: P(7, 0) }]);
+
+  it("confirming a Carrier on its own tile offers Launch", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["launch", "wait", "cancel"]);
+  });
+
+  it("a Carrier that has moved isn't offered Launch", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(0, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["wait", "cancel"]);
+  });
+
+  it("a Fighter and a Bomber aboard get one Launch item each", async () => {
+    const game = carrierGame([{ type: "fighter" }, { type: "bomber" }]);
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH FIGHTER", "LAUNCH BOMBER", "WAIT", "CANCEL"]);
+  });
+
+  it("Launch puts the aircraft on the Carrier's tile, then it moves and bombs like any unit, sent as one launch order", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    game.controller.onMenuChoice("launch");
+    expect(game.seen.preview?.units.find((u) => u.id === 2)?.pos).toEqual(P(1, 0));
+    expect(game.seen.ranges[0]?.tiles).toContainEqual(P(6, 0));
+    game.controller.onConfirm(P(6, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["fire", "wait", "cancel"]);
+    game.controller.onMenuChoice("fire");
+    game.controller.onConfirm(P(7, 0));
+    await game.settle();
+    expect(game.seen.commands).toEqual([{ type: "launch", carrierId: 0, unitId: 2, path: [P(2, 0), P(3, 0), P(4, 0), P(5, 0), P(6, 0)], action: { type: "attack", target: 1 } }]);
+    expect(game.getState().units.find((u) => u.id === 1)?.hp).toBeLessThan(100);
+  });
+
+  it("a launched aircraft can't stop on its Carrier's tile", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    game.controller.onMenuChoice("launch");
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.seen.menu).toBeNull();
+  });
+
+  it("cancelling a launch puts the aircraft back aboard and reopens the Carrier's menu", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    game.controller.onMenuChoice("launch");
+    game.controller.onCancel();
+    expect(game.seen.preview).toBeNull();
+    expect(game.labels()).toEqual(["launch", "wait", "cancel"]);
+  });
+
+  it("after one launch the Carrier can only stay put: its range is its own tile, and the other aircraft can launch", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    game.controller.onMenuChoice("launch");
+    game.controller.onConfirm(P(3, 0));
+    await game.settle();
+    game.controller.onMenuChoice("wait");
+    await game.settle();
+    game.controller.onConfirm(P(1, 0));
+    expect(game.seen.ranges[0]?.tiles).toEqual([P(1, 0)]);
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()).toEqual(["launch", "wait", "cancel"]);
   });
 });

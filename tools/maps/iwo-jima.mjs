@@ -18,7 +18,8 @@ const ISLAND = [
   [28.5, 11], [26, 12.2], [23, 13.3], [20, 14.6], [17, 16.3], [14, 18], [11, 19.6], [8.5, 21], [6.5, 22.5], [4.5, 23.5],
 ];
 
-// The US staging area: a stand-in for the transport and carrier groups offshore, south-east of the island.
+// The US staging area: a stand-in for the transport groups offshore, south-east of the island. The
+// carrier groups are real Carriers (see Forces).
 const ANCHORAGE = [[28, 19], [34, 19], [34, 24], [28, 24]];
 
 function inside(poly, x, y) {
@@ -94,7 +95,6 @@ const P = {
   hq: [20, 4], // Kuribayashi's command post, in a cave near Kitano Point
   usHq: [31, 22],
   usFactory: [30, 21],
-  usAirfield: [32, 20],
   usPort1: [28, 20],
   usPort2: [29, 23],
 };
@@ -107,7 +107,6 @@ set(...P.depot, "f");
 set(...P.hq, "Q");
 set(...P.usHq, "Q");
 set(...P.usFactory, "f");
-set(...P.usAirfield, "A");
 set(...P.usPort1, "P");
 set(...P.usPort2, "P");
 // The runways run on from each airfield as open ground.
@@ -136,6 +135,10 @@ const units = [
   // Offshore: battleships and destroyers for the bombardment, and Landing Craft for the next waves.
   us("battleship", 15, 21), us("battleship", 18, 22), us("destroyer", 20, 17), us("destroyer", 24, 15),
   us("landingCraft", 17, 19), us("landingCraft", 22, 18),
+  // Two Carriers between the beaches and the anchorage, each with two Bombers that can reach the
+  // bunkers round Airfield No. 2 on the first day (05-supply-transport §10).
+  us("carrier", 26, 15, { cargo: [{ type: "bomber" }, { type: "bomber" }] }),
+  us("carrier", 24, 17, { cargo: [{ type: "bomber" }, { type: "bomber" }] }),
   // Waiting at the anchorage to go ashore.
   us("infantry", 30, 20), us("artillery", 31, 21), us("halftrack", 32, 22),
   // Mount Suribachi's garrison.
@@ -152,7 +155,7 @@ const units = [
 ];
 
 const owners = [
-  [P.usHq, 0], [P.usFactory, 0], [P.usAirfield, 0], [P.usPort1, 0], [P.usPort2, 0],
+  [P.usHq, 0], [P.usFactory, 0], [P.usPort1, 0], [P.usPort2, 0],
   [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1], [P.minami, 1],
   [P.nishi, 1], [P.kita, 1], [P.higashi, 1], [P.depot, 1], [P.hq, 1],
 ];
@@ -170,7 +173,7 @@ const scenario = {
       buildable: [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
         "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft",
-        "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat",
+        "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
       ],
       facing: "left",
     },
@@ -200,6 +203,7 @@ const out = new URL("../../src/scenarios/iwo-jima.json", import.meta.url);
 const json = JSON.stringify(scenario, null, 2)
   .replace(/\{\s+"x": (\d+),\s+"y": (\d+)\s+\}/g, '{ "x": $1, "y": $2 }')
   .replace(/\{\s+"pos": (\{[^}]*\}),\s+"owner": (\d+)\s+\}/g, '{ "pos": $1, "owner": $2 }')
-  .replace(/\{\s+"type": ("\w+"),\s+"owner": (\d+),\s+"pos": (\{[^}]*\})\s+\}/g, '{ "type": $1, "owner": $2, "pos": $3 }');
+  .replace(/\{\s+"type": ("\w+"),\s+"owner": (\d+),\s+"pos": (\{[^}]*\})\s+\}/g, '{ "type": $1, "owner": $2, "pos": $3 }')
+  .replace(/\{\s+"type": ("\w+")\s+\}/g, '{ "type": $1 }');
 writeFileSync(out, `${json}\n`);
 console.log(rows.join("\n"));
