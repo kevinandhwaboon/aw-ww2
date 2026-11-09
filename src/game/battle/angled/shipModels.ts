@@ -249,8 +249,15 @@ interface TurretSpec {
   readonly recoil: number;
 }
 
+/**
+ * Battleship main guns are raised to fire so every barrel looks 20° up on screen. The aft turret,
+ * swung out toward the viewer, needs more raise to look the same as the forward two.
+ */
+const MAIN_ELEVATION = 0.41;
+const AFT_ELEVATION = 0.54;
+
 /** A gun turret with a sloped face plate and `guns` barrels, standing at (x, 0, z). */
-function turret(x: number, z: number, s: TurretSpec): { faces: Face[]; muzzle: V3 } {
+function turret(x: number, z: number, s: TurretSpec): { faces: Face[]; muzzle: V3; aim: V3 } {
   const { back, front, half, height, slope } = s;
   const foot: Poly = [[-back, -half], [front - 3, -half], [front, -half + 2.5], [front, half - 2.5], [front - 3, half], [-back, half]];
   const top: Poly = [
@@ -275,11 +282,15 @@ function turret(x: number, z: number, s: TurretSpec): { faces: Face[]; muzzle: V
     muzzle = elevatePoint(muzzle, front - slope, s.gunZ, s.elevation);
   }
   f.push(...guns);
+  // A point a little further out along the barrels, so the shot can leave the way they point.
+  const e = s.elevation ?? 0;
+  let aim: V3 = [muzzle[0] + Math.cos(e) * 10, muzzle[1], muzzle[2] + Math.sin(e) * 10];
   if (s.train) {
     f = rotZ(f, s.train);
     muzzle = rotPoint(muzzle, s.train);
+    aim = rotPoint(aim, s.train);
   }
-  return { faces: shift(f, x, 0, z), muzzle: [muzzle[0] + x, muzzle[1], muzzle[2] + z] };
+  return { faces: shift(f, x, 0, z), muzzle: [muzzle[0] + x, muzzle[1], muzzle[2] + z], aim: [aim[0] + x, aim[1], aim[2] + z] };
 }
 
 /** A round barbette a turret stands on. */
@@ -427,7 +438,7 @@ export function iowa(T: TeamShades, salvo: Salvo): ShipModel {
   ];
   const d = (x: number) => deckAt(S, x);
   const r = (i: number) => (salvo.firing === i ? salvo.recoil : 0);
-  const spec = { back: 10, front: 8, half: 7.5, height: 6.5, slope: 3, guns: 3, spacing: 3.6, bore: 0.55, length: 25, gunZ: 3.2, color: U, hoods: true, elevation: 0.09 };
+  const spec = { back: 10, front: 8, half: 7.5, height: 6.5, slope: 3, guns: 3, spacing: 3.6, bore: 0.55, length: 25, gunZ: 3.2, color: U, hoods: true, elevation: MAIN_ELEVATION };
   const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: mix(C("battleWood"), C("battleSand"), 0.45), boot: 7 })];
   base.push(...portholes(S, -36, 30, 8.2, 6, T.deep), ...anchor(S, 79, 13));
   const houses: Face[] = [...house(S, -38, 27, 10.5, 0, 4, U), ...house(S, 2, 25, 5.5, 4, 4, U), ...house(S, -38, -27, 6, 4, 6, U)];
@@ -438,7 +449,7 @@ export function iowa(T: TeamShades, salvo: Salvo): ShipModel {
   const t2 = turret(36, z2, { ...spec, recoil: r(1) });
   const z3 = d(-56) + 2;
   top.push(...barbette(-56, 7, d(-56) - 0.5, z3, U));
-  const t3 = turret(-56, z3, { ...spec, recoil: r(2), train: -0.6, elevation: 0.12 });
+  const t3 = turret(-56, z3, { ...spec, recoil: r(2), train: -0.6, elevation: AFT_ELEVATION });
   top.push(...t1.faces, ...t2.faces, ...t3.faces);
   // Conning tower, the tower bridge, the Mk 38 director with its rangefinder arms, the foremast and radar.
   const b8 = d(14) + 8;
@@ -472,7 +483,7 @@ export function iowa(T: TeamShades, salvo: Salvo): ShipModel {
     layers: [base, houses, top],
     water: S,
     deck: S,
-    at: { gun0: t1.muzzle, gun1: t2.muzzle, gun2: t3.muzzle, aa: aa.muzzle },
+    at: { gun0: t1.muzzle, gun1: t2.muzzle, gun2: t3.muzzle, aim0: t1.aim, aim1: t2.aim, aim2: t3.aim, aa: aa.muzzle },
     troops: [],
     lift: liftFor(S),
   };
@@ -492,7 +503,7 @@ export function yamato(T: TeamShades, salvo: Salvo): ShipModel {
   ];
   const d = (x: number) => deckAt(S, x);
   const r = (i: number) => (salvo.firing === i ? salvo.recoil : 0);
-  const spec = { back: 12, front: 9, half: 9.5, height: 7.5, slope: 3.5, guns: 3, spacing: 4.4, bore: 0.65, length: 28, gunZ: 3.6, color: U, hoods: true, elevation: 0.09 };
+  const spec = { back: 12, front: 9, half: 9.5, height: 7.5, slope: 3.5, guns: 3, spacing: 4.4, bore: 0.65, length: 28, gunZ: 3.6, color: U, hoods: true, elevation: MAIN_ELEVATION };
   const base: Face[] = [...hull(S, { lower: T.deep, upper: T.mid, deck: mix(C("battleWood"), C("battleSand"), 0.4), boot: 1.5 })];
   base.push(...portholes(S, -50, 36, 8, 7, T.deep), ...anchor(S, 80, 13.5));
   const houses: Face[] = [...house(S, -42, 20, 11.5, 0, 4, U)];
@@ -503,7 +514,7 @@ export function yamato(T: TeamShades, salvo: Salvo): ShipModel {
   const t2 = turret(34, z2, { ...spec, recoil: r(1) });
   const z3 = d(-50) + 2;
   top.push(...barbette(-50, 8, 8.2, z3, U));
-  const t3 = turret(-50, z3, { ...spec, recoil: r(2), train: -0.6, elevation: 0.12 });
+  const t3 = turret(-50, z3, { ...spec, recoil: r(2), train: -0.6, elevation: AFT_ELEVATION });
   top.push(...t1.faces, ...t2.faces, ...t3.faces);
   // The tower: a broad base carrying the forward 15.5cm turret, then narrowing levels up to the
   // rangefinder and radar.
@@ -540,7 +551,7 @@ export function yamato(T: TeamShades, salvo: Salvo): ShipModel {
     layers: [base, houses, top],
     water: S,
     deck: S,
-    at: { gun0: t1.muzzle, gun1: t2.muzzle, gun2: t3.muzzle, aa: aa.muzzle },
+    at: { gun0: t1.muzzle, gun1: t2.muzzle, gun2: t3.muzzle, aim0: t1.aim, aim1: t2.aim, aim2: t3.aim, aa: aa.muzzle },
     troops: [],
     lift: liftFor(S),
   };
