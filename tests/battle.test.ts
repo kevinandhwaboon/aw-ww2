@@ -64,9 +64,11 @@ describe("figures on screen (08-art-pipeline §18)", () => {
     expect([10, 8, 6, 4, 2, 1].map((hp) => figureCount("mediumTank", hp))).toEqual([5, 4, 3, 2, 1, 1]);
   });
 
-  it("a battleship is one ship at any HP", () => {
-    expect(figureCount("battleship", 10)).toBe(1);
-    expect(figureCount("battleship", 2)).toBe(1);
+  it("every naval unit is one ship at any HP", () => {
+    for (const kind of ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"] as const) {
+      expect(figureCount(kind, 10)).toBe(1);
+      expect(figureCount(kind, 2)).toBe(1);
+    }
   });
 });
 
@@ -108,18 +110,18 @@ describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
 
 describe("which weapon the scene shows (08-art-pipeline §18)", () => {
   it("a tank fires its cannon with its primary weapon and its machine gun with its secondary", () => {
-    expect(fireKind("mediumTank", "primary", "mediumTank", false)).toBe("tankGun");
-    expect(fireKind("mediumTank", "secondary", "infantry", false)).toBe("mg");
+    expect(fireKind("mediumTank", "primary", "mediumTank")).toBe("tankGun");
+    expect(fireKind("mediumTank", "secondary", "infantry")).toBe("mg");
   });
 
-  it("a Destroyer drops depth charges on a submerged submarine and uses its deck gun on a surfaced one", () => {
-    expect(fireKind("destroyer", "primary", "submarine", true)).toBe("depthCharges");
-    expect(fireKind("destroyer", "primary", "submarine", false)).toBe("deckGun");
+  it("a Destroyer drops depth charges on a submarine, surfaced or submerged, and uses its deck gun on other ships", () => {
+    expect(fireKind("destroyer", "primary", "submarine")).toBe("depthCharges");
+    expect(fireKind("destroyer", "primary", "destroyer")).toBe("deckGun");
   });
 
   it("a Mortar Team lobs mortar rounds and Assault Infantry fires its launcher", () => {
-    expect(fireKind("mortar", "primary", "infantry", false)).toBe("mortar");
-    expect(fireKind("assaultInfantry", "primary", "mediumTank", false)).toBe("bazooka");
+    expect(fireKind("mortar", "primary", "infantry")).toBe("mortar");
+    expect(fireKind("assaultInfantry", "primary", "mediumTank")).toBe("bazooka");
   });
 });
 
@@ -219,6 +221,10 @@ describe("the order things happen in a battle scene (08-art-pipeline §18)", () 
   it("mortar, artillery and rocket rounds stay in the air over a second before they land", () => {
     for (const fire of ["mortar", "howitzer", "rockets"] as const) expect(FIRE_TIMING[fire].flight).toBeGreaterThanOrEqual(1200);
     expect(FIRE_TIMING.tankGun.flight).toBeLessThan(500);
+  });
+
+  it("ships fight at long range: naval shells, torpedoes and depth charges take over a second to arrive", () => {
+    for (const fire of ["navalGuns", "deckGun", "torpedo", "depthCharges"] as const) expect(FIRE_TIMING[fire].flight).toBeGreaterThanOrEqual(1000);
   });
 
   it("a strike that does no damage still plays its shots and takes no figures", () => {

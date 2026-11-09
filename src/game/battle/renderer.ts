@@ -6,7 +6,8 @@ import { UNITS } from "../../engine/data/units";
 import { terrainName, unitName } from "../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../pixelFont";
 import { playerColors } from "../placeholderUnits";
-import { bomberRig, battleshipRig, destroyerRig, fighterRig, landingCraftRig, submarineRig, torpedoBoatRig, transportRig } from "./airNaval";
+import { bomberRig, fighterRig, transportRig } from "./airNaval";
+import { battleshipRig, destroyerRig, landingCraftRig, submarineRig, torpedoBoatRig } from "./ships";
 import { backdropView, drawBackdrop, SCENE, type BackdropView } from "./backdrops";
 import { C, mix, Painter, teamShades } from "./paint";
 import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
@@ -66,14 +67,15 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   fighter: [pt(100, 118), pt(146, 76), pt(58, 160), pt(56, 58)],
   bomber: [pt(100, 104), pt(118, 172), pt(76, 52)],
   transportAircraft: [pt(100, 104), pt(118, 172), pt(76, 52)],
-  battleship: [pt(100, 204)],
-  destroyer: [pt(76, 210), pt(118, 176)],
-  submarine: [pt(78, 208), pt(118, 176)],
-  landingCraft: [pt(92, 210), pt(104, 176)],
-  torpedoBoat: [pt(52, 214), pt(132, 202), pt(78, 184), pt(146, 170)],
+  // Each naval unit is one ship.
+  battleship: [pt(98, 204)],
+  destroyer: [pt(98, 204)],
+  submarine: [pt(98, 202)],
+  landingCraft: [pt(96, 206)],
+  torpedoBoat: [pt(100, 204)],
   bunker: [pt(96, 208)],
 };
-const SUBMERGED_SLOTS: readonly Pt[] = [pt(84, 190), pt(118, 120)];
+const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
 
 /** Half-width of the shadow a figure casts on the ground; 0 for aircraft and ships. */
 const SHADOW: Record<FigureKind, number> = {
@@ -82,16 +84,24 @@ const SHADOW: Record<FigureKind, number> = {
   fighter: 0, bomber: 0, transportAircraft: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0,
   bunker: 40,
 };
-/** Half-width of the foam line where a ship meets the water. */
-const WATERLINE: Partial<Record<FigureKind, number>> = { battleship: 84, destroyer: 50, submarine: 48, landingCraft: 40, torpedoBoat: 28 };
 
 /** Indirect fire: how long a round takes to leave the screen, and to fall onto its target. */
 const INDIRECT_MS = { up: 260, rocketUp: 420, down: 380 };
 
-type Missile = "bullet" | "shell" | "rocket" | "lob" | "rocketLob" | "bomb" | "torpedo" | "charge";
+/**
+ * Naval gunfire: shells leave the firing half fast and climb out of sight, and only fall into the
+ * target's half near the end of their flight, so the target is hit well after the guns fire.
+ */
+const NAVAL = { speed: 0.6, climb: -0.3, fall: 0.5 };
+/** Depth charges: thrown clear of the stern for this long, then they sink until they go off. */
+const CHARGE_THROW_MS = 520;
+/** Where a depth charge goes into the water: spread in a pattern around the submarine, not all on it. */
+const chargeX = (shot: Pick<Shot, "fireAt"> & { readonly target: Pt }): number => Math.round(shot.target.x + (hash(shot.fireAt, 11) - 0.5) * 40);
+
+type Missile = "bullet" | "shell" | "rocket" | "lob" | "rocketLob" | "bomb" | "torpedo" | "charge" | "naval";
 const MISSILE: Record<FireKind, Missile> = {
   rifle: "bullet", mg: "bullet", aaGuns: "bullet", planeGuns: "bullet", bazooka: "rocket", tankGun: "shell",
-  flak: "shell", deckGun: "shell", navalGuns: "shell", mortar: "lob", howitzer: "lob", rockets: "rocketLob",
+  flak: "shell", deckGun: "naval", navalGuns: "naval", mortar: "lob", howitzer: "lob", rockets: "rocketLob",
   bombs: "bomb", depthCharges: "charge", torpedo: "torpedo",
 };
 type Blast = "small" | "medium" | "large";
@@ -406,8 +416,13 @@ export class BattleRenderer {
     }
     ctx.drawImage(this.figCanvas, -FIGURE_BOX.ox, -FIGURE_BOX.oy);
     ctx.restore();
-    const foam = WATERLINE[h.data.kind] ?? 0;
-    if (h.rig.body === "ship" && h.view === "sea" && alive) this.p.rect(at.x - foam, at.y + 2, foam * 2, 1, C("battleFoam"));
+    if (h.rig.water && (h.view === "sea" || h.view === "shore")) {
+      ctx.save();
+      ctx.translate(at.x, at.y);
+      ctx.scale(h.dir, 1);
+      h.rig.water(this.p, pose, h.look, alive);
+      ctx.restore();
+    }
   }
 
   /** Fire and smoke over machines that were knocked out; aircraft trail smoke as they fall. */
@@ -557,7 +572,7 @@ export class BattleRenderer {
         : shot.targetBody === "machine"
           ? "metal"
           : "ground";
-    const at = surface === "water" ? { x: shot.target.x, y: shot.targetBase.y + 1 } : surface === "ground" && BLAST[shot.fire] === "small" ? { x: shot.target.x, y: shot.targetBase.y - 4 } : shot.target;
+    const at = shot.targetView === "underwater" ? shot.target : surface === "water" ? { x: shot.fire === "depthCharges" ? chargeX(shot) : shot.target.x, y: shot.targetBase.y + 1 } : surface === "ground" && BLAST[shot.fire] === "small" ? { x: shot.target.x, y: shot.targetBase.y - 4 } : shot.target;
     this.explosion(at, age, BLAST[shot.fire], shot.targetView === "underwater" ? "water" : surface, shot.fireAt);
   }
 
@@ -625,14 +640,39 @@ export class BattleRenderer {
       if (side === 1 ? at.x < SCENE.half + 2 : at.x > SCENE.half - 2) return null;
       return { at, dir: fall };
     }
+    if (kind === "naval") {
+      const total = shot.landAt - shot.fireAt;
+      const elapsed = u * total;
+      // Out along the barrel, climbing at least a little, until it leaves the firing half.
+      const hy = Math.min(NAVAL.climb, shot.heading.y);
+      const hl = Math.hypot(shot.heading.x, hy) || 1;
+      const out = { x: m.x + (shot.heading.x / hl) * elapsed * NAVAL.speed, y: m.y + (hy / hl) * elapsed * NAVAL.speed };
+      const outside = (at: Pt) => (side === 1 ? at.x > SCENE.half - 2 : at.x < SCENE.half + 2) || at.y < SCENE.top;
+      if (!outside(out)) return { at: out, dir: { x: shot.heading.x / hl, y: hy / hl } };
+      // Coming down: on a line falling onto the target, seen only once it's over the target's half.
+      const fall = { x: side * Math.cos(NAVAL.fall), y: Math.sin(NAVAL.fall) };
+      const d = (total - elapsed) * NAVAL.speed;
+      const at = { x: target.x - fall.x * d, y: target.y - fall.y * d };
+      if (side === 1 ? at.x < SCENE.half + 2 : at.x > SCENE.half - 2) return null;
+      return { at, dir: fall };
+    }
     if (kind === "charge") {
-      const hx = Math.abs(shot.heading.x) < 0.15 ? 0.15 * side : shot.heading.x;
-      const reach = Math.abs(target.x - m.x) / 2 / Math.abs(hx);
-      const c = { x: m.x + hx * reach, y: m.y + shot.heading.y * reach };
-      const v = 1 - u;
-      const at = { x: v * v * m.x + 2 * v * u * c.x + u * u * target.x, y: v * v * m.y + 2 * v * u * c.y + u * u * target.y };
-      const dx = 2 * v * (c.x - m.x) + 2 * u * (target.x - c.x);
-      const dy = 2 * v * (c.y - m.y) + 2 * u * (target.y - c.y);
+      // Thrown in an arc onto the water over the submarine, then sinking onto it.
+      const total = shot.landAt - shot.fireAt;
+      const elapsed = u * total;
+      const surface = shot.targetView === "underwater" ? SCENE.top + 3 : shot.targetBase.y + 1;
+      const entry = { x: chargeX(shot), y: surface };
+      const depth = shot.targetView === "underwater" ? target : { x: entry.x, y: shot.targetBase.y + 16 };
+      if (elapsed >= CHARGE_THROW_MS) {
+        const k = (elapsed - CHARGE_THROW_MS) / Math.max(1, total - CHARGE_THROW_MS);
+        return { at: { x: lerp(entry.x, depth.x, k) + Math.sin(elapsed / 90) * 1, y: lerp(entry.y, depth.y, k) }, dir: { x: 0, y: 1 } };
+      }
+      const k = elapsed / CHARGE_THROW_MS;
+      const c = { x: (m.x + entry.x) / 2, y: Math.min(m.y, entry.y) - 60 };
+      const v = 1 - k;
+      const at = { x: v * v * m.x + 2 * v * k * c.x + k * k * entry.x, y: v * v * m.y + 2 * v * k * c.y + k * k * entry.y };
+      const dx = 2 * v * (c.x - m.x) + 2 * k * (entry.x - c.x);
+      const dy = 2 * v * (c.y - m.y) + 2 * k * (entry.y - c.y);
       const len = Math.hypot(dx, dy) || 1;
       return { at, dir: { x: dx / len, y: dy / len } };
     }
@@ -656,8 +696,9 @@ export class BattleRenderer {
     };
     if (kind === "bullet") {
       p.line(at.x - dir.x * 5, at.y - dir.y * 5, at.x, at.y, C("battleTracer"));
-    } else if (kind === "shell") {
-      p.line(at.x - dir.x * 9, at.y - dir.y * 9, at.x, at.y, C("battleTracer"), 2);
+    } else if (kind === "shell" || kind === "naval") {
+      const big = shot.fire === "navalGuns";
+      p.line(at.x - dir.x * (big ? 12 : 9), at.y - dir.y * (big ? 12 : 9), at.x, at.y, C("battleTracer"), big ? 3 : 2);
       p.px(at.x, at.y, C("battleFlash"));
     } else if (kind === "rocket") {
       p.line(at.x - dir.x * 6, at.y - dir.y * 6, at.x, at.y, C("battleSteelDark"), 2);
@@ -675,6 +716,27 @@ export class BattleRenderer {
       p.rect(at.x - 4, at.y, 8, 2, C("battleSeaDeep"));
       const side = dir.x > 0 ? 1 : -1;
       for (let k = 1; k < 10; k++) if ((k + Math.floor(t / 60)) % 2 === 0) p.px(at.x - side * k * 4, at.y - 1, C("battleFoam"));
+    } else if (kind === "charge") {
+      const sinking = (t - shot.fireAt) >= CHARGE_THROW_MS;
+      // A dark drum; once in the water it trails bubbles, and it splashes as it goes in.
+      p.rect(at.x - 2, at.y - 2, 5, 4, sinking ? C("battleSeaDeep") : C("battleSteelDark"));
+      if (!sinking) p.rect(at.x - 2, at.y - 2, 5, 1, C("battleSteel"));
+      if (sinking) {
+        const since = t - shot.fireAt - CHARGE_THROW_MS;
+        for (let k = 1; k < 6; k++) if ((k + Math.floor(t / 80)) % 2 === 0) p.px(at.x + (k % 2 === 0 ? 1 : -1), at.y - 2 - k * 3, C("battleFoam"));
+        if (since < 420 && shot.targetView !== "underwater") {
+          // The splash as it goes in, and rings spreading on the surface after.
+          const u = since / 420;
+          const h = 18 * Math.sin(Math.min(1, u * 1.6) * Math.PI);
+          const surface = shot.targetBase.y + 1;
+          if (h > 0) {
+            p.rect(at.x - 3, surface - h, 6, h, C("battleFoam"));
+            p.rect(at.x - 5, surface - h * 0.5, 10, h * 0.5, C("battleSeaLight"));
+          }
+          for (let k = 0; k < 4; k++) p.px(at.x + (k - 1.5) * 4 * (1 + u * 2), surface - h * 0.8 - 2 + u * 10, C("battleFoam"));
+          p.line(at.x - 4 - u * 10, surface + 1, at.x + 4 + u * 10, surface + 1, C("battleFoam"));
+        }
+      }
     } else {
       // A shell or mortar round: a dark body with a glowing tracer behind it.
       p.rect(at.x - 1, at.y - 1, 3, 3, C("battleSteelDark"));

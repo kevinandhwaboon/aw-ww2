@@ -88,10 +88,10 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   bomber: 3,
   transportAircraft: 3,
   battleship: 1,
-  destroyer: 2,
-  submarine: 2,
-  landingCraft: 2,
-  torpedoBoat: 4,
+  destroyer: 1,
+  submarine: 1,
+  landingCraft: 1,
+  torpedoBoat: 1,
   bunker: 1,
 };
 
@@ -123,7 +123,7 @@ export function figureCount(kind: FigureKind, hp: number): number {
 }
 
 /** How the weapon that fired looks, from the shooter, the weapon slot the engine used, and the target. */
-export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", target: FigureKind, targetSubmerged: boolean): FireKind {
+export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", target: FigureKind): FireKind {
   const primary = weapon === "primary";
   switch (shooter) {
     case "infantry":
@@ -154,7 +154,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
       return "navalGuns";
     case "destroyer":
       if (!primary) return "aaGuns";
-      return target === "submarine" && targetSubmerged ? "depthCharges" : "deckGun";
+      return target === "submarine" ? "depthCharges" : "deckGun";
     case "submarine":
       return "torpedo";
     case "torpedoBoat":
@@ -212,8 +212,6 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
   const before = (id: number, fallback: number) => state.units.find((u) => u.id === id)?.hp ?? fallback;
   const attackerHp = displayHp(before(attacker.unitId, attacker.hp));
   const defenderHp = displayHp(before(defender.unitId, defender.hp + attack.damage));
-  const defenderSubmerged = state.units.find((u) => u.id === defender.unitId)?.submerged === true;
-  const attackerSubmerged = state.units.find((u) => u.id === attacker.unitId)?.submerged === true;
 
   const a = half(state, side.attacker, attacker.type, attacker.owner, attacker.pos, attackerHp, attacker.unitId);
   const d = half(state, side.defender, defender.type, defender.owner, defender.pos, defenderHp, defender.unitId);
@@ -221,7 +219,7 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
   const strikes: BattleStrike[] = [
     {
       from: side.attacker,
-      fire: fireKind(attacker.type, attack.weapon, defender.type, defenderSubmerged),
+      fire: fireKind(attacker.type, attack.weapon, defender.type),
       hpBefore: defenderHp,
       hpAfter: displayHp(defender.hp),
       atAir: isAir(defender.type),
@@ -230,7 +228,7 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
   if (counter) {
     strikes.push({
       from: side.defender,
-      fire: fireKind(defender.type, counter.weapon, attacker.type, attackerSubmerged),
+      fire: fireKind(defender.type, counter.weapon, attacker.type),
       hpBefore: attackerHp,
       hpAfter: displayHp(attacker.hp),
       atAir: isAir(attacker.type),
@@ -250,7 +248,7 @@ export function planFortAttack(state: GameState, event: Extract<GameEvent, { typ
   const strikes: BattleStrike[] = [
     {
       from: side.attacker,
-      fire: fireKind(attacker.type, event.attack.weapon, "bunker", false),
+      fire: fireKind(attacker.type, event.attack.weapon, "bunker"),
       hpBefore: fortBefore,
       hpAfter: displayHp(event.hp),
       atAir: false,

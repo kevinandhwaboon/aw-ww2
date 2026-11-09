@@ -45,6 +45,11 @@ function faceOf(points: V3[], color: string, center: V3): Face {
   return { points: out >= 0 ? points : [...points].reverse(), color };
 }
 
+/** A face wound so it faces away from `inside`: for shapes built face by face, like ship hulls. */
+export function oriented(points: V3[], color: string, inside: V3): Face {
+  return faceOf(points, color, inside);
+}
+
 function centroid(points: readonly V3[]): V3 {
   const s = points.reduce<[number, number, number]>((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]], [0, 0, 0]);
   return [s[0] / points.length, s[1] / points.length, s[2] / points.length];
