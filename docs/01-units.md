@@ -11,7 +11,7 @@
 1. **Every unit has a distinct job.** Each unit is either a counter to something or a tool (capture, transport, supply). No unit is just "a slightly better version" of another.
 2. **Stats are identical across sides.** A Medium Tank is the same unit whether the art is a Sherman or a Panzer IV.
 3. **Historical asymmetry comes from availability, not stats.** Each scenario defines which unit types each side can build and which it starts with.
-4. **Availability rule:** a nation has art for a unit type only if it historically fielded an equivalent, and a scenario only offers a nation the unit types it has art for. Example: the US has no Heavy Tank in Normandy; the UK has one (Churchill); Germany has one (Tiger).
+4. **Availability rule:** a nation has art for a unit type only if it historically fielded an equivalent, and a scenario only offers a nation the unit types it has art for. Example: the US has no Heavy Tank in Normandy; the UK has one (Churchill); Germany has one (Tiger). Japan has art for every unit type except the Heavy Tank: it fielded none.
 5. **Generic military names only.** No names from the original game (no "Mech", "Md Tank", "Neotank", "Lander", "B-Copter", etc.).
 
 ## 2. Land units (12 in phase 1 MVP, plus Flak Gun in phase 2)
@@ -179,4 +179,4 @@ All values pass through the modifier layer (master doc section 7).
 - Movement type list and terrain costs (02-terrain).
 - Damage chart, including vs. fortifications and obstacles (03-combat).
 - Can Heavy Tank fuel use or Rocket Artillery fragility be expressed through existing stats, or do they need special rules?
-- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor.
+- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor. Decided so far: the US has no Heavy Tank; Germany has no Battleship or Landing Craft; Japan has no Heavy Tank (08-art-pipeline §17).

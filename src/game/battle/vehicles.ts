@@ -1,7 +1,9 @@
 // Battle figures with wheels and tracks, guns on carriages, and the bunker (08-art-pipeline §18).
 // Each nation's version follows the map art (08-art-pipeline §12, §17) and is drawn so the real
 // vehicle can be told apart: a Sherman's bogies and cast turret, a Panzer IV's skirts and long gun,
-// a Tiger's interleaved wheels and Zimmerit, a Willys jeep's flat hood and upright windshield.
+// a Tiger's interleaved wheels and Zimmerit, a Willys jeep's flat hood and upright windshield, a
+// Chi-Ha's bellcranks and handrail antenna. Japan's other machines (recon, halftrack, AA, guns,
+// rockets) take the German shapes, which their real counterparts resembled, with Japanese crews.
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
@@ -11,9 +13,10 @@ import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkf
 import { C, mix, shade, type Painter } from "./paint";
 import { drawSoldier, earsCovered, sandbags, soldierFrame } from "./soldiers";
 import { FIRE_TIMING } from "./timeline";
-import { justFired, kick, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
+import { justFired, kick, kitOf, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
-const de = (look: Look) => look.nation === "germany";
+/** The Axis shapes: Germany's machines, which Japan's other machines also use (see the top). */
+const de = (look: Look) => kitOf(look) !== "us";
 
 /** A white star, the US vehicle marking. */
 export function star(p: Painter, cx: number, cy: number): void {
@@ -28,11 +31,20 @@ export function star(p: Painter, cx: number, cy: number): void {
   p.px(cx + 3, cy + 2, s);
 }
 
-/** A crewman's head in the hatch: a US tanker helmet, or German headphones over a side cap. */
+/**
+ * A crewman's head in the hatch: a US tanker helmet, German headphones over a side cap, or the
+ * Japanese padded tanker's helmet with its peak.
+ */
 function commander(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x, y - 6, 5, 6, C("battleSkin"));
   p.px(x + 3, y - 4, C("battleInk"));
-  if (de(look)) {
+  if (kitOf(look) === "jp") {
+    const pad = mix(C("battleKhaki"), C("battleLeather"), 0.4);
+    p.rect(x - 1, y - 9, 6, 3, pad);
+    p.rect(x + 4, y - 7, 3, 1, shade(pad, 0.7));
+    p.rect(x - 1, y - 6, 2, 3, pad);
+    p.px(x + 1, y - 9, shade(pad, 1.3));
+  } else if (de(look)) {
     p.rect(x - 1, y - 8, 7, 2, C("battleRubber"));
     p.px(x - 1, y - 4, C("battleRubber"));
   } else {
@@ -53,7 +65,7 @@ function tankModel(kind: TankKind, look: Look, recoil: number): Model {
   const key = `${kind}|${look.nation ?? ""}|${look.team.mid}|${recoil}`;
   let model = modelCache.get(key);
   if (!model) {
-    model = (de(look) ? TANK_MODELS[kind].de : TANK_MODELS[kind].us)(look.team, recoil);
+    model = TANK_MODELS[kind][kitOf(look)](look.team, recoil);
     modelCache.set(key, model);
   }
   return model;
@@ -116,7 +128,12 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x - 1, y - 2, 8, 4, look.team.clothLo);
   p.rect(x, y - 8, 6, 6, C("battleSkin"));
   p.px(x + 4, y - 6, C("battleInk"));
-  if (de(look)) {
+  if (kitOf(look) === "jp") {
+    // Type 90 helmet, its neck flaps hanging behind.
+    p.rect(x - 2, y - 8, 3, 6, mix(look.team.cloth, C("battleSand"), 0.3));
+    p.rect(x, y - 11, 6, 3, look.team.lo);
+    p.rect(x - 1, y - 9, 8, 1, look.team.deep);
+  } else if (de(look)) {
     p.rect(x - 1, y - 11, 8, 4, look.team.lo);
     p.rect(x - 2, y - 8, 2, 3, look.team.lo);
   } else {
@@ -144,7 +161,7 @@ export const reconRig: Rig = {
       const seat = at(m.at.rider, oy);
       const bars = at(m.at.bars, oy);
       const rf = drawSoldier(p, seat.x, seat.y, "kneel", look, { lean: 3, front: bars, back: { x: bars.x - 1, y: bars.y + 1 } });
-      p.rect(seat.x - 2, rf.hip - 1, 13, 7, mix(C("battleFieldGrey"), C("battleRubber"), 0.25));
+      p.rect(seat.x - 2, rf.hip - 1, 13, 7, mix(C(kitOf(look) === "jp" ? "battleKhaki" : "battleFieldGrey"), C("battleRubber"), 0.25));
       p.rect(rf.head.x + 1, rf.head.y - 3, 5, 1, C("battleSkyLow"));
       mesh(p, m.near, oy);
       const g = at(m.at.gunner, oy);

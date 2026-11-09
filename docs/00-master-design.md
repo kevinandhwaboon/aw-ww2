@@ -59,11 +59,12 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 
 ## 6. Factions and historical presentation
 
-- Two sides: **Allies** and **Axis**. Specific nations per scenario (for example US, UK, Canada vs. Germany for Normandy).
+- Two sides: **Allies** and **Axis**. Specific nations per scenario (for example US, UK, Canada vs. Germany for Normandy, or the US vs. Japan for Iwo Jima). Nations so far: US, UK, Canada, Soviet Union (Allies); Germany and Japan (Axis). Only the US, Germany and Japan have their own art yet.
+- Nations are named for the country, never one service: "US", not "US Army", since US forces include Marines and the Navy.
 - **Units are generic in stats** (Light Tank, Heavy Tank, Fighter, etc.) and **identical in capability regardless of side**. Their art mirrors real WW2 equipment per nation (for example a Sherman vs. a Panzer IV for the same unit type).
 - **Historical asymmetry comes from availability, not stats.** A nation has art for a unit type only if it historically fielded an equivalent, and scenarios only offer a nation the unit types it has art for (for example no US Heavy Tank in Normandy).
 - Later, commanders may modify a side's unit performance, as COs did in the original.
-- **No Nazi or political symbols.** Sides are identified by color and equipment silhouettes. Any national insignia use is a future decision (TBD); the swastika is never used.
+- **No Nazi or political symbols.** Sides are identified by color and equipment silhouettes. Any national insignia use is a future decision (TBD); the swastika is never used. Japan is shown only with its national flag, the plain red disc (hinomaru), on its HUD flag and its aircraft; the rising-sun ensign is never used.
 - MVP historical detail is limited to the units themselves. Briefings, real names, dates and so on come later.
 - Unit roster: see **01-units.md**. 13 land units (12 in MVP, Flak Gun in phase 2), 3 air, 5 naval.
 
@@ -227,6 +228,7 @@ UI falls into four categories:
 | 11-tech-setup.md | **Decided**: tooling, repo layout, engine boundary, testing, phased build plan |
 | 12-weather.md | **v0 decided**: Clear and Snow, set per scenario as a forecast; snow uses the original's movement costs |
 | 13-scenarios-ardennes.md | **First Ardennes map (v0)**: Bastogne, 40 × 30, snow then clear; balance untested |
+| 14-scenarios-pacific.md | **First Pacific map (v0)**: Iwo Jima, 36 × 26, the US vs. Japan; balance untested |
 
 ## 18. Open questions
 
@@ -336,3 +338,7 @@ UI falls into four categories:
 | 2026-11-08 | Weather (12-weather): Clear and Snow, the same for the whole map for a whole day, set by the scenario in advance as a forecast; no random weather in v0. Snow adds to movement costs through the modifier layer, using the original game's snow table (roads and towns unchanged, aircraft pay 2 per tile). Rain waits for fog of war. Modifiers can now be scoped by movement type |
 | 2026-11-08 | A scenario can say its map is in winter: snowy map tiles and battle scenes all game, even under clear skies, since snow stays on the ground. Art only; packs give a winter version of the terrain and building sheets with the same layout (08-art-pipeline §21) |
 | 2026-11-08 | Bastogne map (13-scenarios-ardennes): the Ardennes in December 1944, 40 × 30. Germany attacks with a bigger army whose tanks start short of fuel and has no aircraft; it wins by taking Bastogne or the US HQ at Arlon. The US wins by holding out to day 12. Snow until day 5, clear from day 6 |
+| 2026-11-08 | The US is army green: the first player's color in the built-in pack is now army green (was blue), and every built-in map puts the US first. Blue moves to the third player. Each nation's sheets come in army green, red and blue (08-art-pipeline §12) |
+| 2026-11-08 | Player names are the nation, not one service: "US Army" becomes "US", since the US fields Marines and the Navy too (00-master-design §6) |
+| 2026-11-08 | Japan joins the Axis as a nation, with its own map sprites and battle scenes modeled on IJA and IJN equipment: Arisaka with bayonet, Type 90 helmet, Ha-Go, Chi-Ha, Ho-Ni, A6M Zero, G4M, Yamato, Kagero. Japan fielded no heavy tank, so it gets no Heavy Tank art and scenarios don't offer it one (01-units §1). Its aircraft and HUD flag carry the plain hinomaru; the rising-sun ensign is never used (08-art-pipeline §12, §18) |
+| 2026-11-08 | Iwo Jima map (14-scenarios-pacific): February 1945, 36 × 26. The US starts with its first wave ashore and wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ; Japan, dug into bunkers, wins by holding out to day 15. A US anchorage off the south-east corner stands in for the fleet's transport area |

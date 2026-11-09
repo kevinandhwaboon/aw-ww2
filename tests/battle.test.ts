@@ -71,12 +71,17 @@ describe("figures on screen (08-art-pipeline §18)", () => {
 });
 
 describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
-  const squad = (nation: "us" | "germany", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
+  const squad = (nation: "us" | "germany" | "japan", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
   const count = (weapons: string[], weapon: string) => weapons.filter((w) => w === weapon).length;
 
   it("a German squad is six riflemen, a squad leader with an MP 40 and an MG 42", () => {
     const de = squad("germany");
     expect([count(de, "rifle"), count(de, "smg"), count(de, "lmg")]).toEqual([6, 1, 1]);
+  });
+
+  it("a Japanese squad is six riflemen with Arisakas, a squad leader with a Type 100 and a Type 99 light machine gun", () => {
+    const jp = squad("japan");
+    expect([count(jp, "rifle"), count(jp, "smg"), count(jp, "lmg")]).toEqual([6, 1, 1]);
   });
 
   it("a US squad is mostly riflemen, with two Thompsons and a BAR", () => {

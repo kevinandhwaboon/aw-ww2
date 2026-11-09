@@ -1,5 +1,5 @@
 // Draws a whole-map overview PNG of a scenario, one colored block per square, for docs and review.
-// Blue properties are Allied, red German, grey neutral; the inner mark shows the kind
+// Green properties belong to the first player (the US), red to the second, grey neutral; the inner mark shows the kind
 // (yellow factory, white airfield, cyan port, black HQ). Dark squares are starting units.
 //
 // Run: node tools/maps/overview.mjs normandy      (writes docs/maps/normandy.png)
@@ -16,8 +16,8 @@ const TERRAIN = {
   S: "#1565c0", _: "#fff59d", r: "#5d4037", X: "#616161", x: "#9e9e9e", o: "#000000",
 };
 const KIND = { f: "#ffeb3b", A: "#ffffff", P: "#00e5ff", Q: "#000000" };
-const OWNER = ["#1e88e5", "#e53935"];
-const UNIT = ["#0d47a1", "#b71c1c"];
+const OWNER = ["#64783a", "#e53935"];
+const UNIT = ["#2a3818", "#b71c1c"];
 
 const owners = new Map((scenario.propertyOwners ?? []).map((p) => [`${p.pos.x},${p.pos.y}`, p.owner]));
 const k = 8;

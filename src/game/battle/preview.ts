@@ -7,7 +7,8 @@
 // `&zoom=0,150,192,72` enlarges one part of each and `&scale=1` sets the size. `&storm=all` (or
 // `capture`, `garrison`) shows the storming scenes instead, and `&t=end` holds each at its outcome.
 // `&drop=on` shows airborne drops. `&weather=winter` draws every scene on snowy ground, and
-// `&weather=snow` adds an overcast sky and falling snow (12-weather §5).
+// `&weather=snow` adds an overcast sky and falling snow (12-weather §5). `&axis=japan` puts Japan on the
+// Axis side in place of Germany.
 
 import Phaser from "phaser";
 import type { NationId } from "../../engine/data/nations";
@@ -64,9 +65,12 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "tankDestroyer", d: "heavyTank", counter: "primary" },
 ];
 
+/** The Axis nation in every preview scene: Germany, or Japan with `&axis=japan`. */
+let axis: NationId = "germany";
+
 function planFor(m: Matchup, flip: boolean): BattlePlan {
-  const attackerNation: NationId = flip ? "germany" : "us";
-  const defenderNation: NationId = flip ? "us" : "germany";
+  const attackerNation: NationId = flip ? axis : "us";
+  const defenderNation: NationId = flip ? "us" : axis;
   const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"].includes(k);
   const left = {
     half: "left" as const,
@@ -150,18 +154,18 @@ function stormPlans(params: URLSearchParams): StormPlan[] {
     after: kind === "capture" ? after : 0,
     captured: kind === "capture" && after === 0,
     previousOwner: kind === "capture" ? 1 - owner : null,
-    previousNation: kind === "capture" ? (nation === "us" ? "germany" : "us") : null,
+    previousNation: kind === "capture" ? (nation === "us" ? axis : "us") : null,
   });
   const only = params.get("storm");
   const plans = [
     make("capture", "infantry", "city", 20, 10, 0, "us"),
-    make("capture", "infantry", "city", 10, 0, 1, "germany"),
+    make("capture", "infantry", "city", 10, 0, 1, axis),
     make("capture", "infantry", "hq", 16, 6, 0, "us"),
-    make("capture", "assaultInfantry", "factory", 20, 10, 1, "germany"),
+    make("capture", "assaultInfantry", "factory", 20, 10, 1, axis),
     make("capture", "infantry", "airfield", 20, 10, 0, "us"),
-    make("capture", "infantry", "port", 7, 0, 1, "germany"),
+    make("capture", "infantry", "port", 7, 0, 1, axis),
     make("garrison", "infantry", "bunker", 0, 0, 0, "us"),
-    make("garrison", "assaultInfantry", "bunker", 0, 0, 1, "germany"),
+    make("garrison", "assaultInfantry", "bunker", 0, 0, 1, axis),
     make("garrison", "mortar", "bunker", 0, 0, 0, "us"),
   ];
   return only === "capture" || only === "garrison" ? plans.filter((x) => x.kind === only) : plans;
@@ -206,7 +210,7 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
   const suit = Number(params.get("para") ?? 1) % 4 || 0;
   const plans: DropPlan[] = [
     { unit: "infantry", owner: 0, nation: "us", hp: 10, paratrooper: true, suit, terrain: "plains" },
-    { unit: "infantry", owner: 1, nation: "germany", hp: 10, paratrooper: false, suit: 0, terrain: "bocage" },
+    { unit: "infantry", owner: 1, nation: axis, hp: 10, paratrooper: false, suit: 0, terrain: "bocage" },
     { unit: "mortar", owner: 0, nation: "us", hp: 6, paratrooper: false, suit: 0, terrain: "road" },
   ];
   const frozen = params.get("t");
@@ -239,6 +243,7 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
 }
 
 export function startBattlePreview(root: HTMLElement, params: URLSearchParams): void {
+  if (params.get("axis") === "japan") axis = "japan";
   const weather = params.get("weather");
   if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow" });
   if (params.get("angled") !== null) {

@@ -82,6 +82,9 @@ const BUILT_IN_COLORS = {
   // Battle scenes: figures and materials
   battleOlive: "#5c6038",
   battleFieldGrey: "#5e665c",
+  // The IJA uniform's khaki drab, and the red of Japan's hinomaru marking
+  battleKhaki: "#8a7c4c",
+  battleSun: "#c8202c",
   battleSteel: "#5a5e60",
   battleSteelDark: "#33363a",
   battleRubber: "#26262a",
@@ -182,9 +185,10 @@ export interface ArtPack {
 export const BUILT_IN_PACK: ArtPack = {
   name: "Built-in",
   players: [
-    { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
+    // Player 1 is army green: the US, the first player on every built-in map (08-art-pipeline §12).
+    { team: "olive", fill: "#64783a", outline: "#2a3818" },
     { team: "red", fill: "#c8463a", outline: "#5e1a14" },
-    { team: "green", fill: "#4a9a40", outline: "#1e4418" },
+    { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
     { team: "gold", fill: "#d8a030", outline: "#6a4a10" },
   ],
   colors: BUILT_IN_COLORS,

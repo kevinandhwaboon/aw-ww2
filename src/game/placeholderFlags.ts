@@ -1,5 +1,6 @@
 // Small national flags for the HUD. Placeholder art, and deliberately free of political symbols:
-// the Soviet flag is a plain star, and Germany shows the Balkenkreuz, its wartime military marking.
+// the Soviet flag is a plain star, Germany shows the Balkenkreuz, its wartime military marking, and
+// Japan shows its national flag, the plain red disc, never the rising-sun ensign.
 
 import type { NationId } from "../engine/data/nations";
 
@@ -68,5 +69,16 @@ export const FLAGS: Readonly<Record<NationId, readonly string[]>> = {
     "AAAWWWKKKKWWWAAA",
     "AAAAAWKKKKWAAAAA",
     "AAAAAWWWWWWAAAAA",
+  ],
+  japan: [
+    "WWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWW",
+    "WWWWWWRRRRWWWWWW",
+    "WWWWWRRRRRRWWWWW",
+    "WWWWWRRRRRRWWWWW",
+    "WWWWWRRRRRRWWWWW",
+    "WWWWWWRRRRWWWWWW",
+    "WWWWWWWWWWWWWWWW",
+    "WWWWWWWWWWWWWWWW",
   ],
 };
