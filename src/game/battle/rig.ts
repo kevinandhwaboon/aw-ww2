@@ -60,6 +60,11 @@ export interface Rig {
    * after the men have gone, so its shadow stays too.
    */
   gearStays?(look: Look): boolean;
+  /**
+   * Ships: the sea along the hull, drawn over the figure at the water level, without its outline.
+   * `alive` false for a ship going down: the water stops running past it.
+   */
+  water?(p: Painter, pose: Pose, look: Look, alive: boolean): void;
 }
 
 /** Whose equipment a figure carries: Japan's, Germany's, or the US look every other Allied nation shares. */

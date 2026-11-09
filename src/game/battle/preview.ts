@@ -96,10 +96,10 @@ function planFor(m: Matchup, flip: boolean): BattlePlan {
   };
   const air = (k: FigureKind) => k === "fighter" || k === "bomber" || k === "transportAircraft";
   const strikes: BattlePlan["strikes"][number][] = [
-    { from: "left", fire: fireKind(m.a, m.weapon ?? "primary", m.d, m.submerged === true), hpBefore: 10, hpAfter: m.counter ? 6 : 3, atAir: air(m.d) },
+    { from: "left", fire: fireKind(m.a, m.weapon ?? "primary", m.d), hpBefore: 10, hpAfter: m.counter ? 6 : 3, atAir: air(m.d) },
   ];
   if (m.counter && m.d !== "bunker") {
-    strikes.push({ from: "right", fire: fireKind(m.d, m.counter, m.a, false), hpBefore: 10, hpAfter: 7, atAir: air(m.a) });
+    strikes.push({ from: "right", fire: fireKind(m.d, m.counter, m.a), hpBefore: 10, hpAfter: 7, atAir: air(m.a) });
   }
   return { left, right, strikes };
 }
@@ -271,6 +271,7 @@ export function startBattlePreview(root: HTMLElement, params: URLSearchParams): 
         ...(isTerrain(at) ? { at } : {}),
         ...(isTerrain(dt) ? { dt } : {}),
         ...(params.get("para") === null ? {} : { para: Number(params.get("para")) % 4 || 0 }),
+        ...(params.get("sub") === "on" && d === "submarine" ? { submerged: true } : {}),
       }]
     : MATCHUPS;
   const flip = params.get("flip") === "on";

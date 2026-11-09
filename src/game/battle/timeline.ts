@@ -19,7 +19,9 @@ export interface FireTiming {
 
 /**
  * Indirect fire (mortars, howitzers, rockets) flies for well over a second: up out of sight, a
- * pause while it's overhead, then down onto the target.
+ * pause while it's overhead, then down onto the target. Ships fight at long range, so their fire
+ * takes a while to arrive too: shells leave the screen and fall in over a second later, torpedoes
+ * run the whole way across, and depth charges sink before they go off.
  */
 export const FIRE_TIMING: Record<FireKind, FireTiming> = {
   rifle: { cycle: 650, shots: [180], cycles: 2, flight: 240, stagger: 110 },
@@ -33,10 +35,10 @@ export const FIRE_TIMING: Record<FireKind, FireTiming> = {
   flak: { cycle: 1000, shots: [150, 650], cycles: 1, flight: 300, stagger: 250 },
   planeGuns: { cycle: 800, shots: [100, 170, 240, 310, 380, 450], cycles: 1, flight: 230, stagger: 150 },
   bombs: { cycle: 1100, shots: [200, 350, 500, 650], cycles: 1, flight: 750, stagger: 200 },
-  navalGuns: { cycle: 1400, shots: [150, 550, 950], cycles: 1, flight: 500, stagger: 0 },
-  deckGun: { cycle: 900, shots: [150, 550], cycles: 1, flight: 300, stagger: 200 },
-  depthCharges: { cycle: 1000, shots: [150, 400, 650], cycles: 1, flight: 700, stagger: 250 },
-  torpedo: { cycle: 1200, shots: [300], cycles: 1, flight: 900, stagger: 300 },
+  navalGuns: { cycle: 1400, shots: [150, 550, 950], cycles: 1, flight: 1700, stagger: 0 },
+  deckGun: { cycle: 900, shots: [150, 550], cycles: 1, flight: 1100, stagger: 200 },
+  depthCharges: { cycle: 1000, shots: [150, 400, 650], cycles: 1, flight: 1700, stagger: 250 },
+  torpedo: { cycle: 1200, shots: [300], cycles: 1, flight: 1700, stagger: 300 },
 };
 
 /** Infantry fire by soldier: riflemen fire single shots, the SMG and the squad automatic fire bursts. */
