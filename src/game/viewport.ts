@@ -75,3 +75,19 @@ function revealAxis(scroll: number, view: number, map: number, lo: number, hi: n
   else if (hi + m > scroll + view) next = hi + m - view;
   return clampAxis(next, view, map);
 }
+
+/** In the phone game-pad layout the screen shows about this many squares across, like a handheld. */
+export const HANDHELD_SQUARES_ACROSS = 15;
+
+/**
+ * The view for the phone game-pad layout (00-master-design §12, phone prototype): drawn in the phone's own
+ * screen pixels, at the whole-number zoom that shows closest to 15 squares across the screen box.
+ * The canvas is the map's size at that zoom, cut down to the box when the map doesn't fit.
+ * `box` is in CSS pixels; the result is in device pixels.
+ */
+export function handheldViewSize(box: Size, map: Size, devicePixelRatio: number): ViewSize {
+  const width = Math.floor(box.width * devicePixelRatio);
+  const height = Math.floor(box.height * devicePixelRatio);
+  const zoom = Math.max(1, Math.round(width / (HANDHELD_SQUARES_ACROSS * 16)));
+  return { zoom, width: Math.min(map.width * zoom, width), height: Math.min(map.height * zoom, height) };
+}

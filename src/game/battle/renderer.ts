@@ -89,10 +89,12 @@ const SHADOW: Record<FigureKind, number> = {
 const INDIRECT_MS = { up: 260, rocketUp: 420, down: 380 };
 
 /**
- * Naval gunfire: shells leave the firing half fast and climb out of sight, and only fall into the
- * target's half near the end of their flight, so the target is hit well after the guns fire.
+ * Naval gunfire: a shell leaves along the barrel (about 20° up; guns that aren't raised fire at
+ * 20° anyway), climbs for a short stretch and fades into the distance. Near the end of its flight
+ * it reappears coming down at the same angle onto the target, so the target is hit well after the
+ * guns fire. Speed in pixels per ms; `out` and `in` are how far it's seen going and coming.
  */
-const NAVAL = { speed: 0.6, climb: -0.3, fall: 0.5 };
+const NAVAL = { speed: 0.35, launch: 0.35, out: 70, in: 80 };
 /** Depth charges: thrown clear of the stern for this long, then they sink until they go off. */
 const CHARGE_THROW_MS = 520;
 /** Where a depth charge goes into the water: spread in a pattern around the submarine, not all on it. */
@@ -583,7 +585,7 @@ export class BattleRenderer {
    * barrel and comes up under the target from below. Bombs fall out of the bottom of their half and
    * in at the top of the other.
    */
-  private missileAt(shot: PlannedShot, u: number, kind: Missile): { at: Pt; dir: Pt } | null {
+  private missileAt(shot: PlannedShot, u: number, kind: Missile): { at: Pt; dir: Pt; fade?: number } | null {
     const m = shot.muzzle;
     const target = kind === "torpedo" ? { x: shot.target.x, y: shot.targetBase.y + 2 } : shot.target;
     const side = target.x > m.x ? 1 : -1;
@@ -643,18 +645,18 @@ export class BattleRenderer {
     if (kind === "naval") {
       const total = shot.landAt - shot.fireAt;
       const elapsed = u * total;
-      // Out along the barrel, climbing at least a little, until it leaves the firing half.
-      const hy = Math.min(NAVAL.climb, shot.heading.y);
-      const hl = Math.hypot(shot.heading.x, hy) || 1;
-      const out = { x: m.x + (shot.heading.x / hl) * elapsed * NAVAL.speed, y: m.y + (hy / hl) * elapsed * NAVAL.speed };
-      const outside = (at: Pt) => (side === 1 ? at.x > SCENE.half - 2 : at.x < SCENE.half + 2) || at.y < SCENE.top;
-      if (!outside(out)) return { at: out, dir: { x: shot.heading.x / hl, y: hy / hl } };
-      // Coming down: on a line falling onto the target, seen only once it's over the target's half.
-      const fall = { x: side * Math.cos(NAVAL.fall), y: Math.sin(NAVAL.fall) };
-      const d = (total - elapsed) * NAVAL.speed;
-      const at = { x: target.x - fall.x * d, y: target.y - fall.y * d };
+      const raised = Math.atan2(-shot.heading.y, Math.abs(shot.heading.x));
+      const launch = raised > 0.15 ? raised : NAVAL.launch;
+      const climb = { x: side * Math.cos(launch), y: -Math.sin(launch) };
+      const gone = elapsed * NAVAL.speed;
+      if (gone <= NAVAL.out) return { at: { x: m.x + climb.x * gone, y: m.y + climb.y * gone }, dir: climb, fade: Math.min(1, (NAVAL.out - gone) / 25) };
+      // Coming down onto the target at the angle it went up, seen only over the target's half.
+      const left = (total - elapsed) * NAVAL.speed;
+      if (left > NAVAL.in) return null;
+      const fall = { x: side * Math.cos(launch), y: Math.sin(launch) };
+      const at = { x: target.x - fall.x * left, y: target.y - fall.y * left };
       if (side === 1 ? at.x < SCENE.half + 2 : at.x > SCENE.half - 2) return null;
-      return { at, dir: fall };
+      return { at, dir: fall, fade: Math.min(1, (NAVAL.in - left) / 25) };
     }
     if (kind === "charge") {
       // Thrown in an arc onto the water over the submarine, then sinking onto it.
@@ -698,8 +700,12 @@ export class BattleRenderer {
       p.line(at.x - dir.x * 5, at.y - dir.y * 5, at.x, at.y, C("battleTracer"));
     } else if (kind === "shell" || kind === "naval") {
       const big = shot.fire === "navalGuns";
+      // Naval shells fade as they go out of sight into the distance, and in as they come down.
+      p.ctx.save();
+      p.ctx.globalAlpha *= here.fade ?? 1;
       p.line(at.x - dir.x * (big ? 12 : 9), at.y - dir.y * (big ? 12 : 9), at.x, at.y, C("battleTracer"), big ? 3 : 2);
       p.px(at.x, at.y, C("battleFlash"));
+      p.ctx.restore();
     } else if (kind === "rocket") {
       p.line(at.x - dir.x * 6, at.y - dir.y * 6, at.x, at.y, C("battleSteelDark"), 2);
       p.rect(at.x - dir.x * 8 - 1, at.y - dir.y * 8 - 1, 3, 3, C("battleFire"));
