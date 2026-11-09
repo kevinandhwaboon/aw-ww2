@@ -38,6 +38,7 @@ export {
   type Reach,
 } from "./movement";
 export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOption } from "./economy";
+export { buildCommands, legalCommands, unitCommands } from "./legal";
 export { loadGame, saveGame } from "./save";
 export { parseScenario, type Scenario } from "./scenario";
 export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
@@ -73,7 +74,7 @@ export { weatherOn } from "./weather";
 export * as stats from "./stats";
 export type { Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
 export { parseAsciiMap, terrainAt, inBounds, type GameMap, type Point } from "./map";
-export { TERRAIN, TERRAIN_IDS, type TerrainId, type MovementType } from "./data/terrain";
+export { TERRAIN, TERRAIN_IDS, type TerrainId, type TerrainDef, type MovementType } from "./data/terrain";
 export { UNITS, UNIT_TYPE_IDS, type UnitTypeId, type UnitDef, type UnitCategory } from "./data/units";
 export { baseDamage, DAMAGE_CHART, type DamageEntry, type DamageTarget } from "./data/damage";
 export { veterancyFor, VETERANCY, type VeterancyLevel } from "./data/veterancy";
