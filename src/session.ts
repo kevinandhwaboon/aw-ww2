@@ -13,7 +13,7 @@ import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
 import { handheldViewSize, viewSize } from "./game/viewport";
-import { mountPad } from "./ui/pad";
+import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
 import {
   createBanner,
@@ -164,7 +164,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * small that squares are hard to read: past that the view scrolls (00-master-design §12).
    */
   // With the game pad the screen is a box above the pad, drawn in the phone's own pixels.
-  if (pad) mountPad(uiRoot);
+  if (pad) mountPad(uiRoot, padInput(scene));
   const fitWindow = () =>
     pad
       ? handheldViewSize(gameRoot.getBoundingClientRect(), { width, height }, window.devicePixelRatio)
@@ -202,4 +202,32 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
 function turnStartTile(state: GameState, player: number): Point {
   const hq = state.properties.find((p) => p.owner === player && terrainAt(state.map, p.pos) === "hq");
   return hq?.pos ?? state.units.find((u) => u.owner === player)?.pos ?? { x: 0, y: 0 };
+}
+
+/**
+ * Where an on-screen pad button goes: to the menu that has the focus, as the key it stands for,
+ * otherwise straight to the map. A button left focused on a screen that's now hidden doesn't count.
+ */
+function padInput(scene: MapScene): PadInput {
+  const focusedMenu = (): HTMLElement | null => {
+    const focused = document.activeElement;
+    if (!(focused instanceof HTMLElement) || focused === document.body) return null;
+    if (focused.getClientRects().length > 0) return focused;
+    focused.blur();
+    return null;
+  };
+  const send = (target: HTMLElement, type: "keydown" | "keyup", key: string, repeat: boolean) =>
+    target.dispatchEvent(new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true }));
+  return {
+    press(key, repeat) {
+      const menu = focusedMenu();
+      if (menu) send(menu, "keydown", key, repeat);
+      else scene.pressKey(key, repeat);
+    },
+    release(key) {
+      const menu = focusedMenu();
+      if (menu) send(menu, "keyup", key, false);
+      else scene.releaseKey(key);
+    },
+  };
 }

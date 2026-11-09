@@ -2,13 +2,20 @@ import { el } from "./hud";
 
 /**
  * The on-screen game pad for phones held upright (phone prototype): a direction pad and the Z and X
- * buttons under the game screen. Each button sends the same key the keyboard would, so the map and
- * every menu already know what to do with it. It never decides anything itself.
+ * buttons under the game screen. Each button stands for the same key as on the keyboard, and the
+ * page decides where that key goes (an open menu or the map). The pad never decides anything itself.
  */
 
 /** Holding a direction moves again after this long, then every REPEAT_MS. */
 const REPEAT_DELAY_MS = 280;
 const REPEAT_MS = 110;
+
+export interface PadInput {
+  /** A button went down (repeat: it's being held and fires again). */
+  press(key: string, repeat: boolean): void;
+  /** A button came back up. */
+  release(key: string): void;
+}
 
 interface PadKey {
   readonly key: string;
@@ -31,52 +38,58 @@ const ACTIONS: readonly PadKey[] = [
 ];
 
 /** Shows the pad and lays the page out as a handheld: status on top, game screen, info, pad. */
-export function mountPad(root: HTMLElement): void {
+export function mountPad(root: HTMLElement, input: PadInput): void {
   document.body.classList.add("pad-layout");
   const pad = el("div", "pad");
   const dpad = el("div", "pad-dpad");
-  for (const k of DIRECTIONS) dpad.append(padButton(k));
+  for (const k of DIRECTIONS) dpad.append(padButton(k, input));
   dpad.append(el("div", "pad-hub"));
   const actions = el("div", "pad-actions");
-  for (const k of ACTIONS) actions.append(padButton(k));
+  for (const k of ACTIONS) actions.append(padButton(k, input));
   pad.append(dpad, actions);
   root.append(pad);
 }
 
-function padButton(spec: PadKey): HTMLElement {
+function padButton(spec: PadKey, input: PadInput): HTMLElement {
   // A div, not a button: a button would take the focus away from the menu the key is meant for.
   const button = el("div", `pad-btn ${spec.className}`);
   button.append(el("span", "pad-label", spec.label));
   if (spec.hint) button.append(el("span", "pad-hint", spec.hint));
   let timer: number | undefined;
-  const stop = () => {
-    if (timer !== undefined) window.clearTimeout(timer);
-    timer = undefined;
-    if (!button.classList.contains("pressed")) return;
-    button.classList.remove("pressed");
-    send("keyup", spec.key, false);
-  };
-  button.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    button.setPointerCapture(event.pointerId);
+  let down = false;
+
+  const start = () => {
+    if (down) return;
+    down = true;
     button.classList.add("pressed");
     if ("vibrate" in navigator) navigator.vibrate(8); // Android only; iPhones have no web vibration
-    send("keydown", spec.key, false);
+    input.press(spec.key, false);
     if (!spec.repeats) return;
     const again = () => {
-      send("keydown", spec.key, true);
+      input.press(spec.key, true);
       timer = window.setTimeout(again, REPEAT_MS);
     };
     timer = window.setTimeout(again, REPEAT_DELAY_MS);
-  });
-  button.addEventListener("pointerup", stop);
-  button.addEventListener("pointercancel", stop);
+  };
+  const stop = () => {
+    if (timer !== undefined) window.clearTimeout(timer);
+    timer = undefined;
+    if (!down) return;
+    down = false;
+    button.classList.remove("pressed");
+    input.release(spec.key);
+  };
+
+  // Fingers: touch events, the most dependable input on iPhones. Cancelling them stops the page
+  // from scrolling, zooming or selecting text, and stops the mouse events a tap would also send.
+  const touchOptions = { passive: false } as const;
+  button.addEventListener("touchstart", (event) => { event.preventDefault(); start(); }, touchOptions);
+  button.addEventListener("touchend", (event) => { event.preventDefault(); stop(); }, touchOptions);
+  button.addEventListener("touchcancel", stop);
+  // A mouse, for trying the layout on a computer with ?pad=on.
+  button.addEventListener("mousedown", (event) => { event.preventDefault(); start(); });
+  button.addEventListener("mouseup", stop);
+  button.addEventListener("mouseleave", stop);
   button.addEventListener("contextmenu", (event) => event.preventDefault());
   return button;
-}
-
-/** Sent to whatever has the focus (an open menu), else the page, so it reaches the map. */
-function send(type: "keydown" | "keyup", key: string, repeat: boolean): void {
-  const target = document.activeElement instanceof HTMLElement ? document.activeElement : document.body;
-  target.dispatchEvent(new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true }));
 }
