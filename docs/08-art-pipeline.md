@@ -481,9 +481,17 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 - **Five shades per color:** each face takes one of five steps by how much light it gets. Shadows lean toward a cool navy (`battleShadeTint`). Lit faces get lighter without losing saturation and turn a few degrees toward the warm hue of `battleLightTint`, so a lit red stays red instead of going pink. A face lit halfway keeps its color.
 - **Plate edges:** a bright line along every edge facing the light (the lit lip of each plate, a wheel's rim) and a dark crease along edges facing down (the shadow under an overhang). Long thin faces such as barrel facets get neither, or they'd look striped.
 - **Rivets:** a light head over a dark underside, every 6 pixels along the top of each big upright plate.
-- **Cast shadow:** the model's own shape flattened onto the ground, pushed forward and toward the viewer by its height, in the shade tint at half strength. It mirrors with the figure, as its lighting does. For machines it replaces the faint oval; soldiers keep the oval, and aircraft and ships cast none. A wreck keeps its shadow.
+- **Cast shadow:** the model's own shape flattened onto the ground, pushed forward and toward the viewer by its height, in the shade tint at half strength. It mirrors with the figure, as its lighting does. For machines it replaces the faint oval; aircraft and ships cast none. A wreck keeps its shadow.
 - **Outline:** the team's darkest shade toward the shade tint, instead of near-black.
 - **Commanders** (`src/game/battle/crew.ts`) stand up out of a hatch ring with its lid swung open behind them: shoulders and chest in the tanker's jacket (US tan zip jacket, German black wrap jacket, Japanese khaki), one arm out over the rim, and goggles pushed up on the brow. US: the M1938 tanker helmet, a ribbed padded dome with ear flaps. Germany: the side cap under a headphone band and earpiece, with a throat microphone; no cap badge. Japan: the cork tanker's helmet with its ribs and short peak. Open-topped vehicles' crews (M10, Ho-Ni) are drawn the same way without the hatch. About 20 pixels tall, against 8 before. Only tanks and tank destroyers have them; other machines' crews are unchanged.
+
+**Polish on sprite figures (since 2026-11-09).** Soldiers, aircraft and gun crews are drawn as sprites, not 3D models, so they get the same look another way:
+
+- **Edge light:** after a soldier or aircraft is drawn, each pixel on its top edge catches the light and each on its bottom edge shades toward the shade tint; left and right edges the same, more gently. Lines one pixel thick (rifles, straps) are left alone so they don't wash out. Machines skip this: their models already have lit plate edges.
+- **Team shades:** every figure's darker team and uniform shades lean toward the cool shade tint, and the lighter shade keeps its color, as on the models.
+- **Outline:** navy for every figure, as on the machines.
+- **Soldiers' shadows:** each soldier casts his own sprite on the ground, laid down the same way as a machine's shadow (the higher a part of him, the further forward and toward the viewer it falls), replacing the oval. Aircraft cast none.
+- **Gun crews:** the Mobile AA gunner is the hatch commander's crewman in a soldier's steel helmet (M1, Stahlhelm or Type 90) and uniform. Other machines' crews are soldiers already.
 
 `?battle=demo&angled=on&sample=polish` shows every tank without and with polish side by side, the close-up and the battle mock-up before and after. `?battle=demo&t=fire` and the same with `&polish=off` compare every matchup. Images: `docs/art/polish/`.
 

@@ -10,6 +10,7 @@ import { bomberRig, fighterRig, transportRig } from "./airNaval";
 import { battleshipRig, carrierRig, destroyerRig, landingCraftRig, submarineRig, torpedoBoatRig } from "./ships";
 import { backdropView, drawBackdrop, SCENE, type BackdropView } from "./backdrops";
 import { polished } from "./angled/mesh";
+import { rimLight } from "./colors";
 import { C, mix, Painter, ShadowPainter, teamShades } from "./paint";
 import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
 import { clamp01, lerp, seg, type Look, type Pose, type Pt, type Rig } from "./rig";
@@ -153,12 +154,17 @@ interface PlannedShot extends Shot {
 }
 
 const FIGURE_BOX = { w: 200, h: 170, ox: 100, oy: 110 };
+/**
+ * Polish edge lighting reads a figure back pixel by pixel, so it only reads the part a figure can
+ * reach: a soldier (with his rifle, launcher or mortar, standing or falling) stays inside this box.
+ */
+const SOLDIER_REACH = { x: FIGURE_BOX.ox - 62, y: FIGURE_BOX.oy - 82, w: 140, h: 96 };
 
-function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+function canvas(w: number, h: number, readBack = false): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
-  const ctx = c.getContext("2d");
+  const ctx = c.getContext("2d", { willReadFrequently: readBack });
   if (!ctx) throw new Error("2D canvas not available");
   ctx.imageSmoothingEnabled = false;
   return [c, ctx];
@@ -190,7 +196,7 @@ export class BattleRenderer {
     if (!ctx) throw new Error("2D canvas not available");
     ctx.imageSmoothingEnabled = false;
     this.p = new Painter(ctx);
-    const [fc, fctx] = canvas(FIGURE_BOX.w, FIGURE_BOX.h);
+    const [fc, fctx] = canvas(FIGURE_BOX.w, FIGURE_BOX.h, true);
     this.figCanvas = fc;
     this.fig = new Painter(fctx);
     const [sc, sctx] = canvas(FIGURE_BOX.w, FIGURE_BOX.h);
@@ -338,7 +344,7 @@ export class BattleRenderer {
     drawBackdrop(this.p, h.x0, h.data.terrain, h.view, t, h.dir);
 
     const order = Array.from({ length: h.figures }, (_, i) => i).sort((a, b) => this.slot(h, a).y - this.slot(h, b).y);
-    if (SHADOW[h.data.kind] > 0 && h.rig.body === "machine" && polished()) this.castShadows(h, order, t);
+    if (SHADOW[h.data.kind] > 0 && (h.rig.body === "machine" || h.rig.body === "soldier") && polished()) this.castShadows(h, order, t);
     else if (SHADOW[h.data.kind] > 0) {
       ctx.save();
       ctx.globalAlpha = 0.28;
@@ -360,7 +366,8 @@ export class BattleRenderer {
   /**
    * Polish (08-art-pipeline §18): each machine casts its own shape on the ground, in the shade tint
    * at half strength, gathered on one layer first so overlapping shadows don't darken twice. A
-   * wreck keeps its shadow.
+   * wreck keeps its shadow. Soldiers cast their sprite, laid down on the ground the same way: the
+   * higher a part of him, the further forward and toward the viewer its shadow falls.
    */
   private castShadows(h: HalfView, order: readonly number[], t: number): void {
     const s = this.shade.ctx;
@@ -368,11 +375,29 @@ export class BattleRenderer {
     for (const i of order) {
       const at = this.slot(h, i);
       const died = h.deaths.get(i);
+      const age = died === undefined ? -1 : t - died;
       const pose = this.pose(h, i, t);
+      const shown = age < 0 ? pose : { ...pose, fire: null, ct: null, down: age };
       s.save();
       s.translate(at.x, at.y);
       s.scale(h.dir, 1);
-      h.rig.draw(this.shade, died === undefined || t < died ? pose : { ...pose, fire: null, ct: null, down: t - died }, h.look);
+      if (h.rig.body === "soldier") {
+        if (age > 1100 && !h.rig.gearStays?.(h.look)) {
+          s.restore();
+          continue;
+        }
+        const f = this.fig.ctx;
+        f.clearRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
+        f.save();
+        f.translate(FIGURE_BOX.ox, FIGURE_BOX.oy);
+        h.rig.draw(this.fig, shown, h.look);
+        f.restore();
+        // Height up the sprite becomes distance along the ground: forward (x) and down (toward us).
+        s.transform(1, 0, -0.55, -0.36, 0, 0);
+        s.drawImage(this.figCanvas, -FIGURE_BOX.ox, -FIGURE_BOX.oy);
+      } else {
+        h.rig.draw(this.shade, shown, h.look);
+      }
       s.restore();
     }
     // Whatever was drawn (sprites included, should a rig paint one directly) becomes plain shadow.
@@ -420,6 +445,14 @@ export class BattleRenderer {
       f.fillRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
       f.restore();
     };
+    const polish = polished();
+    // Polish: sprite figures (soldiers, aircraft) get the lit and shaded edges the 3D models have.
+    if (polish && (h.rig.body === "soldier" || h.rig.body === "air")) {
+      const r = h.rig.body === "soldier" ? SOLDIER_REACH : { x: 0, y: 0, w: FIGURE_BOX.w, h: FIGURE_BOX.h };
+      const img = f.getImageData(r.x, r.y, r.w, r.h);
+      rimLight(img.data, r.w, r.h, C("battleLightTint"), C("battleShadeTint"));
+      f.putImageData(img, r.x, r.y);
+    }
     if (flash) tint(C("battleFlash"), 0.6);
     if (!alive && h.rig.body !== "soldier") tint(C("battleInk"), 0.55);
 
@@ -428,7 +461,7 @@ export class BattleRenderer {
     s.globalCompositeOperation = "source-over";
     s.drawImage(this.figCanvas, 0, 0);
     s.globalCompositeOperation = "source-in";
-    s.fillStyle = C("battleInk");
+    s.fillStyle = polish ? mix(h.look.team.deep, C("battleShadeTint"), 0.6) : C("battleInk");
     s.fillRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
     s.globalCompositeOperation = "source-over";
 

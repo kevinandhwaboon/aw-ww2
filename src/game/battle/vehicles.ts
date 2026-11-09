@@ -240,7 +240,9 @@ export const mobileAARig: Rig = {
     const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () => quadAA(look.team, de(look), elevation, kicked));
     mesh(p, m.far, -MODEL_LIFT);
     const g = at(m.at.gunner, -MODEL_LIFT);
-    commander(p, Math.round(g.x) - 2, Math.round(g.y), look);
+    // Polish: the gunner as a full crewman in his steel helmet (crew.ts).
+    if (polished()) tankCommander(p, Math.round(g.x), Math.round(g.y) + 4, look, { hatch: false, headgear: "helmet" });
+    else commander(p, Math.round(g.x) - 2, Math.round(g.y), look);
   },
   muzzle(pose, shot, look): Muzzle {
     const elevation = aaElevation(pose.atAir);

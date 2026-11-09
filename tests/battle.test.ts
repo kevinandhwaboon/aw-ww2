@@ -11,6 +11,7 @@ import { BATTLE_VIEW, project, rampShade, RAMP_STEPS } from "../src/game/battle/
 import { TANK_MODELS } from "../src/game/battle/angled/models";
 import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys } from "../src/game/battle/angled/vehicleModels";
 import { FALL_MS, fallAt } from "../src/game/battle/fall";
+import { rimLight } from "../src/game/battle/colors";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -368,5 +369,32 @@ describe("polish (08-art-pipeline §18 Polish)", () => {
 
   it("a face lit halfway keeps the color as it is", () => {
     expect(rampShade(red, 0.5, shadeTint, lightTint)).toBe(red);
+  });
+});
+
+describe("polish on sprite figures (08-art-pipeline §18 Polish)", () => {
+  /** A w×h sprite from rows of "#" (solid grey) and "." (empty). */
+  function sprite(rows: string[]): { data: Uint8ClampedArray; w: number; h: number } {
+    const w = rows[0]?.length ?? 0;
+    const data = new Uint8ClampedArray(w * rows.length * 4);
+    rows.forEach((row, y) => Array.from(row).forEach((c, x) => {
+      if (c === "#") data.set([120, 120, 120, 255], (y * w + x) * 4);
+    }));
+    return { data, w, h: rows.length };
+  }
+  const red = (s: { data: Uint8ClampedArray; w: number }, x: number, y: number) => s.data[(y * s.w + x) * 4] ?? 0;
+
+  it("a sprite's top edge catches the light and its bottom edge shades, its middle stays as drawn", () => {
+    const s = sprite([".....", ".###.", ".###.", ".###.", "....."]);
+    rimLight(s.data, s.w, s.h, "#fff0c8", "#1c2048");
+    expect(red(s, 2, 1)).toBeGreaterThan(120);
+    expect(red(s, 2, 3)).toBeLessThan(120);
+    expect(red(s, 2, 2)).toBe(120);
+  });
+
+  it("lines one pixel thick, like a rifle, are left alone so they don't wash out", () => {
+    const s = sprite([".....", "#####", "....."]);
+    rimLight(s.data, s.w, s.h, "#fff0c8", "#1c2048");
+    expect(red(s, 2, 1)).toBe(120);
   });
 });
