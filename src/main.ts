@@ -14,12 +14,17 @@ import "./ui/style.css";
 //   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 //   ?debug=on            shows the unit and debug panels
+//   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
 const params = new URLSearchParams(window.location.search);
 const seedParam = Number(params.get("seed") ?? NaN);
 
 const gameRoot = document.getElementById("game");
 const uiRoot = document.getElementById("ui");
 if (!gameRoot || !uiRoot) throw new Error("index.html is missing #game or #ui");
+
+const padParam = params.get("pad");
+const smallTouchScreen = window.matchMedia("(pointer: coarse)").matches && Math.min(window.innerWidth, window.innerHeight) < 600;
+const padLayout = padParam === "on" || (padParam !== "off" && smallTouchScreen);
 
 const defaults: GameOptions = {
   luck: params.get("luck") !== "off",
@@ -39,6 +44,7 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,
     debug: params.get("debug") === "on",
+    pad: padLayout,
     onNewGame: () => window.location.reload(),
   });
 }

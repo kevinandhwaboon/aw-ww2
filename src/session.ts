@@ -12,7 +12,8 @@ import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
-import { viewSize } from "./game/viewport";
+import { handheldViewSize, viewSize } from "./game/viewport";
+import { mountPad } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
 import {
   createBanner,
@@ -35,10 +36,12 @@ export interface SessionOptions {
   readonly battleScenes: boolean;
   /** Also shows the unit and debug panels (11-tech-setup §7). */
   readonly debug: boolean;
+  /** Phone held upright: a handheld-style screen with an on-screen game pad under it. */
+  readonly pad: boolean;
   readonly onNewGame: () => void;
 }
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, onNewGame }: SessionOptions): void {
+export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, pad, onNewGame }: SessionOptions): void {
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -160,7 +163,13 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * Whole-number zoom so pixels stay crisp (00-master-design §14), filling the window, but never so
    * small that squares are hard to read: past that the view scrolls (00-master-design §12).
    */
-  const fitWindow = () => viewSize({ width: window.innerWidth, height: window.innerHeight }, { width, height });
+  // With the game pad the screen is a box above the pad, drawn in the phone's own pixels.
+  if (pad) mountPad(uiRoot);
+  const fitWindow = () =>
+    pad
+      ? handheldViewSize(gameRoot.getBoundingClientRect(), { width, height }, window.devicePixelRatio)
+      : viewSize({ width: window.innerWidth, height: window.innerHeight }, { width, height });
+  const canvasZoom = () => (pad ? 1 / window.devicePixelRatio : 1); // canvas pixels per CSS pixel
 
   // The canvas is as big as it shows on screen and the scene's camera does the enlarging, so art
   // finer than one pixel per map pixel (32-pixel units) keeps its detail (08-art-pipeline §17).
@@ -174,7 +183,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     height: view.height,
     pixelArt: true,
     backgroundColor: packColor("uiBg"),
-    scale: { mode: Phaser.Scale.NONE },
+    scale: { mode: Phaser.Scale.NONE, zoom: canvasZoom() },
     scene: [scene, battle],
   });
 
@@ -184,6 +193,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     if (next.zoom === view.zoom && next.width === view.width && next.height === view.height) return;
     view = next;
     game.scale.resize(view.width, view.height);
+    game.scale.setZoom(canvasZoom());
     scene.setPixelScale(view.zoom);
   });
 }
