@@ -30,6 +30,8 @@ export type FireKind =
   | "flak"
   | "planeGuns"
   | "bombs"
+  | "diveBomb"
+  | "aerialTorpedo"
   | "navalGuns"
   | "deckGun"
   | "depthCharges"
@@ -87,6 +89,8 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   fighter: 4,
   bomber: 3,
   transportAircraft: 3,
+  diveBomber: 3,
+  torpedoBomber: 3,
   battleship: 1,
   destroyer: 1,
   submarine: 1,
@@ -151,6 +155,10 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
       return "planeGuns";
     case "bomber":
       return "bombs";
+    case "diveBomber":
+      return "diveBomb";
+    case "torpedoBomber":
+      return "aerialTorpedo";
     case "battleship":
       return "navalGuns";
     case "destroyer":
@@ -172,7 +180,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
 
 /** Fire that arcs up out of the shooter's half and falls into the target's. */
 export function isIndirect(fire: FireKind): boolean {
-  return fire === "mortar" || fire === "howitzer" || fire === "rockets" || fire === "bombs" || fire === "depthCharges";
+  return fire === "mortar" || fire === "howitzer" || fire === "rockets" || fire === "bombs" || fire === "diveBomb" || fire === "aerialTorpedo" || fire === "depthCharges";
 }
 
 const isAir = (kind: FigureKind) => kind !== "bunker" && UNITS[kind].category === "air";

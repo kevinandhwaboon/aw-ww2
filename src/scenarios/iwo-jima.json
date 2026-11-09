@@ -51,6 +51,8 @@
         "fighter",
         "bomber",
         "transportAircraft",
+        "diveBomber",
+        "torpedoBomber",
         "battleship",
         "destroyer",
         "submarine",
@@ -113,17 +115,17 @@
       "owner": 0,
       "pos": { "x": 26, "y": 15 },
       "cargo": [
-        { "type": "bomber" },
-        { "type": "bomber" }
+        { "type": "diveBomber" },
+        { "type": "diveBomber" }
       ]
     },
     {
       "type": "carrier",
       "owner": 0,
-      "pos": { "x": 24, "y": 17 },
+      "pos": { "x": 23, "y": 16 },
       "cargo": [
-        { "type": "bomber" },
-        { "type": "bomber" }
+        { "type": "diveBomber" },
+        { "type": "diveBomber" }
       ]
     },
     { "type": "infantry", "owner": 0, "pos": { "x": 30, "y": 20 } },

@@ -41,6 +41,8 @@ function plane(frame, o) {
   if (o.wingCamo) camo(s, o.wingCamo.map(([a, b, cc, d]) => [a, y(b), cc, y(d)]));
   s.poly([[o.tail + 1, y(c + 2)], [o.tail + 6, y(c + 2)], [o.tail + 5, y(c + 6)], [o.tail + 1, y(c + 6)]], "team", 1);
   if (o.gear) for (const gx of o.gear) s.rect(gx, y(c + 3), gx + 1, y(c + 5), "rubber", 3);
+  // A bomb or torpedo slung under the fuselage, drawn over the near wing root.
+  if (o.store) s.rect(o.store[0], y(c + 3), o.store[1], y(c + 4), "metal", 3);
   // Engines on the near wing, each with its own propeller.
   const props = [];
   if (o.nearEngine) for (const ex of o.nearEngine) {
@@ -141,6 +143,16 @@ const c47 = (f) => plane(f, {
   farEngine: [17], nearEngine: [17],
 });
 
+// Carrier aircraft (05-supply-transport §10): single radial engine, a long canopy for the crew.
+const sbd = (f) => plane(f, {
+  tail: 3, nose: 27, girth: 3, fin: 7, canopy: [13, 21], noseProp: 4, store: [14, 18],
+  farWing: [[12, 12], [21, 12], [18, 6], [16, 6]], nearWing: [[11, 16], [22, 16], [19, 26], [15, 26]], star: [15, 20],
+});
+const avenger = (f) => plane(f, {
+  tail: 2, nose: 27, girth: 4, fin: 8, canopy: [12, 22], noseProp: 4, store: [9, 21],
+  farWing: [[12, 11], [22, 11], [19, 4], [16, 4]], nearWing: [[11, 17], [23, 17], [20, 28], [15, 28]], star: [15, 22],
+});
+
 // ---- German aircraft ----
 const bf109 = (f) => plane(f, {
   tail: 2, nose: 28, girth: 2, fin: 7, canopy: [16, 19], noseProp: 4,
@@ -215,6 +227,15 @@ const ki57 = (f) => plane(f, {
   farEngine: [17], nearEngine: [17],
 });
 
+const val = (f) => plane(f, {
+  tail: 3, nose: 27, girth: 3, fin: 7, canopy: [12, 21], noseProp: 4, gear: [19], store: [14, 17],
+  farWing: [[12, 12], [21, 12], [18, 6], [16, 6]], nearWing: [[11, 16], [22, 16], [19, 26], [15, 26]], sun: [16, 21, 2], bodySun: [7],
+});
+const kate = (f) => plane(f, {
+  tail: 2, nose: 28, girth: 3, fin: 7, canopy: [10, 22], noseProp: 4, store: [9, 21],
+  farWing: [[12, 11], [22, 11], [19, 4], [16, 4]], nearWing: [[11, 17], [23, 17], [20, 28], [15, 28]], sun: [17, 23, 2], bodySun: [6],
+});
+
 // ---- Japanese ships ----
 const yamato = (f) => ship(f, {
   stern: 1, bow: 31, deck: 12, beam: 8, side: 4,
@@ -245,6 +266,8 @@ export const usAir = [
   { code: "FT", name: "Fighter", real: "P-51 Mustang", frames: frames(p51) },
   { code: "BM", name: "Bomber", real: "B-26 Marauder", frames: frames(b26) },
   { code: "TA", name: "Transport Aircraft", real: "C-47 Skytrain", frames: frames(c47) },
+  { code: "DB", name: "Dive Bomber", real: "SBD Dauntless", frames: frames(sbd) },
+  { code: "TR", name: "Torpedo Bomber", real: "TBF Avenger", frames: frames(avenger) },
 ];
 export const usNaval = [
   { code: "BB", name: "Battleship", real: "USS Texas", frames: frames(texas) },
@@ -269,6 +292,8 @@ export const jpAir = [
   { code: "FT", name: "Fighter", real: "A6M Zero", frames: frames(zero) },
   { code: "BM", name: "Bomber", real: "G4M (Betty)", frames: frames(betty) },
   { code: "TA", name: "Transport Aircraft", real: "Ki-57 (Topsy)", frames: frames(ki57) },
+  { code: "DB", name: "Dive Bomber", real: "D3A (Val)", frames: frames(val) },
+  { code: "TR", name: "Torpedo Bomber", real: "B5N (Kate)", frames: frames(kate) },
 ];
 export const jpNaval = [
   { code: "BB", name: "Battleship", real: "Yamato class", frames: frames(yamato) },

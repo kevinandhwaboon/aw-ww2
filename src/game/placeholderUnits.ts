@@ -11,7 +11,7 @@ export const UNIT_CODES: Record<UnitTypeId, string> = {
   infantry: "IN", assaultInfantry: "AI", mortar: "MO", recon: "RC", halftrack: "HT",
   lightTank: "LT", mediumTank: "MT", heavyTank: "HV", tankDestroyer: "TD",
   artillery: "AR", rocketArtillery: "RK", mobileAA: "AA", flakGun: "FK",
-  fighter: "FT", bomber: "BM", transportAircraft: "TA",
+  fighter: "FT", bomber: "BM", transportAircraft: "TA", diveBomber: "DB", torpedoBomber: "TR",
   battleship: "BB", destroyer: "DD", submarine: "SS", landingCraft: "LC", torpedoBoat: "TB", carrier: "CV",
 };
 

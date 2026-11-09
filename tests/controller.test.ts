@@ -769,8 +769,8 @@ describe("cursor limits (11-tech-setup §3c)", () => {
 });
 
 describe("launching from a Carrier (05-supply-transport §10)", () => {
-  const bombers = [{ type: "bomber" as const }, { type: "bomber" as const }];
-  /** A US Carrier at sea carrying two Bombers (ids 2 and 3), a German tank ashore (id 1). */
+  const bombers = [{ type: "diveBomber" as const }, { type: "diveBomber" as const }];
+  /** A US Carrier at sea carrying two Dive Bombers (ids 2 and 3), a German tank ashore (id 1). */
   const carrierGame = (cargo: UnitSetup["cargo"] = bombers) =>
     setup(["SSSS......"], [{ type: "carrier", owner: 0, pos: P(1, 0), cargo }, { type: "mediumTank", owner: 1, pos: P(7, 0) }]);
 
@@ -790,12 +790,12 @@ describe("launching from a Carrier (05-supply-transport §10)", () => {
     expect(game.labels()).toEqual(["wait", "cancel"]);
   });
 
-  it("a Fighter and a Bomber aboard get one Launch item each", async () => {
-    const game = carrierGame([{ type: "fighter" }, { type: "bomber" }]);
+  it("a Fighter and a Torpedo Bomber aboard get one Launch item each", async () => {
+    const game = carrierGame([{ type: "fighter" }, { type: "torpedoBomber" }]);
     game.controller.onConfirm(P(1, 0));
     game.controller.onConfirm(P(1, 0));
     await game.settle();
-    expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH FIGHTER", "LAUNCH BOMBER", "WAIT", "CANCEL"]);
+    expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH FIGHTER", "LAUNCH TORPEDO BOMBER", "WAIT", "CANCEL"]);
   });
 
   it("Launch puts the aircraft on the Carrier's tile, then it moves and bombs like any unit, sent as one launch order", async () => {

@@ -1,5 +1,6 @@
 // Battle figures for aircraft (08-art-pipeline §18), seen side-on with the near wing below the
-// fuselage. US: P-51, B-26, C-47. Germany: Bf 109, Ju 88, Ju 52. Japan: A6M Zero, G4M, Ki-57.
+// fuselage. US: P-51, B-26, C-47, SBD Dauntless, TBF Avenger. Germany: Bf 109, Ju 88, Ju 52.
+// Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Germany has no carrier aircraft.
 // Ships are in ships.ts.
 
 import { C, mix, shade, type Painter } from "./paint";
@@ -220,5 +221,121 @@ export const transportRig: Rig = {
   },
   muzzle() {
     return { x: 0, y: 0 };
+  },
+};
+
+// ---- Carrier aircraft (05-supply-transport §10) ----
+
+/** A radial cowling and propeller at the nose. */
+function radialNose(p: Painter, x: number, top: number, bottom: number, t: number): void {
+  p.rect(x, top, 5, bottom - top + 1, C("battleSteelDark"));
+  p.rect(x, top, 5, 1, shade(C("battleSteelDark"), 1.5));
+  p.poly([[x + 5, -2], [x + 8, 0], [x + 5, 2]], C("battleSteel"));
+  prop(p, x + 8, 0, 11, t);
+}
+
+/** A long glazed canopy over a crew sitting one behind the other, framed every few pixels. */
+function longCanopy(p: Painter, x0: number, x1: number, top: number, frame: string): void {
+  p.poly([[x0, -5], [x0 + 3, top], [x1 - 2, top], [x1, -5]], C("battleSkyLow"));
+  for (let x = x0 + 4; x < x1 - 1; x += 4) p.line(x, top, x, -5, frame);
+}
+
+/** Still in the rack: the store is shown until the first shot has left. */
+const stillAboard = (pose: Pose, fire: "diveBomb" | "aerialTorpedo") =>
+  pose.fire !== fire || pose.ct === null || pose.ct < (FIRE_TIMING[fire].shots[0] ?? 0);
+
+export const diveBomberRig: Rig = {
+  body: "air",
+  hit: { x: 0, y: 0 },
+  draw(p, pose, look) {
+    const T = look.team;
+    const y = bob(pose, 380, 2);
+    p.ctx.save();
+    p.ctx.translate(0, y);
+    // Tail, fuselage and tailplane.
+    p.poly([[-32, -1], [-30, -14], [-24, -14], [-20, -4]], T.mid);
+    p.poly([[-34, -1], [-24, -5], [10, -6], [22, -5], [26, -3], [26, 3], [18, 5], [-24, 3], [-34, 1]], T.mid);
+    p.rect(-24, 2, 42, 2, T.lo);
+    p.rect(-22, -5, 40, 1, T.hi);
+    p.rect(-37, -1, 10, 2, T.lo);
+    if (jp(look)) {
+      // D3A (Val): elliptical wings, fixed legs in spats, a long canopy, the hinomaru.
+      longCanopy(p, -8, 14, -11, T.deep);
+      sun(p, -18, 0, 2);
+      p.poly([[-8, 2], [14, 2], [12, 7], [-2, 9], [-10, 7]], T.mid);
+      p.line(-8, 2, 14, 2, T.hi);
+      sun(p, 2, 5, 2);
+      p.line(10, 4, 11, 11, T.lo, 2);
+      p.ellipse(11, 12, 3, 2, T.mid);
+      radialNose(p, 22, -5, 4, pose.t);
+    } else {
+      // SBD Dauntless: a long canopy for pilot and gunner, perforated dive flaps on the wing, a star.
+      longCanopy(p, -10, 14, -11, T.deep);
+      p.line(-11, -6, -15, -9, C("battleSteelDark"));
+      p.poly([[-9, 2], [14, 2], [11, 9], [-12, 8]], T.mid);
+      p.line(-9, 2, 14, 2, T.hi);
+      p.rect(-12, 7, 20, 2, T.lo);
+      for (let x = -11; x < 8; x += 3) p.px(x, 8, C("battleInk"));
+      star(p, -16, 0);
+      radialNose(p, 22, -5, 4, pose.t);
+    }
+    if (stillAboard(pose, "diveBomb")) {
+      // The bomb on its swinging crutch under the belly.
+      p.ellipse(4, 11, 6, 2, C("battleSteelDark"));
+      p.rect(-3, 10, 2, 3, C("battleSteelDark"));
+      p.line(8, 4, 4, 9, C("battleSteelDark"));
+    }
+    p.ctx.restore();
+  },
+  muzzle(pose) {
+    return { x: 4, y: bob(pose, 380, 2) + 12 };
+  },
+};
+
+export const torpedoBomberRig: Rig = {
+  body: "air",
+  hit: { x: 0, y: 0 },
+  draw(p, pose, look) {
+    const T = look.team;
+    const y = bob(pose, 400, 2);
+    p.ctx.save();
+    p.ctx.translate(0, y);
+    if (jp(look)) {
+      // B5N (Kate): slim, a long three-seat canopy, the torpedo slung under the fuselage.
+      p.poly([[-34, -1], [-32, -14], [-25, -14], [-21, -4]], T.mid);
+      p.poly([[-36, -1], [-24, -5], [12, -6], [22, -5], [26, -3], [26, 3], [18, 5], [-24, 3], [-36, 1]], T.mid);
+      p.rect(-24, 2, 42, 2, T.lo);
+      p.rect(-22, -5, 40, 1, T.hi);
+      p.rect(-39, -1, 10, 2, T.lo);
+      longCanopy(p, -14, 16, -11, T.deep);
+      sun(p, -22, 0, 2);
+    } else {
+      // TBF Avenger: a deep, portly fuselage, the ball turret behind the long canopy, a star.
+      p.poly([[-34, -1], [-31, -16], [-24, -16], [-19, -4]], T.mid);
+      p.poly([[-36, -1], [-24, -6], [10, -8], [22, -6], [26, -3], [26, 4], [16, 8], [-22, 5], [-36, 1]], T.mid);
+      p.rect(-22, 4, 38, 2, T.lo);
+      p.rect(-22, -6, 40, 1, T.hi);
+      p.rect(-39, -1, 10, 2, T.lo);
+      longCanopy(p, -6, 16, -12, T.deep);
+      p.disc(-10, -8, 3, C("battleSkyLow"));
+      p.rect(-10, -9, 6, 1, C("battleSteelDark"));
+      star(p, -20, 0);
+    }
+    // Near wing.
+    p.poly([[-10, 2], [14, 2], [11, 10], [-13, 9]], T.mid);
+    p.line(-10, 2, 14, 2, T.hi);
+    if (jp(look)) sun(p, 0, 6, 2);
+    radialNose(p, 22, -5, 4, pose.t);
+    if (stillAboard(pose, "aerialTorpedo")) {
+      // The torpedo: a long dark body with its tail fins, under the fuselage.
+      p.rect(-10, 10, 22, 3, C("battleSteelDark"));
+      p.rect(-10, 10, 22, 1, C("battleSteel"));
+      p.rect(-13, 9, 3, 5, C("battleSteelDark"));
+      p.line(4, 8, 4, 10, C("battleSteelDark"));
+    }
+    p.ctx.restore();
+  },
+  muzzle(pose) {
+    return { x: 2, y: bob(pose, 400, 2) + 12 };
   },
 };

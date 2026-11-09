@@ -80,7 +80,7 @@ Values come from the original game where a unit maps cleanly (Infantry, Assault 
 
 Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows.
 
-**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Fort = fortification/obstacle.
+**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Fort = fortification/obstacle.
 
 ### 5a. Vs. land units
 
@@ -100,6 +100,8 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 | Flak | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | Ftr | 15 | 15 | 15 | 10 | 8 | 5 | 2 | 1 | 3 | 10 | 10 | 3 | 8 |
 | Bmr | 110 | 110 | 110 | 105 | 105 | 105 | 105 | 95 | 105 | 105 | 105 | 95 | 105 |
+| Dive | 55 | 55 | 55 | 55 | 55 | 55 | 50 | 45 | 50 | 55 | 55 | 45 | 50 |
+| TBmr | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | BB | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 |
 | DD | 50 | 45 | 50 | 40 | 35 | 30 | 20 | 5 | 20 | 40 | 50 | 30 | 45 |
 | Sub | — | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -107,26 +109,28 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 
 ### 5b. Vs. air, naval and fortifications
 
-| Attacker ↓ / Defender → | Ftr | Bmr | Trn | BB | DD | Sub | LC | TB | CV | Fort |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Inf | — | — | — | — | — | — | — | — | — | 5* |
-| AInf | — | — | — | — | — | — | — | — | — | 65 |
-| Mor | — | — | — | — | — | — | 25 | 25 | — | 20 |
-| Rec | — | — | — | — | — | — | — | — | — | — |
-| LT | — | — | — | 1 | 3 | 1 | 8 | 15 | 1 | 10 |
-| MT | — | — | — | 1 | 5 | 1 | 10 | 20 | 1 | 15 |
-| HvT | — | — | — | 10 | 30 | 10 | 35 | 40 | 10 | 40 |
-| TD | — | — | — | 5 | 10 | 5 | 15 | 25 | 5 | 30 |
-| Art | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 50 |
-| Rkt | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 55 |
-| AA | 65 | 75 | 90 | — | — | — | — | — | — | — |
-| Flak | 100 | 100 | 110 | — | — | — | — | — | — | — |
-| Ftr | 55 | 100 | 100 | — | — | — | 5 | 10 | — | — |
-| Bmr | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 55 |
-| BB | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 55 |
-| DD | 55* | 65* | 105* | 10 | 40 | 90 | 50 | 85 | 10 | 20 |
-| Sub | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | — |
-| TB | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | — |
+| Attacker ↓ / Defender → | Ftr | Bmr | Trn | Dive | TBmr | BB | DD | Sub | LC | TB | CV | Fort |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Inf | — | — | — | — | — | — | — | — | — | — | — | 5* |
+| AInf | — | — | — | — | — | — | — | — | — | — | — | 65 |
+| Mor | — | — | — | — | — | — | — | — | 25 | 25 | — | 20 |
+| Rec | — | — | — | — | — | — | — | — | — | — | — | — |
+| LT | — | — | — | — | — | 1 | 3 | 1 | 8 | 15 | 1 | 10 |
+| MT | — | — | — | — | — | 1 | 5 | 1 | 10 | 20 | 1 | 15 |
+| HvT | — | — | — | — | — | 10 | 30 | 10 | 35 | 40 | 10 | 40 |
+| TD | — | — | — | — | — | 5 | 10 | 5 | 15 | 25 | 5 | 30 |
+| Art | — | — | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 50 |
+| Rkt | — | — | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 55 |
+| AA | 65 | 75 | 90 | 75 | 75 | — | — | — | — | — | — | — |
+| Flak | 100 | 100 | 110 | 100 | 100 | — | — | — | — | — | — | — |
+| Ftr | 55 | 100 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | — |
+| Bmr | — | — | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 55 |
+| Dive | — | — | — | — | — | 40 | 45 | 50 | 50 | 50 | 45 | 30 |
+| TBmr | — | — | — | — | — | 120 | 120 | — | 120 | 120 | 120 | — |
+| BB | — | — | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 55 |
+| DD | 55* | 65* | 105* | 65* | 65* | 10 | 40 | 90 | 50 | 85 | 10 | 20 |
+| Sub | — | — | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | — |
+| TB | — | — | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | — |
 
 ### 5c. Notes on the chart
 
@@ -136,6 +140,7 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 - **Assault Infantry** is the best ground unit vs. fortifications (65).
 - **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
 - **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
+- **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 120 against every surface ship and nothing else (decided 2026-11-09, first guesses to tune after playtests). Air defenses hit both as hard as they hit a Bomber.
 - **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It has no weapon, so it never counters.
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
 

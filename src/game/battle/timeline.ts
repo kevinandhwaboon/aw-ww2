@@ -35,6 +35,8 @@ export const FIRE_TIMING: Record<FireKind, FireTiming> = {
   flak: { cycle: 1000, shots: [150, 650], cycles: 1, flight: 300, stagger: 250 },
   planeGuns: { cycle: 800, shots: [100, 170, 240, 310, 380, 450], cycles: 1, flight: 230, stagger: 150 },
   bombs: { cycle: 1100, shots: [200, 350, 500, 650], cycles: 1, flight: 750, stagger: 200 },
+  diveBomb: { cycle: 1100, shots: [450], cycles: 1, flight: 750, stagger: 220 },
+  aerialTorpedo: { cycle: 1300, shots: [400], cycles: 1, flight: 1600, stagger: 280 },
   navalGuns: { cycle: 1400, shots: [150, 550, 950], cycles: 1, flight: 1700, stagger: 0 },
   deckGun: { cycle: 900, shots: [150, 550], cycles: 1, flight: 1100, stagger: 200 },
   depthCharges: { cycle: 1000, shots: [150, 400, 650], cycles: 1, flight: 1700, stagger: 250 },
