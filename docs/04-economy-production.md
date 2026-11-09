@@ -59,7 +59,7 @@ Each event in this sequence is emitted as an engine event so the UI can show it 
 - Repair costs **10% of the unit's cost per displayed HP** restored. If the player can't afford 2 HP, the unit gets 1 HP if affordable, otherwise none.
 - Units are repaired in a deterministic order (row-major by position) so funds run out the same way every time.
 - The same property also fully restores fuel and ammo, free of charge, even if no HP is repaired.
-- Transported units aren't repaired.
+- Transported units aren't repaired, except aircraft on a Carrier, which get 1 HP a day at the same price (05-supply-transport §10).
 
 ## 6. Joining units
 

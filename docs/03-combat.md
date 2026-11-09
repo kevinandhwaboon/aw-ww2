@@ -78,9 +78,9 @@ Values are `base` damage percentages. **Attacker = row, defender = column.**
 
 Values come from the original game where a unit maps cleanly (Infantry, Assault Infantry ≈ Mech, Recon, Halftrack ≈ APC, Medium Tank ≈ Tank, Heavy Tank ≈ Md Tank, Artillery, Rocket Artillery, Mobile AA ≈ Anti-Air, Flak Gun ≈ Missiles, Bomber, Battleship, Submarine) and from intuition for new ones (Mortar Team, Light Tank, Tank Destroyer, Destroyer, Torpedo Boat, Fighter strafing, fortifications).
 
-Unarmed units (Halftrack, Transport Aircraft, Landing Craft) have no attack rows.
+Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows.
 
-**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, Fort = fortification/obstacle.
+**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Fort = fortification/obstacle.
 
 ### 5a. Vs. land units
 
@@ -107,26 +107,26 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft) have no attack rows
 
 ### 5b. Vs. air, naval and fortifications
 
-| Attacker ↓ / Defender → | Ftr | Bmr | Trn | BB | DD | Sub | LC | TB | Fort |
-|---|---|---|---|---|---|---|---|---|---|
-| Inf | — | — | — | — | — | — | — | — | 5* |
-| AInf | — | — | — | — | — | — | — | — | 65 |
-| Mor | — | — | — | — | — | — | 25 | 25 | 20 |
-| Rec | — | — | — | — | — | — | — | — | — |
-| LT | — | — | — | 1 | 3 | 1 | 8 | 15 | 10 |
-| MT | — | — | — | 1 | 5 | 1 | 10 | 20 | 15 |
-| HvT | — | — | — | 10 | 30 | 10 | 35 | 40 | 40 |
-| TD | — | — | — | 5 | 10 | 5 | 15 | 25 | 30 |
-| Art | — | — | — | 40 | 50 | 60 | 55 | 60 | 50 |
-| Rkt | — | — | — | 55 | 65 | 85 | 60 | 75 | 55 |
-| AA | 65 | 75 | 90 | — | — | — | — | — | — |
-| Flak | 100 | 100 | 110 | — | — | — | — | — | — |
-| Ftr | 55 | 100 | 100 | — | — | — | 5 | 10 | — |
-| Bmr | — | — | — | 75 | 85 | 95 | 95 | 95 | 55 |
-| BB | — | — | — | 50 | 85 | 95 | 95 | 95 | 55 |
-| DD | 55* | 65* | 105* | 10 | 40 | 90 | 50 | 85 | 20 |
-| Sub | — | — | — | 55 | 25 | 55 | 95 | 75 | — |
-| TB | — | — | — | 35 | 30 | 40 | 75 | 55 | — |
+| Attacker ↓ / Defender → | Ftr | Bmr | Trn | BB | DD | Sub | LC | TB | CV | Fort |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Inf | — | — | — | — | — | — | — | — | — | 5* |
+| AInf | — | — | — | — | — | — | — | — | — | 65 |
+| Mor | — | — | — | — | — | — | 25 | 25 | — | 20 |
+| Rec | — | — | — | — | — | — | — | — | — | — |
+| LT | — | — | — | 1 | 3 | 1 | 8 | 15 | 1 | 10 |
+| MT | — | — | — | 1 | 5 | 1 | 10 | 20 | 1 | 15 |
+| HvT | — | — | — | 10 | 30 | 10 | 35 | 40 | 10 | 40 |
+| TD | — | — | — | 5 | 10 | 5 | 15 | 25 | 5 | 30 |
+| Art | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 50 |
+| Rkt | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 55 |
+| AA | 65 | 75 | 90 | — | — | — | — | — | — | — |
+| Flak | 100 | 100 | 110 | — | — | — | — | — | — | — |
+| Ftr | 55 | 100 | 100 | — | — | — | 5 | 10 | — | — |
+| Bmr | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 55 |
+| BB | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 55 |
+| DD | 55* | 65* | 105* | 10 | 40 | 90 | 50 | 85 | 10 | 20 |
+| Sub | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | — |
+| TB | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | — |
 
 ### 5c. Notes on the chart
 
@@ -136,6 +136,7 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft) have no attack rows
 - **Assault Infantry** is the best ground unit vs. fortifications (65).
 - **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
 - **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
+- **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It has no weapon, so it never counters.
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
 
 ## 6. Veterancy (combat experience)

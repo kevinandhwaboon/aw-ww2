@@ -10,7 +10,7 @@
 // stands on a deck is always drawn over that deck however big the deck's faces are.
 
 import { C, mix, shade, type TeamShades } from "../colors";
-import { barrel, box, circle, decalX, decalY, elevate, elevatePoint, loftZ, oriented, shift, type Face, type V3 } from "./mesh";
+import { barrel, box, circle, decalX, decalY, decalZ, elevate, elevatePoint, loftZ, oriented, shift, type Face, type V3 } from "./mesh";
 import { TANK_MODELS } from "./models";
 
 type Poly = (readonly [number, number])[];
@@ -939,6 +939,123 @@ export function gyoraitei(T: TeamShades, launch: Launch, shake: number): ShipMod
     water: S,
     deck: S,
     at: { torpedo: [-8 + launch.slide, -4.2, d(-19) + 1.6], mg: gun.muzzle },
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+// ---- Carriers (05-supply-transport §10) ----
+
+/** A carrier aircraft parked on deck with its wings folded up over its back. */
+function parkedPlane(x: number, y: number, z: number, color: string): Face[] {
+  return [
+    ...beam([x - 4.5, y, z + 1], [x + 4, y, z + 1.2], 1.6, 1.4, color),
+    ...box(x + 1, x + 2.6, y - 1.6, y + 1.6, z + 1.6, z + 3.8, color),
+    ...box(x - 4.6, x - 3.4, y - 0.2, y + 0.2, z + 1.4, z + 3.6, color),
+    ...box(x - 4.6, x - 3.6, y - 2.2, y + 2.2, z + 1.2, z + 1.6, color),
+    ...box(x + 4, x + 4.4, y - 1.4, y + 1.4, z + 0.8, z + 1.8, steelDark()),
+  ];
+}
+
+/** Paint on the flight deck: a dashed centerline, the deck's edge lines, and the elevators' outlines. */
+function deckMarks(x0: number, x1: number, half: number, z: number, elevators: readonly number[], deck: string): Face[] {
+  const white = mix(C("battleStar"), deck, 0.2);
+  const f: Face[] = [];
+  for (let x = x0; x + 5 <= x1; x += 9) f.push(decalZ(z, [[x, -0.35], [x + 5, -0.35], [x + 5, 0.35], [x, 0.35]], white));
+  for (const y of [-half, half - 0.5]) f.push(decalZ(z, [[x0, y], [x1, y], [x1, y + 0.5], [x0, y + 0.5]], white));
+  for (const x of elevators) f.push(decalZ(z, [[x - 6, -6], [x + 6, -6], [x + 6, 6], [x - 6, 6]], shade(deck, 0.82)));
+  return f;
+}
+
+/** The flight deck: a slab wider than the hull below, with a squared-off stern and a tapered bow. */
+function flightDeck(x0: number, x1: number, half: number, z: number, color: string): Face[] {
+  const outline: Poly = [[x0, -half], [x1 - 12, -half], [x1, -half * 0.55], [x1, half * 0.55], [x1 - 12, half], [x0, half]];
+  return loftZ(z - 1.2, outline, z, outline, color);
+}
+
+/**
+ * Essex class: a long hull with an open hangar under a wooden flight deck that overhangs it fore
+ * and aft, the island on the starboard side with its bridge, one broad funnel and a lattice mast,
+ * twin 5-inch mounts before and abaft the island, 40mm quads in sponsons along the side, and
+ * aircraft parked aft with their wings folded.
+ */
+export function essex(T: TeamShades): ShipModel {
+  const U = sup(T);
+  const S = [
+    st(92, 0.5, 15, 12), st(86, 3.5, 13.5, -4), st(72, 8, 12, -4), st(50, 11, 11.4, -4), st(20, 12, 11, -4),
+    st(-50, 12, 11, -4), st(-74, 11, 11, -4), st(-86, 8.5, 11, -1), st(-91, 6, 11, 3),
+  ];
+  const top = 21;
+  const deck = mix(C("battleWood"), T.lo, 0.35);
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: T.lo, boot: 6 }), ...anchor(S, 80, 9.5)];
+  // The hangar, open along the side in bays, and the closed forecastle under the bow overhang.
+  const houses: Face[] = [...house(S, -76, 58, 11.6, 0, 8.8, U), ...house(S, 58, 82, 7, 0, 8.8, T.mid)];
+  for (let x = -70; x + 10 <= 52; x += 14) houses.push(decalY(-11.65, [[x, 12.6], [x + 10, 12.6], [x + 10, 18], [x, 18]], T.deep));
+  const flight: Face[] = [...flightDeck(-96, 94, 14.5, top, deck)];
+  for (const x of [-92, -84, 86]) flight.push(...beam([x, -6, x > 0 ? 13.5 : 11], [x, -10, top - 1.2], 0.8, 0.8, steelDark()));
+  const over: Face[] = [...deckMarks(-92, 84, 13.6, top + 0.02, [40, -28], deck)];
+  // The island on the starboard (near) side.
+  over.push(...box(-6, 30, -14.4, -10, top, top + 7, U), ...box(4, 24, -14, -10.4, top + 7, top + 12, U));
+  over.push(...windows(-14.05, 5, 23, top + 9.6, 1.1), ...box(8, 20, -13.6, -10.8, top + 12, top + 14, T.lo));
+  over.push(...shift(funnel(-2, top + 7, 4.4, 9, 1.5, U, steelDark(), 0.5), 0, -12.2, 0));
+  over.push(...beam([14, -12.2, top + 14], [14, -12.2, top + 28], 0.8, 0.8, steelDark()), ...beam([14, -16, top + 24], [14, -8, top + 24], 0.6, 0.6, steelDark()));
+  over.push(...box(13, 15, -15, -9.4, top + 20, top + 21, steel()));
+  for (const x of [38, -14]) over.push(...twinMount(x, -12.2, top, U, x < 0));
+  // 40mm quads in sponsons just under the flight deck edge.
+  for (const x of [66, 4, -40, -66]) over.push(...aaTub(x, -15.5, top - 3.4, T.lo, 4, 2.2).faces);
+  // Aircraft parked aft, wings folded.
+  const plane = mix(T.hi, C("battleSteel"), 0.35);
+  for (const [x, y] of [[-58, -5], [-58, 5], [-70, -5], [-70, 5], [-82, -5], [-82, 5]] as const) over.push(...parkedPlane(x, y, top, plane));
+  return {
+    layers: [base, houses, flight, over],
+    water: S,
+    deck: [st(94, 8, top, 0), st(82, 14.5, top, 0), st(-96, 14.5, top, 0)],
+    at: {},
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+/**
+ * Shōkaku: a closed two-level hangar under the flight deck, a small island well forward on the
+ * starboard side, two funnels curving down and out from the starboard side below the deck edge,
+ * twin 12.7cm mounts in sponsons, 25mm triples, and aircraft parked aft.
+ */
+export function shokaku(T: TeamShades): ShipModel {
+  const U = sup(T);
+  const S = [
+    st(92, 0.5, 16, 12), st(85, 3.5, 14, -4), st(70, 8, 12.4, -4), st(46, 11.4, 11.6, -4), st(10, 12, 11, -4),
+    st(-52, 12, 11, -4), st(-76, 10.4, 11, -4), st(-87, 7.5, 11, -1), st(-91, 5, 11, 3),
+  ];
+  const top = 22;
+  const deck = mix(C("battleWood"), C("battleSand"), 0.3);
+  const base: Face[] = [...hull(S, { lower: T.deep, upper: T.mid, deck: T.lo, boot: 4 }), ...anchor(S, 80, 10)];
+  base.push(...portholes(S, -70, 60, 8.4, 5, T.deep));
+  // The closed hangar, the same color as the hull, with a row of scuttles along each level.
+  const houses: Face[] = [...house(S, -80, 64, 11.8, 0, 9.8, T.mid), ...house(S, 64, 84, 6.6, 0, 9.8, T.mid)];
+  for (const z of [13.6, 17.6]) houses.push(...portholes([st(64, 11.8, 0, 0), st(-80, 11.8, 0, 0)], -74, 58, z, 6, T.deep));
+  const flight: Face[] = [...flightDeck(-95, 92, 14, top, deck)];
+  for (const x of [-90, -80, 84]) flight.push(...beam([x, -6, x > 0 ? 14 : 11], [x, -10, top - 1.2], 0.8, 0.8, steelDark()));
+  const over: Face[] = [...deckMarks(-90, 82, 13, top + 0.02, [46, -10, -50], deck)];
+  // Two funnels from the starboard side, curving down and out, below the flight deck.
+  for (const x of [-4, -12]) {
+    over.push(...beam([x, -11.8, 17], [x, -16, 17.5], 3.2, 3.2, U), ...beam([x, -16, 17.5], [x - 1, -18.5, 13], 3, 3, U));
+    over.push(...box(x - 2.4, x + 0.4, -19.6, -17.4, 11.4, 12.6, steelDark()));
+  }
+  // The small island forward, with its bridge, rangefinder and mast.
+  over.push(...box(26, 38, -14, -10.4, top, top + 6, U), ...box(28, 36, -13.6, -10.8, top + 6, top + 9.5, U));
+  over.push(...windows(-13.65, 28.5, 35.5, top + 7.6, 0.9, 2), ...box(30, 34, -14.6, -9.8, top + 9.5, top + 10.6, T.lo));
+  over.push(...beam([31, -12.2, top + 10.6], [30, -12.2, top + 22], 0.7, 0.7, steelDark()), ...beam([30.2, -15.4, top + 19], [30.2, -9, top + 19], 0.5, 0.5, steelDark()));
+  // Twin 12.7cm mounts in sponsons below the deck edge, and 25mm triples.
+  for (const x of [60, 24, -40, -64]) over.push(...twinMount(x, -15, top - 4.6, U, x < 0, 0.9));
+  for (const x of [44, 8, -26, -52]) over.push(...aaTub(x, -15.2, top - 3, T.lo, 3, 1.8).faces);
+  const plane = mix(C("battleKhaki"), T.hi, 0.3);
+  for (const [x, y] of [[-56, -5], [-56, 5], [-68, -5], [-68, 5], [-80, -5], [-80, 5]] as const) over.push(...parkedPlane(x, y, top, plane));
+  return {
+    layers: [base, houses, flight, over],
+    water: S,
+    deck: [st(92, 7.7, top, 0), st(80, 14, top, 0), st(-95, 14, top, 0)],
+    at: {},
     troops: [],
     lift: liftFor(S),
   };

@@ -41,9 +41,9 @@ export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOp
 export { loadGame, saveGame } from "./save";
 export { parseScenario, type Scenario } from "./scenario";
 export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
-export { joinProblem, loadProblem, supplyTargets, unloadTiles } from "./transport";
+export { joinProblem, launchable, launchProblem, launchState, loadProblem, supplyTargets, unloadTiles } from "./transport";
 export { diveProblem, surfaceProblem } from "./submarine";
-export { REPAIR_HP } from "./turn";
+export { CARRIER_REPAIR_HP, REPAIR_HP } from "./turn";
 export {
   displayHp,
   fortAt,

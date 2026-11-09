@@ -20,7 +20,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 - **36 × 26 squares**, about 300 m each. North is up. The island runs from Mount Suribachi at the south-west tip to Kitano Point and Tachiiwa Point in the north-east, about 27 squares long.
 - The outline is a polygon traced from the real map in `tools/maps/iwo-jima.mjs`. The neck behind the landing beaches is 3 to 4 squares wide, as the real one was under a kilometre.
-- **The US anchorage** is a block of land in the south-east corner. It stands for the transport and carrier groups offshore, which the game can't show as ships that build units: it holds the US HQ, a Factory, an Airfield (the carriers) and two Ports. It's about 12 squares, two Landing Craft turns, from the beaches.
+- **The US anchorage** is a block of land in the south-east corner. It stands for the transport and carrier groups offshore, which the game can't show as ships that build units: it holds the US HQ, a Factory and two Ports. The carriers are real Carriers offshore (below); the anchorage Airfield that stood in for them is removed (decided 2026-11-09, not built yet). It's about 12 squares, two Landing Craft turns, from the beaches.
 
 ### Places
 
@@ -28,7 +28,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 |---|---|---|
 | HQ | The anchorage | Kuribayashi's command post near Kitano Point |
 | Factory | The anchorage | The supply depot north of Motoyama |
-| Airfields | The anchorage | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
+| Airfields | none | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
 | Ports | Two at the anchorage | none |
 | Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
 
@@ -45,7 +45,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 ### Starting forces
 
-- **US** (6,000 funds): the first wave already ashore on the beaches: four Infantry, two Assault Infantry and two Medium Tanks. Offshore: two Battleships, two Destroyers and two Landing Craft for the next waves. At the anchorage: an Infantry, an Artillery and a Halftrack waiting to be ferried in.
+- **US** (6,000 funds): the first wave already ashore on the beaches: four Infantry, two Assault Infantry and two Medium Tanks. Offshore: two Battleships, two Destroyers and two Landing Craft for the next waves, and two Carriers, each carrying two Bombers. With no airfield of its own, the US can't build aircraft until it takes Airfield No. 1 or No. 2, so lost Bombers aren't replaced before then. At the anchorage: an Infantry, an Artillery and a Halftrack waiting to be ferried in.
 - **Japan** (3,000 funds), its foot soldiers almost all in bunkers: Mount Suribachi's garrison (two Infantry, a Mortar, an Artillery); the airfield line (three Infantry, Assault Infantry, a Mortar, a Flak Gun); the northern main line (four Infantry, Assault Infantry, two Rocket Artillery, an Artillery, a Mortar, a Flak Gun); and Baron Nishi's 26th Tank Regiment near Airfield No. 2 (two Medium Tanks and a Light Tank).
 
 ### Build lists
@@ -70,6 +70,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 ## 2. Known gaps
 
+- Carrier numbers are a first guess, to tune after playtests. Japan has no way to reach Carriers out of artillery range, as historically.
 - Balance is a first guess: whether 14 days is enough for the US, and whether Japan's income is too high for a garrison that was cut off.
 - Caves and tunnels (Japanese units reappearing behind the front) aren't a rule.
 - Naval gunfire support is just Battleships and Destroyers firing at range; there's no pre-landing bombardment.

@@ -66,7 +66,7 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 - Later, commanders may modify a side's unit performance, as COs did in the original.
 - **No Nazi or political symbols.** Sides are identified by color and equipment silhouettes. Any national insignia use is a future decision (TBD); the swastika is never used. Japan is shown only with its national flag, the plain red disc (hinomaru), on its HUD flag and its aircraft; the rising-sun ensign is never used.
 - MVP historical detail is limited to the units themselves. Briefings, real names, dates and so on come later.
-- Unit roster: see **01-units.md**. 13 land units (12 in MVP, Flak Gun in phase 2), 3 air, 5 naval.
+- Unit roster: see **01-units.md**. 13 land units (12 in MVP, Flak Gun in phase 2), 3 air, 6 naval (the Carrier added for the Pacific).
 
 ## 7. Commanders (COs): deferred, hook built early
 
@@ -344,3 +344,4 @@ UI falls into four categories:
 | 2026-11-08 | Iwo Jima map (14-scenarios-pacific): February 1945, 36 × 26. The US starts with its first wave ashore and wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ; Japan, dug into bunkers, wins by holding out to day 15. A US anchorage off the south-east corner stands in for the fleet's transport area |
 | 2026-11-09 | Battle scenes: every naval unit is one larger ship, a 3D model turned 5° like the land machines, with more detail; the US Battleship becomes an Iowa-class battleship. Waves run along every hull from bow to stern, with a bow wave and a wake, so ships always look under way (08-art-pipeline §18) |
 | 2026-11-09 | Naval fire takes time to arrive in battle scenes: shells leave the screen and fall in over a second later, torpedoes run slower, depth charges sink before they go off. A Destroyer uses depth charges on any submarine, surfaced or not (it used its deck gun on a surfaced one), at the developer's request (08-art-pipeline §18) |
+| 2026-11-09 | Carrier added (01-units §4, 05-supply-transport §10), decided but not built yet. It carries 2 Fighters or Bombers and each turn either moves or launches, not both; it can launch both aircraft in one turn, and they fly off and attack that same turn (a departure from the original). Aircraft aboard get fuel and ammo free and 1 HP a day at the normal repair price. Unarmed; aircraft aboard sink with it. Iwo Jima loses the anchorage Airfield and gets two Carriers with two Bombers each instead |
