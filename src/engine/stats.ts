@@ -73,6 +73,16 @@ export function fuelPerDay(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "fuelPerDay", base);
 }
 
+/** Fuel spent per movement point when the unit moves, on top of any daily burn (05-supply-transport §1). */
+export function fuelPerMove(state: GameState, unit: Unit): number {
+  return Math.max(1, unitStat(state, unit, "fuelPerMove", UNITS[unit.type].fuelPerMove));
+}
+
+/** Fuel a move costing `cost` movement points burns. */
+export function moveFuel(state: GameState, unit: Unit, cost: number): number {
+  return cost * fuelPerMove(state, unit);
+}
+
 /** Attack range in tiles, or null for unarmed units. */
 export function attackRange(state: GameState, unit: Unit): { min: number; max: number } | null {
   const range = UNITS[unit.type].range;

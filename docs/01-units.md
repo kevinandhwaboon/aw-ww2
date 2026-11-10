@@ -122,24 +122,24 @@ These are starting points for the first playable build, based on the original ga
 
 | Unit | Cost | Move | Movement type | Vision | Fuel | Primary (ammo) | Secondary | Range |
 |---|---|---|---|---|---|---|---|---|
-| Infantry | 1,000 | 3 | Foot | 2 | 99 | — | Rifle/MG | 1 |
-| Assault Infantry | 3,000 | 2 | Heavy foot | 2 | 99 | Bazooka (3) | MG | 1 |
-| Mortar Team | 3,000 | 2 | Heavy foot | 2 | 99 | Mortar (3) | — | 2 |
-| Recon | 4,000 | 8 | Wheels | 5 | 99 | — | MG | 1 |
-| Halftrack | 5,000 | 6 | Tracks | 1 | 90 | — | — | — |
-| Light Tank | 6,000 | 7 | Tracks | 3 | 55 | Gun (9) | MG | 1 |
-| Medium Tank | 8,000 | 6 | Tracks | 2 | 60 | Gun (9) | MG | 1 |
-| Tank Destroyer | 9,000 | 5 | Tracks | 2 | 65 | AT gun (6) | — | 1 |
-| Heavy Tank | 15,000 | 4 | Tracks | 1 | 40 | Gun (8) | MG | 1 |
-| Artillery | 6,000 | 5 | Tracks | 1 | 80 | Howitzer (9) | — | 2–3 |
-| Rocket Artillery | 14,000 | 5 | Wheels | 1 | 75 | Rockets (5) | — | 3–5 |
-| Mobile AA | 8,000 | 6 | Tracks | 2 | 85 | AA guns (9) | — | 1 |
+| Infantry | 1,000 | 3 | Foot | 2 | 50 | — | Rifle/MG | 1 |
+| Assault Infantry | 3,000 | 2 | Heavy foot | 2 | 50 | Bazooka (3) | MG | 1 |
+| Mortar Team | 3,000 | 2 | Heavy foot | 2 | 50 | Mortar (3) | — | 2 |
+| Recon | 4,000 | 8 | Wheels | 5 | 50 | — | MG | 1 |
+| Halftrack | 5,000 | 6 | Tracks | 1 | 45 | — | — | — |
+| Light Tank | 6,000 | 7 | Tracks | 3 | 28 | Gun (9) | MG | 1 |
+| Medium Tank | 8,000 | 6 | Tracks | 2 | 30 | Gun (9) | MG | 1 |
+| Tank Destroyer | 9,000 | 5 | Tracks | 2 | 33 | AT gun (6) | — | 1 |
+| Heavy Tank | 15,000 | 4 | Tracks | 1 | 20 | Gun (8) | MG | 1 |
+| Artillery | 6,000 | 5 | Tracks | 1 | 40 | Howitzer (9) | — | 2–3 |
+| Rocket Artillery | 14,000 | 5 | Wheels | 1 | 38 | Rockets (5) | — | 3–5 |
+| Mobile AA | 8,000 | 6 | Tracks | 2 | 43 | AA guns (9) | — | 1 |
 
 ### Air and naval (phase 2, rougher)
 
 | Unit | Cost | Move | Vision | Fuel | Fuel/day | Primary (ammo) | Secondary | Range | Carries |
 |---|---|---|---|---|---|---|---|---|---|
-| Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 80 | — | Flak (6) | — | 3–5 | — |
+| Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
 | Fighter | 20,000 | 9 | 2 | 80 | 5 | Guns (2) | — | 1 | — |
 | Bomber | 22,000 | 7 | 2 | 50 | 8 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
@@ -156,20 +156,20 @@ Fighter ground attack (strafing) uses the same guns, with very low damage values
 
 ## 8a. Fuel and ammo from the real machines (decided 2026-11-10)
 
-At the developer's request, fuel was rescaled so each unit's tank reflects the machine it stands for. **Land:** fuel is roughly the vehicle's road range in km divided by 3, capped at 99. **Air and naval:** the full tank and the daily burn together give roughly how long the real machine could stay out; the developer's balance requests for Bombers override realism where they conflict.
+At the developer's request, fuel was rescaled so each unit's tank reflects the machine it stands for. **Land:** fuel is roughly the vehicle's road range in km divided by 6, capped at 50 (first set at ÷ 3, capped at 99; halved the same day at the developer's request, rounding halves up). The table below gives the halved values. **Air and naval:** the full tank and the daily burn together give roughly how long the real machine could stay out; the developer's balance requests for Bombers override realism where they conflict.
 
 | Unit | Fuel | Per day | Real basis |
 |---|---|---|---|
-| Infantry, Assault Infantry, Mortar Team | 99 | — | On foot: no fuel to run out of |
-| Recon | 99 | — | Jeep and M8 armored car, 450–560 km |
-| Halftrack | 90 | — | M3 and Sd.Kfz. 251, about 300 km |
-| Mobile AA | 85 | — | Halftrack-mounted (M16, Flakvierling), about 280 km |
-| Artillery, Flak Gun | 80 | — | Towed by trucks or prime movers, 250–480 km |
-| Rocket Artillery | 75 | — | Truck- or tank-mounted launchers, about 230 km |
-| Tank Destroyer | 65 | — | M10 (diesel) about 300 km, StuG III about 155 km |
-| Medium Tank | 60 | — | Sherman and Panzer IV, about 190–210 km |
-| Light Tank | 55 | — | M5 Stuart and Panzer II, about 160–200 km |
-| Heavy Tank | 40 | — | Tiger and Churchill, about 120–145 km: famously thirsty |
+| Infantry, Assault Infantry, Mortar Team | 50 | — | On foot: no fuel to run out of |
+| Recon | 50 | — | Jeep and M8 armored car, 450–560 km |
+| Halftrack | 45 | — | M3 and Sd.Kfz. 251, about 300 km |
+| Mobile AA | 43 | — | Halftrack-mounted (M16, Flakvierling), about 280 km |
+| Artillery, Flak Gun | 40 | — | Towed by trucks or prime movers, 250–480 km |
+| Rocket Artillery | 38 | — | Truck- or tank-mounted launchers, about 230 km |
+| Tank Destroyer | 33 | — | M10 (diesel) about 300 km, StuG III about 155 km |
+| Medium Tank | 30 | — | Sherman and Panzer IV, about 190–210 km |
+| Light Tank | 28 | — | M5 Stuart and Panzer II, about 160–200 km |
+| Heavy Tank | 20 | — | Tiger and Churchill, about 120–145 km: famously thirsty |
 | Fighter | 80 | 5 | Short-legged single-seaters (Spitfire, Bf 109): 1–3 hours aloft |
 | Bomber | 50 | 8 | Developer's balance call: half the old tank, and the heaviest idle burn of any aircraft (multi-engine bombers burn the most per hour) |
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
@@ -179,6 +179,8 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Destroyer | 80 | 2 | Notoriously thirsty: refuelled at sea every few days |
 | Landing Craft | 70 | 1 | LCTs were short-ranged coastal craft |
 | Torpedo Boat | 50 | 2 | PT boats and E-boats: fast coastal raiders that had to return to base often |
+
+**Moving burns more for aircraft:** every aircraft spends 2 fuel per tile flown (`fuelPerMove`), on top of its daily burn (05-supply-transport §1). Land units and ships spend 1 per movement point.
 
 **Ammo:** Fighters and Bombers carry **2** rounds of ammo (was 9), at the developer's request: they were too strong. A sortie is one or two attacks, then back to an airfield (or, for Fighters, a Carrier) to rearm.
 
@@ -198,7 +200,7 @@ Every unit type in the data files defines:
 - `cost`
 - `movePoints`, `movementType` (foot, heavyFoot, wheels, tracks, air, sea, landingCraft; costs per terrain in 02-terrain)
 - `vision`
-- `maxFuel`, `fuelPerDay` (air and naval)
+- `maxFuel`, `fuelPerDay` (air and naval), `fuelPerMove` (fuel per movement point; 2 for aircraft, else 1)
 - `primaryWeapon` + `maxAmmo` (may be none)
 - `secondaryWeapon` (unlimited ammo; may be none)
 - `attackRange` (min–max; direct = 1–1)

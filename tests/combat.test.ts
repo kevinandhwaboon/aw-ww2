@@ -106,7 +106,7 @@ describe("attack resolution (03-combat §2)", () => {
     ], { settings: { luck: false } });
     const { state: after, events } = fight(state, attack(0, 1, [P(1, 0)]));
     expect(events.map((e) => e.type)).toEqual(["unitMoved", "combat"]);
-    expect(unitById(after, 0)).toMatchObject({ pos: P(1, 0), hasActed: true, fuel: 59 });
+    expect(unitById(after, 0)).toMatchObject({ pos: P(1, 0), hasActed: true, fuel: 29 });
   });
 
   it("the counter uses the terrain the attacker moved onto", () => {

@@ -111,8 +111,8 @@ describe("tile info box (00-master-design §12)", () => {
   it("flags fuel as low for any unit down to a quarter of its tank (05-supply-transport §11)", () => {
     const state = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
     const withFuel = (fuel: number) => ({ ...state, units: state.units.map((u) => ({ ...u, fuel })) });
-    expect(tileInfo(withFuel(16), P(0, 0)).unit?.fuel.low).toBe(false);
-    expect(tileInfo(withFuel(15), P(0, 0)).unit?.fuel.low).toBe(true); // 60 / 4
+    expect(tileInfo(withFuel(8), P(0, 0)).unit?.fuel.low).toBe(false);
+    expect(tileInfo(withFuel(7), P(0, 0)).unit?.fuel.low).toBe(true); // 30 / 4, rounded down
   });
 
   it("flags ammo as low at a quarter or less, but a single torpedo still loaded is a full load (05-supply-transport §11)", () => {

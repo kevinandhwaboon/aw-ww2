@@ -365,7 +365,9 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       };
       row("HP", `${displayHp(unit.hp)} / 10  (internal ${unit.hp})`);
       const burn = stats.fuelPerDay(state, unit);
-      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${burn > 0 ? `  (−${burn} per turn)` : ""}`);
+      const perMove = stats.fuelPerMove(state, unit);
+      const costs = [...(burn > 0 ? [`−${burn} per turn`] : []), ...(perMove > 1 ? [`−${perMove} per tile moved`] : [])];
+      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${costs.length > 0 ? `  (${costs.join(", ")})` : ""}`);
       row("Ammo", def.primaryWeapon ? `${unit.ammo} / ${ammo}  (${def.primaryWeapon.name})` : "—");
       if (def.secondaryWeapon) row("Secondary", def.secondaryWeapon.name);
       row("Move", stats.movePoints(state, unit), def.movePoints);

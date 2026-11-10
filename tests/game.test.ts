@@ -29,7 +29,7 @@ describe("createGame", () => {
 
   it("units start at full HP, fuel and ammo, as rookies, ready to act", () => {
     const state = makeGame(["..."], [{ type: "mediumTank", owner: 0, pos: { x: 1, y: 0 } }]);
-    expect(state.units[0]).toMatchObject({ hp: 100, fuel: 60, ammo: 9, kills: 0, hasActed: false });
+    expect(state.units[0]).toMatchObject({ hp: 100, fuel: 30, ammo: 9, kills: 0, hasActed: false });
   });
 
   it("units without a primary weapon have 0 ammo", () => {

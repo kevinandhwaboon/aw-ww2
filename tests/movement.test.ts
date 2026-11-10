@@ -167,7 +167,7 @@ describe("Move command", () => {
 
   it("moves the unit, spends fuel equal to the movement cost, and marks it as acted", () => {
     const { state, events } = mustApply(base, move(0, [P(1, 0), P(2, 0)]));
-    expect(state.units[0]).toMatchObject({ pos: P(2, 0), fuel: 99 - 4, hasActed: true });
+    expect(state.units[0]).toMatchObject({ pos: P(2, 0), fuel: 50 - 4, hasActed: true });
     expect(events).toEqual([
       { type: "unitMoved", unitId: 0, path: [P(0, 0), P(1, 0), P(2, 0)], fuelUsed: 4 },
       { type: "unitWaited", unitId: 0 },
@@ -176,7 +176,7 @@ describe("Move command", () => {
 
   it("waiting in place is allowed and costs no fuel", () => {
     const { state, events } = mustApply(base, move(0, []));
-    expect(state.units[0]).toMatchObject({ pos: P(0, 0), fuel: 99, hasActed: true });
+    expect(state.units[0]).toMatchObject({ pos: P(0, 0), fuel: 50, hasActed: true });
     expect(events).toEqual([{ type: "unitWaited", unitId: 0 }]);
   });
 

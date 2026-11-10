@@ -9,8 +9,9 @@
 ## 1. Fuel
 
 - Each unit has `maxFuel` (01-units section 8).
-- **Moving costs fuel equal to the movement cost spent** (02-terrain), not the number of tiles.
-- A unit can't plan a path costing more than its remaining fuel.
+- **Moving costs fuel equal to the movement cost spent** (02-terrain), not the number of tiles, **times the unit's `fuelPerMove`**: 1 for land units and ships, 2 for aircraft (decided 2026-11-10, at the developer's request: aircraft burn far more under way than loitering).
+- A unit can't plan a path costing more fuel than it has left.
+- **The daily burn comes on top of movement.** A Fighter (5 a day) that stays put burns 5; one that flies 6 tiles burns 5 + 2 × 6 = 17.
 - **Land units** use no fuel per day. A land unit with 0 fuel can't move but can still attack (if it has ammo or a secondary weapon), capture and be resupplied.
 - **Air and naval units (phase 2)** also burn `fuelPerDay` at the start of their owner's turn. A submerged submarine burns 5 per day instead of 1. An air or naval unit that reaches 0 fuel at turn start is destroyed (crashes or sinks). This isn't a kill for veterancy.
 
@@ -48,7 +49,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
 - **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit. It flies over enemy ground units and ships, but enemy aircraft block its path (02-terrain §5).
-- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a), on top of 2 fuel per tile flown (§1). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
 - **Service:** owned airfields repair and resupply air units (04-economy §5). A Halftrack also resupplies an adjacent aircraft, since the rule covers all friendly units.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
 

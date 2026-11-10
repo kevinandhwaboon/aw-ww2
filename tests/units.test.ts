@@ -18,10 +18,10 @@ describe("unit roster (01-units)", () => {
   });
 
   it("matches the v0 stat table for a few units (01-units §8)", () => {
-    expect(UNITS.infantry).toMatchObject({ cost: 1000, movePoints: 3, movementType: "foot", vision: 2, maxFuel: 99 });
-    expect(UNITS.mediumTank).toMatchObject({ cost: 8000, movePoints: 6, movementType: "tracks", maxFuel: 60 });
+    expect(UNITS.infantry).toMatchObject({ cost: 1000, movePoints: 3, movementType: "foot", vision: 2, maxFuel: 50 });
+    expect(UNITS.mediumTank).toMatchObject({ cost: 8000, movePoints: 6, movementType: "tracks", maxFuel: 30 });
     expect(UNITS.mediumTank.primaryWeapon.maxAmmo).toBe(9);
-    expect(UNITS.heavyTank).toMatchObject({ cost: 15000, movePoints: 4, maxFuel: 40 });
+    expect(UNITS.heavyTank).toMatchObject({ cost: 15000, movePoints: 4, maxFuel: 20 });
     expect(UNITS.rocketArtillery).toMatchObject({ cost: 14000, movementType: "wheels", range: { min: 3, max: 5 } });
     expect(UNITS.fighter).toMatchObject({ cost: 20000, movePoints: 9, fuelPerDay: 5 });
   });
@@ -64,11 +64,11 @@ describe("unit roster (01-units)", () => {
 });
 
 describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
-  it("heavy tanks have the shortest legs, then medium and light tanks; foot soldiers and jeeps the longest", () => {
+  it("heavy tanks have the shortest legs, then light and medium tanks; foot soldiers and jeeps the longest, at half the old scale", () => {
     expect(UNITS.heavyTank.maxFuel).toBeLessThan(UNITS.lightTank.maxFuel);
     expect(UNITS.lightTank.maxFuel).toBeLessThan(UNITS.mediumTank.maxFuel);
     expect(UNITS.mediumTank.maxFuel).toBeLessThan(UNITS.halftrack.maxFuel);
-    for (const id of ["infantry", "assaultInfantry", "mortar", "recon"] as const) expect(UNITS[id].maxFuel, id).toBe(99);
+    for (const id of ["infantry", "assaultInfantry", "mortar", "recon"] as const) expect(UNITS[id].maxFuel, id).toBe(50);
   });
 
   it("Fighters and Bombers carry only 2 rounds of ammo", () => {

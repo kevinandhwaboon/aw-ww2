@@ -37,9 +37,26 @@ describe("flying (05-supply-transport §5)", () => {
     expect(reach).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
-  it("flying over the sea spends fuel like any other move", () => {
+  it("flying over the sea spends fuel like any other move: 2 per tile for aircraft", () => {
     const state = makeGame(["=SS="], [u("bomber", 0, 0)]);
-    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(47);
+    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(44);
+  });
+
+  it("an aircraft that stays put burns only its daily fuel; one that flies burns the daily fuel plus 2 per tile (05-supply-transport §1)", () => {
+    const state = makeGame([".", ".", ".", "."], [u("fighter", 0, 0, { fuel: 50 }), { type: "fighter", owner: 0, pos: P(0, 1), fuel: 50 }]);
+    const after = nextRound(run(state, wait(0), wait(1, [P(0, 2), P(0, 3)]))).state;
+    expect(byId(after, 0)?.fuel).toBe(45); // 5 a day
+    expect(byId(after, 1)?.fuel).toBe(41); // 5 a day + 2 × 2 tiles
+  });
+
+  it("an aircraft can only fly as far as its fuel pays for at 2 per tile", () => {
+    const state = makeGame(["=========="], [u("fighter", 0, 0, { fuel: 7 })]);
+    expect(Math.max(...moveDestinations(state, state.units[0] as Unit).map((p) => p.x))).toBe(3);
+  });
+
+  it("a modifier can change how much fuel a move burns", () => {
+    const state = makeGame(["===="], [u("bomber", 0, 0)], { modifiers: [{ source: "test", stat: "fuelPerMove", op: "add", value: 1 }] });
+    expect(byId(run(state, wait(0, [P(1, 0)])), 0)?.fuel).toBe(47);
   });
 
   it("an aircraft can end its move over the sea", () => {

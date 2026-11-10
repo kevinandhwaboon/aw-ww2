@@ -33,6 +33,11 @@ export interface UnitDef {
   readonly maxFuel: number;
   /** Fuel burned at the start of each of the owner's turns (air and naval only). */
   readonly fuelPerDay: number;
+  /**
+   * Fuel per movement point spent moving, on top of the daily burn (05-supply-transport §1): 1 for
+   * land units and ships, more for aircraft, which burn far more under way than loitering.
+   */
+  readonly fuelPerMove: number;
   /** Fuel burned per day instead while submerged; null for units that can't dive (05-supply-transport §9). */
   readonly fuelPerDaySubmerged: number | null;
   /** Can attack, and so counter, a submerged submarine (03-combat §5c). */
@@ -68,10 +73,14 @@ export const LAND_UNITS = [
 
 const DIRECT = { min: 1, max: 1 } as const;
 
+/** Aircraft burn this much fuel per tile flown, on top of their daily burn (05-supply-transport §5). */
+const AIR_FUEL_PER_MOVE = 2;
+
 /** Defaults shared by most units; each entry overrides what differs. */
 const BASE = {
   phase: 1,
   fuelPerDay: 0,
+  fuelPerMove: 1,
   fuelPerDaySubmerged: null,
   attacksSubmerged: false,
   primaryWeapon: null,
@@ -87,86 +96,86 @@ export const UNITS = {
   // ---- Land, phase 1 ----
   infantry: {
     ...BASE, name: "Infantry", category: "land", cost: 1000, movePoints: 3, movementType: "foot",
-    vision: 2, maxFuel: 99, secondaryWeapon: { name: "Rifle/MG" }, canCapture: true,
+    vision: 2, maxFuel: 50, secondaryWeapon: { name: "Rifle/MG" }, canCapture: true,
   },
   assaultInfantry: {
     ...BASE, name: "Assault Infantry", category: "land", cost: 3000, movePoints: 2, movementType: "heavyFoot",
-    vision: 2, maxFuel: 99, primaryWeapon: { name: "Bazooka", maxAmmo: 3 }, secondaryWeapon: { name: "MG" },
+    vision: 2, maxFuel: 50, primaryWeapon: { name: "Bazooka", maxAmmo: 3 }, secondaryWeapon: { name: "MG" },
     canCapture: true,
   },
   mortar: {
     ...BASE, name: "Mortar Team", category: "land", cost: 3000, movePoints: 2, movementType: "heavyFoot",
-    vision: 2, maxFuel: 99, primaryWeapon: { name: "Mortar", maxAmmo: 3 }, range: { min: 2, max: 2 },
+    vision: 2, maxFuel: 50, primaryWeapon: { name: "Mortar", maxAmmo: 3 }, range: { min: 2, max: 2 },
     canMoveAndFire: false,
   },
   recon: {
     ...BASE, name: "Recon", category: "land", cost: 4000, movePoints: 8, movementType: "wheels",
-    vision: 5, maxFuel: 99, secondaryWeapon: { name: "MG" },
+    vision: 5, maxFuel: 50, secondaryWeapon: { name: "MG" },
   },
   halftrack: {
     ...BASE, name: "Halftrack", category: "land", cost: 5000, movePoints: 6, movementType: "tracks",
-    vision: 1, maxFuel: 90, range: null, transport: { capacity: 1, carries: FOOT_UNITS },
+    vision: 1, maxFuel: 45, range: null, transport: { capacity: 1, carries: FOOT_UNITS },
     specialActions: ["resupply"],
   },
   lightTank: {
     ...BASE, name: "Light Tank", category: "land", cost: 6000, movePoints: 7, movementType: "tracks",
-    vision: 3, maxFuel: 55, primaryWeapon: { name: "Gun", maxAmmo: 9 }, secondaryWeapon: { name: "MG" },
+    vision: 3, maxFuel: 28, primaryWeapon: { name: "Gun", maxAmmo: 9 }, secondaryWeapon: { name: "MG" },
   },
   mediumTank: {
     ...BASE, name: "Medium Tank", category: "land", cost: 8000, movePoints: 6, movementType: "tracks",
-    vision: 2, maxFuel: 60, primaryWeapon: { name: "Gun", maxAmmo: 9 }, secondaryWeapon: { name: "MG" },
+    vision: 2, maxFuel: 30, primaryWeapon: { name: "Gun", maxAmmo: 9 }, secondaryWeapon: { name: "MG" },
   },
   heavyTank: {
     ...BASE, name: "Heavy Tank", category: "land", cost: 15000, movePoints: 4, movementType: "tracks",
-    vision: 1, maxFuel: 40, primaryWeapon: { name: "Gun", maxAmmo: 8 }, secondaryWeapon: { name: "MG" },
+    vision: 1, maxFuel: 20, primaryWeapon: { name: "Gun", maxAmmo: 8 }, secondaryWeapon: { name: "MG" },
   },
   tankDestroyer: {
     ...BASE, name: "Tank Destroyer", category: "land", cost: 9000, movePoints: 5, movementType: "tracks",
-    vision: 2, maxFuel: 65, primaryWeapon: { name: "AT gun", maxAmmo: 6 },
+    vision: 2, maxFuel: 33, primaryWeapon: { name: "AT gun", maxAmmo: 6 },
   },
   artillery: {
     ...BASE, name: "Artillery", category: "land", cost: 6000, movePoints: 5, movementType: "tracks",
-    vision: 1, maxFuel: 80, primaryWeapon: { name: "Howitzer", maxAmmo: 9 }, range: { min: 2, max: 3 },
+    vision: 1, maxFuel: 40, primaryWeapon: { name: "Howitzer", maxAmmo: 9 }, range: { min: 2, max: 3 },
     canMoveAndFire: false,
   },
   rocketArtillery: {
     ...BASE, name: "Rocket Artillery", category: "land", cost: 14000, movePoints: 5, movementType: "wheels",
-    vision: 1, maxFuel: 75, primaryWeapon: { name: "Rockets", maxAmmo: 5 }, range: { min: 3, max: 5 },
+    vision: 1, maxFuel: 38, primaryWeapon: { name: "Rockets", maxAmmo: 5 }, range: { min: 3, max: 5 },
     canMoveAndFire: false,
   },
   mobileAA: {
     ...BASE, name: "Mobile AA", category: "land", cost: 8000, movePoints: 6, movementType: "tracks",
-    vision: 2, maxFuel: 85, primaryWeapon: { name: "AA guns", maxAmmo: 9 },
+    vision: 2, maxFuel: 43, primaryWeapon: { name: "AA guns", maxAmmo: 9 },
   },
 
   // ---- Land, phase 2 ----
   flakGun: {
     ...BASE, phase: 2, name: "Flak Gun", category: "land", cost: 11000, movePoints: 3, movementType: "tracks",
-    vision: 2, maxFuel: 80, primaryWeapon: { name: "Flak", maxAmmo: 6 }, range: { min: 3, max: 5 },
+    vision: 2, maxFuel: 40, primaryWeapon: { name: "Flak", maxAmmo: 6 }, range: { min: 3, max: 5 },
     canMoveAndFire: false,
   },
 
   // ---- Air, phase 2 ----
   fighter: {
     ...BASE, phase: 2, name: "Fighter", category: "air", cost: 20000, movePoints: 9, movementType: "air",
-    vision: 2, maxFuel: 80, fuelPerDay: 5, primaryWeapon: { name: "Guns", maxAmmo: 2 },
+    vision: 2, maxFuel: 80, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Guns", maxAmmo: 2 },
   },
   bomber: {
     ...BASE, phase: 2, name: "Bomber", category: "air", cost: 22000, movePoints: 7, movementType: "air",
-    vision: 2, maxFuel: 50, fuelPerDay: 8, primaryWeapon: { name: "Bombs", maxAmmo: 2 },
+    vision: 2, maxFuel: 50, fuelPerDay: 8, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bombs", maxAmmo: 2 },
   },
   transportAircraft: {
     ...BASE, phase: 2, name: "Transport Aircraft", category: "air", cost: 10000, movePoints: 8,
-    movementType: "air", vision: 2, maxFuel: 99, fuelPerDay: 3, range: null,
+    movementType: "air", vision: 2, maxFuel: 99, fuelPerDay: 3, fuelPerMove: AIR_FUEL_PER_MOVE, range: null,
     transport: { capacity: 2, carries: FOOT_UNITS }, specialActions: ["airDrop"],
   },
   diveBomber: {
     ...BASE, phase: 2, name: "Dive Bomber", category: "air", cost: 14000, movePoints: 6, movementType: "air",
-    vision: 2, maxFuel: 70, fuelPerDay: 5, primaryWeapon: { name: "Bomb", maxAmmo: 2 },
+    vision: 2, maxFuel: 70, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bomb", maxAmmo: 2 },
   },
   torpedoBomber: {
     ...BASE, phase: 2, name: "Torpedo Bomber", category: "air", cost: 16000, movePoints: 6, movementType: "air",
-    vision: 2, maxFuel: 70, fuelPerDay: 5, primaryWeapon: { name: "Torpedo", maxAmmo: 1 },
+    vision: 2, maxFuel: 70, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Torpedo", maxAmmo: 1 },
   },
 
   // ---- Naval, phase 2 ----
