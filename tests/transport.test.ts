@@ -182,7 +182,7 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
 
   it("the Supply action refills adjacent friendly units, ending the Halftrack's action", () => {
     const { state, events } = must(game(), driveUp());
-    expect(byId(state, 1)).toMatchObject({ ammo: 9, fuel: 70 });
+    expect(byId(state, 1)).toMatchObject({ ammo: 9, fuel: 60 });
     expect(byId(state, 0)).toMatchObject({ pos: P(1, 0), hasActed: true });
     expect(events.map((e) => e.type)).toEqual(["unitMoved", "unitResupplied"]);
   });
@@ -201,7 +201,7 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
   it("happens automatically at the start of the owner's turn", () => {
     const state = makeGame(["==="], [u("halftrack", 1, 1), u("mediumTank", 1, 2, 0, { ammo: 1, fuel: 5 })]);
     const { state: after, events } = must(state, endTurn);
-    expect(byId(after, 1)).toMatchObject({ ammo: 9, fuel: 70 });
+    expect(byId(after, 1)).toMatchObject({ ammo: 9, fuel: 60 });
     expect(events).toContainEqual({ type: "unitResupplied", unitId: 1 });
   });
 
@@ -245,7 +245,7 @@ describe("joining units (04-economy §6, 03-combat §6)", () => {
 
   it("adds fuel and ammo, capped at the maximum", () => {
     expect(byId(merge(pair({ fuel: 20, ammo: 2 }, { fuel: 30, ammo: 3, hp: 50 })).state, 1)).toMatchObject({ fuel: 49, ammo: 5 });
-    expect(byId(merge(pair({ fuel: 60, ammo: 8 }, { fuel: 60, ammo: 8, hp: 50 })).state, 1)).toMatchObject({ fuel: 70, ammo: 9 });
+    expect(byId(merge(pair({ fuel: 60, ammo: 8 }, { fuel: 60, ammo: 8, hp: 50 })).state, 1)).toMatchObject({ fuel: 60, ammo: 9 });
   });
 
   it("Elite at 7 HP + Rookie at 3 HP gives an Elite at 10 HP", () => {

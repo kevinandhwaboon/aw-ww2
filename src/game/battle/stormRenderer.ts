@@ -8,7 +8,7 @@ import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../pixelFont";
 import { playerColors } from "../placeholderUnits";
 import { CAPTURE_POINTS, type PlayerId } from "../../engine/state";
 import type { NationId } from "../../engine/data/nations";
-import { drawBackdrop, SCENE } from "./backdrops";
+import { dockCargo, drawBackdrop, drawHarbor, SCENE } from "./backdrops";
 import type { Cutscene } from "./BattleScene";
 import { C, mix, Painter, shade, teamShades } from "./paint";
 import { along, clamp01, lerp, seg, type Look, type Pt } from "./rig";
@@ -247,7 +247,8 @@ function hangar(p: Painter): Building {
 }
 
 function warehouse(p: Painter): Building {
-  // A quayside warehouse with a loading hoist, and a crane beside it.
+  // A quayside warehouse with a loading hoist and a lifebuoy by the door; the harbor's crane works
+  // the freighter alongside (drawHarbor).
   stoneWall(p, 220, 112, 140, GROUND - 112);
   p.poly([[214, 112], [290, 86], [366, 112]], shade(C("battleRoof"), 0.85));
   const windows: Pt[] = [];
@@ -259,9 +260,16 @@ function warehouse(p: Painter): Building {
   for (let x = 238; x < 264; x += 5) p.rect(x, 151, 1, GROUND - 151, shade(C("battleWood"), 0.45));
   p.rect(248, 100, 8, 10, C("battleSteelDark"));
   p.line(252, 110, 252, 140, C("battleSteelDark"));
-  p.rect(372, 50, 4, GROUND - 50, C("battleBrass"));
-  p.line(374, 52, 330, 70, C("battleBrass"), 2);
-  for (let x = 220; x < 360; x += 24) p.rect(x, GROUND + 2, 4, 5, C("battleSteelDark"));
+  p.rect(248, 140, 9, 6, C("battleWood"));
+  // A lifebuoy on the wall: a white ring with red quarters.
+  p.disc(284, 160, 6, C("battleStar"));
+  for (const [dx, dy] of [[-5, -2], [3, -5], [3, 2], [-2, 4]] as const) p.rect(284 + dx, 160 + dy, 3, 2, C("battleSun"));
+  p.disc(284, 160, 3, shade(C("battleStone"), 0.8));
+  // A cargo sling of sacks waiting by the wall.
+  p.rect(316, 186, 18, 14, shade(C("battleSand"), 0.85));
+  p.line(316, 186, 325, 178, C("battleInk"));
+  p.line(334, 186, 325, 178, C("battleInk"));
+  dockCargo(p, 340, GROUND + 8, 1);
   return { door: { x: 251, y: GROUND }, pole: { x: 290, y: 86 }, windows };
 }
 
@@ -352,14 +360,17 @@ export class StormRenderer implements Cutscene {
     ctx.beginPath();
     ctx.rect(0, SCENE.top, SCENE.width, SCENE.bottom - SCENE.top);
     ctx.clip();
-    drawBackdrop(p, 0, "plains", "land", t, 1);
-    drawBackdrop(p, SCENE.half, "plains", "land", t, 1);
+    if (this.plan.terrain === "port") drawHarbor(p, t);
+    else {
+      drawBackdrop(p, 0, "plains", "land", t, 1);
+      drawBackdrop(p, SCENE.half, "plains", "land", t, 1);
+    }
     const followUp = isFollowUp(this.plan);
     // When the squad is all inside (or, for a follow-up, when the flag stops rising).
     const lastIn = followUp ? STORM_MS.intro + STORM_MS.haul : Math.max(...this.times.map((x) => x.enter), 0);
     const building = this.drawBuilding(t, lastIn);
     if (this.plan.terrain === "airfield") runway(p);
-    else if (this.plan.terrain !== "city") {
+    else if (this.plan.terrain !== "city" && this.plan.terrain !== "port") {
       // A track through the grass to the door.
       p.poly([[0, 212], [0, 222], [building.door.x + 10, GROUND + 2], [building.door.x - 10, GROUND - 1]], mix(C("battleRoad"), C("battleGrass"), 0.3));
       p.rect(building.door.x - 12, GROUND - 2, 24, 4, shade(C("battleRoad"), 0.85));

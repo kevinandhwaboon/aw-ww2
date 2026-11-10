@@ -172,7 +172,7 @@ describe("build (04-economy §4)", () => {
 
   it("creates a full-strength rookie and charges its cost", () => {
     const { state, events } = must(factory(), build("mediumTank", P(0, 0)));
-    expect(state.units[0]).toMatchObject({ type: "mediumTank", owner: 0, pos: P(0, 0), hp: 100, fuel: 70, ammo: 9, kills: 0 });
+    expect(state.units[0]).toMatchObject({ type: "mediumTank", owner: 0, pos: P(0, 0), hp: 100, fuel: 60, ammo: 9, kills: 0 });
     expect(funds(state, 0)).toBe(2000);
     expect(events).toEqual([{ type: "unitBuilt", unitId: 0, unitType: "mediumTank", owner: 0, pos: P(0, 0), cost: 8000 }]);
   });
@@ -329,14 +329,14 @@ describe("repair and resupply (04-economy §5)", () => {
 
   it("no funds means no healing, but fuel and ammo are still free", () => {
     const { state, events } = repairing("C", { type: "mediumTank", hp: 50, fuel: 3, ammo: 1 }, 0);
-    expect(state.units[0]).toMatchObject({ hp: 50, fuel: 70, ammo: 9 });
+    expect(state.units[0]).toMatchObject({ hp: 50, fuel: 60, ammo: 9 });
     expect(eventsOf(events, "unitRepaired")).toEqual([]);
     expect(eventsOf(events, "unitResupplied")).toEqual([{ type: "unitResupplied", unitId: 0 }]);
   });
 
   it("a full-HP unit is still resupplied", () => {
     const { state } = repairing("C", { type: "mediumTank", fuel: 10 }, 0);
-    expect(state.units[0]?.fuel).toBe(70);
+    expect(state.units[0]?.fuel).toBe(60);
   });
 
   it("nothing happens on neutral or enemy properties, or open ground", () => {

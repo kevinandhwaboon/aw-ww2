@@ -36,12 +36,40 @@ export const FIRE_TIMING: Record<FireKind, FireTiming> = {
   planeGuns: { cycle: 800, shots: [100, 170, 240, 310, 380, 450], cycles: 1, flight: 230, stagger: 150 },
   bombs: { cycle: 1100, shots: [200, 350, 500, 650], cycles: 1, flight: 750, stagger: 200 },
   diveBomb: { cycle: 1100, shots: [450], cycles: 1, flight: 750, stagger: 220 },
-  aerialTorpedo: { cycle: 1300, shots: [400], cycles: 1, flight: 1600, stagger: 280 },
+  aerialTorpedo: { cycle: 1700, shots: [750], cycles: 1, flight: 1600, stagger: 280 },
   navalGuns: { cycle: 1400, shots: [150, 550, 950], cycles: 1, flight: 1700, stagger: 0 },
   deckGun: { cycle: 900, shots: [150, 550], cycles: 1, flight: 1100, stagger: 200 },
   depthCharges: { cycle: 1000, shots: [150, 400, 650], cycles: 1, flight: 1700, stagger: 250 },
   torpedo: { cycle: 1200, shots: [300], cycles: 1, flight: 1700, stagger: 300 },
 };
+
+/**
+ * A Torpedo Bomber's attack run, in ms into its firing cycle: it dives to just over the waves, flies
+ * level while the torpedo drops (the shot leaves at `release`), then climbs back to where it was.
+ */
+export const TORPEDO_RUN = { descend: 650, release: 750, level: 950, climb: 1600 } as const;
+
+const smooth = (u: number) => u * u * (3 - 2 * u);
+
+/**
+ * Where a Torpedo Bomber is in its run at `ct` ms into the cycle (null: not attacking). `depth` is
+ * how far down toward the water it has come, 0 at its usual height and 1 skimming the waves; `pitch`
+ * is its nose angle in radians, positive nose down.
+ */
+export function torpedoRun(ct: number | null): { readonly depth: number; readonly pitch: number } {
+  if (ct === null || ct < 0) return { depth: 0, pitch: 0 };
+  const { descend, level, climb } = TORPEDO_RUN;
+  if (ct < descend) {
+    const u = ct / descend;
+    return { depth: smooth(u), pitch: 0.35 * Math.sin(Math.PI * u) };
+  }
+  if (ct < level) return { depth: 1, pitch: 0 };
+  if (ct < climb) {
+    const u = (ct - level) / (climb - level);
+    return { depth: 1 - smooth(u), pitch: -0.4 * Math.sin(Math.PI * u) };
+  }
+  return { depth: 0, pitch: 0 };
+}
 
 /** Infantry fire by soldier: riflemen fire single shots, the SMG and the squad automatic fire bursts. */
 const SQUAD_TIMING: Record<"smg" | "lmg", FireTiming> = {

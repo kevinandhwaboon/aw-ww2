@@ -1,7 +1,7 @@
 # Topic Doc 05: Supply and Transport
 
 **Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09).
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-10
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
 ---
@@ -48,7 +48,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
 - **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit. It flies over enemy ground units and ships, but enemy aircraft block its path (02-terrain §5).
-- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter and Bomber 5, Transport Aircraft 4). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
 - **Service:** owned airfields repair and resupply air units (04-economy §5). A Halftrack also resupplies an adjacent aircraft, since the rule covers all friendly units.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
 
@@ -91,7 +91,20 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 - **Sunk:** aircraft on board are lost with it and don't count as kills (§4). The Carrier itself burns fuel and sinks at 0 like any ship (§7).
 - **Building:** at Ports, like other ships. A Carrier is built empty: its aircraft are built at airfields and flown aboard by the player.
 
-## 11. Open questions
+## 11. Low fuel and ammo warnings (decided 2026-11-10)
+
+Presentation only: no rule reads these. At the developer's request, a unit short of supplies shows a **flashing can** on the map, stacked up the left edge of its tile (above the capture C, if any):
+
+- **Gas can** (a red jerrycan): fuel is empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (they're lost at 0).
+- **Ammo can** (an olive can with brass rounds): a unit with a main weapon has used it up, or has a quarter or less left (rounded up). A unit that only ever holds 1 shot (the Torpedo Bomber) warns only once it's spent.
+
+Both cans blink together, and the same numbers turn the fuel and ammo lines in the tile info box to the warning color, where they blink too. The rule is one function, `supplyWarnings` in `src/game/tileInfo.ts`.
+
+**Seeing what's aboard.** With nothing selected, putting the cursor (or the mouse) on a transport with units aboard opens a small panel beside it showing each passenger's sprite, name and HP, with its own cans if it's short. The tile info box lists the same passengers with HP, fuel and ammo. This covers Landing Craft and Carriers, and Halftracks and Transport Aircraft too.
+
+**Launching names the aircraft.** A Carrier's Launch item always says which aircraft it launches ("LAUNCH DIVE BOMBER"). Two different aircraft get one item each; two of a kind with different HP get one each with their HP; two identical ones share one item. While the aircraft is out on the Carrier's tile choosing where to go, a label over it says "LAUNCHING …" with its HP, fuel and ammo.
+
+## 12. Open questions
 
 - Should passenger fuel or ammo top up when a transport sits on a property? Working answer: no.
 
