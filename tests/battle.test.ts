@@ -6,7 +6,7 @@ import type { Point } from "../src/engine/map";
 import type { UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { figureCount, fireKind, planCombat, planFortAttack, squadWeapon, type BattlePlan } from "../src/game/battle/plan";
-import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt } from "../src/game/battle/timeline";
+import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt, TORPEDO_RUN, torpedoRun } from "../src/game/battle/timeline";
 import { BATTLE_VIEW, project, rampShade, RAMP_STEPS } from "../src/game/battle/angled/mesh";
 import { TANK_MODELS } from "../src/game/battle/angled/models";
 import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys } from "../src/game/battle/angled/vehicleModels";
@@ -226,6 +226,19 @@ describe("the order things happen in a battle scene (08-art-pipeline §18)", () 
 
   it("ships fight at long range: naval shells, torpedoes and depth charges take over a second to arrive", () => {
     for (const fire of ["navalGuns", "deckGun", "torpedo", "depthCharges"] as const) expect(FIRE_TIMING[fire].flight).toBeGreaterThanOrEqual(1000);
+  });
+
+  it("a Torpedo Bomber dives nose-down to skim the water, drops its torpedo flying level, then climbs back (08-art-pipeline §18)", () => {
+    const { cycle, shots } = FIRE_TIMING.aerialTorpedo;
+    expect(shots).toEqual([TORPEDO_RUN.release]);
+    expect(torpedoRun(null)).toEqual({ depth: 0, pitch: 0 });
+    expect(torpedoRun(0).depth).toBe(0);
+    expect(torpedoRun(TORPEDO_RUN.descend / 2).pitch).toBeGreaterThan(0); // nose down on the way in
+    expect(torpedoRun(TORPEDO_RUN.release)).toEqual({ depth: 1, pitch: 0 }); // level, at wave-top height
+    const climbing = torpedoRun((TORPEDO_RUN.level + TORPEDO_RUN.climb) / 2);
+    expect(climbing.pitch).toBeLessThan(0);
+    expect(climbing.depth).toBeGreaterThan(0);
+    expect(torpedoRun(cycle - 1).depth).toBe(0); // back where it started before the cycle ends
   });
 
   it("a strike that does no damage still plays its shots and takes no figures", () => {

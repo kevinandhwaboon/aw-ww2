@@ -18,10 +18,10 @@ describe("unit roster (01-units)", () => {
   });
 
   it("matches the v0 stat table for a few units (01-units §8)", () => {
-    expect(UNITS.infantry).toMatchObject({ cost: 1000, movePoints: 3, movementType: "foot", vision: 2, maxFuel: 99 });
-    expect(UNITS.mediumTank).toMatchObject({ cost: 8000, movePoints: 6, movementType: "tracks", maxFuel: 70 });
+    expect(UNITS.infantry).toMatchObject({ cost: 1000, movePoints: 3, movementType: "foot", vision: 2, maxFuel: 50 });
+    expect(UNITS.mediumTank).toMatchObject({ cost: 8000, movePoints: 6, movementType: "tracks", maxFuel: 30 });
     expect(UNITS.mediumTank.primaryWeapon.maxAmmo).toBe(9);
-    expect(UNITS.heavyTank).toMatchObject({ cost: 15000, movePoints: 4, maxFuel: 50 });
+    expect(UNITS.heavyTank).toMatchObject({ cost: 15000, movePoints: 4, maxFuel: 20 });
     expect(UNITS.rocketArtillery).toMatchObject({ cost: 14000, movementType: "wheels", range: { min: 3, max: 5 } });
     expect(UNITS.fighter).toMatchObject({ cost: 20000, movePoints: 9, fuelPerDay: 5 });
   });
@@ -60,5 +60,30 @@ describe("unit roster (01-units)", () => {
       if (category === "land") expect(fuelPerDay, id).toBe(0);
       else expect(fuelPerDay, id).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
+  it("heavy tanks have the shortest legs, then light and medium tanks; foot soldiers and jeeps the longest, at half the old scale", () => {
+    expect(UNITS.heavyTank.maxFuel).toBeLessThan(UNITS.lightTank.maxFuel);
+    expect(UNITS.lightTank.maxFuel).toBeLessThan(UNITS.mediumTank.maxFuel);
+    expect(UNITS.mediumTank.maxFuel).toBeLessThan(UNITS.halftrack.maxFuel);
+    for (const id of ["infantry", "assaultInfantry", "mortar", "recon"] as const) expect(UNITS[id].maxFuel, id).toBe(50);
+  });
+
+  it("Fighters and Bombers carry only 2 rounds of ammo", () => {
+    expect(UNITS.fighter.primaryWeapon.maxAmmo).toBe(2);
+    expect(UNITS.bomber.primaryWeapon.maxAmmo).toBe(2);
+  });
+
+  it("Bombers carry half a full tank of fuel and burn the most of any aircraft while idling", () => {
+    expect(UNITS.bomber.maxFuel).toBe(50);
+    const airBurn = (["fighter", "transportAircraft", "diveBomber", "torpedoBomber"] as const).map((id) => UNITS[id].fuelPerDay);
+    expect(UNITS.bomber.fuelPerDay).toBeGreaterThan(Math.max(...airBurn));
+  });
+
+  it("Destroyers and Torpedo Boats are thirstier than the big ships, which can stay out longest", () => {
+    for (const id of ["destroyer", "torpedoBoat"] as const) expect(UNITS[id].fuelPerDay, id).toBe(2);
+    for (const id of ["battleship", "carrier"] as const) expect(UNITS[id]).toMatchObject({ maxFuel: 99, fuelPerDay: 1 });
   });
 });

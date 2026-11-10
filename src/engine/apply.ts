@@ -9,6 +9,7 @@ import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedC
 import { inBounds, type Point } from "./map";
 import { checkPath } from "./movement";
 import { unitAt, type GameState, type PlayerId, type Unit } from "./state";
+import * as stats from "./stats";
 import {
   applyJoin,
   applyLoad,
@@ -98,11 +99,12 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
 
   const events: GameEvent[] = [];
   const end = path[path.length - 1] ?? unit.pos;
+  const fuelUsed = stats.moveFuel(state, unit, check.cost);
   if (path.length > 0) {
-    events.push({ type: "unitMoved", unitId, path: [unit.pos, ...path], fuelUsed: check.cost });
+    events.push({ type: "unitMoved", unitId, path: [unit.pos, ...path], fuelUsed });
   }
 
-  const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - check.cost, hasActed: true };
+  const moved: Unit = { ...unit, pos: end, fuel: unit.fuel - fuelUsed, hasActed: true };
 
   if (boarding) {
     const host = path.length > 0 ? unitAt(state, end) : undefined;

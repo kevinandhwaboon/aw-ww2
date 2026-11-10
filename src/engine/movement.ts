@@ -7,7 +7,7 @@ import type { GameState, Unit } from "./state";
 import * as stats from "./stats";
 
 export interface Reach {
-  /** Movement points (= fuel) spent to get here by the cheapest path. */
+  /** Movement points spent to get here by the cheapest path (fuel is this times the unit's fuel per move). */
   readonly cost: number;
   /** Tile index this tile was reached from on the cheapest path; null for the start tile. */
   readonly prev: number | null;
@@ -25,12 +25,13 @@ export const tilePoint = (state: GameState, i: number): Point => ({ x: i % state
 const isAdjacent = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
 
 /**
- * How far the unit can move this turn: its move points, limited by its fuel (05-supply-transport §1).
+ * How far the unit can move this turn: its move points, limited by the movement its fuel pays for
+ * at its fuel-per-move rate (05-supply-transport §1).
  * A Carrier that has launched aircraft this turn can't move at all (05-supply-transport §10).
  */
 export function movementBudget(state: GameState, unit: Unit): number {
   if (unit.launched === true) return 0;
-  return Math.min(stats.movePoints(state, unit), unit.fuel);
+  return Math.min(stats.movePoints(state, unit), Math.floor(unit.fuel / stats.fuelPerMove(state, unit)));
 }
 
 function sideOf(state: GameState, unit: Unit) {

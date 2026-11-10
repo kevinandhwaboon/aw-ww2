@@ -137,7 +137,7 @@ class Brain {
       const dist = this.distances(unit, home, "repair");
       const fromHere = dist[this.index(unit.pos)] ?? Infinity;
       const burn = stats.fuelPerDay(this.state, unit);
-      const lowFuel = burn > 0 && unit.fuel < fromHere + this.w.fuelSafetyDays * burn;
+      const lowFuel = burn > 0 && unit.fuel < stats.moveFuel(this.state, unit, fromHere) + this.w.fuelSafetyDays * burn;
       const noAmmo = def.primaryWeapon !== null && unit.ammo === 0 && def.secondaryWeapon === null;
       const hurt = displayHp(unit.hp) <= this.w.retreatHp;
       if ((lowFuel || noAmmo || hurt) && Number.isFinite(fromHere)) return { kind: "retreat", dist };

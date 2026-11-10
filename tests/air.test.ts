@@ -37,9 +37,26 @@ describe("flying (05-supply-transport §5)", () => {
     expect(reach).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
-  it("flying over the sea spends fuel like any other move", () => {
+  it("flying over the sea spends fuel like any other move: 2 per tile for aircraft", () => {
     const state = makeGame(["=SS="], [u("bomber", 0, 0)]);
-    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(96);
+    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(44);
+  });
+
+  it("an aircraft that stays put burns only its daily fuel; one that flies burns the daily fuel plus 2 per tile (05-supply-transport §1)", () => {
+    const state = makeGame([".", ".", ".", "."], [u("fighter", 0, 0, { fuel: 50 }), { type: "fighter", owner: 0, pos: P(0, 1), fuel: 50 }]);
+    const after = nextRound(run(state, wait(0), wait(1, [P(0, 2), P(0, 3)]))).state;
+    expect(byId(after, 0)?.fuel).toBe(45); // 5 a day
+    expect(byId(after, 1)?.fuel).toBe(41); // 5 a day + 2 × 2 tiles
+  });
+
+  it("an aircraft can only fly as far as its fuel pays for at 2 per tile", () => {
+    const state = makeGame(["=========="], [u("fighter", 0, 0, { fuel: 7 })]);
+    expect(Math.max(...moveDestinations(state, state.units[0] as Unit).map((p) => p.x))).toBe(3);
+  });
+
+  it("a modifier can change how much fuel a move burns", () => {
+    const state = makeGame(["===="], [u("bomber", 0, 0)], { modifiers: [{ source: "test", stat: "fuelPerMove", op: "add", value: 1 }] });
+    expect(byId(run(state, wait(0, [P(1, 0)])), 0)?.fuel).toBe(47);
   });
 
   it("an aircraft can end its move over the sea", () => {
@@ -89,9 +106,23 @@ describe("daily fuel (05-supply-transport §5, 04-economy §2)", () => {
     expect(byId(nextRound(fighter(50)).state, 0)?.fuel).toBe(45); // Fighter: 5 per turn
   });
 
+  it("Bombers burn 8 fuel a day just staying aloft", () => {
+    const state = makeGame(["."], [u("bomber", 0, 0, { fuel: 50 })]);
+    expect(byId(nextRound(state).state, 0)?.fuel).toBe(42);
+  });
+
+  it("a Bomber with 2 bombs can strike twice, then has nothing left to attack with", () => {
+    const state = makeGame(["=.", ".."], [u("bomber", 0, 0), u("infantry", 1, 1), u("infantry", 1, 0, { pos: P(0, 1) })], { settings: { luck: false } });
+    const after = run(state, attack(0, 1), endTurn, endTurn);
+    expect(byId(after, 0)?.ammo).toBe(1);
+    const spent = run(after, attack(0, 2));
+    expect(byId(spent, 0)?.ammo).toBe(0);
+    expect(attackTargets(spent, byId(spent, 0) as Unit, false)).toEqual([]);
+  });
+
   it("Transport Aircraft burn less than Fighters", () => {
     const state = makeGame(["."], [u("transportAircraft", 0, 0, { fuel: 50 })]);
-    expect(byId(nextRound(state).state, 0)?.fuel).toBe(46);
+    expect(byId(nextRound(state).state, 0)?.fuel).toBe(47); // 3 per turn
   });
 
   it("nothing burns on day 1 (D1)", () => {
@@ -158,14 +189,14 @@ describe("airfields (04-economy §1, §5)", () => {
 
   it("an aircraft on its own airfield burns nothing, so it can't crash there", () => {
     const { state, events } = nextRound(owned("A", u("fighter", 0, 0, { fuel: 3 })));
-    expect(byId(state, 0)?.fuel).toBe(99);
+    expect(byId(state, 0)?.fuel).toBe(80);
     expect(events.map((e) => e.type)).not.toContain("unitOutOfFuel");
   });
 
   it("airfields repair and resupply air units", () => {
     // Serviced at the start of day 1, then again on day 2.
     const state = nextRound(owned("A", u("bomber", 0, 0, { hp: 50, fuel: 20, ammo: 1 }))).state;
-    expect(byId(state, 0)).toMatchObject({ hp: 90, fuel: 99, ammo: 9 });
+    expect(byId(state, 0)).toMatchObject({ hp: 90, fuel: 50, ammo: 2 });
   });
 
   it("repair costs 10% of the unit's cost per HP, as for land units", () => {
@@ -188,7 +219,7 @@ describe("airfields (04-economy §1, §5)", () => {
     const empty: GameState = { ...state, units: [] };
     expect(buildOptions(empty, P(0, 0)).map((o) => o.type)).toEqual(["transportAircraft", "diveBomber", "torpedoBomber", "fighter", "bomber"]);
     const built = run(empty, { type: "build", unitType: "bomber", pos: P(0, 0) });
-    expect(built.units[0]).toMatchObject({ type: "bomber", hasActed: true, fuel: 99, ammo: 9 });
+    expect(built.units[0]).toMatchObject({ type: "bomber", hasActed: true, fuel: 50, ammo: 2 });
   });
 
   it("infantry can capture an airfield", () => {
@@ -201,7 +232,7 @@ describe("airfields (04-economy §1, §5)", () => {
   it("a Halftrack refuels an adjacent aircraft (05-supply-transport §5)", () => {
     const state = makeGame(["==.", "..."], [u("halftrack", 0, 0), { type: "fighter", owner: 0, pos: P(2, 1), fuel: 50 }]);
     const after = run(state, order(0, [P(1, 0), P(2, 0)], { type: "supply" }));
-    expect(byId(after, 1)?.fuel).toBe(99);
+    expect(byId(after, 1)?.fuel).toBe(80);
   });
 });
 

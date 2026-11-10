@@ -798,6 +798,34 @@ describe("launching from a Carrier (05-supply-transport §10)", () => {
     expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH FIGHTER", "LAUNCH TORPEDO BOMBER", "WAIT", "CANCEL"]);
   });
 
+  it("the Launch item names the aircraft, even when there's only one kind aboard", async () => {
+    const game = carrierGame();
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH DIVE BOMBER", "WAIT", "CANCEL"]);
+  });
+
+  it("two aircraft of one kind with different HP get one Launch item each, with their HP", async () => {
+    const game = carrierGame([{ type: "fighter", hp: 60 }, { type: "fighter" }]);
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    // 7HP: the Carrier repaired it 1 HP at the start of the turn.
+    expect(game.seen.menu?.map((i) => i.label)).toEqual(["LAUNCH FIGHTER 7HP", "LAUNCH FIGHTER 10HP", "WAIT", "CANCEL"]);
+  });
+
+  it("while an aircraft is being launched, a label over the Carrier says which one it is, and goes when the launch is cancelled", async () => {
+    const game = carrierGame([{ type: "fighter" }, { type: "torpedoBomber" }]);
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    game.controller.onMenuChoice(game.seen.menu?.[1]?.id ?? "");
+    expect(game.seen.forecast).toEqual(["LAUNCHING TORPEDO BOMBER", "HP 10  FUEL 70  AMMO 1"]);
+    game.controller.onCancel();
+    expect(game.seen.forecast).toBeNull();
+  });
+
   it("Launch puts the aircraft on the Carrier's tile, then it moves and bombs like any unit, sent as one launch order", async () => {
     const game = carrierGame();
     game.controller.onConfirm(P(1, 0));

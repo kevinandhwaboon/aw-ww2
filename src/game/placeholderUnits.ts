@@ -83,6 +83,54 @@ export function drawSubmergedBadge(): HTMLCanvasElement {
   return c;
 }
 
+/**
+ * Draws a small pixel icon from rows of letters: `O` the dark outline, `B` the body color, `L` a
+ * lighter shade of it, `Y` brass, `.` clear.
+ */
+function pixelIcon(rows: readonly string[], body: string, light: string): HTMLCanvasElement {
+  const [c, ctx] = canvas(rows[0]?.length ?? 0, rows.length);
+  const colors: Record<string, string> = { O: "#101018", B: body, L: light, Y: "#f0c040" };
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const color = colors[row.charAt(x)];
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, 1, 1);
+    }
+  });
+  return c;
+}
+
+/** A jerrycan with the embossed X on its side: the low-fuel warning (05-supply-transport §11). */
+export function drawFuelCanBadge(): HTMLCanvasElement {
+  const body = activePack().colors.fuelCan;
+  return pixelIcon([
+    "..OOOO.",
+    ".OLOLOO",
+    "OOOOOLO",
+    "OBLBLBO",
+    "OBBLBBO",
+    "OBLBLBO",
+    "OBBBBBO",
+    "OOOOOOO",
+  ], body, "#ffb0a0");
+}
+
+/** An ammo can with three brass rounds standing in it: the low-ammo warning (05-supply-transport §11). */
+export function drawAmmoCanBadge(): HTMLCanvasElement {
+  const body = activePack().colors.ammoCan;
+  return pixelIcon([
+    ".O.O.O.",
+    "OYOYOYO",
+    "OYOYOYO",
+    "OOOOOOO",
+    "OBBBBBO",
+    "OLLLLLO",
+    "OBBBBBO",
+    "OOOOOOO",
+  ], body, "#c8d088");
+}
+
 /** Veterancy chevrons: one for Veteran, three for Elite (03-combat §6). */
 export function drawVeterancyBadge(level: Exclude<VeterancyLevel, "rookie">): HTMLCanvasElement {
   const count = level === "elite" ? 3 : 1;

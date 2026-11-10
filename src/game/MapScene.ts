@@ -2,15 +2,14 @@ import Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
-import { displayHp, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
-import * as stats from "../engine/stats";
+import { displayHp, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
 import { setBattleWeather } from "./battle/colors";
 import { planCombat, planFortAttack } from "./battle/plan";
 import { planDrop } from "./battle/drop";
 import { planCapture, planGarrison } from "./battle/storm";
-import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, type ColorKey } from "./artPack";
+import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, unitName, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
 import { objectiveTiles } from "./objectives";
@@ -19,7 +18,11 @@ import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
 import { terrainLayers } from "./terrainTiles";
 import { clampScroll, FOLLOW_MARGIN_SQUARES, inLeftHalf, revealScroll, type Scroll, type Size } from "./viewport";
-import { drawHpBadge, drawSubmergedBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
+import { drawAmmoCanBadge, drawFuelCanBadge, drawHpBadge, drawSubmergedBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
+import { supplyWarnings } from "./tileInfo";
+
+/** How long one blink of the low-supply cans takes, on and off. */
+const WARNING_BLINK_MS = 900;
 
 /** What the scene reports to whoever handles input (the InputController, wired up in main.ts). */
 export interface MapInputHandlers {
@@ -353,12 +356,22 @@ export class MapScene extends Phaser.Scene implements MapView {
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;
+  /** The panel listing a transport's passengers while the cursor is on it. */
+  private cargoPeek: Phaser.GameObjects.Container | undefined;
+  /** The cans in that panel, which blink with the map's. */
+  private peekBadges: Phaser.GameObjects.Image[] = [];
+  /** The flashing gas and ammo cans on the map, redrawn with the state. */
+  private warningBadges: Phaser.GameObjects.Image[] = [];
 
   /**
    * Snow falling over the visible part of the map while it snows (12-weather §5). Each flake's place
    * is a function of the time, so nothing is stored between frames.
    */
   override update(time: number): void {
+    // Low-supply cans blink together: on for most of the beat, off briefly, so they catch the eye.
+    const on = time % WARNING_BLINK_MS < WARNING_BLINK_MS * 0.65;
+    for (const badge of this.warningBadges) badge.setVisible(on);
+    for (const badge of this.peekBadges) badge.setVisible(on);
     const layer = this.snowLayer;
     if (!layer) return;
     layer.clear();
@@ -555,6 +568,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     await this.walk(unitId, fullPath);
   }
 
+  /** The game as drawn: the preview while one is shown (an aircraft out on its Carrier), else the real one. */
+  shownState(): GameState {
+    return this.preview ?? this.state;
+  }
+
   showPreviewState(state: GameState | null): void {
     if (state === null && this.preview === undefined) return;
     this.previewed = undefined;
@@ -617,6 +635,58 @@ export class MapScene extends Phaser.Scene implements MapView {
   clearForecast(): void {
     this.forecastPanel?.destroy();
     this.forecastPanel = undefined;
+  }
+
+  /**
+   * With the cursor on a transport that has units aboard (a Landing Craft, Carrier, Halftrack or
+   * Transport Aircraft), a small panel beside it shows each passenger's sprite, name and HP, with
+   * the flashing cans if it's short of fuel or ammo (05-supply-transport §4, §11). null hides it.
+   */
+  showCargoPeek(tile: Point | null): void {
+    this.cargoPeek?.destroy();
+    this.cargoPeek = undefined;
+    this.peekBadges = [];
+    if (!tile) return;
+    const state = this.preview ?? this.state;
+    const host = unitAt(state, tile);
+    if (!host || host.cargo.length === 0) return;
+    const rowHeight = TILE_SIZE + 2;
+    const labels = host.cargo.map((p) => ({ name: unitName(p.type).toUpperCase(), hp: `HP ${displayHp(p.hp)}` }));
+    const textColumn = Math.max(...labels.map((l) => Math.max(textWidth(l.name), textWidth(l.hp))));
+    const width = TILE_SIZE + textColumn + 9;
+    const height = host.cargo.length * rowHeight + 4;
+    const view = this.visibleRect();
+    let x = (tile.x + 1) * TILE_SIZE + 2;
+    if (x + width > view.right) x = tile.x * TILE_SIZE - width - 2;
+    const y = Phaser.Math.Clamp(tile.y * TILE_SIZE - 2, view.top, view.bottom - height);
+
+    const panel = this.add.container(Math.round(x), Math.round(y));
+    const g = this.add.graphics();
+    g.fillStyle(packColorNumber("menuBorder"), 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(packColorNumber("menuBg"), 1);
+    g.fillRect(1, 1, width - 2, height - 2);
+    panel.add(g);
+    host.cargo.forEach((passenger, i) => {
+      const top = 2 + i * rowHeight;
+      const row = this.add.container(2, top);
+      row.add(this.untintedUnitImage({ ...passenger, hasActed: false }));
+      const low = supplyWarnings(state, passenger);
+      let bottom = TILE_SIZE;
+      for (const [warn, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
+        if (!warn) continue;
+        const can = this.add.image(0, bottom, this.texture(key, draw)).setOrigin(0, 1);
+        row.add(can);
+        this.peekBadges.push(can);
+        bottom -= can.height;
+      }
+      panel.add(row);
+      const label = labels[i];
+      if (!label) return;
+      panel.add(this.add.image(TILE_SIZE + 5, top + 2, this.textTexture(label.name, packColor("menuInk"))).setOrigin(0));
+      panel.add(this.add.image(TILE_SIZE + 5, top + GLYPH_HEIGHT + 4, this.textTexture(label.hp, packColor("menuInk"))).setOrigin(0));
+    });
+    this.cargoPeek = panel;
   }
 
   private menuIndexAt(worldX: number, worldY: number): number | null {
@@ -892,6 +962,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     layer.removeAll(true);
     this.unitSprites.clear();
     this.unitImages.clear();
+    this.warningBadges = [];
     this.redrawChangedTerrain();
     const garrisons = this.garrisonArt();
     this.garrisoned = new Set(this.state.units.filter((u) => garrisons.has(u.pos.y * this.state.map.width + u.pos.x)).map((u) => u.id));
@@ -958,13 +1029,21 @@ export class MapScene extends Phaser.Scene implements MapView {
 
     const hp = displayHp(unit.hp);
     if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
+    // The left edge stacks up from the bottom: the capture C, then flashing gas and ammo cans for a
+    // unit short of fuel or ammo (05-supply-transport §11).
+    let bottom = TILE_SIZE;
     if (this.state.properties.some((p) => p.capturingUnit === unit.id)) {
-      sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("C", packColor("labelText"), packColor("labelOutline"))).setOrigin(0, 1));
+      const c = this.add.image(0, bottom, this.textTexture("C", packColor("labelText"), packColor("labelOutline"))).setOrigin(0, 1);
+      sprite.add(c);
+      bottom -= c.height;
     }
-    // Aircraft and ships within two turns of running dry show a warning.
-    const burn = stats.fuelPerDay(this.state, unit);
-    if (burn > 0 && unit.fuel <= burn * 2) {
-      sprite.add(this.add.image(0, TILE_SIZE, this.textTexture("F", packColor("labelWarning"), packColor("labelOutline"))).setOrigin(0, 1));
+    const low = supplyWarnings(this.state, unit);
+    for (const [warn, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
+      if (!warn) continue;
+      const can = this.add.image(0, bottom, this.texture(key, draw)).setOrigin(0, 1);
+      sprite.add(can);
+      this.warningBadges.push(can);
+      bottom -= can.height;
     }
     // A transport carrying units shows a small marker.
     if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));

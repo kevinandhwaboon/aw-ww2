@@ -91,9 +91,33 @@ body {
   gap: 1em;
 }
 
+.tile-passenger {
+  display: flex;
+  gap: 0.6em;
+  padding-left: 0.6em;
+}
+
+.tile-passenger-name {
+  font-weight: bold;
+}
+
 .tile-low {
   color: var(--accent);
   font-weight: bold;
+  /* Blinks like the gas and ammo cans on the map (05-supply-transport §11). */
+  animation: tile-low-blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes tile-low-blink {
+  65% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-low {
+    animation: none;
+  }
 }
 
 .tile-objective {

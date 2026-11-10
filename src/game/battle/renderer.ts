@@ -15,7 +15,7 @@ import { C, mix, Painter, ShadowPainter, teamShades } from "./paint";
 import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
 import { clamp01, lerp, seg, type Look, type Pose, type Pt, type Rig } from "./rig";
 import { assaultRig, infantryRig, mortarRig } from "./soldiers";
-import { buildTimeline, deathTimes, figureTiming, hash, hpAt, SCENE_MS, type Shot, type Timeline } from "./timeline";
+import { buildTimeline, deathTimes, figureTiming, hash, hpAt, SCENE_MS, torpedoRun, type Shot, type Timeline } from "./timeline";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "./vehicles";
 
 const RIGS: Record<FigureKind, Rig> = {
@@ -92,6 +92,16 @@ const SHADOW: Record<FigureKind, number> = {
   fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0,
   bunker: 40,
 };
+
+/**
+ * A Torpedo Bomber's run (08-art-pipeline §18): at the bottom of its dive the aircraft flies at this
+ * height, just over the water band of the sky backdrop, and this far forward of its place.
+ */
+const TORPEDO_SKIM = { y: SCENE.bottom - 42, forward: 16, spreadFrom: 120 };
+/** Where an aerial torpedo hits the water and runs, in the shooter's half, when it flies over the sea. */
+const TORPEDO_WATER_Y = SCENE.bottom - 14;
+/** The part of an aerial torpedo's flight spent falling to the water, then running to the half's edge. */
+const AIR_TORPEDO = { splash: 0.1, edge: 0.4 };
 
 /** Indirect fire: how long a round takes to leave the screen, and to fall onto its target. */
 const INDIRECT_MS = { up: 260, rocketUp: 420, down: 380 };
@@ -283,7 +293,9 @@ export class BattleRenderer {
     const atAir = this.plan.strikes[shot.strike]?.atAir ?? false;
     const pose: Pose = { t: shot.fireAt, index: shot.shooterFigure, fire, ct, atAir, hp: 10 };
     const m = from.rig.muzzle(pose, shotIndex, from.look);
-    const origin = this.slot(from, shot.shooterFigure);
+    const run = this.swoop(from, shot.shooterFigure, pose);
+    const rest = this.slot(from, shot.shooterFigure);
+    const origin = { x: rest.x + run.dx, y: rest.y + run.dy };
     const base = this.slot(to, shot.targetFigure);
     // Shots that don't take a figure down land around it, not all on one pixel.
     const spread = shot.kills ? 0 : 1;
@@ -426,6 +438,19 @@ export class BattleRenderer {
 
   // ---- Figures ----
 
+  /**
+   * How far a figure is off its place: a Torpedo Bomber on its attack run dives toward the water,
+   * forward toward the enemy, and pitches its nose down and then up (`pitch`, radians, nose down).
+   */
+  private swoop(h: HalfView, i: number, pose: Pose): { dx: number; dy: number; pitch: number } {
+    if (pose.fire !== "aerialTorpedo" || h.rig.body !== "air") return { dx: 0, dy: 0, pitch: 0 };
+    const { depth, pitch } = torpedoRun(pose.ct);
+    const rest = this.slot(h, i);
+    // Aircraft further back in the formation skim a little higher, so the three don't bunch up.
+    const skim = TORPEDO_SKIM.y + (rest.y - TORPEDO_SKIM.spreadFrom) * 0.1;
+    return { dx: h.dir * depth * TORPEDO_SKIM.forward, dy: depth * Math.max(0, skim - rest.y), pitch };
+  }
+
   private drawFigure(h: HalfView, i: number, t: number): void {
     const died = h.deaths.get(i);
     const age = died === undefined ? -1 : t - died;
@@ -469,9 +494,11 @@ export class BattleRenderer {
     s.fillRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
     s.globalCompositeOperation = "source-over";
 
-    const at = this.slot(h, i);
+    const run = alive ? this.swoop(h, i, pose) : { dx: 0, dy: 0, pitch: 0 };
+    const rest = this.slot(h, i);
+    const at = { x: rest.x + run.dx, y: rest.y + run.dy };
     let dy = 0;
-    let rotate = 0;
+    let rotate = run.pitch;
     // Soldiers draw their own fall; see Rig.gearStays.
     if (!alive) {
       if (h.rig.body === "air") {
@@ -656,6 +683,12 @@ export class BattleRenderer {
     this.explosion(at, age, BLAST[shot.fire], shot.targetView === "underwater" ? "water" : surface, shot.fireAt);
   }
 
+  /** The half's aircraft fly over the sea, so the sky backdrop shows water under them. */
+  private overWater(half: HalfId): boolean {
+    const terrain = this.halves[half].data.terrain;
+    return terrain === "sea" || terrain === "reef";
+  }
+
   /**
    * Where a shot is at progress u (0 to 1) and which way it's heading. Indirect fire leaves along
    * the barrel and arcs down onto the target, so a howitzer's flat barrel gives a flat arc and a
@@ -676,9 +709,24 @@ export class BattleRenderer {
       const k = (u - 0.58) / 0.42;
       return { at: { x: lerp(target.x - side * 30, target.x, k), y: lerp(SCENE.top - 12, target.y, k * k) }, dir: { x: 0.3 * side, y: 1 } };
     }
+    if (kind === "airTorpedo" && this.overWater(shot.from)) {
+      // Dropped from wave-top height: it falls into the sea under the aircraft, runs just under the
+      // surface to the edge of the shooter's half, then on across the target's half to the ship.
+      const entry = { x: m.x + side * 8, y: TORPEDO_WATER_Y };
+      if (u < AIR_TORPEDO.splash) {
+        const k = u / AIR_TORPEDO.splash;
+        return { at: { x: lerp(m.x, entry.x, k), y: lerp(m.y, entry.y, k * k) }, dir: { x: side, y: 1 } };
+      }
+      if (u < AIR_TORPEDO.edge) {
+        const k = (u - AIR_TORPEDO.splash) / (AIR_TORPEDO.edge - AIR_TORPEDO.splash);
+        return { at: { x: lerp(entry.x, SCENE.half - side * 2, k), y: entry.y }, dir: { x: side, y: 0 } };
+      }
+      const k = (u - AIR_TORPEDO.edge) / (1 - AIR_TORPEDO.edge);
+      return { at: { x: lerp(SCENE.half + side * 4, target.x, k), y: target.y }, dir: { x: side, y: 0 } };
+    }
     if (kind === "airTorpedo") {
-      // Dropped low over the water: it falls out of the bottom of the shooter's half, then runs in
-      // just under the surface from the edge of the target's half.
+      // Dropped over land (an aircraft on an airfield by the shore): it falls out of the bottom of
+      // the shooter's half, then runs in just under the surface from the edge of the target's half.
       if (u < 0.3) {
         const k = u / 0.3;
         return { at: { x: m.x + side * 20 * k, y: lerp(m.y, SCENE.bottom + 10, k * k) }, dir: { x: side, y: 1 } };
@@ -812,6 +860,14 @@ export class BattleRenderer {
       p.rect(dir.x > 0 ? at.x - 6 : at.x + 5, at.y - 2, 1, 4, C("battleSteelDark"));
       p.rect(at.x - 5, at.y - 1, 10, 1, C("battleSteel"));
     } else if (kind === "torpedo" || kind === "airTorpedo") {
+      if (kind === "airTorpedo" && this.overWater(shot.from) && u < AIR_TORPEDO.splash + 0.12) {
+        // The splash where it went in, falling back.
+        const entry = this.missileAt(shot, AIR_TORPEDO.splash, kind)?.at ?? at;
+        const k = (u - AIR_TORPEDO.splash) / 0.12;
+        const h = 9 * Math.sin(Math.min(1, k * 1.4) * Math.PI);
+        p.ellipse(entry.x, entry.y - h / 2, 3 + k * 4, h / 2 + 1, C("battleFoam"));
+        p.rect(entry.x - 6 - k * 6, entry.y, 12 + k * 12, 1, C("battleFoam"));
+      }
       // A dark shape just under the surface and a line of bubbles behind it.
       p.rect(at.x - 4, at.y, 8, 2, C("battleSeaDeep"));
       const side = dir.x > 0 ? 1 : -1;

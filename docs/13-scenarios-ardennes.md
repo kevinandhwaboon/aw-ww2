@@ -42,7 +42,7 @@ In December 1944 Germany attacked through the snowy Ardennes forest, hoping bad 
 ### Starting forces
 
 - **US** (4,000 funds): in Bastogne, three Infantry, Artillery and a Tank Destroyer; one Infantry each in St. Vith (with a Tank Destroyer), Clervaux and Wiltz; two Medium Tanks and a Halftrack near Arlon in the far south, as the 4th Armored was.
-- **Germany** (10,000 funds): massed behind the Our: two Heavy Tanks, four Medium Tanks, a Recon, a Halftrack, two Artillery, five Infantry and two Assault Infantry. **Its tanks start short of fuel** (Heavy Tanks 30 of 50, Medium Tanks 40 of 70), so they need the Halftrack or a captured or own town to refuel.
+- **Germany** (10,000 funds): massed behind the Our: two Heavy Tanks, four Medium Tanks, a Recon, a Halftrack, two Artillery, five Infantry and two Assault Infantry. **Its tanks start short of fuel** (Heavy Tanks 12 of 20, Medium Tanks 17 of 30), so they need the Halftrack or a captured or own town to refuel.
 
 ### Weather
 

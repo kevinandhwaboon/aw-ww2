@@ -39,7 +39,18 @@ describe("tile info box (00-master-design §12)", () => {
       if (!result.ok) throw new Error(result.message);
       return result.state;
     };
-    expect(tileInfo(board(board(state, 1), 2), P(1, 0)).unit?.cargo).toEqual(["Infantry", "Medium Tank"]);
+    const cargo = tileInfo(board(board(state, 1), 2), P(1, 0)).unit?.cargo;
+    expect(cargo?.map((c) => c.name)).toEqual(["Infantry", "Medium Tank"]);
+  });
+
+  it("hovering a Landing Craft or Carrier shows each unit aboard with its HP, fuel and ammo", () => {
+    const fresh = makeGame(["S"], [{ type: "carrier", owner: 0, pos: P(0, 0), cargo: [{ type: "fighter", hp: 70 }, { type: "torpedoBomber" }] }]);
+    // Drained after setup: the Carrier's turn-start service would otherwise top the Fighter up.
+    const state = { ...fresh, units: fresh.units.map((u) => ({ ...u, cargo: u.cargo.map((c, i) => (i === 0 ? { ...c, fuel: 12, ammo: 1 } : c)) })) };
+    expect(tileInfo(state, P(0, 0)).unit?.cargo).toEqual([
+      { name: "Fighter", hp: 7, fuel: { left: 12, max: 80, low: true }, ammo: { left: 1, max: 2, low: true } },
+      { name: "Torpedo Bomber", hp: 10, fuel: { left: 70, max: 70, low: false }, ammo: { left: 1, max: 1, low: false } },
+    ]);
   });
 
   it("a unit that isn't a transport has no cargo line", () => {
@@ -89,11 +100,30 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(empty, P(0, 0)).unit?.ammo?.low).toBe(true);
   });
 
-  it("flags fuel as low for an aircraft within two turns of running dry, like the map's F badge (05-supply-transport §5)", () => {
-    const state = makeGame(["."], [{ type: "fighter", owner: 0, pos: P(0, 0) }]);
+  it("flags fuel as low for an aircraft within two turns of running dry, like the map's gas can (05-supply-transport §11)", () => {
+    const state = makeGame(["."], [{ type: "bomber", owner: 0, pos: P(0, 0) }]);
     expect(tileInfo(state, P(0, 0)).unit?.fuel.low).toBe(false);
-    const dry = { ...state, units: state.units.map((u) => ({ ...u, fuel: 4 })) };
-    expect(tileInfo(dry, P(0, 0)).unit?.fuel.low).toBe(true);
+    const withFuel = (fuel: number) => ({ ...state, units: state.units.map((u) => ({ ...u, fuel })) });
+    expect(tileInfo(withFuel(17), P(0, 0)).unit?.fuel.low).toBe(false);
+    expect(tileInfo(withFuel(16), P(0, 0)).unit?.fuel.low).toBe(true); // two days at 8 a day
+  });
+
+  it("flags fuel as low for any unit down to a quarter of its tank (05-supply-transport §11)", () => {
+    const state = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
+    const withFuel = (fuel: number) => ({ ...state, units: state.units.map((u) => ({ ...u, fuel })) });
+    expect(tileInfo(withFuel(8), P(0, 0)).unit?.fuel.low).toBe(false);
+    expect(tileInfo(withFuel(7), P(0, 0)).unit?.fuel.low).toBe(true); // 30 / 4, rounded down
+  });
+
+  it("flags ammo as low at a quarter or less, but a single torpedo still loaded is a full load (05-supply-transport §11)", () => {
+    const tank = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0), ammo: 4 }]);
+    expect(tileInfo(tank, P(0, 0)).unit?.ammo?.low).toBe(false);
+    const short = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0), ammo: 3 }]);
+    expect(tileInfo(short, P(0, 0)).unit?.ammo?.low).toBe(true); // 9 / 4, rounded up
+    const fighter = makeGame(["."], [{ type: "fighter", owner: 0, pos: P(0, 0), ammo: 1 }]);
+    expect(tileInfo(fighter, P(0, 0)).unit?.ammo?.low).toBe(true);
+    const torpedo = makeGame(["."], [{ type: "torpedoBomber", owner: 0, pos: P(0, 0) }]);
+    expect(tileInfo(torpedo, P(0, 0)).unit?.ammo?.low).toBe(false);
   });
 
   it("says when a property is a scenario objective (04-economy §8)", () => {

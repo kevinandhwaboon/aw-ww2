@@ -79,7 +79,17 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   const battle = new BattleScene();
   scene.setBattlePlayer(battleScenes ? battle : null);
 
-  const controller = new InputController({ getState: () => state, dispatch, view: scene, buildMenu });
+  const controller = new InputController({
+    getState: () => state,
+    // The controller frees itself just after an order plays out; refresh the cursor info once it has.
+    dispatch: async (command) => {
+      const ok = await dispatch(command);
+      setTimeout(showCursorInfo, 0);
+      return ok;
+    },
+    view: scene,
+    buildMenu,
+  });
   /** During the computer's turn the map can be looked at, but no orders given (09-ai §5). */
   const aiTurn = () => state.result === null && ais[state.currentPlayer] != null;
   const humans = setup.players.filter((_, id) => ais[id] == null).length;
@@ -88,23 +98,39 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     nextCursor: (from, step) => controller.nextCursor(from, step),
     onConfirm: (tile) => {
       if (!aiTurn()) controller.onConfirm(tile);
+      showCursorInfo();
     },
     onCancel: () => {
       if (!aiTurn()) controller.onCancel();
+      showCursorInfo();
     },
     onMenuChoice: (id) => {
       if (!aiTurn()) controller.onMenuChoice(id);
+      showCursorInfo();
     },
-    onPeekStart: (tile) => controller.onPeekStart(tile),
-    onPeekEnd: () => controller.onPeekEnd(),
+    onPeekStart: (tile) => {
+      controller.onPeekStart(tile);
+      showCursorInfo();
+    },
+    onPeekEnd: () => {
+      controller.onPeekEnd();
+      showCursorInfo();
+    },
   });
 
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
     const onLeft = scene.tileInLeftHalf(cursor);
     hud.update(state, onLeft);
-    tileInfoPanel.show(state, cursor, onLeft);
+    // While an aircraft is out on its Carrier being launched, the panel describes it.
+    tileInfoPanel.show(scene.shownState(), cursor, onLeft);
     unitPanel?.show(state, unitAt(state, cursor));
+    refreshCargoPeek();
+  }
+
+  /** A transport under the cursor shows who is aboard, while nothing is selected (05-supply-transport §4). */
+  function refreshCargoPeek(): void {
+    scene.showCargoPeek(controller.idle && inBounds(state.map, cursor) ? cursor : null);
   }
 
   /**

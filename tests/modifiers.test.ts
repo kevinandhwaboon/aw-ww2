@@ -15,7 +15,7 @@ describe("modifier layer (00-master-design §7)", () => {
     const tank = unitAt0(state);
     expect(stats.movePoints(state, tank)).toBe(6);
     expect(stats.vision(state, tank)).toBe(2);
-    expect(stats.maxFuel(state, tank)).toBe(70);
+    expect(stats.maxFuel(state, tank)).toBe(30);
     expect(stats.maxAmmo(state, tank)).toBe(9);
     expect(stats.attackMod(state, tank)).toBe(100);
     expect(stats.defenseMod(state, tank)).toBe(100);

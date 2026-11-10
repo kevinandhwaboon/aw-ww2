@@ -8,7 +8,8 @@ import { UNITS, type UnitTypeId } from "../engine/data/units";
 import { buildOptions, captureProblem, type BuildOption } from "../engine/economy";
 import { inBounds, type Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
-import { unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
+import { displayHp, unitAt, type GameState, type Unit, type UnitId } from "../engine/state";
+import * as stats from "../engine/stats";
 import { diveProblem, surfaceProblem } from "../engine/submarine";
 import { joinProblem, launchable, launchState, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
 import { unitName } from "./artPack";
@@ -164,6 +165,11 @@ export class InputController {
     if (!this.launching) return;
     this.launching = undefined;
     this.deps.view.showPreviewState(null);
+  }
+
+  /** Nothing selected and no menu open: the player is just looking at the map. */
+  get idle(): boolean {
+    return this.mode.kind === "idle" || this.mode.kind === "peeking";
   }
 
   get busy(): boolean {
@@ -573,12 +579,27 @@ export class InputController {
     this.deps.view.openMenu(first.to, [UNLOAD, WAIT, CANCEL]);
   }
 
-  /** LAUNCH, or one LAUNCH per aircraft type when a Fighter and a Bomber are aboard (05-supply-transport §10). */
+  /**
+   * LAUNCH items that name the aircraft (05-supply-transport §10): "LAUNCH FIGHTER". Two different
+   * aircraft get one item each; two of a kind with different HP get one each with their HP; two
+   * identical ones share a single item, since it doesn't matter which goes first.
+   */
   private launchItems(aircraft: readonly Unit[]): MenuItem[] {
     const [first, second] = aircraft;
     if (!first) return [];
-    if (!second || second.type === first.type) return [LAUNCH];
-    return aircraft.map((a) => ({ id: `launch:${a.id}`, label: `LAUNCH ${unitName(a.type).toUpperCase()}` }));
+    const name = (a: Unit) => `LAUNCH ${unitName(a.type).toUpperCase()}`;
+    if (!second || (second.type === first.type && displayHp(second.hp) === displayHp(first.hp))) return [{ ...LAUNCH, label: name(first) }];
+    const sameType = second.type === first.type;
+    return aircraft.map((a) => ({ id: `launch:${a.id}`, label: sameType ? `${name(a)} ${displayHp(a.hp)}HP` : name(a) }));
+  }
+
+  /** The label over a Carrier while one of its aircraft is out, naming it and its supplies. */
+  private showLaunchLabel(aircraft: Unit, state: GameState): void {
+    const ammo = stats.maxAmmo(state, aircraft) > 0 ? `  AMMO ${aircraft.ammo}` : "";
+    this.deps.view.showForecast(aircraft.pos, [
+      `LAUNCHING ${unitName(aircraft.type).toUpperCase()}`,
+      `HP ${displayHp(aircraft.hp)}  FUEL ${aircraft.fuel}${ammo}`,
+    ]);
   }
 
   /** Aircraft that can take off from this Carrier now: only while it stays where it is. */
@@ -604,6 +625,7 @@ export class InputController {
     view.showRanges([{ tiles: [...reach.keys()].map((i) => tilePoint(preview, i)), kind: "move" }]);
     view.showPath(aircraft.pos, []);
     view.setCursor(aircraft.pos);
+    this.showLaunchLabel(aircraft, preview);
   }
 
   /** Cancelled a launch: back to the Carrier's menu, the aircraft back aboard. */
@@ -611,6 +633,7 @@ export class InputController {
     const { view } = this.deps;
     view.clearRange();
     view.clearPath();
+    view.clearForecast();
     this.endLaunch();
     const state = this.state();
     const carrier = state.units.find((u) => u.id === carrierId);

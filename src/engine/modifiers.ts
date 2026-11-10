@@ -12,6 +12,8 @@ import type { UnitCategory, UnitTypeId } from "./data/units";
 
 export const MODIFIABLE_STATS = [
   "movePoints", "vision", "cost", "maxFuel", "maxAmmo", "fuelPerDay",
+  /** Fuel per movement point spent (05-supply-transport §1). */
+  "fuelPerMove",
   /** Movement points to enter a tile; the context's terrain is the tile being entered. */
   "moveCost",
   "minRange", "maxRange",

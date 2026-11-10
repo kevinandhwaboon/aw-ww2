@@ -14,7 +14,7 @@ import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
 import { drawUnitMarker, playerColors } from "../game/placeholderUnits";
 import { TILE_SIZE } from "../game/placeholderTiles";
 import { objectiveLines, type ObjectiveLine } from "../game/objectives";
-import { tileInfo } from "../game/tileInfo";
+import { tileInfo, type Passenger } from "../game/tileInfo";
 import { UNIT_GUIDE } from "../game/unitGuide";
 import { menuKeys } from "./menuKeys";
 
@@ -62,12 +62,29 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       ammoText.classList.toggle("tile-low", unit?.ammo?.low === true);
       captureLine.hidden = !info.capture;
       captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
+      // A transport lists who is aboard, each with HP, fuel and ammo (05-supply-transport §4).
       const cargo = info.unit?.cargo;
       cargoLine.hidden = !cargo;
-      cargoLine.textContent = cargo ? `Carrying: ${cargo.length > 0 ? cargo.join(", ") : "nothing"}` : "";
+      cargoLine.replaceChildren(...(cargo ? cargoRows(cargo) : []));
       panel.classList.toggle("tile-info-right", cursorOnLeft);
     },
   };
+}
+
+/** "Carrying: nothing", or a heading and one row per passenger with its HP, fuel and ammo. */
+function cargoRows(cargo: readonly Passenger[]): HTMLElement[] {
+  if (cargo.length === 0) return [el("div", undefined, "Carrying: nothing")];
+  return [
+    el("div", undefined, "Carrying:"),
+    ...cargo.map((p) => {
+      const row = el("div", "tile-passenger");
+      const fuel = el("span", p.fuel.low ? "tile-low" : undefined, `Fuel ${p.fuel.left}/${p.fuel.max}`);
+      const parts: HTMLElement[] = [el("span", "tile-passenger-name", p.name), el("span", undefined, `HP ${p.hp}`), fuel];
+      if (p.ammo) parts.push(el("span", p.ammo.low ? "tile-low" : undefined, `Ammo ${p.ammo.left}/${p.ammo.max}`));
+      row.append(...parts);
+      return row;
+    }),
+  ];
 }
 
 function drawFlag(nation: NationId): HTMLCanvasElement {
@@ -348,7 +365,9 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       };
       row("HP", `${displayHp(unit.hp)} / 10  (internal ${unit.hp})`);
       const burn = stats.fuelPerDay(state, unit);
-      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${burn > 0 ? `  (−${burn} per turn)` : ""}`);
+      const perMove = stats.fuelPerMove(state, unit);
+      const costs = [...(burn > 0 ? [`−${burn} per turn`] : []), ...(perMove > 1 ? [`−${perMove} per tile moved`] : [])];
+      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${costs.length > 0 ? `  (${costs.join(", ")})` : ""}`);
       row("Ammo", def.primaryWeapon ? `${unit.ammo} / ${ammo}  (${def.primaryWeapon.name})` : "—");
       if (def.secondaryWeapon) row("Secondary", def.secondaryWeapon.name);
       row("Move", stats.movePoints(state, unit), def.movePoints);
