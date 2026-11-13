@@ -512,6 +512,17 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
     expect(waitScore(state, artillery, P(7, 0), blind) - waitScore(state, artillery, P(7, 0))).toBeCloseTo(expected);
   });
 
+  it("far ahead, it presses: with an army worth twice the enemy's, the look ahead no longer counts", () => {
+    const state = makeGame(["===============", "==============="], [
+      { type: "artillery", owner: 0, pos: P(5, 0) },
+      { type: "heavyTank", owner: 0, pos: P(0, 1) },
+      { type: "mediumTank", owner: 1, pos: P(14, 0) },
+    ], { settings: { luck: false } });
+    const artillery = find(state, "artillery", 0);
+    const blind = { ...GREEDY_WEIGHTS, dangerWeight: 0 };
+    expect(waitScore(state, artillery, P(7, 0))).toBeCloseTo(waitScore(state, artillery, P(7, 0), blind));
+  });
+
   it("a Torpedo Boat doesn't sail past the point of no return to hit a ship worth no more than itself", () => {
     // 14 tiles from port with 30 fuel, and an enemy Torpedo Boat 6 tiles further out.
     const state = makeGame(["P" + "S".repeat(39)], [

@@ -88,6 +88,8 @@ export interface GreedyWeights {
    * the move (09-ai §4c). Kept low: at 0.25 and above both sides hang back and games stop finishing.
    */
   readonly dangerWeight: number;
+  /** The look ahead is switched off once our army is worth this many times the enemy's: far ahead, it presses rather than hangs back (09-ai §4c). */
+  readonly pressRatio: number;
   /** How many enemy attackers that estimate counts on one tile. */
   readonly dangerAttackers: number;
   /** Days of fuel burn an aircraft or ship keeps in hand on top of what the trip home needs (09-ai §4c). */
@@ -147,6 +149,7 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   indirectFirst: true,
   focusKillBonus: 0.25,
   dangerWeight: 0.1,
+  pressRatio: 2,
   dangerAttackers: 2,
   fuelReserveDays: 2,
   keepSitesForService: true,

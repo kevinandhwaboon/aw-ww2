@@ -103,6 +103,7 @@ class Brain {
   private readonly goalLabelCache = new Map<UnitTypeId, ReadonlySet<number>>();
   private readonly pickupCache = new Map<string, Point | null>();
   private waitingCache: readonly Unit[] | null = null;
+  private pressCache: boolean | null = null;
   private garrisonCache: ReadonlySet<number> | null = null;
   private escortCache: ReadonlyMap<number, Unit> | null = null;
   private readonly threatTileCache = new Map<number, ReadonlySet<number>>();
@@ -619,7 +620,7 @@ class Brain {
     const inTheWay = staying && plan.kind === "advance" && plan.embark && plan.goals.some((g) => samePoint(g, dest));
     const exposed = isCarrier(unit.type) && this.inDanger(unit, dest);
     const delivering = unit.cargo.length > 0 && (isLandingCraft(unit.type) || isAirTransport(unit.type));
-    const danger = this.w.dangerWeight > 0 && staying && !delivering ? this.w.dangerWeight * this.danger(unit, dest) : 0;
+    const danger = this.w.dangerWeight > 0 && staying && !delivering && !this.pressing() ? this.w.dangerWeight * this.danger(unit, dest) : 0;
     return (
       this.actionScore(unit, plan, command, dest) -
       (blocks || inTheWay ? this.w.blockSitePenalty : 0) -
@@ -746,6 +747,16 @@ class Brain {
       (kill + focus) * targetCost +
       (capturing ? this.w.stopCaptureBonus : 0)
     );
+  }
+
+  /** Whether our army is worth so much more than the enemy's that it should press on regardless of risk. */
+  private pressing(): boolean {
+    if (this.pressCache === null) {
+      const mine = this.state.units.reduce((sum, u) => sum + (u.owner === this.me ? this.worth(u) : 0), 0);
+      const theirs = this.enemies.reduce((sum, u) => sum + this.worth(u), 0);
+      this.pressCache = mine >= this.w.pressRatio * theirs;
+    }
+    return this.pressCache;
   }
 
   /** Rough damage, in HP out of 100, of this attacker type and strength against a defender on terrain with these stars. */
