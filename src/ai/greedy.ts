@@ -216,16 +216,19 @@ class Brain {
     const def = defOf(unit.type);
     const home = this.repairTiles(unit);
     // A transport with passengers presses on while it has the fuel to land them and get back to one
-    // of our ports or airfields, rather than turning for home just short of the landing (09-ai §4b).
+    // of our ports or airfields, or once the landing is nearer than home and within reach, rather
+    // than turning for home just short of it (09-ai §4b, §4c).
     if ((isLandingCraft(unit.type) || isAirTransport(unit.type)) && unit.cargo.length > 0) {
       const ferry = this.planFerry(unit);
       if (ferry.kind === "idle" && ferry.hold) return ferry;
       if (ferry.kind === "advance") {
         const here = this.index(unit.pos);
         const trip = this.distances(unit, ferry.goals, `trip${unit.id}`)[here] ?? Infinity;
-        const back = home.length > 0 ? trip + (this.distances(unit, home, "repair")[here] ?? Infinity) : 0;
-        const days = Math.ceil((trip + back) / Math.max(1, stats.movePoints(this.state, unit)));
-        if (unit.fuel >= stats.moveFuel(this.state, unit, trip + back) + days * stats.fuelPerDay(this.state, unit)) return ferry;
+        const homeward = home.length > 0 ? (this.distances(unit, home, "repair")[here] ?? Infinity) : Infinity;
+        const back = home.length > 0 ? trip + homeward : 0;
+        const fuelFor = (steps: number) =>
+          stats.moveFuel(this.state, unit, steps) + Math.ceil(steps / Math.max(1, stats.movePoints(this.state, unit))) * stats.fuelPerDay(this.state, unit);
+        if (unit.fuel >= fuelFor(trip + back) || (trip <= homeward && unit.fuel >= fuelFor(trip))) return ferry;
       }
     }
     const homeward = this.headingHome(unit, home);
@@ -520,7 +523,8 @@ class Brain {
         if ((occupant && occupant.id !== transport.id) || !Number.isFinite(travel)) continue;
         let walk = Infinity;
         for (const u of waiting) {
-          if (this.connected(u.type, u.pos, tile)) walk = Math.min(walk, distance(u.pos, tile) / stats.movePoints(this.state, u));
+          if (!this.connected(u.type, u.pos, tile) || (isAirTransport(transport.type) && !this.canFly(transport, tile, u))) continue;
+          walk = Math.min(walk, distance(u.pos, tile) / stats.movePoints(this.state, u));
         }
         // A craft waiting in a port keeps our ships from refuelling there: a beach is preferred.
         const inPort = isLandingCraft(transport.type) && terrainAt(this.state.map, tile) === "port" ? 1 : 0;
@@ -530,6 +534,20 @@ class Brain {
     }
     this.pickupCache.set(key, best?.tile ?? null);
     return best?.tile ?? null;
+  }
+
+  /**
+   * Whether a Transport Aircraft could fly this unit from this tile to its goal and back: on a full
+   * tank from one of our airfields, or else on the fuel it has. It never loads for a drop out of range.
+   */
+  private canFly(transport: Unit, from: Point, passenger: Unit): boolean {
+    const goals = this.goalsFor(passenger);
+    if (goals.length === 0) return false;
+    // There and back: an aircraft that couldn't return would be lost with every drop.
+    const trip = 2 * Math.min(...goals.map((g) => distance(from, g)));
+    const fuel = this.canBoardAt(transport.type, from) ? stats.maxFuel(this.state, transport) : transport.fuel;
+    const days = Math.ceil(trip / Math.max(1, stats.movePoints(this.state, transport)));
+    return fuel >= stats.moveFuel(this.state, transport, trip) + days * stats.fuelPerDay(this.state, transport);
   }
 
   /** Whether a stranded unit that fits is close enough to this transport that it's worth waiting for. */
@@ -554,7 +572,9 @@ class Brain {
       if (t.owner !== this.me || !rules || !(isLandingCraft(t.type) || isAirTransport(t.type))) continue;
       if (!rules.carries.includes(unit.type) || t.cargo.length >= rules.capacity) continue;
       const tile = this.canBoardAt(t.type, t.pos) ? t.pos : t.cargo.length === 0 ? this.pickup(t) : null;
-      if (tile && this.connected(unit.type, unit.pos, tile)) tiles.set(this.index(tile), tile);
+      if (!tile || !this.connected(unit.type, unit.pos, tile)) continue;
+      if (isAirTransport(t.type) && !this.canFly(t, tile, unit)) continue;
+      tiles.set(this.index(tile), tile);
     }
     return [...tiles.values()];
   }
@@ -886,7 +906,8 @@ class Brain {
     const wanted =
       type === "landingCraft"
         ? owned < this.w.maxLandingCraft && owned * this.w.strandedPerCraft < waiting.length && this.pickup(this.phantom(type, site)) !== null
-        : owned < this.w.maxAirTransports && waiting.some((u) => defOf(u.type).canCapture && this.connected(u.type, u.pos, site));
+        : owned < this.w.maxAirTransports &&
+          waiting.some((u) => defOf(u.type).canCapture && this.connected(u.type, u.pos, site) && this.canFly(this.phantom(type, site), site, u));
     return wanted ? { type, cost: option.cost } : null;
   }
 

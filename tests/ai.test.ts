@@ -552,6 +552,25 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
     expect(craft.pos).toEqual(P(2, 0));
   });
 
+  it("a loaded Landing Craft nearer its landing than its port lands its troops rather than turning back for fuel", () => {
+    // 3 tiles from the beach and 20 from port, with 15 fuel: not enough to land and get home, enough to land.
+    const state = makeGame(["P" + "S".repeat(22) + "_.Q"], [
+      { type: "landingCraft", owner: 0, pos: P(20, 0), fuel: 15, cargo: [{ type: "infantry" }] },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(25, 0), owner: 1 }] });
+    const command = chooseCommand(state);
+    expect(command).toMatchObject({ type: "move", action: { type: "unload", to: P(24, 0) } });
+  });
+
+  it("a Transport Aircraft doesn't take on infantry, and isn't built, for a drop it couldn't fly back from", async () => {
+    const far = ["A." + "S".repeat(56) + ".Q", ".." + "S".repeat(56) + ".."];
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(59, 0), owner: 1 }] };
+    const waiting = makeGame(far, [{ type: "infantry", owner: 0, pos: P(1, 0) }, { type: "transportAircraft", owner: 0, pos: P(0, 0) }], setup);
+    const { commands } = await playTurn(waiting);
+    expect(commands.some((c) => c.type === "move" && c.action.type === "load")).toBe(false);
+    const troops = [P(1, 0), P(1, 1), P(0, 1)].map((pos) => ({ type: "infantry" as const, owner: 0, pos }));
+    expect(nextBuild(makeGame(far, troops, setup))).not.toBe("transportAircraft");
+  });
+
   const islands = ["...._SSSSS_..Q", "...._SSSSS_...", "...._SSSSS_..."];
   const enemyHq = { propertyOwners: [{ pos: P(13, 0), owner: 1 }] };
 
