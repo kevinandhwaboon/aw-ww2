@@ -24,7 +24,7 @@ export interface GreedyWeights {
   readonly reachRepairBonus: number;
   /** Retreat at this displayed HP or less. */
   readonly retreatHp: number;
-  /** Air and naval units head home once their fuel is within this many days' burn of what it takes to get there. */
+  /** Air and naval units head home once their fuel is within this many days' burn of what the trip home takes (distance plus the daily burn on the way). */
   readonly fuelSafetyDays: number;
   /** Value of each defense star at the destination, at full HP. */
   readonly starValue: number;
@@ -57,6 +57,23 @@ export interface GreedyWeights {
   readonly threatTurns: number;
   /** How much more a near threat counts than a distant enemy when choosing what to build (09-ai §4a). */
   readonly nearThreatWeight: number;
+  /** A transport taking passengers on waits for any that could reach it within this many turns (09-ai §4b). */
+  readonly boardWaitTurns: number;
+  /** Build another Landing Craft while there are more than this many stranded units per craft we own. */
+  readonly strandedPerCraft: number;
+  /** Most Landing Craft and Transport Aircraft the AI keeps. */
+  readonly maxLandingCraft: number;
+  readonly maxAirTransports: number;
+  /** A Transport Aircraft drops a passenger only within this many turns' walk of its goal. */
+  readonly dropWithinTurns: number;
+  /** How much an enemy a land unit could only reach by sea counts when choosing what to build, against one it can walk to. */
+  readonly overseasWeight: number;
+  /** Score lost by an aircraft or ship moving to where it wouldn't have the fuel left to get home. */
+  readonly noReturnPenalty: number;
+  /** Score lost by a Carrier ending its move where an enemy that can hurt it could attack next turn. */
+  readonly carrierDangerPenalty: number;
+  /** A Carrier closes to within its aircraft's flying range of a target, and no nearer than this many tiles less. */
+  readonly carrierStandoff: number;
   /** Bonus value of a capture-capable unit while we have fewer than the capture rule wants, above the minimum. */
   readonly capturerBonus: number;
 }
@@ -91,4 +108,13 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   threatTurns: 2,
   nearThreatWeight: 3,
   capturerBonus: 1500,
+  boardWaitTurns: 2,
+  strandedPerCraft: 2,
+  maxLandingCraft: 6,
+  maxAirTransports: 1,
+  dropWithinTurns: 1,
+  overseasWeight: 0.5,
+  noReturnPenalty: 5000,
+  carrierDangerPenalty: 3000,
+  carrierStandoff: 2,
 };

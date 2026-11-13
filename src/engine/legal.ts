@@ -3,6 +3,7 @@
 //
 // It's representative rather than exhaustive in one way: an Unload lists each passenger and tile on
 // its own, not every pairing of two passengers in one action (05-supply-transport §6, D3).
+// Carrier launches are listed since 2026-11-13 (05-supply-transport §10).
 
 import { attackTargets, fortTargets } from "./combat";
 import type { Command } from "./commands";
@@ -10,7 +11,7 @@ import { buildOptions, buildProblem, captureProblem } from "./economy";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint } from "./movement";
 import type { GameState, Unit } from "./state";
 import { diveProblem, surfaceProblem } from "./submarine";
-import { joinProblem, loadProblem, supplyTargets, unloadTiles } from "./transport";
+import { joinProblem, launchable, launchProblem, launchState, loadProblem, supplyTargets, unloadTiles } from "./transport";
 
 type MoveCommand = Extract<Command, { type: "move" }>;
 
@@ -19,7 +20,9 @@ export function legalCommands(state: GameState): Command[] {
   if (state.result) return [];
   const commands: Command[] = [];
   for (const unit of state.units) {
-    if (unit.owner === state.currentPlayer && !unit.hasActed) commands.push(...unitCommands(state, unit));
+    if (unit.owner !== state.currentPlayer) continue;
+    if (!unit.hasActed) commands.push(...unitCommands(state, unit));
+    commands.push(...launchCommands(state, unit));
   }
   commands.push(...buildCommands(state));
   commands.push({ type: "endTurn" });
@@ -55,6 +58,26 @@ export function unitCommands(state: GameState, unit: Unit): Command[] {
     }
     if (diveProblem(moved) === null) move(path, { type: "dive" });
     if (surfaceProblem(moved) === null) move(path, { type: "surface" });
+  }
+  return commands;
+}
+
+/**
+ * Every legal launch from this Carrier (05-supply-transport §10): each aircraft aboard that can take
+ * off, with every move-and-act command it would have from the Carrier's tile, except staying there.
+ */
+export function launchCommands(state: GameState, carrier: Unit): Command[] {
+  if (state.result || carrier.owner !== state.currentPlayer) return [];
+  const commands: Command[] = [];
+  for (const aircraft of launchable(carrier)) {
+    if (launchProblem(state, carrier, aircraft.id) !== null) continue;
+    const out = launchState(state, carrier.id, aircraft.id);
+    const flying = out?.units.find((u) => u.id === aircraft.id);
+    if (!out || !flying) continue;
+    for (const command of unitCommands(out, flying)) {
+      if (command.type !== "move" || command.path.length === 0) continue;
+      commands.push({ type: "launch", carrierId: carrier.id, unitId: aircraft.id, path: command.path, action: command.action });
+    }
   }
   return commands;
 }

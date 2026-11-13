@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (first AI) are done, and 16 (Greedy v2) is under way: part 1, threat-aware production, done on 2026-11-13. Milestone 13 (CO hooks) was skipped for now on 2026-11-09 to get single-player sooner; it is still to do.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (first AI) are done, and 16 (Greedy v2: threat-aware production, then landings, drops and carriers) was done on 2026-11-13. Milestone 13 (CO hooks) was skipped for now on 2026-11-09 to get single-player sooner; it is still to do.
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -185,7 +185,7 @@ Rules: 05-supply-transport §5–9, 04-economy §8, 09-ai. Each milestone ends p
 | 13 | CO hooks | Modifier scopes that depend on the target (for example attack vs infantry); luck modifiers (03-combat §7) | Modifier list in the unit panel |
 | 14 | AI interface | `legalCommands`, `AiView`, session support for AI players, command limit | Human or AI choice per player, locked input during AI turns |
 | 15 | First AI | The Greedy AI (09-ai §4), AI vs AI tests, a performance benchmark | Playable single-player on every map |
-| 16 | Greedy v2 | Part 1: threat-aware production (09-ai §4a). Part 2: Landing Craft, Transport Aircraft and Carriers (09-ai §4b, lifts D9) | Single-player on the sea and island maps: every built-in map ends with a winner in AI vs AI |
+| 16 | Greedy v2 | Part 1: threat-aware production (09-ai §4a). Part 2: Landing Craft, Transport Aircraft and Carriers (09-ai §4b, lifts D9) | Single-player on the sea and island maps. The goal that every built-in map ends with a winner in AI vs AI is not met for The Slot and Normandy (09-ai §4b) |
 
 Air and naval rules come first because the AI has to handle them. The Normandy theater stays in phase 4.
 
@@ -203,7 +203,7 @@ All accepted on 2026-10-31.
 | D6 | Is the victory condition list right? | Yes: capture, hold, survive | Enough for "hold Bastogne for 10 turns" and Normandy |
 | D7 | Should the order stay air, naval, landings, then AI? | Yes | The alternative is AI first, on land only, so single-player arrives sooner but has to be extended twice |
 | D8 | Should the AI run in a Web Worker from the start? | No: main thread now, with an async interface | Workers matter once community AIs exist |
-| D9 | Should the first AI use Landing Craft and Transport Aircraft? | No | Amphibious planning is much harder and comes after a solid basic AI |
+| D9 | Should the first AI use Landing Craft and Transport Aircraft? | No | Amphibious planning is much harder and comes after a solid basic AI. Lifted on 2026-11-13 by milestone 16 (09-ai §4b) |
 
 A playable deathmatch exists after milestone 3: the first real playtest.
 
