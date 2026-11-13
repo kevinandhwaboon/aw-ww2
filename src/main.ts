@@ -2,7 +2,7 @@ import type { Scenario } from "./engine/scenario";
 import { loadArtPack } from "./game/loadArtPack";
 import { SCENARIOS } from "./scenarios";
 import { startSession } from "./session";
-import { defaultComputerPlayers, showTitleScreen, type GameOptions } from "./ui/screens";
+import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions } from "./ui/screens";
 import { greedyAi } from "./ai/greedy";
 import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
@@ -28,7 +28,7 @@ const defaults: GameOptions = {
 };
 
 function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions): void {
-  startSession({
+  const session = startSession({
     gameRoot: game,
     uiRoot: ui,
     setup: {
@@ -41,7 +41,11 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     ais: scenario.setup.players.map((_, id) => ((options.computer ?? defaultComputerPlayers(scenario)).includes(id) ? greedyAi(weightsFor(options.level)) : null)),
     debug: url.debug,
     pad: padLayout,
-    onNewGame: () => window.location.reload(),
+    // Back to the map select, keeping the options just played with.
+    onNewGame: () => {
+      session.end();
+      showMapSelect(ui, SCENARIOS, options, (next, nextOptions) => start(game, ui, next, nextOptions));
+    },
   });
 }
 

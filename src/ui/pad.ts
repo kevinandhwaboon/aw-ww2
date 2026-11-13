@@ -37,8 +37,11 @@ const ACTIONS: readonly PadKey[] = [
   { key: "z", label: "Z", hint: "Select · OK", className: "pad-z", repeats: false },
 ];
 
-/** Shows the pad and lays the page out as a handheld: status on top, game screen, info, pad. */
-export function mountPad(root: HTMLElement, input: PadInput): void {
+/**
+ * Shows the pad and lays the page out as a handheld: status on top, game screen, info, pad.
+ * Returns a function that takes the pad away and puts the normal layout back.
+ */
+export function mountPad(root: HTMLElement, input: PadInput): () => void {
   document.body.classList.add("pad-layout");
   const pad = el("div", "pad");
   // If a press ever fails, the reason shows on the pad instead of the button silently doing nothing.
@@ -63,6 +66,10 @@ export function mountPad(root: HTMLElement, input: PadInput): void {
   for (const k of ACTIONS) actions.append(padButton(k, guarded));
   pad.append(problem, dpad, actions);
   root.append(pad);
+  return () => {
+    pad.remove();
+    document.body.classList.remove("pad-layout");
+  };
 }
 
 function padButton(spec: PadKey, input: PadInput): HTMLElement {

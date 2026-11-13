@@ -121,7 +121,7 @@
 - **When they're checked:** HQ capture straight after the capture; rout at the end of each turn, as 04-economy §8 says. So a player whose last unit dies still finishes that turn.
 - **Resign** is a command for the current player, available in every scenario.
 - **Once `state.result` is set**, `apply` rejects every command with `gameOver`, and the UI locks input and shows the results screen.
-- **New Game** reloads the page for now. Choosing a map comes with the game shell in milestone 8.
+- **New Game** goes back to the map select (see 3i).
 
 ## 3h. Fortifications (milestone 7)
 
@@ -133,6 +133,7 @@
 
 - **`src/main.ts`** shows the title screen or, with `?map=`, starts straight away. **`src/session.ts`** is one game in progress. **`src/ui/screens.ts`** has the title and map select.
 - **Hot-seat:** with the pass-the-device option on, a full screen waits between turns until the next player presses Ready. With it off, the turn banner shows instead.
+- **New Game** on the results screen ends the game (`end()` in `src/session.ts` removes its listeners, canvas and panels) and goes back to the map select with the options just played. Since 2026-11-13; before that it reloaded the page.
 - **Luck seeds** are random for each new game unless `?seed=` fixes one. They're not part of a scenario file.
 - **Saving:** `saveGame` and `loadGame` in `src/engine/save.ts` work and are tested, but no screen uses them yet, since save/load isn't in the MVP (00-master-design §5).
 

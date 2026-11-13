@@ -348,8 +348,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.input.on("pointerupoutside", () => this.handlers?.onPeekEnd());
     this.game.events.on("blur", () => this.handlers?.onPeekEnd()); // a release we'd otherwise never see
     // Not Phaser's keyboard events: they replay earlier keys when several land in one frame.
-    window.addEventListener("keydown", (event) => this.onKey(event));
-    window.addEventListener("keyup", (event) => this.releaseKey(event.key));
+    // They're removed when the game is destroyed, so an ended game doesn't hear the next one's keys.
+    const keys = new AbortController();
+    window.addEventListener("keydown", (event) => this.onKey(event), { signal: keys.signal });
+    window.addEventListener("keyup", (event) => this.releaseKey(event.key), { signal: keys.signal });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;

@@ -59,7 +59,7 @@ function checkbox(label: string, checked: boolean): { row: HTMLElement; input: H
   return { row, input };
 }
 
-function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
+export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
   const list = el("div", "map-list");
