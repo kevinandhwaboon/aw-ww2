@@ -1,5 +1,6 @@
 // The screens around a game: title and map select (00-master-design §12, HTML full screens).
 
+import type { AiLevel } from "../ai/weights";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
 import { el } from "./hud";
@@ -14,6 +15,8 @@ export interface GameOptions {
   readonly battleScenes: boolean;
   /** Player ids the computer plays (09-ai §5). On the map select, null means every player but the first. */
   readonly computer: readonly number[] | null;
+  /** How well the computer plays (09-ai §4c). */
+  readonly level: AiLevel;
 }
 
 /** Who the computer plays unless the player says otherwise: everyone but the first player. */
@@ -104,12 +107,19 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
   const luck = checkbox("Luck in combat", defaults.luck);
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
   const battleScenes = checkbox("Battle scenes", defaults.battleScenes);
+  const easy = checkbox("Easy computer opponent", defaults.level === "easy");
   const start = el("button", "btn btn-big", "Start");
   start.addEventListener("click", () => {
     if (!chosen) return;
     close();
     const computer = computerBoxes.flatMap((box, id) => (box.checked ? [id] : []));
-    onStart(chosen, { luck: luck.input.checked, passDevice: passDevice.input.checked, battleScenes: battleScenes.input.checked, computer });
+    onStart(chosen, {
+      luck: luck.input.checked,
+      passDevice: passDevice.input.checked,
+      battleScenes: battleScenes.input.checked,
+      computer,
+      level: easy.input.checked ? "easy" : "normal",
+    });
   });
 
   panel.append(
@@ -120,6 +130,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     description,
     el("div", "panel-subtitle", "Players"),
     players,
+    easy.row,
     el("div", "panel-subtitle", "Options"),
     luck.row,
     passDevice.row,
@@ -135,7 +146,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
     () => {
       const mapRows = rows.map(({ row }) => row);
       const onList = mapRows.some((row) => row === document.activeElement);
-      return onList ? mapRows : [chosenRow(), ...computerBoxes, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
+      return onList ? mapRows : [chosenRow(), ...computerBoxes, easy.input, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
     },
     () => {
       close();

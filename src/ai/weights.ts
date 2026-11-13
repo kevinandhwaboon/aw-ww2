@@ -68,8 +68,32 @@ export interface GreedyWeights {
   readonly dropWithinTurns: number;
   /** How much an enemy a land unit could only reach by sea counts when choosing what to build, against one it can walk to. */
   readonly overseasWeight: number;
-  /** Score lost by an aircraft or ship moving to where it wouldn't have the fuel left to get home. */
+  /** Least score lost by an aircraft or ship moving to where it wouldn't have the fuel left to get home. */
   readonly noReturnPenalty: number;
+  /** The same as a share of what the unit is worth, when that's more: going past the point of no return loses the unit (09-ai §4c). */
+  readonly noReturnOwnValue: number;
+  /** Loaded Landing Craft leave together: one waits at its boarding tile while another within `waveRadius` is still loading, until this many are ready (09-ai §4c). 1 = never wait. */
+  readonly waveSize: number;
+  readonly waveRadius: number;
+  /** Warships with nothing to shoot nearby that sail with each loaded Landing Craft (09-ai §4c). */
+  readonly escortsPerCraft: number;
+  /** Land units that stay on the HQ's landmass however little there is to do there (09-ai §4c). */
+  readonly garrisonSize: number;
+  /** Indirect-fire units shoot before direct-fire units move in, so targets are softened first (09-ai §4c). */
+  readonly indirectFirst: boolean;
+  /** Bonus for hitting a target our other ready units could finish off this turn, as a share of its cost (09-ai §4c). */
+  readonly focusKillBonus: number;
+  /**
+   * How much the damage the enemy could do to a unit next turn, where it ends its move, counts against
+   * the move (09-ai §4c). Kept low: at 0.25 and above both sides hang back and games stop finishing.
+   */
+  readonly dangerWeight: number;
+  /** How many enemy attackers that estimate counts on one tile. */
+  readonly dangerAttackers: number;
+  /** Days of fuel burn an aircraft or ship keeps in hand on top of what the trip home needs (09-ai §4c). */
+  readonly fuelReserveDays: number;
+  /** Leave a port or airfield unbuilt while one of our units is coming in to it for fuel or repairs (09-ai §4c). */
+  readonly keepSitesForService: boolean;
   /** Score lost by a Carrier ending its move where an enemy that can hurt it could attack next turn. */
   readonly carrierDangerPenalty: number;
   /** A Carrier closes to within its aircraft's flying range of a target, and no nearer than this many tiles less. */
@@ -115,6 +139,41 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   dropWithinTurns: 1,
   overseasWeight: 0.5,
   noReturnPenalty: 5000,
+  noReturnOwnValue: 1,
+  waveSize: 3,
+  waveRadius: 8,
+  escortsPerCraft: 2,
+  garrisonSize: 2,
+  indirectFirst: true,
+  focusKillBonus: 0.25,
+  dangerWeight: 0.1,
+  dangerAttackers: 2,
+  fuelReserveDays: 2,
+  keepSitesForService: true,
   carrierDangerPenalty: 3000,
   carrierStandoff: 2,
 };
+
+/** The levels the player can choose for the computer (09-ai §4c). */
+export type AiLevel = "easy" | "normal";
+
+/**
+ * Easy is the same AI, by the same rules and with no handicap: it doesn't coordinate (no focus fire,
+ * no look ahead, no waves, escorts or garrison), doesn't weigh nearby threats more when building,
+ * and counts only half of the damage it will take back when it attacks.
+ */
+export const EASY_WEIGHTS: GreedyWeights = {
+  ...GREEDY_WEIGHTS,
+  counterLoss: 0.5,
+  nearThreatWeight: 1,
+  indirectFirst: false,
+  focusKillBonus: 0,
+  dangerWeight: 0,
+  waveSize: 1,
+  escortsPerCraft: 0,
+  garrisonSize: 0,
+};
+
+export function weightsFor(level: AiLevel): GreedyWeights {
+  return level === "easy" ? EASY_WEIGHTS : GREEDY_WEIGHTS;
+}

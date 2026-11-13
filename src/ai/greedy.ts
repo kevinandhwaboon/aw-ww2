@@ -18,6 +18,7 @@ import {
   launchProblem,
   launchState,
   movementBudget,
+  threatTiles,
   propertyAt,
   propertyDefAt,
   stats,
@@ -37,7 +38,7 @@ import {
   type UnitTypeId,
 } from "../engine";
 import type { AiPlayer } from "./player";
-import { GREEDY_WEIGHTS, type GreedyWeights } from "./weights";
+import { EASY_WEIGHTS, GREEDY_WEIGHTS, type GreedyWeights } from "./weights";
 
 type MoveCommand = Extract<Command, { type: "move" }>;
 
@@ -52,7 +53,7 @@ const isCarrier = (type: UnitTypeId) => defOf(type).specialActions.includes("lau
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 export function greedyAi(weights: GreedyWeights = GREEDY_WEIGHTS): AiPlayer {
-  return { name: "Greedy", chooseCommand: (view) => chooseCommand(view.state, weights) };
+  return { name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy", chooseCommand: (view) => chooseCommand(view.state, weights) };
 }
 
 /** The Greedy AI's next command for the current player. */
@@ -85,6 +86,7 @@ interface Opponent {
   readonly pos: Point | null;
 }
 
+const NO_TILES: ReadonlySet<number> = new Set();
 const IDLE: Plan = { kind: "idle", hold: false };
 const HOLD: Plan = { kind: "idle", hold: true };
 
@@ -101,6 +103,11 @@ class Brain {
   private readonly goalLabelCache = new Map<UnitTypeId, ReadonlySet<number>>();
   private readonly pickupCache = new Map<string, Point | null>();
   private waitingCache: readonly Unit[] | null = null;
+  private garrisonCache: ReadonlySet<number> | null = null;
+  private escortCache: ReadonlyMap<number, Unit> | null = null;
+  private readonly threatTileCache = new Map<number, ReadonlySet<number>>();
+  private readonly dangerCache = new Map<string, number>();
+  private readonly followUpCache = new Map<number, readonly { id: number; damage: number }[]>();
   private loadableCache: readonly Point[] | null = null;
 
   constructor(
@@ -128,8 +135,10 @@ class Brain {
     if (defOf(unit.type).transport) return 3;
     const range = stats.attackRange(this.state, unit);
     if (range) {
-      const reach = (defOf(unit.type).canMoveAndFire ? movementBudget(this.state, unit) : 0) + range.max;
-      if (this.enemies.some((e) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach)) return 0;
+      const direct = defOf(unit.type).canMoveAndFire;
+      const reach = (direct ? movementBudget(this.state, unit) : 0) + range.max;
+      // Indirect fire goes first, so targets are softened before direct-fire units close in (09-ai §4c).
+      if (this.enemies.some((e) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach)) return direct && this.w.indirectFirst ? 0.5 : 0;
     }
     if (defOf(unit.type).canCapture) {
       const reach = movementBudget(this.state, unit);
@@ -247,6 +256,14 @@ class Brain {
 
     const targets = this.enemies.filter((e) => this.canHurt(unit.type, e));
     const range = stats.attackRange(this.state, unit);
+    const convoy = this.escorts().get(unit.id);
+    if (convoy) {
+      // An escort stays with its convoy unless there's something to shoot within two turns.
+      const fight = this.advance(unit, targets.map((e) => e.pos), `targets:${unit.type}`);
+      const near = fight.kind === "advance" && (fight.dist[this.index(unit.pos)] ?? Infinity) <= 2 * stats.movePoints(this.state, unit);
+      const ferry = near ? IDLE : this.planFerry(convoy);
+      if (ferry.kind === "advance") return this.advance(unit, ferry.goals, `escort${unit.id}`);
+    }
     if (range && targets.length > 0) {
       if (def.canMoveAndFire) return this.advance(unit, targets.map((e) => e.pos), `targets:${unit.type}`);
       // Indirect fire: head for tiles that have an enemy in range, not for the enemy itself.
@@ -319,7 +336,56 @@ class Brain {
       landings.push(tile);
       offsets.push(walk * perStep);
     }
+    // Massed landings: still at the boarding tile, it waits for the rest of the wave (09-ai §4c).
+    const atHome = this.canBoardAt(unit.type, unit.pos) && !landings.some((l) => samePoint(l, unit.pos));
+    if (atHome && this.waitsForWave(unit)) return HOLD;
     return this.advance(unit, landings, `landing${unit.id}`, offsets);
+  }
+
+  /** Whether this transport is still taking passengers on: it has room and stranded units are coming. */
+  private stillLoading(transport: Unit): boolean {
+    const capacity = defOf(transport.type).transport?.capacity ?? 0;
+    if (transport.cargo.length >= capacity) return false;
+    if (transport.cargo.length === 0) {
+      // An empty one counts only once it's about to arrive, so a far-off craft doesn't hold up the wave.
+      const pickup = this.pickup(transport);
+      return pickup !== null && distance(transport.pos, pickup) <= stats.movePoints(this.state, transport);
+    }
+    return this.canBoardAt(transport.type, transport.pos) && this.moreComing(transport);
+  }
+
+  /**
+   * Whether this loaded Landing Craft should hold for others nearby that are still loading, so they
+   * land together. It goes once enough craft are ready, or nobody nearby is still loading.
+   */
+  private waitsForWave(craft: Unit): boolean {
+    if (this.w.waveSize <= 1) return false;
+    const others = this.state.units.filter(
+      (u) => u.owner === this.me && u.id !== craft.id && isLandingCraft(u.type) && distance(u.pos, craft.pos) <= this.w.waveRadius,
+    );
+    const ready = 1 + others.filter((o) => o.cargo.length > 0 && !this.stillLoading(o)).length;
+    return ready < this.w.waveSize && others.some((o) => this.stillLoading(o));
+  }
+
+  /**
+   * Escorts (09-ai §4c): for each loaded Landing Craft on its way, the nearest warships not heading
+   * home. Each sails for the craft's landing unless it has something to shoot nearer by.
+   */
+  private escorts(): ReadonlyMap<number, Unit> {
+    if (this.escortCache) return this.escortCache;
+    const assigned = new Map<number, Unit>();
+    if (this.w.escortsPerCraft > 0) {
+      const craft = this.state.units.filter((u) => u.owner === this.me && isLandingCraft(u.type) && u.cargo.length > 0 && !this.canBoardAt(u.type, u.pos));
+      const warships = this.state.units.filter((u) => u.owner === this.me && defOf(u.type).category === "naval" && defOf(u.type).range !== null);
+      for (const c of craft) {
+        const nearest = warships
+          .filter((w) => !assigned.has(w.id) && this.connected(w.type, w.pos, c.pos))
+          .sort((a, b) => distance(a.pos, c.pos) - distance(b.pos, c.pos) || a.id - b.id);
+        for (const w of nearest.slice(0, this.w.escortsPerCraft)) assigned.set(w.id, c);
+      }
+    }
+    this.escortCache = assigned;
+    return assigned;
   }
 
   /**
@@ -352,10 +418,37 @@ class Brain {
    */
   private isStranded(unit: Unit): boolean {
     const def = defOf(unit.type);
-    if (def.category !== "land" || def.transport) return false;
+    if (def.category !== "land" || def.transport || this.garrison().has(unit.id)) return false;
     const label = this.label(unit.type, unit.pos);
     const goals = this.goalLabels(unit.type);
     return label >= 0 && goals.size > 0 && !goals.has(label);
+  }
+
+  /**
+   * The home garrison (09-ai §4c): the few land units nearest our HQ on its landmass. They stay,
+   * so the HQ isn't left empty when everyone else sails. None is kept when no enemy could invade.
+   */
+  private garrison(): ReadonlySet<number> {
+    if (this.garrisonCache) return this.garrisonCache;
+    const ids = new Set<number>();
+    const hq = this.state.properties.find((p) => p.owner === this.me && terrainAt(this.state.map, p.pos) === "hq");
+    if (hq && this.w.garrisonSize > 0 && this.enemyCanInvade()) {
+      const local = this.state.units
+        .filter((u) => u.owner === this.me && defOf(u.type).category === "land" && !defOf(u.type).transport && this.connected(u.type, u.pos, hq.pos))
+        .sort((a, b) => distance(a.pos, hq.pos) - distance(b.pos, hq.pos) || a.id - b.id);
+      for (const u of local.slice(0, this.w.garrisonSize)) ids.add(u.id);
+    }
+    this.garrisonCache = ids;
+    return ids;
+  }
+
+  /** Whether any enemy has, or could build, a Landing Craft or Transport Aircraft. */
+  private enemyCanInvade(): boolean {
+    const carries = (type: UnitTypeId) => isLandingCraft(type) || isAirTransport(type);
+    return (
+      this.enemies.some((e) => carries(e.type)) ||
+      this.state.players.some((p) => this.isEnemy(p.id) && p.buildable.some((t) => carries(t) && this.state.properties.some((q) => q.owner === p.id && propertyDefAt(this.state, q.pos)?.builds === defOf(t).category)))
+    );
   }
 
   /** The landmasses, for this unit type's movement, that hold something for it to take or fight. */
@@ -499,15 +592,20 @@ class Brain {
     // leaves the tile, and a unit retreating there for repairs is allowed to stay.
     const staying = command.action.type !== "load";
     const holding = plan.kind === "idle" && plan.hold;
-    const blocks = staying && plan.kind !== "retreat" && !holding && this.isOwnProductionSite(dest);
+    // A transport going in to its pickup tile is allowed onto a port or airfield of ours.
+    const collecting = plan.kind === "advance" && unit.cargo.length === 0 && (isLandingCraft(unit.type) || isAirTransport(unit.type)) && plan.goals.some((g) => samePoint(g, dest));
+    const blocks = staying && plan.kind !== "retreat" && !holding && !collecting && this.isOwnProductionSite(dest);
     // A unit waiting for a Landing Craft keeps off the tile the craft is coming to.
     const inTheWay = staying && plan.kind === "advance" && plan.embark && plan.goals.some((g) => samePoint(g, dest));
     const exposed = isCarrier(unit.type) && this.inDanger(unit, dest);
+    const delivering = unit.cargo.length > 0 && (isLandingCraft(unit.type) || isAirTransport(unit.type));
+    const danger = this.w.dangerWeight > 0 && staying && !delivering ? this.w.dangerWeight * this.danger(unit, dest) : 0;
     return (
       this.actionScore(unit, plan, command, dest) -
       (blocks || inTheWay ? this.w.blockSitePenalty : 0) -
       (exposed ? this.w.carrierDangerPenalty : 0) -
-      (staying && this.pastReturn(unit, plan, command, dest) ? this.w.noReturnPenalty : 0)
+      danger -
+      (staying && this.pastReturn(unit, plan, command, dest) ? Math.max(this.w.noReturnPenalty, this.w.noReturnOwnValue * this.worth(unit)) : 0)
     );
   }
 
@@ -529,11 +627,14 @@ class Brain {
       const back = homeward[this.index(tile)] ?? Infinity;
       return stats.moveFuel(this.state, unit, back) + Math.ceil(back / mp) * burn;
     };
-    // A unit that can't get home even from where it stands has nothing to lose by moving.
+    // A unit that can't get home even from where it stands has nothing to lose by moving, and a
+    // move that brings it nearer home is never the problem.
     if (!Number.isFinite(needFrom(dest)) || unit.fuel <= needFrom(unit.pos)) return false;
+    if ((homeward[this.index(dest)] ?? Infinity) < (homeward[this.index(unit.pos)] ?? Infinity)) return false;
     let spent = 0;
     for (const step of command.path) spent += stats.moveCost(this.state, unit, terrainAt(this.state.map, step)) ?? 0;
-    return unit.fuel - stats.moveFuel(this.state, unit, spent) <= needFrom(dest);
+    // Keep some days' burn in hand: the way home may be blocked, or the port taken when it arrives.
+    return unit.fuel - stats.moveFuel(this.state, unit, spent) <= needFrom(dest) + this.w.fuelReserveDays * burn;
   }
 
   private actionScore(unit: Unit, plan: Plan, command: MoveCommand, dest: Point): number {
@@ -616,12 +717,77 @@ class Brain {
     const targetCost = this.cost(target);
     const kill = f.certainKill ? this.w.certainKillBonus : f.canKill ? this.w.possibleKillBonus : 0;
     const capturing = this.state.properties.some((p) => p.capturingUnit === target.id && p.owner !== null && !this.isEnemy(p.owner));
+    // Focus fire: a hit that doesn't kill is worth more when our other ready units could finish the job.
+    const others = f.certainKill || this.w.focusKillBonus <= 0 ? 0 : this.followUp(target).reduce((sum, o) => sum + (o.id === moved.id ? 0 : o.damage), 0);
+    const focus = others > 0 && dealt + others >= target.hp ? this.w.focusKillBonus : 0;
     return (
       (dealt / 100) * targetCost -
       this.w.counterLoss * (taken / 100) * this.cost(moved) +
-      kill * targetCost +
+      (kill + focus) * targetCost +
       (capturing ? this.w.stopCaptureBonus : 0)
     );
+  }
+
+  /** Rough damage, in HP out of 100, of this attacker type and strength against a defender on terrain with these stars. */
+  private estimate(attacker: Unit, defender: Unit, stars: number): number {
+    const base = baseDamage(attacker.type, defender.type)?.base ?? 0;
+    return (base * displayHp(attacker.hp) * (100 - stars * displayHp(defender.hp))) / 1000;
+  }
+
+  /** What each of our units that hasn't acted could do to this enemy this turn, roughly (09-ai §4c). */
+  private followUp(target: Unit): readonly { id: number; damage: number }[] {
+    const cached = this.followUpCache.get(target.id);
+    if (cached) return cached;
+    const stars = stats.terrainStars(this.state, target);
+    const list: { id: number; damage: number }[] = [];
+    for (const u of this.state.units) {
+      if (u.owner !== this.me || u.hasActed || !this.canHurt(u.type, target)) continue;
+      const range = stats.attackRange(this.state, u);
+      if (!range) continue;
+      const gap = distance(u.pos, target.pos);
+      const inReach = defOf(u.type).canMoveAndFire ? gap <= movementBudget(this.state, u) + range.max : gap >= range.min && gap <= range.max;
+      if (inReach) list.push({ id: u.id, damage: this.estimate(u, target, stars) });
+    }
+    this.followUpCache.set(target.id, list);
+    return list;
+  }
+
+  /**
+   * The look ahead (09-ai §4c): what this unit stands to lose next turn if it ends its move on this
+   * tile, in funds. The enemy units that could fire on the tile are found with the engine's own
+   * threat ranges; the two hardest hits are counted.
+   */
+  private danger(unit: Unit, dest: Point): number {
+    const key = `${unit.id}|${this.index(dest)}`;
+    const cached = this.dangerCache.get(key);
+    if (cached !== undefined) return cached;
+    const at = this.index(dest);
+    const moved: Unit = { ...unit, pos: dest };
+    const stars = stats.terrainStars({ ...this.state, units: this.state.units.map((u) => (u.id === unit.id ? moved : u)) }, moved);
+    const hits: number[] = [];
+    for (const enemy of this.enemies) {
+      if (!this.canHurt(enemy.type, unit) || !this.threatened(enemy, unit).has(at)) continue;
+      hits.push(this.estimate(enemy, unit, stars));
+    }
+    hits.sort((a, b) => b - a);
+    const lost = Math.min(unit.hp, hits.slice(0, this.w.dangerAttackers).reduce((sum, h) => sum + h, 0));
+    const value = (lost / 100) * this.worth({ ...unit, hp: 100 });
+    this.dangerCache.set(key, value);
+    return value;
+  }
+
+  /** The tiles this enemy could fire on next turn, or none if it's too far off to matter to this unit. */
+  private threatened(enemy: Unit, unit: Unit): ReadonlySet<number> {
+    const range = stats.attackRange(this.state, enemy);
+    if (!range) return NO_TILES;
+    const far = movementBudget(this.state, unit) + stats.movePoints(this.state, enemy) + range.max;
+    if (distance(enemy.pos, unit.pos) > far) return NO_TILES;
+    let tiles = this.threatTileCache.get(enemy.id);
+    if (!tiles) {
+      tiles = new Set(threatTiles(this.state, enemy).map((p) => this.index(p)));
+      this.threatTileCache.set(enemy.id, tiles);
+    }
+    return tiles;
   }
 
   /** Fortifications are only worth shooting when they block the way to the goal (09-ai §4). */
@@ -669,6 +835,7 @@ class Brain {
     const funds = Math.max(0, (this.state.players[this.me]?.funds ?? 0) - reserve);
     const share = funds / Math.max(1, sites.length);
     for (const { pos, options } of sites) {
+      if (this.w.keepSitesForService && this.neededForService(pos)) continue;
       const threatened = this.enemies.some((e) => this.nearThreat(e, pos));
       const budget = threatened ? funds : Math.max(share, options[0]?.cost ?? 0);
       const opponents = this.opponentsFor(pos);
@@ -685,6 +852,23 @@ class Brain {
       if (best) return { type: "build", unitType: best.type, pos };
     }
     return null;
+  }
+
+  /**
+   * Whether one of our aircraft or ships is coming in to this airfield or port for fuel, ammo or
+   * repairs and could get there within two turns: then it's kept free rather than built on, or the
+   * new unit would be standing there when it arrives (09-ai §4c).
+   */
+  private neededForService(site: Point): boolean {
+    const repairs = propertyDefAt(this.state, site)?.repairs;
+    if (repairs !== "air" && repairs !== "naval") return false;
+    return this.state.units.some(
+      (u) =>
+        u.owner === this.me &&
+        defOf(u.type).category === repairs &&
+        distance(u.pos, site) <= 2 * stats.movePoints(this.state, u) &&
+        this.headingHome(u) !== null,
+    );
   }
 
   /**
@@ -880,6 +1064,11 @@ class Brain {
     return stats.unitCost(this.state, unit.owner, unit.type);
   }
 
+  /** What losing this unit now would cost: its price at its present strength, and its passengers'. */
+  private worth(unit: Unit): number {
+    return (this.cost(unit) * unit.hp) / 100 + unit.cargo.reduce((sum, c) => sum + this.worth(c), 0);
+  }
+
   private index(p: Point): number {
     return p.y * this.state.map.width + p.x;
   }
@@ -927,8 +1116,10 @@ class Brain {
     const properties = this.state.properties
       .filter((p) => p.owner === this.me && propertyDefAt(this.state, p.pos)?.repairs === category)
       .filter((p) => {
+        // A port or airfield one of our own units stands on still counts as home: units move off
+        // production sites, so it's usually free on arrival. A city under a friend may stay taken.
         const occupant = unitAt(this.state, p.pos);
-        return !occupant || occupant.id === unit.id;
+        return !occupant || occupant.id === unit.id || (this.w.keepSitesForService && category !== "land" && occupant.owner === this.me);
       })
       .map((p) => p.pos);
     const carriers = this.state.units

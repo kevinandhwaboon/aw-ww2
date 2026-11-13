@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { chooseCommand, greedyAi } from "../src/ai/greedy";
+import { chooseCommand, greedyAi, scoreUnitCommands } from "../src/ai/greedy";
+import { EASY_WEIGHTS, GREEDY_WEIGHTS, weightsFor } from "../src/ai/weights";
 import { aiStep, COMMAND_LIMIT, makeView, playMatch, type AiPlayer } from "../src/ai/player";
 import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
@@ -460,6 +461,173 @@ describe("Greedy v2: landings, drops and carriers (09-ai §4b)", () => {
     expect(command).toMatchObject({ type: "move", action: { type: "load" } });
     expect(destination(state, command)).toEqual(P(1, 1));
   });
+});
+
+describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
+  /** The score of this unit's attack on that target from where it stands. */
+  const attackScore = (state: GameState, unit: Unit, targetId: number, weights = GREEDY_WEIGHTS) =>
+    scoreUnitCommands(state, unit, weights).find((c) => c.command.path.length === 0 && c.command.action.type === "attack" && c.command.action.target === targetId)?.score ?? NaN;
+  /** The score of this unit moving to that tile and waiting. */
+  const waitScore = (state: GameState, unit: Unit, to: Point, weights = GREEDY_WEIGHTS) =>
+    scoreUnitCommands(state, unit, weights).find((c) => c.command.action.type === "wait" && (c.command.path.at(-1) ?? unit.pos).x === to.x && (c.command.path.at(-1) ?? unit.pos).y === to.y)?.score ?? NaN;
+  const acted = (state: GameState, id: number): GameState => ({ ...state, units: state.units.map((u) => (u.id === id ? { ...u, hasActed: true } : u)) });
+
+  it("focus fire: hitting a unit is worth more when a friend who hasn't acted yet could finish it off", () => {
+    const state = makeGame([".....", "....."], [
+      { type: "infantry", owner: 0, pos: P(1, 0) },
+      { type: "mediumTank", owner: 0, pos: P(1, 1) },
+      { type: "infantry", owner: 1, pos: P(2, 0), hp: 60 },
+    ], { settings: { luck: false } });
+    const [infantry, tank, target] = state.units;
+    if (!infantry || !tank || !target) throw new Error("setup");
+    const together = attackScore(state, infantry, target.id);
+    const alone = attackScore(acted(state, tank.id), infantry, target.id);
+    expect(together - alone).toBeCloseTo(GREEDY_WEIGHTS.focusKillBonus * UNITS.infantry.cost);
+  });
+
+  it("artillery fires before a tank moves in, though the tank is the more valuable unit", () => {
+    const state = makeGame(["......", "......"], [
+      { type: "mediumTank", owner: 0, pos: P(1, 0) },
+      { type: "artillery", owner: 0, pos: P(1, 1) },
+      { type: "mediumTank", owner: 1, pos: P(4, 1) },
+    ]);
+    const first = chooseCommand(state);
+    expect(first).toMatchObject({ type: "move", unitId: find(state, "artillery", 0).id, action: { type: "attack" } });
+    const easyFirst = chooseCommand(state, EASY_WEIGHTS);
+    expect(easyFirst).toMatchObject({ type: "move", unitId: find(state, "mediumTank", 0).id });
+  });
+
+  it("the look ahead: ending a move where the enemy can fire next turn costs a tenth of what the unit stands to lose there", () => {
+    // The enemy Medium Tank at x=14 can reach x=8 and fire on x=7. Our artillery at x=5 can move to x=7 or stay back at x=6.
+    // Road all the way, so no terrain stars soften the hit.
+    const state = makeGame(["==============="], [
+      { type: "artillery", owner: 0, pos: P(5, 0) },
+      { type: "mediumTank", owner: 1, pos: P(14, 0) },
+    ], { settings: { luck: false } });
+    const artillery = find(state, "artillery", 0);
+    const blind = { ...GREEDY_WEIGHTS, dangerWeight: 0 };
+    expect(waitScore(state, artillery, P(6, 0))).toBeCloseTo(waitScore(state, artillery, P(6, 0), blind));
+    const hit = baseDamage("mediumTank", "artillery")?.base ?? 0;
+    const expected = GREEDY_WEIGHTS.dangerWeight * (hit / 100) * UNITS.artillery.cost;
+    expect(waitScore(state, artillery, P(7, 0), blind) - waitScore(state, artillery, P(7, 0))).toBeCloseTo(expected);
+  });
+
+  it("a Torpedo Boat doesn't sail past the point of no return to hit a ship worth no more than itself", () => {
+    // 14 tiles from port with 30 fuel, and an enemy Torpedo Boat 6 tiles further out.
+    const state = makeGame(["P" + "S".repeat(39)], [
+      { type: "torpedoBoat", owner: 0, pos: P(14, 0), fuel: 30 },
+      { type: "torpedoBoat", owner: 1, pos: P(21, 0) },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    const command = chooseCommand(state);
+    expect(command.type === "move" && command.action.type).not.toBe("attack");
+    const reckless = chooseCommand(state, { ...GREEDY_WEIGHTS, noReturnOwnValue: 0, noReturnPenalty: 0 });
+    expect(reckless).toMatchObject({ type: "move", action: { type: "attack" } });
+  });
+
+  it("a ship low on fuel still moves toward its port, even with none to spare", () => {
+    const state = makeGame(["P" + "S".repeat(39)], [
+      { type: "torpedoBoat", owner: 0, pos: P(9, 0), fuel: 13 },
+      { type: "destroyer", owner: 1, pos: P(39, 0) },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    expect(destination(state, chooseCommand(state))?.x).toBeLessThan(9);
+  });
+
+  it("a port isn't built on while one of our ships is coming in to it for fuel", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
+    const units = (fuel: number) => [
+      { type: "torpedoBoat" as const, owner: 0, pos: P(6, 0), fuel },
+      { type: "destroyer" as const, owner: 1, pos: P(12, 0) },
+    ];
+    expect(nextBuild(makeGame(["P" + "S".repeat(12)], units(8), setup))).toBeNull();
+    expect(nextBuild(makeGame(["P" + "S".repeat(12)], units(50), setup))).not.toBeNull();
+  });
+
+  it("an empty Landing Craft goes into our own port to collect stranded units", async () => {
+    const state = makeGame(["..PSSSSS_..Q", "...SSSSS_..."], [
+      { type: "infantry", owner: 0, pos: P(1, 0) },
+      { type: "landingCraft", owner: 0, pos: P(4, 0) },
+    ], { propertyOwners: [{ pos: P(2, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] });
+    const { state: after } = await playTurn(state);
+    const craft = find(after, "landingCraft", 0);
+    expect(craft.pos).toEqual(P(2, 0));
+  });
+
+  const islands = ["...._SSSSS_..Q", "...._SSSSS_...", "...._SSSSS_..."];
+  const enemyHq = { propertyOwners: [{ pos: P(13, 0), owner: 1 }] };
+
+  it("massed landings: a loaded Landing Craft waits while another beside it is still loading, and they leave together", async () => {
+    const state = makeGame(islands, [
+      { type: "landingCraft", owner: 0, pos: P(4, 0), cargo: [{ type: "infantry" }, { type: "infantry" }] },
+      { type: "landingCraft", owner: 0, pos: P(4, 2), cargo: [{ type: "infantry" }] },
+      { type: "infantry", owner: 0, pos: P(0, 2) },
+    ], enemyHq);
+    const full = state.units.find((u) => u.cargo.length === 2);
+    if (!full) throw new Error("setup");
+    const dayOne = await playMatch(state, [greedy, greedy], 1);
+    expect(dayOne.state.units.find((u) => u.id === full.id)?.pos).toEqual(P(4, 0));
+    const dayTwo = await playMatch(state, [greedy, greedy], 2);
+    const craft = dayTwo.state.units.filter((u) => u.type === "landingCraft");
+    expect(craft.every((c) => c.pos.x > 4)).toBe(true);
+
+    const easy = greedyAi(EASY_WEIGHTS);
+    const alone = await playMatch(state, [easy, easy], 1);
+    expect(alone.state.units.find((u) => u.id === full.id)?.pos.x).toBeGreaterThan(4);
+  });
+
+  it("escorts: a Destroyer with nothing to shoot nearby sails with a loaded Landing Craft, not off to a distant enemy", () => {
+    const state = makeGame(["S".repeat(30), "S".repeat(30), "_".repeat(29) + "Q"], [
+      { type: "landingCraft", owner: 0, pos: P(3, 0), cargo: [{ type: "infantry" }] },
+      { type: "destroyer", owner: 0, pos: P(3, 1) },
+      { type: "torpedoBoat", owner: 1, pos: P(29, 0) },
+    ], { propertyOwners: [{ pos: P(29, 2), owner: 1 }] });
+    const destroyer = find(state, "destroyer", 0);
+    const best = scoreUnitCommands(state, destroyer)[0]?.command;
+    const unescorted = scoreUnitCommands(state, destroyer, { ...GREEDY_WEIGHTS, escortsPerCraft: 0 })[0]?.command;
+    // The craft makes for the beach along the bottom row, and its escort keeps to the row beside it;
+    // without the escort rule the Destroyer heads along the top row for the enemy boat.
+    expect(best && destination(state, best)?.y).toBe(1);
+    expect(unescorted && destination(state, unescorted)?.y).toBe(0);
+  });
+
+  it("a garrison of two stays on the HQ's island when the enemy could invade, and nobody stays when it can't", async () => {
+    const map = ["Q..._SSSSS_..Q", "...._SSSSS_...", "...._SSSSS_..."];
+    const troops = [P(1, 0), P(1, 1), P(3, 0), P(3, 1)].map((pos) => ({ type: "infantry" as const, owner: 0, pos }));
+    const craft = [P(4, 0), P(4, 1)].map((pos) => ({ type: "landingCraft" as const, owner: 0, pos }));
+    const owners = { propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(13, 0), owner: 1 }] };
+    const boarded = async (enemyBuilds: readonly UnitTypeId[], enemyUnits: Parameters<typeof makeGame>[1]) => {
+      const state = makeGame(map, [...troops, ...craft, ...(enemyUnits ?? [])], {
+        ...owners,
+        players: [{ name: "Allies", nation: "us" }, { name: "Axis", nation: "germany", buildable: enemyBuilds }],
+      });
+      const { commands } = await playTurn(state);
+      return commands.filter((c) => c.type === "move" && c.action.type === "load").length;
+    };
+    expect(await boarded(["infantry"], [{ type: "landingCraft", owner: 1, pos: P(9, 2) }])).toBe(2);
+    expect(await boarded(["infantry"], [])).toBe(4);
+  });
+
+  it("Easy is the same AI without coordination: no focus fire, look ahead, waves, escorts or garrison", () => {
+    expect(weightsFor("normal")).toBe(GREEDY_WEIGHTS);
+    expect(weightsFor("easy")).toMatchObject({ focusKillBonus: 0, dangerWeight: 0, indirectFirst: false, waveSize: 1, escortsPerCraft: 0, garrisonSize: 0 });
+    expect(greedyAi(weightsFor("easy")).name).toBe("Greedy (Easy)");
+  });
+
+  it("Normal beats Easy from either side on Twin Bridges and Bocage Country", async () => {
+    const normal = greedyAi(weightsFor("normal"));
+    const easy = greedyAi(weightsFor("easy"));
+    let wins = 0;
+    for (const id of ["twin-bridges", "bocage-country"]) {
+      const scenario = SCENARIOS.find((s) => s.id === id);
+      if (!scenario) throw new Error(id);
+      for (const seat of [0, 1]) {
+        const state = createGame({ ...scenario.setup, seed: 1 });
+        const result = await playMatch(state, state.players.map((p) => (p.id === seat ? normal : easy)), 60);
+        expect(result.bugs).toEqual([]);
+        if (result.state.result?.winners.includes(seat)) wins++;
+      }
+    }
+    expect(wins).toBeGreaterThanOrEqual(3);
+  }, 120_000);
 });
 
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
