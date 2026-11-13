@@ -61,12 +61,14 @@ export class BattleScene extends Phaser.Scene implements BattlePlayer {
     this.texture = this.textures.createCanvas(TEXTURE_KEY, SCENE.width, SCENE.height);
     this.dim = this.add.rectangle(0, 0, 1, 1, packColorNumber("uiBg")).setOrigin(0).setVisible(false);
     this.image = this.add.image(0, 0, TEXTURE_KEY).setVisible(false);
+    const keys = new AbortController();
     window.addEventListener("keydown", (event) => {
       if (!SKIP_KEYS.has(event.key) || !this.playing) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       this.skip();
-    }, { capture: true });
+    }, { capture: true, signal: keys.signal });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
     this.input.on("pointerdown", () => this.skip());
     this.markReady();
   }

@@ -5,6 +5,15 @@
   --panel-border: #4a3c28;
   --accent: #c84030;
   --highlight: #e8c070;
+  /* The phone game pad. These defaults match the built-in art pack, which sets them all at startup. */
+  --pad-body: #3b3f2a;
+  --pad-body-edge: #23261a;
+  --pad-key: #1d1f17;
+  --pad-key-pressed: #4a4e38;
+  --pad-ink: #e9e2c8;
+  --pad-action: #8a3324;
+  --pad-action-pressed: #b0503a;
+  --pad-screen: #000000;
   --pixel: 4px; /* overlay pixel unit; matches typical integer zoom */
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -178,17 +187,14 @@ body {
   align-items: center;
   gap: 12px;
   font-weight: bold;
+  /* The scenario's objectives wrap onto their own lines under the day and funds. */
+  flex-wrap: wrap;
+  max-width: 300px;
 }
 
 .hud-right {
   left: auto;
   right: 16px;
-}
-
-/* The scenario's objectives, on their own lines under the day and funds. */
-.hud {
-  flex-wrap: wrap;
-  max-width: 300px;
 }
 
 .hud-objectives {
@@ -314,7 +320,8 @@ body {
   gap: 2px;
 }
 
-.build-row {
+/* A row in a pickable list: the build menu and the map select. */
+.list-row {
   font: inherit;
   font-size: 14px;
   color: var(--panel-ink);
@@ -327,14 +334,15 @@ body {
   cursor: pointer;
 }
 
-.build-row:hover:not(:disabled),
-.build-row:focus {
+.list-row:hover:not(:disabled),
+.list-row:focus,
+.list-row.selected {
   background: var(--highlight);
   border-color: var(--panel-border);
   outline: none;
 }
 
-.build-row:disabled {
+.list-row:disabled {
   opacity: 0.4;
   cursor: default;
 }
@@ -343,7 +351,7 @@ body {
   font-weight: bold;
 }
 
-.build-menu .build-row {
+.build-row {
   justify-content: flex-start;
   align-items: center;
   gap: 8px;
@@ -406,14 +414,16 @@ body {
   pointer-events: auto;
 }
 
-.results-title {
+.results-title,
+.handoff-title {
   font-size: 26px;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.results-reason {
+.results-reason,
+.handoff-detail {
   margin: 4px 0 12px;
 }
 
@@ -490,11 +500,6 @@ body {
   margin-bottom: 8px;
 }
 
-.build-row.selected {
-  background: var(--highlight);
-  border-color: var(--panel-border);
-}
-
 .map-details {
   font-size: 13px;
   font-weight: bold;
@@ -527,13 +532,6 @@ body.pad-layout {
   --pad-screen-h: calc(100vw * 2 / 3);
   --pad-info-h: 84px;
   --pad-top: calc(var(--pad-screen-top) + var(--pad-screen-h) + var(--pad-info-h));
-  --pad-body: #3b3f2a;
-  --pad-body-edge: #23261a;
-  --pad-key: #1d1f17;
-  --pad-key-pressed: #4a4e38;
-  --pad-ink: #e9e2c8;
-  --pad-action: #8a3324;
-  --pad-action-pressed: #b0503a;
   touch-action: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -543,7 +541,7 @@ body.pad-layout {
 .pad-layout #game {
   inset: var(--pad-screen-top) 0 auto 0;
   height: var(--pad-screen-h);
-  background: #000;
+  background: var(--pad-screen);
 }
 
 .pad-layout .hud,

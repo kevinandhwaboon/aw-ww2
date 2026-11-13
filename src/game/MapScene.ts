@@ -1,17 +1,14 @@
 import Phaser from "phaser";
-import type { Combatant, GameEvent } from "../engine/commands";
+import type { GameEvent } from "../engine/commands";
 import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
 import { displayHp, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
-import { setBattleWeather } from "./battle/colors";
-import { planCombat, planFortAttack } from "./battle/plan";
-import { planDrop } from "./battle/drop";
-import { planCapture, planGarrison } from "./battle/storm";
 import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, unitName, type ColorKey } from "./artPack";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
+import { center, MapPlayback } from "./mapPlayback";
 import { objectiveTiles } from "./objectives";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
@@ -44,10 +41,11 @@ export interface MapSceneOptions {
   readonly onCursorMove: (tile: Point) => void;
 }
 
-const MOVE_MS_PER_TILE = 70;
 const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack" };
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
+/** How long the view takes to pan to the cursor. */
+const CURSOR_PAN_MS = 90;
 /** Unit shadows fall to the lower right, like the terrain's (08-art-pipeline §16). */
 const UNIT_SHADOW_OFFSET = { x: 2, y: 1 };
 const UNIT_SHADOW_ALPHA = 0.35;
@@ -62,17 +60,6 @@ const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
 /** Changes when any building changes hands or any bunker is garrisoned or left, so the map repaints. */
 const ownerKey = (state: GameState) =>
   `${state.properties.map((p) => p.owner ?? "-").join(",")}|${[...garrisonedBunkers(state)].map(([tile, owner]) => `${tile}:${owner}`).join(",")}`;
-const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
-/** How long the view takes to pan to the cursor or to the next thing that happens. */
-const PAN_MS = { cursor: 90, action: 220 };
-
-/** What a shot lands on: a unit, or just a tile for a fortification. */
-interface StrikeTarget {
-  readonly pos: Point;
-  readonly unitId?: UnitId;
-}
-
-const center = (p: Point) => ({ x: p.x * TILE_SIZE + TILE_SIZE / 2, y: p.y * TILE_SIZE + TILE_SIZE / 2 });
 
 /**
  * Draws the map, units, move ranges, the path arrow and the action menu, and plays engine events
@@ -111,6 +98,16 @@ export class MapScene extends Phaser.Scene implements MapView {
   private created = false;
   /** Plays attacks as split-screen battle scenes (08-art-pipeline §18); null plays them on the map. */
   private battle: BattlePlayer | null = null;
+  private readonly playback = new MapPlayback({
+    scene: this,
+    state: () => this.state,
+    battle: () => this.battle,
+    unitSprites: this.unitSprites,
+    unitImages: this.unitImages,
+    addUnitSprite: (unit) => this.addUnitSprite(unit),
+    revealTiles: (tiles, ms) => this.revealTiles(tiles, ms),
+    textTexture: (text, color, outline) => this.textTexture(text, color, outline),
+  });
 
   constructor(private readonly options: MapSceneOptions) {
     super("map");
@@ -351,8 +348,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.input.on("pointerupoutside", () => this.handlers?.onPeekEnd());
     this.game.events.on("blur", () => this.handlers?.onPeekEnd()); // a release we'd otherwise never see
     // Not Phaser's keyboard events: they replay earlier keys when several land in one frame.
-    window.addEventListener("keydown", (event) => this.onKey(event));
-    window.addEventListener("keyup", (event) => this.releaseKey(event.key));
+    // They're removed when the game is destroyed, so an ended game doesn't hear the next one's keys.
+    const keys = new AbortController();
+    window.addEventListener("keydown", (event) => this.onKey(event), { signal: keys.signal });
+    window.addEventListener("keyup", (event) => this.releaseKey(event.key), { signal: keys.signal });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;
@@ -493,7 +493,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     const { map } = this.state;
     const x = Phaser.Math.Clamp(tile.x, 0, map.width - 1);
     const y = Phaser.Math.Clamp(tile.y, 0, map.height - 1);
-    if (follow) void this.revealTiles([{ x, y }], PAN_MS.cursor);
+    if (follow) void this.revealTiles([{ x, y }], CURSOR_PAN_MS);
     if (x === this.cursorTile.x && y === this.cursorTile.y) return;
     this.cursorTile = { x, y };
     this.drawCursor();
@@ -565,7 +565,7 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   async previewMove(unitId: UnitId, fullPath: readonly Point[]): Promise<void> {
     this.previewed = unitId;
-    await this.walk(unitId, fullPath);
+    await this.playback.walk(unitId, fullPath);
   }
 
   /** The game as drawn: the preview while one is shown (an aircraft out on its Carrier), else the real one. */
@@ -620,11 +620,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     const y = above >= view.top ? above : (at.y + 1) * TILE_SIZE + 2;
 
     const panel = this.add.container(Math.round(x), y);
-    const g = this.add.graphics();
-    g.fillStyle(packColorNumber("menuBorder"), 1);
-    g.fillRect(0, 0, width, height);
-    g.fillStyle(packColorNumber("menuBg"), 1);
-    g.fillRect(1, 1, width - 2, height - 2);
+    const g = this.panelBox(width, height);
     panel.add(g);
     lines.forEach((line, i) => {
       panel.add(this.add.image(3, 3 + i * lineHeight, this.textTexture(line, packColor("menuInk"))).setOrigin(0));
@@ -661,11 +657,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     const y = Phaser.Math.Clamp(tile.y * TILE_SIZE - 2, view.top, view.bottom - height);
 
     const panel = this.add.container(Math.round(x), Math.round(y));
-    const g = this.add.graphics();
-    g.fillStyle(packColorNumber("menuBorder"), 1);
-    g.fillRect(0, 0, width, height);
-    g.fillStyle(packColorNumber("menuBg"), 1);
-    g.fillRect(1, 1, width - 2, height - 2);
+    const g = this.panelBox(width, height);
     panel.add(g);
     host.cargo.forEach((passenger, i) => {
       const top = 2 + i * rowHeight;
@@ -707,11 +699,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!menu) return;
     const { container, items, rect, selected } = menu;
     container.removeAll(true);
-    const g = this.add.graphics();
-    g.fillStyle(packColorNumber("menuBorder"), 1);
-    g.fillRect(0, 0, rect.width, rect.height);
-    g.fillStyle(packColorNumber("menuBg"), 1);
-    g.fillRect(1, 1, rect.width - 2, rect.height - 2);
+    const g = this.panelBox(rect.width, rect.height);
     g.fillStyle(packColorNumber("menuHighlight"), 1);
     g.fillRect(1, MENU.pad - 1 + selected * MENU.itemHeight, rect.width - 2, MENU.itemHeight);
     // A small pointer next to the highlighted item.
@@ -722,6 +710,16 @@ export class MapScene extends Phaser.Scene implements MapView {
     items.forEach((item, i) => {
       container.add(this.add.image(MENU.pad + 4, MENU.pad + 1 + i * MENU.itemHeight, this.textTexture(item.label, packColor("menuInk"))).setOrigin(0));
     });
+  }
+
+  /** A menu-colored box with a 1-pixel border, for the action menu and the map's small panels. */
+  private panelBox(width: number, height: number): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    g.fillStyle(packColorNumber("menuBorder"), 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(packColorNumber("menuBg"), 1);
+    g.fillRect(1, 1, width - 2, height - 2);
+    return g;
   }
 
   /** A texture of pixel text, optionally with a 1px outline so it reads on any terrain. */
@@ -743,204 +741,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     });
   }
 
-  // ---- Event playback ----
+  // ---- Event playback (mapPlayback.ts) ----
 
   /** Animates engine events. Call before setState(newState); resolves when the animations finish. */
-  async playEvents(events: readonly GameEvent[]): Promise<void> {
-    setBattleWeather({ season: this.state.weather.season, snowing: weatherOn(this.state) === "snow" });
-    for (const event of events) {
-      await this.revealTiles(this.eventTiles(event), PAN_MS.action);
-      if (event.type === "unitLaunched" && !this.unitSprites.has(event.unitId)) {
-        // Takes off from the Carrier's tile, unless the launch preview already put it there.
-        const aircraft = this.state.units.find((u) => u.id === event.carrierId)?.cargo.find((c) => c.id === event.unitId);
-        if (aircraft) this.addUnitSprite({ ...aircraft, pos: event.pos, hasActed: false });
-      }
-      if (event.type === "unitMoved") {
-        await this.walk(event.unitId, event.path);
-        await this.playGarrison(event.unitId, event.path[0] ?? null, event.path[event.path.length - 1], events);
-      }
-      if (event.type === "unitUnloaded") {
-        // A Transport Aircraft's passengers jump (08-art-pipeline §20); others may go into a bunker.
-        const drop = this.battle && planDrop(this.state, event);
-        if (this.battle && drop) await this.battle.playDrop(drop);
-        else await this.playGarrison(event.unitId, null, event.pos, events);
-      }
-      if (event.type === "combat") await this.playCombat(event);
-      if (event.type === "fortAttacked") {
-        const plan = this.battle && planFortAttack(this.state, event);
-        if (this.battle && plan) await this.battle.play(plan);
-        else {
-          const shooter = { unitId: event.attackerId, pos: event.attackerPos };
-          await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
-        }
-      }
-      if (event.type === "captureProgress" || event.type === "propertyCaptured") {
-        // A capture plays as a storming scene when scenes are on (08-art-pipeline §19), else as a label.
-        const plan = this.battle && planCapture(this.state, event);
-        if (this.battle && plan) await this.battle.playStorm(plan);
-        else if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
-        else await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
-      }
-      if (event.type === "unitOutOfFuel") {
-        const lost = { pos: event.pos, unitId: event.unitId };
-        await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"))]);
-      }
-      if (event.type === "unitJoined") {
-        const target = this.state.units.find((u) => u.id === event.targetId);
-        if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
-      }
-      if (event.type === "unitDived" || event.type === "unitSurfaced") {
-        // The sprite has already walked to where the submarine dived or surfaced.
-        const sprite = this.unitSprites.get(event.unitId);
-        const tile = sprite && { x: Math.round(sprite.x / TILE_SIZE), y: Math.round(sprite.y / TILE_SIZE) };
-        if (tile) await this.floatLabel(tile, event.type === "unitDived" ? "DIVE" : "SURFACE", packColor("submerged"));
-      }
-    }
-    await Promise.all(this.repairLabels(events));
-  }
-
-  /** Foot soldiers going into a bunker play a storming scene, when scenes are on (08-art-pipeline §19). */
-  private async playGarrison(unitId: UnitId, from: Point | null, to: Point | undefined, events: readonly GameEvent[]): Promise<void> {
-    if (!this.battle || !to) return;
-    const plan = planGarrison(this.state, unitId, from, to, events);
-    if (plan) await this.battle.playStorm(plan);
-  }
-
-  /** Where an event happens, so the view can pan to it first. Repairs at turn start don't pan. */
-  private eventTiles(event: GameEvent): Point[] {
-    switch (event.type) {
-      case "unitMoved":
-        return event.path.slice(0, 1);
-      case "combat":
-        return [event.attacker.pos, event.defender.pos];
-      case "fortAttacked":
-        return [event.attackerPos, event.pos];
-      case "captureProgress":
-      case "propertyCaptured":
-      case "unitOutOfFuel":
-      case "unitLaunched":
-        return [event.pos];
-      case "unitJoined": {
-        const target = this.state.units.find((u) => u.id === event.targetId);
-        return target ? [target.pos] : [];
-      }
-      default:
-        return [];
-    }
-  }
-
-  /** "+2" over repaired units and "SUPPLY" over units only resupplied, all at once. */
-  private repairLabels(events: readonly GameEvent[]): Promise<void>[] {
-    const repaired = new Set<UnitId>();
-    const labels: Promise<void>[] = [];
-    // Aircraft aboard a Carrier are serviced there, so their labels show over the Carrier.
-    const over = (unitId: UnitId, text: string, color: string) => {
-      const unit = this.state.units.find((u) => u.id === unitId || u.cargo.some((c) => c.id === unitId));
-      if (unit) labels.push(this.floatLabel(unit.pos, text, color));
-    };
-    for (const event of events) {
-      if (event.type !== "unitRepaired") continue;
-      repaired.add(event.unitId);
-      over(event.unitId, `+${event.hp}`, packColor("labelGreen"));
-    }
-    for (const event of events) {
-      if (event.type === "unitResupplied" && !repaired.has(event.unitId)) over(event.unitId, "SUPPLY", packColor("labelBlue"));
-    }
-    return labels;
-  }
-
-  /**
-   * The attack, then the counter if there was one, then any promotions (00-master-design §13): as a
-   * battle scene when they're on, otherwise on the map. After a battle scene, a destroyed unit
-   * still blows up on the map so it's clear which one is gone.
-   */
-  private async playCombat(event: Extract<GameEvent, { type: "combat" }>): Promise<void> {
-    const { attacker, defender, attack, counter } = event;
-    if (this.battle) {
-      await this.battle.play(planCombat(this.state, event));
-      const lost = [attacker, defender].filter((u) => u.destroyed).map((u) => this.explode({ pos: u.pos, unitId: u.unitId }));
-      await Promise.all(lost);
-    } else {
-      await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
-      if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
-    }
-    for (const unit of [attacker, defender]) {
-      if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), packColor("labelGold"));
-    }
-  }
-
-  /** The shooter nudges toward its target, which flashes and shows the damage. */
-  private async playStrike(
-    shooter: Pick<Combatant, "unitId" | "pos">,
-    target: StrikeTarget,
-    damage: number,
-    destroyed: boolean,
-  ): Promise<void> {
-    const sprite = this.unitSprites.get(shooter.unitId);
-    if (sprite) {
-      const { x, y } = sprite;
-      const dx = Math.sign(target.pos.x - shooter.pos.x) * 3;
-      const dy = Math.sign(target.pos.y - shooter.pos.y) * 3;
-      await this.tween(sprite, { x: x + dx, y: y + dy }, COMBAT_MS.nudge);
-      await this.tween(sprite, { x, y }, COMBAT_MS.nudge);
-    }
-    const flash = this.add.rectangle(target.pos.x * TILE_SIZE, target.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, packColorNumber("flash")).setOrigin(0);
-    await this.tween(flash, { alpha: 0 }, COMBAT_MS.flash);
-    flash.destroy();
-    await Promise.all([
-      this.floatLabel(target.pos, `-${damage}`, packColor("labelText")),
-      destroyed ? this.explode(target) : Promise.resolve(),
-    ]);
-  }
-
-  private async explode(target: StrikeTarget): Promise<void> {
-    const { x, y } = center(target.pos);
-    const blast = this.add.rectangle(x, y, 8, 8, packColorNumber("blast"));
-    const sprite = target.unitId === undefined ? undefined : this.unitSprites.get(target.unitId);
-    await Promise.all([
-      this.tween(blast, { scaleX: 2.5, scaleY: 2.5, alpha: 0 }, COMBAT_MS.explode),
-      sprite ? this.tween(sprite, { alpha: 0 }, COMBAT_MS.explode) : Promise.resolve(),
-    ]);
-    blast.destroy();
-  }
-
-  /** Text that rises from a tile and fades out. */
-  private async floatLabel(tile: Point, text: string, color: string): Promise<void> {
-    const { x, y } = center(tile);
-    const label = this.add.image(x, y, this.textTexture(text, color, packColor("labelOutline")));
-    await this.tween(label, { y: y - 9, alpha: 0 }, COMBAT_MS.float);
-    label.destroy();
-  }
-
-  private tween(target: object, props: Record<string, number>, duration: number): Promise<void> {
-    return new Promise((resolve) => {
-      this.tweens.add({ targets: target, ...props, duration, onComplete: () => resolve() });
-    });
-  }
-
-  /** Tweens a unit marker tile by tile along a path. Skips if it's already at the end (previewed). */
-  private async walk(unitId: UnitId, fullPath: readonly Point[]): Promise<void> {
-    const sprite = this.unitSprites.get(unitId);
-    const end = fullPath[fullPath.length - 1];
-    if (!sprite || !end) return;
-    if (sprite.x === end.x * TILE_SIZE && sprite.y === end.y * TILE_SIZE) return;
-    // A soldier leaving a garrisoned bunker comes out into view.
-    this.unitImages.get(unitId)?.setVisible(true);
-    for (const p of fullPath.slice(1)) {
-      // The view keeps pace with the unit, so a long move never walks off screen.
-      await Promise.all([
-        this.revealTiles([p], MOVE_MS_PER_TILE),
-        new Promise<void>((resolve) => {
-          this.tweens.add({
-            targets: sprite,
-            x: p.x * TILE_SIZE,
-            y: p.y * TILE_SIZE,
-            duration: MOVE_MS_PER_TILE,
-            onComplete: () => resolve(),
-          });
-        }),
-      ]);
-    }
+  playEvents(events: readonly GameEvent[]): Promise<void> {
+    return this.playback.playEvents(events);
   }
 
   // ---- Rendering game state ----

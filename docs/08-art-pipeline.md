@@ -204,7 +204,7 @@ Make a small test set before committing to a method: Plains, Road, Forest, Sea, 
 - Placeholder units and overlays: `src/game/placeholderUnits.ts`
 - Placeholder HUD flags: `src/game/placeholderFlags.ts`
 - Pixel font: `src/game/pixelFont.ts`
-- Drawing and effects: `src/game/MapScene.ts`
+- Map drawing: `src/game/MapScene.ts`; the map's animations for what happened (moves, hits, labels): `src/game/mapPlayback.ts`
 - HTML panels and screens: `src/ui/`
 - Finished art: `public/assets/`
 - Unit pixel grids and the script that renders them: `tools/art/`
@@ -256,7 +256,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 |---|---|
 | `name` | The pack's name |
 | `players` | One entry per player: `team`, `fill` and `outline`. `team` picks that player's unit sheets |
-| `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: panels, ranges, path arrow, menus, effects |
+| `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: HTML panels and screens, the phone game pad, ranges, path arrow, menus, effects |
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows`, and optionally `frameSize` (16 or 32, default 16) and `paratroopers` (section 17) |
 | `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
@@ -476,7 +476,7 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **Ships are always under way.** Along the near side of every ship afloat, the sea rises over the foot of the hull in waves that run from bow to stern, flecked with foam streaming aft; a bow wave piles up against the stem and throws spray, and a churned wake trails the stern. The ship bobs on the swell while the waves keep the water level, so the waterline moves. A ship going down still sits in the water but the waves stop running past it. A Landing Craft run aground has only the water lapping round its stern. Faster ships run faster water: the PT boat's waves race past and its bow wave is biggest. `?battle=demo&a=destroyer&d=submarine&sub=on` shows a submerged submarine.
 
-**How it's built.** The figures are drawn in code, not from sprite sheets: `src/game/battle/`. Each unit is a *rig*, a function that draws it at any moment of its animation from simple shapes (rectangles, lines, discs, polygons) on a 384×240 canvas, which is scaled up with nearest-neighbor so it stays pixel art. Figures get a dark outline. `plan.ts` and `timeline.ts` decide what happens when, and are tested; `soldiers.ts`, `vehicles.ts`, `airNaval.ts` (aircraft) and `ships.ts` hold the rigs; `backdrops.ts` the backgrounds; `renderer.ts` puts a frame together. Sprite-sheet battle art in packs can replace rigs unit by unit later (00-master-design §13); nothing in the pack format covers it yet.
+**How it's built.** The figures are drawn in code, not from sprite sheets: `src/game/battle/`. Each unit is a *rig*, a function that draws it at any moment of its animation from simple shapes (rectangles, lines, discs, polygons) on a 384×240 canvas, which is scaled up with nearest-neighbor so it stays pixel art. Figures get a dark outline. `plan.ts` and `timeline.ts` decide what happens when, and are tested; `soldiers.ts`, `vehicles.ts`, `airNaval.ts` (aircraft) and `ships.ts` hold the rigs; `backdrops.ts` the backgrounds; `renderer.ts` puts a frame together, with `effects.ts` drawing what's in flight and what it hits. Sprite-sheet battle art in packs can replace rigs unit by unit later (00-master-design §13); nothing in the pack format covers it yet.
 
 **Option.** "Battle scenes" on the map select screen, on by default. `?battle=off` turns them off. Off, attacks play on the map as before. The same option covers captures and bunkers (section 19).
 

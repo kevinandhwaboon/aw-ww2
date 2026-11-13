@@ -3,7 +3,7 @@
 import type { AiLevel } from "../ai/weights";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
-import { el } from "./hud";
+import { el } from "./dom";
 import { menuKeys } from "./menuKeys";
 
 export interface GameOptions {
@@ -59,7 +59,7 @@ function checkbox(label: string, checked: boolean): { row: HTMLElement; input: H
   return { row, input };
 }
 
-function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
+export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
   const list = el("div", "map-list");
@@ -69,7 +69,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
 
   let chosen = scenarios[0];
   const rows = scenarios.map((scenario) => {
-    const row = el("button", "build-row", scenario.name);
+    const row = el("button", "list-row", scenario.name);
     row.addEventListener("focus", () => choose(scenario));
     row.addEventListener("click", () => {
       choose(scenario);

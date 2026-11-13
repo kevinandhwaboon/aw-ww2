@@ -6,5 +6,7 @@
     "lib": ["ES2023"],
     "types": []
   },
-  "include": ["src/engine", "src/ai", "tests"]
+  "include": ["src/engine", "src/ai", "tests"],
+  // Reads ui/style.css as text, which needs Vite's types; checked by tsconfig.json instead.
+  "exclude": ["tests/pageColors.test.ts"]
 }

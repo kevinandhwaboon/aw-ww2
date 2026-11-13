@@ -121,7 +121,7 @@
 - **When they're checked:** HQ capture straight after the capture; rout at the end of each turn, as 04-economy §8 says. So a player whose last unit dies still finishes that turn.
 - **Resign** is a command for the current player, available in every scenario.
 - **Once `state.result` is set**, `apply` rejects every command with `gameOver`, and the UI locks input and shows the results screen.
-- **New Game** reloads the page for now. Choosing a map comes with the game shell in milestone 8.
+- **New Game** goes back to the map select (see 3i).
 
 ## 3h. Fortifications (milestone 7)
 
@@ -133,6 +133,7 @@
 
 - **`src/main.ts`** shows the title screen or, with `?map=`, starts straight away. **`src/session.ts`** is one game in progress. **`src/ui/screens.ts`** has the title and map select.
 - **Hot-seat:** with the pass-the-device option on, a full screen waits between turns until the next player presses Ready. With it off, the turn banner shows instead.
+- **New Game** on the results screen ends the game (`end()` in `src/session.ts` removes its listeners, canvas and panels) and goes back to the map select with the options just played. Since 2026-11-13; before that it reloaded the page.
 - **Luck seeds** are random for each new game unless `?seed=` fixes one. They're not part of a scenario file.
 - **Saving:** `saveGame` and `loadGame` in `src/engine/save.ts` work and are tested, but no screen uses them yet, since save/load isn't in the MVP (00-master-design §5).
 
@@ -212,5 +213,5 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON). Since 2026-11-01 these only appear with `?debug=on`.
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?ai=1` has the computer play those players (`?ai=0,1` for AI vs AI, `?ai=none` for all human), `?level=easy` has it play on Easy (09-ai §4c), `?battle=off` plays attacks on the map instead of as battle scenes, `?polish=off` draws battle machines without the polish pass (08-art-pipeline §18).
+- URL parameters: `?map=bocage-country` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?ai=1` has the computer play those players (`?ai=0,1` for AI vs AI, `?ai=none` for all human), `?level=easy` has it play on Easy (09-ai §4c), `?battle=off` plays attacks on the map instead of as battle scenes, `?polish=off` draws battle machines without the polish pass (08-art-pipeline §18). They are read in `src/urlOptions.ts`, which has its own tests. A blank or unreadable `?seed=` picks a random seed, and a blank `?ai=` means everyone is human.
 - Battle preview: `?battle=demo` plays a battle scene for every unit in turn, `&a=mortar&d=infantry` just that matchup, `&at=forest&dt=beach` sets each side's terrain, `&para=1` makes the attacking squad paratroopers with that card suit. `&storm=all` (or `capture`, `garrison`) shows the capture and bunker scenes instead, and `&t=end` holds each at its outcome. `&drop=on` shows airborne drops. `&t=fire` (or `&t=hit`, or a time in ms) shows every matchup frozen side by side, `&zoom=0,150,192,72` enlarges that part of each, `&scale=1` sets the size, `&flip=on` swaps the nations, and `&axis=japan` puts Japan on the Axis side in place of Germany (08-art-pipeline §18).

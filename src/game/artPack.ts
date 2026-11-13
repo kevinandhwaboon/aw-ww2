@@ -16,6 +16,15 @@ const BUILT_IN_COLORS = {
   uiBorder: "#4a3c28",
   uiAccent: "#c84030",
   uiHighlight: "#e8c070",
+  // The phone game pad and the box behind its game screen (00-master-design §12)
+  padBody: "#3b3f2a",
+  padBodyEdge: "#23261a",
+  padKey: "#1d1f17",
+  padKeyPressed: "#4a4e38",
+  padInk: "#e9e2c8",
+  padAction: "#8a3324",
+  padActionPressed: "#b0503a",
+  padScreen: "#000000",
   // Map overlays
   cursor: "#ffffff",
   rangeMove: "#7ec8ff",
@@ -113,6 +122,24 @@ const BUILT_IN_COLORS = {
 } as const;
 
 export type ColorKey = keyof typeof BUILT_IN_COLORS;
+
+/** The page's CSS color variables (ui/style.css) and the pack color each one is set from at startup. */
+export const PAGE_COLORS: Readonly<Record<string, ColorKey>> = {
+  "--bg": "uiBg",
+  "--panel-bg": "uiPanel",
+  "--panel-ink": "uiInk",
+  "--panel-border": "uiBorder",
+  "--accent": "uiAccent",
+  "--highlight": "uiHighlight",
+  "--pad-body": "padBody",
+  "--pad-body-edge": "padBodyEdge",
+  "--pad-key": "padKey",
+  "--pad-key-pressed": "padKeyPressed",
+  "--pad-ink": "padInk",
+  "--pad-action": "padAction",
+  "--pad-action-pressed": "padActionPressed",
+  "--pad-screen": "padScreen",
+};
 
 /** How a player's units are colored, and which sheets they use. */
 export interface PlayerArt {

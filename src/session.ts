@@ -16,16 +16,13 @@ import { TILE_SIZE } from "./game/placeholderTiles";
 import { handheldViewSize, viewSize } from "./game/viewport";
 import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
-import {
-  createBanner,
-  createBuildMenu,
-  createDebugPanel,
-  createHandoff,
-  createHud,
-  createResultsScreen,
-  createTileInfo,
-  createUnitPanel,
-} from "./ui/hud";
+import { createBuildMenu } from "./ui/buildMenu";
+import { createDebugPanel } from "./ui/debugPanel";
+import { createHud } from "./ui/hud";
+import { createBanner, createHandoff } from "./ui/overlays";
+import { createResultsScreen } from "./ui/results";
+import { createTileInfo } from "./ui/tileInfoPanel";
+import { createUnitPanel } from "./ui/unitPanel";
 
 export interface SessionOptions {
   readonly gameRoot: HTMLElement;
@@ -44,10 +41,22 @@ export interface SessionOptions {
   readonly onNewGame: () => void;
 }
 
+/** A game in progress, as seen from outside. */
+export interface Session {
+  /**
+   * Ends the game for good: stops the computer, removes the page listeners, the map canvas, the game
+   * pad and everything in uiRoot, so another game can start on the same page.
+   */
+  end(): void;
+}
+
 /** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
 const AI_PAUSE_MS = 250;
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): void {
+export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): Session {
+  /** Aborted by end(): removes every listener the session added to the page. */
+  const listening = new AbortController();
+  let ended = false;
   let state: GameState = createGame(setup);
   let cursor: Point = { x: 0, y: 0 };
   /**
@@ -138,6 +147,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * input is locked, then show the new state.
    */
   async function dispatch(command: Command): Promise<boolean> {
+    if (ended) return false;
     const result = apply(state, command);
     if (!result.ok) {
       console.warn(`Command rejected (${result.code}): ${result.message}`);
@@ -188,7 +198,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     controller.reset();
     try {
       let sent = 0;
-      for (let ai = ais[state.currentPlayer]; ai && !state.result; ai = ais[state.currentPlayer]) {
+      for (let ai = ais[state.currentPlayer]; ai && !state.result && !ended; ai = ais[state.currentPlayer]) {
         const step = await aiStep(state, ai, sent);
         const command = step.command;
         if (step.bug) {
@@ -232,14 +242,14 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     } else if (event.key === "e" || event.key === "E") {
       if (!aiTurn()) controller.endTurn();
     }
-  });
+  }, { signal: listening.signal });
 
   /**
    * Whole-number zoom so pixels stay crisp (00-master-design §14), filling the window, but never so
    * small that squares are hard to read: past that the view scrolls (00-master-design §12).
    */
   // With the game pad the screen is a box above the pad, drawn in the phone's own pixels.
-  if (pad) mountPad(uiRoot, padInput(scene));
+  const unmountPad = pad ? mountPad(uiRoot, padInput(scene)) : null;
   const fitWindow = () =>
     pad
       ? handheldViewSize(gameRoot.getBoundingClientRect(), { width, height }, window.devicePixelRatio)
@@ -271,7 +281,18 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     game.scale.resize(view.width, view.height);
     game.scale.setZoom(canvasZoom());
     scene.setPixelScale(view.zoom);
-  });
+  }, { signal: listening.signal });
+
+  return {
+    end() {
+      if (ended) return;
+      ended = true;
+      listening.abort();
+      unmountPad?.();
+      game.destroy(true); // the scenes remove their own listeners as they're destroyed
+      uiRoot.replaceChildren();
+    },
+  };
 }
 
 /** Where a player's turn starts the cursor: on their HQ, or their first unit if they have none. */
