@@ -256,7 +256,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 |---|---|
 | `name` | The pack's name |
 | `players` | One entry per player: `team`, `fill` and `outline`. `team` picks that player's unit sheets |
-| `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: panels, ranges, path arrow, menus, effects |
+| `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: HTML panels and screens, the phone game pad, ranges, path arrow, menus, effects |
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows`, and optionally `frameSize` (16 or 32, default 16) and `paratroopers` (section 17) |
 | `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |

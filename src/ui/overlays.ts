@@ -9,7 +9,7 @@ export function createHandoff(root: HTMLElement): { show: (title: string, detail
   return {
     show(title, detail, color) {
       return new Promise((resolve) => {
-        const heading = el("div", "results-title", title);
+        const heading = el("div", "handoff-title", title);
         heading.style.color = color;
         const ready = el("button", "btn btn-big", "Ready");
         ready.addEventListener("click", () => {
@@ -18,7 +18,7 @@ export function createHandoff(root: HTMLElement): { show: (title: string, detail
           resolve();
         });
         const panel = el("div", "panel screen-panel");
-        panel.append(heading, el("div", "results-reason", detail || "Your turn"), ready);
+        panel.append(heading, el("div", "handoff-detail", detail || "Your turn"), ready);
         screen.replaceChildren(panel);
         screen.hidden = false;
         ready.focus();

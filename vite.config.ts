@@ -7,5 +7,7 @@ export default defineConfig({
   build: { chunkSizeWarningLimit: 2000 },
   test: {
     include: ["tests/**/*.test.ts"],
+    // Tests read the page styles as text (art pack colors, 08-art-pipeline §13); Vitest blanks CSS otherwise.
+    css: { include: [/src\/ui\/style\.css/] },
   },
 });

@@ -1,6 +1,6 @@
 // Loads an art pack at startup. Kept apart from artPack.ts because this part needs the browser.
 
-import { BUILT_IN_PACK, parseArtPack, setActivePack, type ArtPack } from "./artPack";
+import { BUILT_IN_PACK, PAGE_COLORS, parseArtPack, setActivePack, type ArtPack } from "./artPack";
 
 const packUrl = (name: string, file: string) => new URL(`assets/packs/${name}/${file}`, document.baseURI).href;
 
@@ -11,12 +11,7 @@ export const packFileUrl = (path: string): string => new URL(path, packFolder).h
 /** The page's CSS colors come from the pack too (see the variables in ui/style.css). */
 function applyPageColors({ colors }: ArtPack): void {
   const { style } = document.documentElement;
-  style.setProperty("--bg", colors.uiBg);
-  style.setProperty("--panel-bg", colors.uiPanel);
-  style.setProperty("--panel-ink", colors.uiInk);
-  style.setProperty("--panel-border", colors.uiBorder);
-  style.setProperty("--accent", colors.uiAccent);
-  style.setProperty("--highlight", colors.uiHighlight);
+  for (const [variable, key] of Object.entries(PAGE_COLORS)) style.setProperty(variable, colors[key]);
 }
 
 async function fetchPack(name: string): Promise<ArtPack> {

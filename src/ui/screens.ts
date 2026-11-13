@@ -69,7 +69,7 @@ function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaul
 
   let chosen = scenarios[0];
   const rows = scenarios.map((scenario) => {
-    const row = el("button", "build-row", scenario.name);
+    const row = el("button", "list-row", scenario.name);
     row.addEventListener("focus", () => choose(scenario));
     row.addEventListener("click", () => {
       choose(scenario);

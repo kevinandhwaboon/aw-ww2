@@ -53,7 +53,7 @@ export function createBuildMenu(root: HTMLElement, getState: () => GameState): B
       const title = el("div", "panel-title", "Build");
       const list = el("div", "build-list");
       const buttons = options.map((option) => {
-        const row = el("button", "build-row");
+        const row = el("button", "list-row build-row");
         row.disabled = !option.affordable;
         const heading = el("div", "build-heading");
         heading.append(el("span", "build-name", unitTypeName(option.type)), el("span", "build-cost", option.cost.toLocaleString("en-US")));
