@@ -43,7 +43,7 @@ export interface GreedyWeights {
   readonly unloadPerStep: number;
   /** Value of merging two damaged units: negative, as it's rarely worth an action. */
   readonly join: number;
-  /** Fewest capture-capable units to keep before building anything else. */
+  /** Fewest capture-capable units to keep before building anything else. Above it, up to the wanted count, they get `capturerBonus`. */
   readonly minCapturers: number;
   /** Most capture-capable units the "one per N properties" rule asks for. */
   readonly maxCapturers: number;
@@ -51,6 +51,14 @@ export interface GreedyWeights {
   readonly propertiesPerCapturer: number;
   /** How much the enemy's damage to a unit type counts against building it. */
   readonly buildRisk: number;
+  /** Score lost by a unit ending its move on one of our own production sites, which blocks building there (09-ai §4a). */
+  readonly blockSitePenalty: number;
+  /** An enemy is a near threat when it could reach a production site within this many turns (09-ai §4a). */
+  readonly threatTurns: number;
+  /** How much more a near threat counts than a distant enemy when choosing what to build (09-ai §4a). */
+  readonly nearThreatWeight: number;
+  /** Bonus value of a capture-capable unit while we have fewer than the capture rule wants, above the minimum. */
+  readonly capturerBonus: number;
 }
 
 export const GREEDY_WEIGHTS: GreedyWeights = {
@@ -79,4 +87,8 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   maxCapturers: 8,
   propertiesPerCapturer: 3,
   buildRisk: 0.5,
+  blockSitePenalty: 2500,
+  threatTurns: 2,
+  nearThreatWeight: 3,
+  capturerBonus: 1500,
 };
