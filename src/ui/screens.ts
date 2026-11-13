@@ -3,7 +3,7 @@
 import type { AiLevel } from "../ai/weights";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
-import { el } from "./hud";
+import { el } from "./dom";
 import { menuKeys } from "./menuKeys";
 
 export interface GameOptions {

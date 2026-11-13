@@ -1,4 +1,4 @@
-import { el } from "./hud";
+import { el } from "./dom";
 
 /**
  * The on-screen game pad for phones held upright (phone prototype): a direction pad and the Z and X

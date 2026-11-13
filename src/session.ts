@@ -16,16 +16,13 @@ import { TILE_SIZE } from "./game/placeholderTiles";
 import { handheldViewSize, viewSize } from "./game/viewport";
 import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
-import {
-  createBanner,
-  createBuildMenu,
-  createDebugPanel,
-  createHandoff,
-  createHud,
-  createResultsScreen,
-  createTileInfo,
-  createUnitPanel,
-} from "./ui/hud";
+import { createBuildMenu } from "./ui/buildMenu";
+import { createDebugPanel } from "./ui/debugPanel";
+import { createHud } from "./ui/hud";
+import { createBanner, createHandoff } from "./ui/overlays";
+import { createResultsScreen } from "./ui/results";
+import { createTileInfo } from "./ui/tileInfoPanel";
+import { createUnitPanel } from "./ui/unitPanel";
 
 export interface SessionOptions {
   readonly gameRoot: HTMLElement;
