@@ -1,6 +1,6 @@
 # Master Design Doc: WW2 Turn-Based Tactics (working title TBD)
 
-**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (the Greedy AI) done. Milestone 13 (CO hooks) is still to do.
+**Status:** Big-picture decisions made. Units, combat, terrain, economy, land supply and tech setup decided as v0. Phases 0 and 1 are done. Phase 2 is under way, with milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (the Greedy AI) done, and 16 (Greedy v2) under way. Milestone 13 (CO hooks) is still to do.
 **Last updated:** 2026-10-24
 **How to use this doc:** This is the hub. Every chat in this project should read it first. Detailed topics get their own docs (see Topic Doc Index). If a decision isn't written here or in a topic doc, it hasn't been made.
 
@@ -198,7 +198,7 @@ UI falls into four categories:
 
 ## 15. AI opponent
 
-- Not in the MVP. MVP is hot-seat PvP. The first AI, Greedy, was built on 2026-11-09 (09-ai).
+- Not in the MVP. MVP is hot-seat PvP. The first AI, Greedy, was built on 2026-11-09 (09-ai). Greedy v2 (milestone 16) adds threat-aware production (built 2026-11-13), then landings, drops and carriers (09-ai §4a, §4b).
 - **Pluggable from the start:** an AI receives game state and returns commands through the same interface a human uses.
 - Long-term: AIs that mimic real commanders' tendencies, and users can write their own custom AIs as plain JS/TS modules.
 - Must stay efficient enough for theater-scale unit counts.
@@ -357,3 +357,4 @@ UI falls into four categories:
 | 2026-11-10 | Supply warnings and cargo display (05-supply-transport §11): flashing gas and ammo cans replace the F badge, from one rule shared with the info box; a panel beside a transport under the cursor shows its passengers' sprites, names and HP; a Carrier's Launch item names the aircraft, and a "LAUNCHING …" label stays over it while it's out |
 | 2026-11-10 | Battle and capture scenes (08-art-pipeline §18, §19): Ports become harbors (lighthouse on a breakwater, moored freighter, gantry crane, bollards, dock railway, gulls), and Torpedo Bombers dive to skim the water, drop level, and climb away; over the sea the sky backdrop shows water beneath aircraft |
 | 2026-11-10 | At the developer's request: every land unit's fuel is halved (Infantry 50, Medium Tank 30, Heavy Tank 20, rounding halves up; Bastogne's German tanks 12/20 and 17/30), and moving burns fuel at a per-unit rate on top of the daily burn: aircraft 2 per tile flown, land units and ships 1 per movement point (`fuelPerMove`, a modifiable stat; 01-units §8a, 05-supply-transport §1) |
+| 2026-11-13 | Milestone 16, Greedy v2, at the developer's request (09-ai §4a, §4b): part 1, threat-aware production, built. Units step off their own production sites; when choosing a build, enemies within 2 turns of the site count 3×, enemies our units nearby already hurt count less, and only enemies the unit could reach from that site count; a threatened site always builds. So a Bomber near a factory makes it build anti-air. Part 2, the AI using Landing Craft, Transport Aircraft and Carriers (lifting D9), is next |

@@ -4,7 +4,7 @@ import { aiStep, COMMAND_LIMIT, makeView, playMatch, type AiPlayer } from "../sr
 import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
 import { baseDamage } from "../src/engine/data/damage";
-import { UNITS } from "../src/engine/data/units";
+import { UNITS, type UnitTypeId } from "../src/engine/data/units";
 import { legalCommands } from "../src/engine/legal";
 import type { Point } from "../src/engine/map";
 import { createGame } from "../src/engine/setup";
@@ -28,6 +28,25 @@ function destination(state: GameState, command: Command): Point | null {
 }
 
 /** Lets the Greedy AI play the current player's whole turn; returns the state and what it sent. */
+/** Has every unit of the current player wait in place, so the next command is a build or End Turn. */
+function waitAll(start: GameState): GameState {
+  let state = start;
+  for (const unit of start.units.filter((u) => u.owner === start.currentPlayer)) {
+    const next = apply(state, { type: "move", unitId: unit.id, path: [], action: { type: "wait" } });
+    if (next.ok) state = next.state;
+  }
+  return state;
+}
+
+/** Three infantry of ours, enough capture-capable units that building isn't forced to infantry. */
+const threeInfantry = (y: number) => [1, 2, 3].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, y) }));
+
+/** What the AI builds next, once its units have acted. */
+function nextBuild(state: GameState): UnitTypeId | null {
+  const command = chooseCommand(waitAll(state));
+  return command.type === "build" ? command.unitType : null;
+}
+
 async function playTurn(start: GameState): Promise<{ state: GameState; commands: Command[] }> {
   let state = start;
   const commands: Command[] = [];
@@ -159,12 +178,14 @@ describe("the Greedy AI (09-ai §4)", () => {
     expect(infantry?.pos.x).toBeGreaterThan(3);
   });
 
-  it("builds infantry first when it has too few units that can capture", () => {
+  it("builds capture-capable infantry first when it has too few units that can capture", () => {
     const state = makeGame(["f...C"], [{ type: "mediumTank", owner: 1, pos: P(3, 0) }], {
       players: [{ name: "Allies", nation: "us", funds: 20000 }, { name: "Axis", nation: "germany" }],
       propertyOwners: [{ pos: P(0, 0), owner: 0 }],
     });
-    expect(chooseCommand(state)).toEqual({ type: "build", unitType: "infantry", pos: P(0, 0) });
+    const command = chooseCommand(state);
+    expect(command).toMatchObject({ type: "build", pos: P(0, 0) });
+    expect(command.type === "build" && UNITS[command.unitType].canCapture).toBe(true);
   });
 
   it("with enough infantry, builds what hits the enemy's army hardest: anti-tank against Heavy Tanks", () => {
@@ -217,6 +238,88 @@ describe("the Greedy AI (09-ai §4)", () => {
       if (!result.ok) throw new Error(result.message);
       current = result.state;
     }
+  });
+});
+
+describe("Greedy v2: threat-aware production (09-ai §4a)", () => {
+  const rich = { players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }] };
+  const ownFactory = { propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
+  const wide = (rows: number) => Array.from({ length: rows }, (_, y) => (y === 0 ? "f" : ".") + ".".repeat(23));
+
+  it("builds anti-air when an enemy Bomber is near its factory, even with six Heavy Tanks far away", () => {
+    const state = makeGame(wide(3), [
+      ...threeInfantry(2),
+      { type: "bomber", owner: 1, pos: P(4, 0) },
+      ...[0, 1, 2].flatMap((y) => [22, 23].map((x) => ({ type: "heavyTank" as const, owner: 1, pos: P(x, y) }))),
+    ], { ...rich, ...ownFactory });
+    const built = nextBuild(state);
+    expect(built).not.toBeNull();
+    expect(baseDamage(built ?? "infantry", "bomber")?.base ?? 0).toBeGreaterThanOrEqual(50);
+  });
+
+  it("a threat near the factory counts more than one far away: a Heavy Tank on the doorstep beats a distant Bomber", () => {
+    const state = makeGame(wide(3), [
+      ...threeInfantry(2),
+      { type: "heavyTank", owner: 1, pos: P(4, 0) },
+      { type: "bomber", owner: 1, pos: P(23, 2) },
+    ], { ...rich, ...ownFactory });
+    const built = nextBuild(state);
+    expect(baseDamage(built ?? "infantry", "heavyTank")?.base ?? 0).toBeGreaterThanOrEqual(50);
+  });
+
+  it("doesn't build anti-air for a Bomber that two Mobile AA by the factory already cover: it answers the tank instead", () => {
+    const units = [
+      ...threeInfantry(2),
+      { type: "bomber" as const, owner: 1, pos: P(5, 0) },
+      { type: "mediumTank" as const, owner: 1, pos: P(6, 1) },
+    ];
+    const uncovered = nextBuild(makeGame(wide(3), units, { ...rich, ...ownFactory }));
+    expect(baseDamage(uncovered ?? "infantry", "bomber")?.base ?? 0).toBeGreaterThanOrEqual(50);
+
+    const twoMobileAA = [P(1, 1), P(0, 1)].map((pos) => ({ type: "mobileAA" as const, owner: 0, pos }));
+    const covered = nextBuild(makeGame(wide(3), [...units, ...twoMobileAA], { ...rich, ...ownFactory }));
+    expect(covered).not.toBeNull();
+    expect(baseDamage(covered ?? "infantry", "bomber")).toBeNull();
+    expect(baseDamage(covered ?? "infantry", "mediumTank")?.base ?? 0).toBeGreaterThanOrEqual(50);
+  });
+
+  it("a port only builds ships against enemies it can reach by sea: none from a lake", () => {
+    // Our port at the right end; the enemy Destroyer sails the sea on the left.
+    const lake = ["SSSS..............PS", "SSSS...............S"];
+    const open = ["SSSSSSSSSSSSSSSSSSPS", "SSSS...............S"];
+    const setup = { ...rich, propertyOwners: [{ pos: P(18, 0), owner: 0 }] };
+    const destroyer = [{ type: "destroyer" as const, owner: 1, pos: P(0, 0) }];
+    expect(chooseCommand(makeGame(lake, destroyer, setup))).toEqual({ type: "endTurn" });
+    expect(chooseCommand(makeGame(open, destroyer, setup))).toMatchObject({ type: "build", pos: P(18, 0) });
+  });
+
+  it("a factory an enemy could reach soon always builds something, even when nothing trades well", () => {
+    const infantryOnly = { players: [{ name: "Allies", nation: "us" as const, funds: 30000, buildable: ["infantry" as const] }, { name: "Axis", nation: "germany" as const }] };
+    const far = makeGame(wide(3), [...threeInfantry(2), { type: "heavyTank", owner: 1, pos: P(23, 0) }], { ...infantryOnly, ...ownFactory });
+    expect(nextBuild(far)).toBeNull();
+    const near = makeGame(wide(3), [...threeInfantry(2), { type: "heavyTank", owner: 1, pos: P(5, 0) }], { ...infantryOnly, ...ownFactory });
+    expect(nextBuild(near)).toBe("infantry");
+  });
+
+  it("with plenty of funds and one factory, buys a strong unit rather than the cheapest", () => {
+    const state = makeGame(wide(3), [
+      ...threeInfantry(2),
+      { type: "mediumTank", owner: 1, pos: P(23, 0) },
+      { type: "mediumTank", owner: 1, pos: P(23, 1) },
+    ], { players: [{ name: "Allies", nation: "us", funds: 50000 }, { name: "Axis", nation: "germany" }], ...ownFactory });
+    const built = nextBuild(state);
+    expect(built).not.toBeNull();
+    expect(UNITS[built ?? "infantry"].cost).toBeGreaterThanOrEqual(6000);
+  });
+
+  it("moves a unit off its own factory so it can build there", () => {
+    const state = makeGame(["f....", "....."], [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "infantry", owner: 1, pos: P(1, 0), hp: 40 },
+    ], ownFactory);
+    const command = chooseCommand(state);
+    expect(command).toMatchObject({ type: "move", action: { type: "attack" } });
+    expect(destination(state, command)).not.toEqual(P(0, 0));
   });
 });
 

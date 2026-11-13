@@ -61,6 +61,14 @@ type Plan =
   /** Head home to a property that repairs and resupplies it. */
   | { readonly kind: "retreat"; readonly dist: Float64Array };
 
+/** An enemy unit a build is weighed against; `pos` is null for one they could build but haven't. */
+interface Opponent {
+  readonly type: UnitTypeId;
+  readonly cost: number;
+  readonly weight: number;
+  readonly pos: Point | null;
+}
+
 export interface Scored {
   readonly command: MoveCommand;
   readonly score: number;
@@ -70,6 +78,7 @@ class Brain {
   private readonly me: number;
   private readonly enemies: readonly Unit[];
   private readonly distCache = new Map<string, Float64Array>();
+  private readonly regionCache = new Map<string, Uint8Array>();
 
   constructor(
     private readonly state: GameState,
@@ -180,6 +189,13 @@ class Brain {
 
   private score(unit: Unit, plan: Plan, command: MoveCommand): number {
     const dest = command.path[command.path.length - 1] ?? unit.pos;
+    // Standing on our own production site blocks building there (09-ai §4a). Boarding a transport
+    // leaves the tile, and a unit retreating there for repairs is allowed to stay.
+    const blocks = command.action.type !== "load" && plan.kind !== "retreat" && this.isOwnProductionSite(dest);
+    return this.actionScore(unit, plan, command, dest) - (blocks ? this.w.blockSitePenalty : 0);
+  }
+
+  private actionScore(unit: Unit, plan: Plan, command: MoveCommand, dest: Point): number {
     const moved: Unit = { ...unit, pos: dest, hasActed: true };
     const afterMove: GameState = { ...this.state, units: this.state.units.map((u) => (u.id === unit.id ? moved : u)) };
     const position = this.positionScore(unit, moved, plan);
@@ -286,9 +302,10 @@ class Brain {
   // ---- Building ------------------------------------------------------------------------------
 
   /**
-   * One build, or null when there's nothing worth building (09-ai §4): first enough capture-capable
-   * units, then whatever best counters what the enemy has fielded, scored from the damage chart.
-   * Funds are shared out over the free production sites, so one site doesn't take everything.
+   * One build, or null when there's nothing worth building (09-ai §4, §4a): first enough
+   * capture-capable units, then whatever best counters the enemy units that matter to this site,
+   * scored from the damage chart. Funds are shared out over the free production sites, so one site
+   * doesn't take everything; a site an enemy could reach soon may spend it all, and always builds.
    */
   build(): Command | null {
     const sites = this.state.properties
@@ -297,53 +314,156 @@ class Brain {
     const funds = this.state.players[this.me]?.funds ?? 0;
     const share = funds / Math.max(1, sites.length);
     for (const { pos, options } of sites) {
-      if (propertyDefAt(this.state, pos)?.builds === "land" && this.needsCapturers()) {
-        const capturer = options.find((o) => UNITS[o.type].canCapture);
-        if (capturer) return { type: "build", unitType: capturer.type, pos };
-      }
-      const cheapest = options[0]?.cost ?? 0;
+      const threatened = this.enemies.some((e) => this.nearThreat(e, pos));
+      const budget = threatened ? funds : Math.max(share, options[0]?.cost ?? 0);
+      const opponents = this.opponentsFor(pos);
+      const capturers = propertyDefAt(this.state, pos)?.builds === "land" ? this.capturersNeeded() : "enough";
+      const capturersOnly = capturers === "belowMinimum" && options.some((o) => o.cost <= budget && UNITS[o.type].canCapture);
       let best: { type: UnitTypeId; score: number } | null = null;
       for (const option of options) {
-        if (option.cost > Math.max(share, cheapest)) continue;
-        const score = this.buildScore(option.type, option.cost);
-        if (score > 0 && (!best || score > best.score)) best = { type: option.type, score };
+        const canCapture = UNITS[option.type].canCapture;
+        if (option.cost > budget || (capturersOnly && !canCapture)) continue;
+        const bonus = canCapture && capturers !== "enough" ? this.w.capturerBonus : 0;
+        const score = this.buildScore(option.type, option.cost, budget, pos, opponents, bonus);
+        if ((score > 0 || threatened || capturersOnly) && (!best || score > best.score)) best = { type: option.type, score };
       }
       if (best) return { type: "build", unitType: best.type, pos };
     }
     return null;
   }
 
-  private needsCapturers(): boolean {
+  /**
+   * Whether we have enough capture-capable units: below the minimum, a land site builds only them;
+   * between the minimum and the wanted count (one per three properties still to take, up to 8),
+   * they get a bonus (09-ai §4, §4a).
+   */
+  private capturersNeeded(): "belowMinimum" | "belowWanted" | "enough" {
     const mine = this.state.units.flatMap((u) => (u.owner === this.me ? [u, ...u.cargo] : []));
     const capturers = mine.filter((u) => UNITS[u.type].canCapture).length;
     const toTake = this.state.properties.filter((p) => p.owner === null || this.isEnemy(p.owner)).length;
     const wanted = Math.min(this.w.maxCapturers, Math.max(this.w.minCapturers, Math.ceil(toTake / this.w.propertiesPerCapturer)));
-    return capturers < wanted;
+    return capturers < this.w.minCapturers ? "belowMinimum" : capturers < wanted ? "belowWanted" : "enough";
   }
 
   /**
-   * How well a unit type does against the enemy's army: for each enemy unit, the value of the damage
-   * it would deal minus the value of the damage it would take, averaged, then divided by the square
-   * root of its cost, which balances quality against numbers. Before the enemy fields anything, it's
-   * scored against what they could build.
+   * The enemy units a build at this site is weighed against (09-ai §4a): each counts by its HP, 3×
+   * when it could reach the site soon, and less the more our units near it can already hurt it
+   * (unless our units already cover every enemy). Before the enemy fields anything, it's what they
+   * could build, with no position.
    */
-  private buildScore(type: UnitTypeId, cost: number): number {
-    const fielded = this.enemies.flatMap((e) => [e, ...e.cargo]).map((e) => ({ type: e.type, weight: e.hp / 100, cost: this.cost(e) }));
-    const opponents = fielded.length > 0
-      ? fielded
-      : this.state.players
-          .filter((p) => this.isEnemy(p.id))
-          .flatMap((p) => p.buildable.map((t) => ({ type: t, weight: 1, cost: stats.unitCost(this.state, p.id, t) })));
-    if (opponents.length === 0) return 0;
+  private opponentsFor(site: Point): Opponent[] {
+    const fielded = this.enemies.flatMap((e) =>
+      [e, ...e.cargo].map((u) => {
+        const weight = (u.hp / 100) * (this.nearThreat(e, site) ? this.w.nearThreatWeight : 1);
+        return { type: u.type, cost: this.cost(u), weight, uncovered: weight * (1 - this.coverage(u, e.pos)), pos: e.pos };
+      }),
+    );
+    // When our units already cover every enemy, coverage is ignored, so building doesn't stop.
+    const allCovered = fielded.every((o) => o.uncovered <= 0);
+    if (fielded.length > 0) return fielded.map((o) => ({ ...o, weight: allCovered ? o.weight : o.uncovered }));
+    return this.state.players
+      .filter((p) => this.isEnemy(p.id))
+      .flatMap((p) => p.buildable.map((t) => ({ type: t, weight: 1, cost: stats.unitCost(this.state, p.id, t), pos: null })));
+  }
+
+  /**
+   * How well a unit type built at this site does against the opponents it could reach from there:
+   * for each, the value of the damage it would deal minus the value of the damage it would take,
+   * averaged by weight. Then divided by the square root of the larger of its cost and the site's
+   * budget: every unit the budget pays for is compared on value alone, since a site builds one unit a
+   * turn whatever it costs, so cheap units only win when money is the limit (09-ai §4a).
+   */
+  private buildScore(type: UnitTypeId, cost: number, budget: number, site: Point, opponents: readonly Opponent[], bonus: number): number {
     let total = 0;
     let weights = 0;
     for (const enemy of opponents) {
-      const dealt = baseDamage(type, enemy.type)?.base ?? 0;
+      const reachable = enemy.pos === null || this.canReachFrom(type, site, enemy.pos);
+      const dealt = reachable ? (baseDamage(type, enemy.type)?.base ?? 0) : 0;
       const taken = baseDamage(enemy.type, type)?.base ?? 0;
       total += enemy.weight * ((dealt / 100) * enemy.cost - this.w.buildRisk * (taken / 100) * cost);
       weights += enemy.weight;
     }
-    return weights > 0 ? total / weights / Math.sqrt(cost) : 0;
+    return weights > 0 ? (total / weights + bonus) / Math.sqrt(Math.max(cost, budget)) : 0;
+  }
+
+  /**
+   * Whether this enemy could reach the site within a few turns: straight-line distance, not the
+   * path, against its movement plus its attack range (09-ai §4a).
+   */
+  private nearThreat(enemy: Unit, site: Point): boolean {
+    const reach = this.w.threatTurns * stats.movePoints(this.state, enemy) + (stats.attackRange(this.state, enemy)?.max ?? 0);
+    return distance(enemy.pos, site) <= reach;
+  }
+
+  /**
+   * How much of this enemy our units can already deal with, 0 to 1: each of our units that could
+   * reach it within a few turns covers its base damage against it, scaled by its HP (09-ai §4a).
+   */
+  private coverage(enemy: Unit, at: Point): number {
+    let covered = 0;
+    for (const mine of this.state.units) {
+      if (mine.owner !== this.me) continue;
+      const base = baseDamage(mine.type, enemy.type)?.base;
+      if (base === undefined || (enemy.submerged === true && !UNITS[mine.type].attacksSubmerged)) continue;
+      const reach = this.w.threatTurns * stats.movePoints(this.state, mine) + (stats.attackRange(this.state, mine)?.max ?? 0);
+      if (distance(mine.pos, at) <= reach) covered += (base / 100) * (mine.hp / 100);
+      if (covered >= 1) return 1;
+    }
+    return covered;
+  }
+
+  /**
+   * Whether a unit of this type built at the site could ever attack a unit at `target`: its movement
+   * type can travel from the site to a tile with the target in its attack range. Aircraft reach
+   * everywhere (09-ai §4a).
+   */
+  private canReachFrom(type: UnitTypeId, site: Point, target: Point): boolean {
+    const def = UNITS[type];
+    if (def.category === "air") return true;
+    const phantom = this.phantom(type, site);
+    const range = stats.attackRange(this.state, phantom);
+    if (!range) return false;
+    const region = this.region(phantom);
+    for (let dy = -range.max; dy <= range.max; dy++) {
+      const spread = range.max - Math.abs(dy);
+      for (let dx = -spread; dx <= spread; dx++) {
+        const p = { x: target.x + dx, y: target.y + dy };
+        if (!inBounds(this.state.map, p) || distance(p, target) < range.min) continue;
+        if (region[this.index(p)]) return true;
+      }
+    }
+    return false;
+  }
+
+  /** A not-yet-built unit of ours, to ask the engine about its stats. */
+  private phantom(type: UnitTypeId, pos: Point): Unit {
+    return { id: -1, type, owner: this.me, pos, hp: 100, fuel: 0, ammo: 0, kills: 0, hasActed: false, cargo: [] };
+  }
+
+  /** Every tile this unit could travel to over terrain from where it stands, ignoring other units. */
+  private region(unit: Unit): Uint8Array {
+    const key = `${UNITS[unit.type].movementType}|${unit.owner}|${this.index(unit.pos)}`;
+    const cached = this.regionCache.get(key);
+    if (cached) return cached;
+    const { width, height, terrain } = this.state.map;
+    const seen = new Uint8Array(width * height);
+    const start = this.index(unit.pos);
+    seen[start] = 1;
+    const stack = [start];
+    for (let i = stack.pop(); i !== undefined; i = stack.pop()) {
+      const x = i % width;
+      const y = (i - x) / width;
+      for (const [nx, ny] of [[x, y - 1], [x + 1, y], [x, y + 1], [x - 1, y]] as const) {
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const n = ny * width + nx;
+        const here = terrain[n];
+        if (seen[n] || here === undefined || stats.moveCost(this.state, unit, here) === null) continue;
+        seen[n] = 1;
+        stack.push(n);
+      }
+    }
+    this.regionCache.set(key, seen);
+    return seen;
   }
 
   // ---- Helpers -------------------------------------------------------------------------------
@@ -378,6 +498,13 @@ class Brain {
       })
       .filter((p) => stats.moveCost(this.state, unit, terrainAt(this.state.map, p.pos)) !== null)
       .map((p) => p.pos);
+  }
+
+  /** One of our own factories, airfields or ports that can build something of ours. */
+  private isOwnProductionSite(p: Point): boolean {
+    const builds = propertyDefAt(this.state, p)?.builds;
+    if (!builds || propertyAt(this.state, p)?.owner !== this.me) return false;
+    return (this.state.players[this.me]?.buildable ?? []).some((t) => UNITS[t].category === builds && !NEVER_BUILT.has(t));
   }
 
   private enemyProperties(): Point[] {
