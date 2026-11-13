@@ -7,6 +7,7 @@ import { buildOptions } from "../src/engine/economy";
 import { UNIT_TYPE_IDS, UNITS } from "../src/engine/data/units";
 import type { Point } from "../src/engine/map";
 import type { UnitSetup } from "../src/engine/setup";
+import { legalCommands } from "../src/engine/legal";
 import { launchable, unloadTiles } from "../src/engine/transport";
 import type { GameState, Unit } from "../src/engine/state";
 import { makeGame } from "./helpers";
@@ -67,6 +68,19 @@ describe("launching from a Carrier (05-supply-transport §10)", () => {
     const state = run(game(), launch(0, 2, [P(2, 0)]));
     expect(apply(state, launch(0, 3, [P(0, 0)])).ok).toBe(true);
     expect(apply(state, order(0, [])).ok).toBe(true);
+  });
+
+  it("the list of legal commands includes every launch, and the engine accepts each one (09-ai §2)", () => {
+    const state = game();
+    const launches = legalCommands(state).filter((c) => c.type === "launch");
+    expect(launches.some((c) => c.unitId === 2 && c.action.type === "attack")).toBe(true);
+    expect(launches.some((c) => c.unitId === 3 && c.action.type === "wait")).toBe(true);
+    for (const command of launches) expect(apply(state, command).ok).toBe(true);
+  });
+
+  it("no launch is listed once the Carrier has moved", () => {
+    const state = run(game(), order(0, [P(0, 0)]));
+    expect(legalCommands(state).filter((c) => c.type === "launch")).toEqual([]);
   });
 
   it("a Carrier can't launch after moving", () => {

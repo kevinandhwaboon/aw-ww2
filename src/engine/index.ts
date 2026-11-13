@@ -38,7 +38,7 @@ export {
   type Reach,
 } from "./movement";
 export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOption } from "./economy";
-export { buildCommands, legalCommands, unitCommands } from "./legal";
+export { buildCommands, launchCommands, legalCommands, unitCommands } from "./legal";
 export { loadGame, saveGame } from "./save";
 export { parseScenario, type Scenario } from "./scenario";
 export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";

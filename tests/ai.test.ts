@@ -211,7 +211,7 @@ describe("the Greedy AI (09-ai §4)", () => {
     expect(baseDamage(command.unitType, "heavyTank")?.base ?? 0).toBeGreaterThanOrEqual(50);
   });
 
-  it("leaves Landing Craft and Transport Aircraft where they are, and never builds them (D9)", () => {
+  it("with no stranded units to collect, a Landing Craft stays where it is and none is built", () => {
     const state = makeGame(["P.SSS", "SSSSS"], [{ type: "landingCraft", owner: 0, pos: P(2, 0) }], {
       players: [{ name: "Allies", nation: "us", funds: 50000, buildable: ["landingCraft"] }, { name: "Axis", nation: "germany" }],
       propertyOwners: [{ pos: P(0, 0), owner: 0 }],
@@ -323,6 +323,145 @@ describe("Greedy v2: threat-aware production (09-ai §4a)", () => {
   });
 });
 
+describe("Greedy v2: landings, drops and carriers (09-ai §4b)", () => {
+  const twoIslands = ["..._SSSS_..Q", "..._SSSS_..."];
+  const enemyHq = { propertyOwners: [{ pos: P(11, 0), owner: 1 }] };
+  const unloads = (commands: readonly Command[]) => commands.flatMap((c) => (c.type === "move" && c.action.type === "unload" ? [c.action] : []));
+
+  it("a stranded infantry squad boards a Landing Craft, is carried across and landed, and takes the enemy HQ", async () => {
+    const state = makeGame(twoIslands, [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "landingCraft", owner: 0, pos: P(5, 1) },
+    ], enemyHq);
+    const result = await playMatch(state, [greedy, greedy], 12);
+    expect(result.bugs).toEqual([]);
+    expect(result.state.result).toMatchObject({ winners: [0], reason: "hqCapture" });
+  });
+
+  it("a Landing Craft waits for a second unit that can reach it soon, then lands both in one action", async () => {
+    const state = makeGame(twoIslands, [
+      { type: "infantry", owner: 0, pos: P(2, 0) },
+      { type: "infantry", owner: 0, pos: P(0, 1) },
+      { type: "landingCraft", owner: 0, pos: P(3, 0) },
+    ], enemyHq);
+    const dayOne = await playMatch(state, [greedy, greedy], 1);
+    const waitingCraft = find(dayOne.state, "landingCraft", 0);
+    expect(waitingCraft.pos).toEqual(P(3, 0));
+    expect(waitingCraft.cargo.length).toBe(1);
+
+    const later = await playMatch(state, [greedy, greedy], 8);
+    expect(later.bugs).toEqual([]);
+    expect(unloads(later.commands).some((u) => u.second !== undefined)).toBe(true);
+    expect(later.state.units.filter((u) => u.type === "infantry" && u.pos.x >= 9).length).toBe(2);
+  });
+
+  it("a unit with something still to do on its own island doesn't board", async () => {
+    const state = makeGame(["C.._SSSS_..Q", "..._SSSS_..."], [
+      { type: "infantry", owner: 0, pos: P(2, 0) },
+      { type: "landingCraft", owner: 0, pos: P(3, 0) },
+    ], enemyHq);
+    const { commands } = await playTurn(state);
+    expect(commands.some((c) => c.type === "move" && c.action.type === "load")).toBe(false);
+  });
+
+  it("builds a Landing Craft at its port when its troops have no way across by land, and not when they can walk", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const troops = [0, 1, 2].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+    expect(nextBuild(makeGame(["...PSSSS_..Q", "..._SSSS_..."], troops, setup))).toBe("landingCraft");
+    expect(nextBuild(makeGame(["...PSSSS_..Q", "............"], troops, setup))).not.toBe("landingCraft");
+  });
+
+  it("keeps its funds for a Landing Craft it can't afford yet, rather than spending them at the factory", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 9000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const troops = [0, 1, 2].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+    const state = makeGame(["f..PSSSS_..Q", "..._SSSS_..."], [...troops, { type: "mediumTank", owner: 1, pos: P(10, 1) }], setup);
+    expect(nextBuild(state)).toBeNull();
+  });
+
+  it("builds an army to ship overseas: with Landing Craft enough, the factory answers enemy tanks across the water", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 20000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const state = makeGame(["f.._SSSS_..Q", "..._SSSS_..."], [
+      ...[0, 1, 2].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) })),
+      { type: "landingCraft", owner: 0, pos: P(4, 0) },
+      { type: "landingCraft", owner: 0, pos: P(4, 1) },
+      { type: "mediumTank", owner: 1, pos: P(10, 0) },
+      { type: "mediumTank", owner: 1, pos: P(10, 1) },
+    ], setup);
+    const built = nextBuild(state);
+    expect(built).not.toBeNull();
+    expect(UNITS[built ?? "infantry"].category).toBe("land");
+    expect(baseDamage(built ?? "infantry", "mediumTank")?.base ?? 0).toBeGreaterThanOrEqual(50);
+  });
+
+  it("infantry boards a Transport Aircraft at its airfield, is dropped beside the enemy HQ and takes it", async () => {
+    const state = makeGame(["A...SSSS...Q", "....SSSS...."], [
+      { type: "infantry", owner: 0, pos: P(1, 0) },
+      { type: "transportAircraft", owner: 0, pos: P(0, 0) },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] });
+    const result = await playMatch(state, [greedy, greedy], 8);
+    expect(result.bugs).toEqual([]);
+    expect(result.state.result).toMatchObject({ winners: [0], reason: "hqCapture" });
+    expect(unloads(result.commands).length).toBe(1);
+  });
+
+  it("builds a Transport Aircraft at its airfield for infantry cut off by water, when it has none", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const troops = [1, 2, 3].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+    expect(nextBuild(makeGame(["A...SSSS...Q", "....SSSS...."], troops, setup))).toBe("transportAircraft");
+    const withOne = [...troops, { type: "transportAircraft" as const, owner: 0, pos: P(3, 0) }];
+    expect(nextBuild(makeGame(["A...SSSS...Q", "....SSSS...."], withOne, setup))).not.toBe("transportAircraft");
+  });
+
+  it("an aircraft heads home while it still has fuel for the trip, counting the daily burn on the way", () => {
+    // 18 tiles from its airfield: 36 fuel to fly, plus 2 days' burn of 5. With 55 it must turn back now.
+    const state = makeGame(["A" + ".".repeat(39)], [
+      { type: "fighter", owner: 0, pos: P(18, 0), fuel: 55 },
+      { type: "fighter", owner: 1, pos: P(39, 0) },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    expect(destination(state, chooseCommand(state))?.x).toBeLessThan(18);
+  });
+
+  it("a ship doesn't sail on past the point it could still get home from", () => {
+    // 14 tiles from port with 30 fuel: 4 more tiles out still leaves enough to return, 5 doesn't.
+    const state = makeGame(["P" + "S".repeat(39)], [
+      { type: "torpedoBoat", owner: 0, pos: P(14, 0), fuel: 30 },
+      { type: "destroyer", owner: 1, pos: P(39, 0) },
+    ], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    const x = destination(state, chooseCommand(state))?.x ?? 99;
+    expect(x).toBeGreaterThan(14);
+    expect(x).toBeLessThanOrEqual(18);
+  });
+
+  const sea = (width: number) => ["S".repeat(width), "S".repeat(width), "S".repeat(width)];
+  const carrier = (pos: Point) => ({ type: "carrier" as const, owner: 0, pos, cargo: [{ type: "torpedoBomber" as const }] });
+
+  it("a Carrier launches its Torpedo Bomber at an enemy Battleship within reach", () => {
+    const state = makeGame(sea(10), [carrier(P(0, 1)), { type: "battleship", owner: 1, pos: P(5, 1) }]);
+    const battleship = find(state, "battleship", 1);
+    expect(chooseCommand(state)).toMatchObject({ type: "launch", action: { type: "attack", target: battleship.id } });
+  });
+
+  it("with nothing in reach it keeps its aircraft aboard and the Carrier sails closer, stopping short of the enemy", async () => {
+    const state = makeGame(sea(24), [carrier(P(0, 1)), { type: "battleship", owner: 1, pos: P(23, 1) }]);
+    const { commands, state: after } = await playTurn(state);
+    expect(commands.some((c) => c.type === "launch")).toBe(false);
+    const moved = find(after, "carrier", 0);
+    expect(moved.pos.x).toBeGreaterThan(0);
+    expect(moved.cargo.length).toBe(1);
+  });
+
+  it("an aircraft out of ammo lands on a Carrier with room", () => {
+    const state = makeGame(sea(24), [
+      { type: "torpedoBomber", owner: 0, pos: P(4, 1), ammo: 0 },
+      { type: "carrier", owner: 0, pos: P(1, 1) },
+      { type: "battleship", owner: 1, pos: P(23, 1) },
+    ]);
+    const command = chooseCommand(state);
+    expect(command).toMatchObject({ type: "move", action: { type: "load" } });
+    expect(destination(state, command)).toEqual(P(1, 1));
+  });
+});
+
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   const start = (id: string, seed = 7) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
@@ -331,8 +470,8 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   };
   const everyone = (state: GameState) => state.players.map(() => greedy);
 
-  // Maps where both sides can reach each other by land. On the others, winning needs landings,
-  // which the first AI doesn't attempt yet (D9).
+  // Maps where both sides can reach each other by land. On the others, winning needs landings: the
+  // AI makes them (09-ai §4b), but those games often run past 40 days.
   const LAND_MAPS = ["twin-bridges", "bocage-country", "crossroads", "bastogne", "iwo-jima", "proving-ground"];
 
   for (const id of LAND_MAPS) {
@@ -350,6 +489,42 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
       expect(result.state.day).toBeGreaterThan(10);
     }, 60_000);
   }
+
+  /** How many of these commands land passengers from this kind of transport, and how many are launches. */
+  const tally = (start: GameState, commands: readonly Command[]) => {
+    let state = start;
+    const count = { landings: 0, drops: 0, launches: 0 };
+    for (const command of commands) {
+      const mover = command.type === "move" ? state.units.find((u) => u.id === command.unitId) : undefined;
+      if (command.type === "launch") count.launches++;
+      if (command.type === "move" && command.action.type === "unload" && mover?.type === "landingCraft") count.landings++;
+      if (command.type === "move" && command.action.type === "unload" && mover?.type === "transportAircraft") count.drops++;
+      const result = apply(state, command);
+      if (!result.ok) throw new Error(result.message);
+      state = result.state;
+    }
+    return count;
+  };
+
+  it("iwo-jima: the US launches its Dive Bombers and lands reinforcements from Landing Craft (09-ai §4b)", async () => {
+    const state = start("iwo-jima");
+    const result = await playMatch(state, everyone(state), 15);
+    const count = tally(state, result.commands);
+    expect(result.bugs).toEqual([]);
+    expect(count.launches).toBeGreaterThan(0);
+    expect(count.landings).toBeGreaterThan(0);
+  }, 60_000);
+
+  it("the-slot: both sides land on other islands, and properties change hands (09-ai §4b)", async () => {
+    const state = start("the-slot");
+    const result = await playMatch(state, everyone(state), 25);
+    const count = tally(state, result.commands);
+    expect(result.bugs).toEqual([]);
+    expect(count.launches).toBeGreaterThan(0);
+    expect(count.landings).toBeGreaterThan(5);
+    const taken = result.state.properties.filter((p) => { const before = propertyAt(state, p.pos)?.owner ?? null; return before !== null && p.owner !== before; });
+    expect(taken.length).toBeGreaterThan(0);
+  }, 120_000);
 
   it("same seed, same game: an AI vs AI game replays exactly", async () => {
     const first = await playMatch(start("bocage-country", 3), everyone(start("bocage-country")), 15);
