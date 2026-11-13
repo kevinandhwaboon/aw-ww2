@@ -1,5 +1,5 @@
 // Draws a whole-map overview PNG of a scenario, one colored block per square, for docs and review.
-// Green properties belong to the first player (the US), red to the second, grey neutral; the inner mark shows the kind
+// Green properties belong to the Allies, red to the Axis, grey neutral; the inner mark shows the kind
 // (yellow factory, white airfield, cyan port, black HQ). Dark squares are starting units.
 //
 // Run: node tools/maps/overview.mjs normandy      (writes docs/maps/normandy.png)
@@ -16,6 +16,9 @@ const TERRAIN = {
   S: "#1565c0", _: "#fff59d", r: "#5d4037", X: "#616161", x: "#9e9e9e", o: "#000000",
 };
 const KIND = { f: "#ffeb3b", A: "#ffffff", P: "#00e5ff", Q: "#000000" };
+// Colored by side, not by player order, so a scenario where the Axis moves first (Midway) reads the same.
+const ALLIES = new Set(["us", "uk", "canada", "ussr"]);
+const sideOf = (owner) => (ALLIES.has(scenario.players[owner]?.nation) ? 0 : 1);
 const OWNER = ["#64783a", "#e53935"];
 const UNIT = ["#2a3818", "#b71c1c"];
 
@@ -29,9 +32,9 @@ const fill = (x0, y0, size, hex) => {
 };
 rows.forEach((row, y) => [...row].forEach((ch, x) => {
   const isProperty = "CfAPQ".includes(ch);
-  fill(x * k, y * k, k, isProperty ? (OWNER[owners.get(`${x},${y}`)] ?? "#bdbdbd") : TERRAIN[ch]);
+  fill(x * k, y * k, k, isProperty ? (owners.has(`${x},${y}`) ? OWNER[sideOf(owners.get(`${x},${y}`))] : "#bdbdbd") : TERRAIN[ch]);
   if (KIND[ch]) fill(x * k + 2, y * k + 2, k - 4, KIND[ch]);
 }));
-for (const u of scenario.units) fill(u.pos.x * k + 2, u.pos.y * k + 2, k - 4, UNIT[u.owner] ?? "#000000");
+for (const u of scenario.units) fill(u.pos.x * k + 2, u.pos.y * k + 2, k - 4, UNIT[sideOf(u.owner)]);
 savePng(c, new URL(`docs/maps/${id}.png`, root).pathname);
 console.log(`docs/maps/${id}.png`);

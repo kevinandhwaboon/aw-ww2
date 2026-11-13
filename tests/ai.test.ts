@@ -668,9 +668,10 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   };
   const everyone = (state: GameState) => state.players.map(() => greedy);
 
-  // Maps where both sides can reach each other by land. On the others, winning needs landings: the
-  // AI makes them (09-ai §4b), but those games often run past 40 days.
-  const LAND_MAPS = ["twin-bridges", "bocage-country", "crossroads", "bastogne", "iwo-jima", "proving-ground"];
+  // Maps where both sides can reach each other by land, and Midway, whose day limit ends every game
+  // by day 12. On the others, winning needs landings: the AI makes them (09-ai §4b), but those games
+  // often run past 40 days.
+  const LAND_MAPS = ["twin-bridges", "bocage-country", "crossroads", "bastogne", "iwo-jima", "proving-ground", "midway"];
 
   for (const id of LAND_MAPS) {
     it(`${id}: a game between AIs ends with a winner within 40 days, with no AI bugs`, async () => {

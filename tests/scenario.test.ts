@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
 import { TERRAIN, type MovementType } from "../src/engine/data/terrain";
-import { UNITS } from "../src/engine/data/units";
+import { baseDamage } from "../src/engine/data/damage";
+import { UNITS, type UnitTypeId } from "../src/engine/data/units";
 import { terrainAt, type GameMap, type Point } from "../src/engine/map";
 import { loadGame, saveGame } from "../src/engine/save";
 import { parseScenario, type Scenario } from "../src/engine/scenario";
@@ -409,6 +410,132 @@ describe("built-in scenarios (00-master-design §8)", () => {
           expect(dist(a.pos, b.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs ${b.type} at ${b.pos.x},${b.pos.y}`).toBeGreaterThan(UNITS[a.type].movePoints + range.max);
         }
       }
+    });
+  });
+
+  describe("Midway (14-scenarios-pacific §3)", () => {
+    const midway = SCENARIOS.find((s) => s.id === "midway");
+    if (!midway) throw new Error("missing scenario");
+    const { map, units, victory, players, propertyOwners } = midway.setup;
+    const US = 0;
+    const JAPAN = 1;
+    const objectives = victory?.find((v) => v.type === "captureProperties")?.properties ?? [];
+    const [commandPost, airfield] = objectives;
+    if (!commandPost || !airfield) throw new Error("missing objectives");
+    const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const carriers = (owner: number) => (units ?? []).filter((u) => u.owner === owner && u.type === "carrier");
+    /** Every unit that could attack on day 1, aircraft aboard a Carrier included (they launch from its square). */
+    const attackers = (owner: number) => (units ?? []).filter((u) => u.owner === owner)
+      .flatMap((u) => [{ type: u.type, pos: u.pos }, ...(u.cargo ?? []).map((c) => ({ type: c.type, pos: u.pos }))]);
+    /** How far a unit can attack without help on day 1: move and fire, or just fire for indirect units. */
+    const reach = (type: UnitTypeId) => {
+      const { range, canMoveAndFire, movePoints } = UNITS[type];
+      return range === null ? -1 : (canMoveAndFire ? movePoints : 0) + range.max;
+    };
+    /** The cheapest a ship could sail from one square to each other square, ignoring other units. */
+    const sailingCost = (from: Point): Map<string, number> => {
+      const cost = new Map([[`${from.x},${from.y}`, 0]]);
+      const queue = [from];
+      for (let p = queue.shift(); p; p = queue.shift()) {
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+          const q = P(p.x + dx, p.y + dy);
+          if (q.x < 0 || q.y < 0 || q.x >= map.width || q.y >= map.height) continue;
+          const step = TERRAIN[terrainAt(map, q)].moveCost.sea;
+          if (step === null) continue;
+          const total = (cost.get(`${p.x},${p.y}`) ?? 0) + step;
+          if (total >= (cost.get(`${q.x},${q.y}`) ?? Infinity)) continue;
+          cost.set(`${q.x},${q.y}`, total);
+          queue.push(q);
+        }
+      }
+      return cost;
+    };
+
+    it("the US fights Japan and moves first, as on every built-in map, so the US is the army green player (08-art-pipeline §12)", () => {
+      expect(players.map((p) => p.nation)).toEqual(["us", "japan"]);
+    });
+
+    it("Japan wins by capturing Sand Island's command post and Eastern Island's airfield, both held by the US at the start", () => {
+      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [commandPost, airfield] });
+      expect([commandPost, airfield].map((p) => terrainAt(map, p))).toEqual(["city", "airfield"]);
+      for (const p of objectives) expect(propertyOwners).toContainEqual({ pos: p, owner: US });
+    });
+
+    it("the US wins by holding Midway to the start of day 12", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 12 });
+    });
+
+    it("Midway is two islands inside a ring of reef: soldiers can't walk from the command post to the airfield", () => {
+      expect(connected(map, "foot", commandPost, airfield)).toBe(false);
+      const reefs = map.terrain.flatMap((t, i) => (t === "reef" ? [P(i % map.width, Math.floor(i / map.width))] : []));
+      const ring = reefs.filter((r) => r.x >= commandPost.x - 1 && r.x <= airfield.x + 1 && r.y < commandPost.y && r.y >= commandPost.y - 3);
+      expect(ring.length).toBeGreaterThanOrEqual(8);
+    });
+
+    it("Japan has four Carriers north-west of Midway, and every one of them can strike Sand Island on its first turn without moving", () => {
+      const jp = carriers(JAPAN);
+      expect(jp).toHaveLength(4);
+      for (const c of jp) {
+        expect(c.cargo, `carrier at ${c.pos.x},${c.pos.y}`).toHaveLength(2);
+        expect(c.pos.x).toBeLessThan(airfield.x);
+        expect(c.pos.y).toBeLessThan(commandPost.y);
+        expect(dist(c.pos, commandPost)).toBeLessThanOrEqual(UNITS.diveBomber.movePoints + 1);
+      }
+    });
+
+    it("the US has three Carriers north-east of Midway, each with two aircraft aboard", () => {
+      const us = carriers(US);
+      expect(us).toHaveLength(3);
+      for (const c of us) {
+        expect(c.cargo, `carrier at ${c.pos.x},${c.pos.y}`).toHaveLength(2);
+        expect(c.pos.x).toBeGreaterThan(commandPost.x);
+        expect(c.pos.y).toBeLessThan(commandPost.y);
+      }
+    });
+
+    it("no unit can attack an enemy Carrier from where it starts: not the other fleet's aircraft, ships or submarines, nor Midway's aircraft and PT boats", () => {
+      for (const owner of [JAPAN, US]) {
+        for (const target of carriers(1 - owner)) {
+          for (const a of attackers(owner).filter((u) => baseDamage(u.type, "carrier") !== null)) {
+            expect(dist(a.pos, target.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs carrier at ${target.pos.x},${target.pos.y}`).toBeGreaterThan(reach(a.type));
+          }
+        }
+      }
+    });
+
+    it("each US Carrier is one move from striking range of a Japanese Carrier, so the side that closes in is the one exposed", () => {
+      const strike = UNITS.diveBomber.movePoints + 1;
+      for (const c of carriers(US)) {
+        const cost = sailingCost(c.pos);
+        const closeEnough = [...cost].some(([key, spent]) => {
+          const [x = 0, y = 0] = key.split(",").map(Number);
+          return spent <= UNITS.carrier.movePoints && carriers(JAPAN).some((j) => dist(P(x, y), j.pos) <= strike);
+        });
+        expect(closeEnough, `carrier at ${c.pos.x},${c.pos.y}`).toBe(true);
+      }
+    });
+
+    it("Midway starts with its own air group of a Fighter, a Bomber, a Dive Bomber and a Torpedo Bomber on Eastern Island", () => {
+      const air = (units ?? []).filter((u) => u.owner === US && UNITS[u.type].category === "air");
+      expect(air.map((u) => u.type).sort()).toEqual(["bomber", "diveBomber", "fighter", "torpedoBomber"]);
+      for (const u of air) expect(connected(map, "foot", u.pos, airfield), `${u.type} at ${u.pos.x},${u.pos.y}`).toBe(true);
+    });
+
+    it("Japan's invasion force, three loaded Landing Craft, starts more than two days' sailing from Midway", () => {
+      const craft = (units ?? []).filter((u) => u.owner === JAPAN && u.type === "landingCraft");
+      expect(craft).toHaveLength(3);
+      for (const lc of craft) {
+        expect(lc.cargo).toHaveLength(2);
+        expect(dist(lc.pos, commandPost)).toBeGreaterThan(2 * UNITS.landingCraft.movePoints);
+      }
+    });
+
+    it("Japan has no airfield of its own: it can't replace lost aircraft until it takes Midway's", () => {
+      expect(properties(midway, "airfield", JAPAN)).toHaveLength(0);
+    });
+
+    it("neither side builds Heavy Tanks (01-units §1)", () => {
+      for (const p of players) expect(p.buildable).not.toContain("heavyTank");
     });
   });
 
