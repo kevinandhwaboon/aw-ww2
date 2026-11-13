@@ -120,7 +120,7 @@ An island campaign in the style of the Solomons, **not a historical map**. The U
 ### Known gaps
 
 - Balance is a first guess, especially the size of the starting fleets against 5,000 funds and the value of the central airfield.
-- Since 2026-11-13 the Greedy AI uses Landing Craft, Transport Aircraft and Carriers (09-ai §4b), so against the computer the islands do change hands. It lands two units at a time with no escort, so it's slow to finish a game.
+- Since 2026-11-13 the Greedy AI uses Landing Craft, Transport Aircraft and Carriers (09-ai §4b), so against the computer the islands do change hands. Since milestone 17 (09-ai §4c) it lands in waves with warship escorts and keeps a garrison at home; AI vs AI games on The Slot end by day 54.
 
 ## 3. Known gaps (Iwo Jima)
 

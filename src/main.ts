@@ -4,6 +4,7 @@ import { SCENARIOS } from "./scenarios";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showTitleScreen, type GameOptions } from "./ui/screens";
 import { greedyAi } from "./ai/greedy";
+import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
 import "./ui/style.css";
 
@@ -19,6 +20,7 @@ import "./ui/style.css";
 //   ?debug=on            shows the unit and debug panels
 //   ?ai=1                the computer plays these players (comma-separated ids; ?ai=0,1 watches AI vs AI,
 //                        ?ai=none is all human). Without it, the computer plays everyone but the first player.
+//   ?level=easy          the computer plays on Easy (09-ai §4c); Normal without it
 //   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
 const params = new URLSearchParams(window.location.search);
 setPolish(params.get("polish") !== "off");
@@ -39,6 +41,7 @@ const defaults: GameOptions = {
   passDevice: params.get("handoff") !== "off",
   battleScenes: params.get("battle") !== "off",
   computer: computerParam,
+  level: params.get("level") === "easy" ? "easy" : "normal",
 };
 
 function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions): void {
@@ -52,7 +55,7 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,
-    ais: scenario.setup.players.map((_, id) => ((options.computer ?? defaultComputerPlayers(scenario)).includes(id) ? greedyAi() : null)),
+    ais: scenario.setup.players.map((_, id) => ((options.computer ?? defaultComputerPlayers(scenario)).includes(id) ? greedyAi(weightsFor(options.level)) : null)),
     debug: params.get("debug") === "on",
     pad: padLayout,
     onNewGame: () => window.location.reload(),
