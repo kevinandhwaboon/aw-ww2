@@ -237,10 +237,10 @@ describe("breaking fortifications (02-terrain §4, 03-combat §4)", () => {
     expect(apply(next, hit(0, P(1, 0)))).toMatchObject({ ok: false, code: "invalidTarget" });
   });
 
-  it("rubble gives no cover at all (02-terrain §4)", () => {
+  it("rubble gives far less cover than a bunker (02-terrain §4)", () => {
     const state = twoHits(["=X"], 1).state;
     const moved = run(state, endTurn, endTurn, { type: "move", unitId: 0, path: [P(1, 0)], action: { type: "wait" } });
-    expect(stats.terrainStars(moved, moved.units[0] as Unit)).toBe(0);
+    expect(stats.terrainStars(moved, moved.units[0] as Unit)).toBe(1);
   });
 
   it("a destroyed bunker is gone for good: soldiers on the rubble are no garrison and are hit directly", () => {
