@@ -120,6 +120,12 @@ describe("which weapon the scene shows (08-art-pipeline §18)", () => {
     expect(fireKind("destroyer", "primary", "destroyer")).toBe("deckGun");
   });
 
+  it("Battleships and Carriers fire back at aircraft with their AA guns (03-combat §5d)", () => {
+    expect(fireKind("battleship", "secondary", "torpedoBomber")).toBe("aaGuns");
+    expect(fireKind("carrier", "secondary", "diveBomber")).toBe("aaGuns");
+    expect(fireKind("battleship", "primary", "destroyer")).toBe("navalGuns");
+  });
+
   it("a Mortar Team lobs mortar rounds and Assault Infantry fires its launcher", () => {
     expect(fireKind("mortar", "primary", "infantry")).toBe("mortar");
     expect(fireKind("assaultInfantry", "primary", "mediumTank")).toBe("bazooka");

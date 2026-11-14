@@ -202,8 +202,11 @@ export const battleshipRig: Rig = shipRig({
     const ct = pose.fire === "navalGuns" ? pose.ct : null;
     return Math.max(...FIRE_TIMING.navalGuns.shots.map((s) => kick(ct, s, 60, 300)));
   },
-  muzzle: (_pose, shot, _look, m) => m.at[`gun${Math.min(shot, 2)}`] ?? [80, 0, 18],
-  aim: (_pose, shot, _look, m) => m.at[`aim${Math.min(shot, 2)}`],
+  muzzle(pose, shot, _look, m) {
+    if (pose.fire === "aaGuns") return m.at.aa ?? [0, 0, 18];
+    return m.at[`gun${Math.min(shot, 2)}`] ?? [80, 0, 18];
+  },
+  aim: (pose, shot, _look, m) => (pose.fire === "aaGuns" ? undefined : m.at[`aim${Math.min(shot, 2)}`]),
 });
 
 // ---- Destroyer: the forward guns fire in turn; depth charges roll off the stern ----

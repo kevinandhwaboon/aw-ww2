@@ -160,7 +160,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
     case "torpedoBomber":
       return "aerialTorpedo";
     case "battleship":
-      return "navalGuns";
+      return primary ? "navalGuns" : "aaGuns";
     case "destroyer":
       if (!primary) return "aaGuns";
       return target === "submarine" ? "depthCharges" : "deckGun";
@@ -173,8 +173,10 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
     case "halftrack":
     case "transportAircraft":
     case "landingCraft":
-    case "carrier":
       return "mg";
+    // Its only weapon: return-fire AA (03-combat §5d).
+    case "carrier":
+      return "aaGuns";
   }
 }
 

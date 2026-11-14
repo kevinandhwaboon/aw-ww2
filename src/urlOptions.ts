@@ -1,7 +1,7 @@
 // The page's URL options for testing (11-tech-setup §7), read into plain values. Pure: no window, no
 // randomness, so the rules for each option can be tested directly.
 //
-//   ?map=bocage-country  skips the menus and starts that scenario
+//   ?map=bastogne        skips the menus and starts that scenario
 //   ?seed=123            fixes the luck rolls
 //   ?luck=off            turns luck off
 //   ?handoff=off         skips the pass-the-device screen

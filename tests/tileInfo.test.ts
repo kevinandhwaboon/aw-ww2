@@ -101,11 +101,13 @@ describe("tile info box (00-master-design §12)", () => {
   });
 
   it("flags fuel as low for an aircraft within two turns of running dry, like the map's gas can (05-supply-transport §11)", () => {
-    const state = makeGame(["."], [{ type: "bomber", owner: 0, pos: P(0, 0) }]);
+    // A Bomber burning 10 a day (8 plus a test modifier), so two days' burn is more than a quarter tank.
+    const modifiers = [{ source: "test", stat: "fuelPerDay", op: "add", value: 2 }] as const;
+    const state = makeGame(["."], [{ type: "bomber", owner: 0, pos: P(0, 0) }], { modifiers: [...modifiers] });
     expect(tileInfo(state, P(0, 0)).unit?.fuel.low).toBe(false);
     const withFuel = (fuel: number) => ({ ...state, units: state.units.map((u) => ({ ...u, fuel })) });
-    expect(tileInfo(withFuel(17), P(0, 0)).unit?.fuel.low).toBe(false);
-    expect(tileInfo(withFuel(16), P(0, 0)).unit?.fuel.low).toBe(true); // two days at 8 a day
+    expect(tileInfo(withFuel(21), P(0, 0)).unit?.fuel.low).toBe(false);
+    expect(tileInfo(withFuel(20), P(0, 0)).unit?.fuel.low).toBe(true); // two days at 10 a day
   });
 
   describe("an aircraft or ship warns while it can still get home (05-supply-transport §11)", () => {

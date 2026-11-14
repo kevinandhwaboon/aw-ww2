@@ -8,9 +8,12 @@ import { baseDamage } from "../src/engine/data/damage";
 import { UNITS, type UnitTypeId } from "../src/engine/data/units";
 import { legalCommands } from "../src/engine/legal";
 import type { Point } from "../src/engine/map";
+import { parseScenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import { propertyAt, type GameState, type Unit } from "../src/engine/state";
 import { SCENARIOS } from "../src/scenarios";
+import bocageCountry from "./fixtures/maps/bocage-country.json";
+import twinBridges from "./fixtures/maps/twin-bridges.json";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -642,13 +645,13 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
     expect(greedyAi(weightsFor("easy")).name).toBe("Greedy (Easy)");
   });
 
-  it("Normal beats Easy from either side on Twin Bridges and Bocage Country", async () => {
+  // The built-in maps are historical and lopsided, so their winner says more about the map than the
+  // AI. These two fair test maps (no longer in the game) measure the AI itself.
+  it("Normal beats Easy from either side on the fair test maps Twin Bridges and Bocage Country", async () => {
     const normal = greedyAi(weightsFor("normal"));
     const easy = greedyAi(weightsFor("easy"));
     let wins = 0;
-    for (const id of ["twin-bridges", "bocage-country"]) {
-      const scenario = SCENARIOS.find((s) => s.id === id);
-      if (!scenario) throw new Error(id);
+    for (const scenario of [parseScenario(twinBridges), parseScenario(bocageCountry)]) {
       for (const seat of [0, 1]) {
         const state = createGame({ ...scenario.setup, seed: 1 });
         const result = await playMatch(state, state.players.map((p) => (p.id === seat ? normal : easy)), 60);
@@ -671,7 +674,7 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   // Maps where both sides can reach each other by land, and Midway, whose day limit ends every game
   // by day 12. On the others, winning needs landings: the AI makes them (09-ai §4b), but those games
   // often run past 40 days.
-  const LAND_MAPS = ["twin-bridges", "bocage-country", "crossroads", "bastogne", "iwo-jima", "proving-ground", "midway"];
+  const LAND_MAPS = ["bastogne", "iwo-jima", "midway"];
 
   for (const id of LAND_MAPS) {
     it(`${id}: a game between AIs ends with a winner within 40 days, with no AI bugs`, async () => {
@@ -726,8 +729,8 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   }, 120_000);
 
   it("same seed, same game: an AI vs AI game replays exactly", async () => {
-    const first = await playMatch(start("bocage-country", 3), everyone(start("bocage-country")), 15);
-    const second = await playMatch(start("bocage-country", 3), everyone(start("bocage-country")), 15);
+    const first = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 15);
+    const second = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 15);
     expect(second.commands).toEqual(first.commands);
     expect(second.state).toEqual(first.state);
   });
@@ -740,8 +743,8 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
     expect(perCommand).toBeLessThan(100);
   }, 60_000);
 
-  it("captures properties along the way: an AI game on Twin Bridges changes some owners", async () => {
-    const state = start("twin-bridges");
+  it("captures properties along the way: an AI game on Bastogne changes some owners", async () => {
+    const state = start("bastogne");
     const result = await playMatch(state, everyone(state), 10);
     const changed = result.state.properties.filter((p) => propertyAt(state, p.pos)?.owner !== p.owner);
     expect(changed.length).toBeGreaterThan(0);

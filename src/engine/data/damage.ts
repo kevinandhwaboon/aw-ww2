@@ -84,6 +84,16 @@ const VS_OTHER: Record<ArmedUnitId, string> = {
   torpedoBoat:     "—    —    —    —    —    35   30   40   75   55   45   —",
 };
 
+// 03-combat §5d: return-fire AA. Battleships and Carriers fire these back at an aircraft that
+// attacks them from next door, and never attack aircraft themselves. Deliberately weak.
+const RETURN_FIRE_AA_COLUMNS = ["fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber"] as const satisfies readonly DamageTarget[];
+
+//                     Ftr  Bmr  Trn  Dive TBmr
+const RETURN_FIRE_AA: Partial<Record<UnitTypeId, string>> = {
+  battleship:      "10*  10*  15*  15*  15*",
+  carrier:         "10*  10*  15*  15*  15*",
+};
+
 type ChartRow = Readonly<Partial<Record<DamageTarget, DamageEntry>>>;
 
 function parseCell(cell: string, where: string): DamageEntry | null {
@@ -116,6 +126,26 @@ function buildChart(): Readonly<Partial<Record<UnitTypeId, ChartRow>>> {
 }
 
 export const DAMAGE_CHART = buildChart();
+
+function buildReturnFireChart(): Readonly<Partial<Record<UnitTypeId, ChartRow>>> {
+  const chart: Partial<Record<UnitTypeId, ChartRow>> = {};
+  for (const [defender, text] of Object.entries(RETURN_FIRE_AA) as [UnitTypeId, string][]) {
+    const row = {} as Record<DamageTarget, DamageEntry>;
+    parseRow(row, RETURN_FIRE_AA_COLUMNS, text, defender);
+    chart[defender] = row;
+  }
+  return chart;
+}
+
+export const RETURN_FIRE_AA_CHART = buildReturnFireChart();
+
+/**
+ * The return-fire AA entry when this defender is attacked by this aircraft, or null if it has none
+ * (03-combat §5d). Never used to attack first.
+ */
+export function returnFireDamage(defender: UnitTypeId, attacker: UnitTypeId): DamageEntry | null {
+  return RETURN_FIRE_AA_CHART[defender]?.[attacker] ?? null;
+}
 
 /** Base damage entry for attacker vs target, or null if the attacker can't hit it at all. */
 export function baseDamage(attacker: UnitTypeId, target: DamageTarget): DamageEntry | null {

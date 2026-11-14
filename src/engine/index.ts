@@ -14,6 +14,7 @@ export type {
 export {
   attackTargets,
   canCounter,
+  counterWeapon,
   chooseWeapon,
   damageFormula,
   distance,

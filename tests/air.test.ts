@@ -39,7 +39,7 @@ describe("flying (05-supply-transport §5)", () => {
 
   it("flying over the sea spends fuel like any other move: 2 per tile for aircraft", () => {
     const state = makeGame(["=SS="], [u("bomber", 0, 0)]);
-    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(44);
+    expect(byId(run(state, wait(0, [P(1, 0), P(2, 0), P(3, 0)])), 0)?.fuel).toBe(64);
   });
 
   it("an aircraft that stays put burns only its daily fuel; one that flies burns the daily fuel plus 2 per tile (05-supply-transport §1)", () => {
@@ -56,7 +56,7 @@ describe("flying (05-supply-transport §5)", () => {
 
   it("a modifier can change how much fuel a move burns", () => {
     const state = makeGame(["===="], [u("bomber", 0, 0)], { modifiers: [{ source: "test", stat: "fuelPerMove", op: "add", value: 1 }] });
-    expect(byId(run(state, wait(0, [P(1, 0)])), 0)?.fuel).toBe(47);
+    expect(byId(run(state, wait(0, [P(1, 0)])), 0)?.fuel).toBe(67);
   });
 
   it("an aircraft can end its move over the sea", () => {
@@ -196,7 +196,7 @@ describe("airfields (04-economy §1, §5)", () => {
   it("airfields repair and resupply air units", () => {
     // Serviced at the start of day 1, then again on day 2.
     const state = nextRound(owned("A", u("bomber", 0, 0, { hp: 50, fuel: 20, ammo: 1 }))).state;
-    expect(byId(state, 0)).toMatchObject({ hp: 90, fuel: 50, ammo: 2 });
+    expect(byId(state, 0)).toMatchObject({ hp: 90, fuel: 70, ammo: 2 });
   });
 
   it("repair costs 10% of the unit's cost per HP, as for land units", () => {
@@ -219,7 +219,7 @@ describe("airfields (04-economy §1, §5)", () => {
     const empty: GameState = { ...state, units: [] };
     expect(buildOptions(empty, P(0, 0)).map((o) => o.type)).toEqual(["transportAircraft", "diveBomber", "torpedoBomber", "fighter", "bomber"]);
     const built = run(empty, { type: "build", unitType: "bomber", pos: P(0, 0) });
-    expect(built.units[0]).toMatchObject({ type: "bomber", hasActed: true, fuel: 50, ammo: 2 });
+    expect(built.units[0]).toMatchObject({ type: "bomber", hasActed: true, fuel: 70, ammo: 2 });
   });
 
   it("infantry can capture an airfield", () => {

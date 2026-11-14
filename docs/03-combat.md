@@ -1,7 +1,7 @@
 # Topic Doc 03: Combat
 
 **Status:** Rules decided. Provisional v0 damage chart and veterancy values set; expect tuning after playtesting.
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-14
 **Depends on:** 00-master-design.md, 01-units.md. **Feeds:** 02-terrain (defense stars, fortification HP), 06-commanders (modifiers).
 
 **Guiding rule:** when a design choice is open, follow the original game's mechanism unless there's a clear reason not to.
@@ -48,6 +48,7 @@ damage% = (base × attackMod/100 + luck) × (attackerHP / 10) × ((200 − defen
    - the defender has a usable weapon vs. the attacker (same weapon-choice rule; counters spend ammo too).
    The counter uses the defender's **reduced** HP and gets its own luck roll.
 5. Indirect units never counterattack, and are never countered when they fire.
+   - **Exception, return-fire AA (2026-11-14):** Battleships and Carriers carry light AA guns that fire back at an aircraft attacking them from an adjacent tile, using the §5d chart. They never fire them first, need no ammo, and fire at nothing but aircraft. Counter damage uses the ship's reduced HP as usual, so a ship badly hit fires back very little.
 6. The engine emits a single combat result event (damage dealt, counter damage, destroyed units, ammo spent, veterancy changes) for the presentation layer to play back.
 
 **Damage forecast:** before confirming, the player sees the expected damage range (minimum and maximum luck) for the attack. The counter isn't shown.
@@ -78,7 +79,7 @@ Values are `base` damage percentages. **Attacker = row, defender = column.**
 
 Values come from the original game where a unit maps cleanly (Infantry, Assault Infantry ≈ Mech, Recon, Halftrack ≈ APC, Medium Tank ≈ Tank, Heavy Tank ≈ Md Tank, Artillery, Rocket Artillery, Mobile AA ≈ Anti-Air, Flak Gun ≈ Missiles, Bomber, Battleship, Submarine) and from intuition for new ones (Mortar Team, Light Tank, Tank Destroyer, Destroyer, Torpedo Boat, Fighter strafing, fortifications).
 
-Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows.
+Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows. The Carrier's return-fire AA is in §5d, not the main chart, since it never attacks.
 
 **Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Fort = fortification/obstacle.
 
@@ -141,8 +142,19 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 - **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
 - **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
 - **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 60 against every surface ship and nothing else (decided 2026-11-09 at 120; halved on 2026-11-14 at the developer's request, because one torpedo sank a full-strength Carrier. Now a full-strength Torpedo Bomber leaves a ship at sea on about 4 HP, and two sink it). Air defenses hit both as hard as they hit a Bomber.
-- **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It has no weapon, so it never counters.
+- **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It can't attack, and only counters aircraft, weakly (§5d).
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
+
+### 5d. Return-fire AA (added 2026-11-14)
+
+At the developer's request, Battleships and Carriers have anti-aircraft fire, deliberately very limited: it only fires back at an aircraft that attacks the ship from next door (§2), never first, and its values are a fraction of a Destroyer's AA (55–105). All values are secondary weapon (no ammo). A departure from the original, where neither ship could hit aircraft.
+
+| Defender ↓ / Attacking aircraft → | Ftr | Bmr | Trn | Dive | TBmr |
+|---|---|---|---|---|---|
+| BB | 10* | 10* | 15* | 15* | 15* |
+| CV | 10* | 10* | 15* | 15* | 15* |
+
+In play only Bombers, Dive Bombers and Torpedo Bombers attack these ships, so those are the columns that matter. Example: a full-strength Dive Bomber hits a Battleship at sea for 40%; the Battleship, down to 6 HP, fires back for 9%. Bombers (high-level bombing) take less than the low-flying Dive and Torpedo Bombers.
 
 ## 6. Veterancy (combat experience)
 

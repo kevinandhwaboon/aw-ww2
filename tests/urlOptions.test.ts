@@ -37,7 +37,7 @@ describe("URL options (11-tech-setup §7)", () => {
   });
 
   it("?map= skips the menus and starts that scenario", () => {
-    expect(options("?map=bocage-country").map).toBe("bocage-country");
+    expect(options("?map=bastogne").map).toBe("bastogne");
   });
 
   it("?seed= fixes the luck rolls, including seed 0", () => {
