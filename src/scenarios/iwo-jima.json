@@ -26,7 +26,7 @@
     "SS_HXHX._SSSSSSSSSSSSSSSSSSSP.....SS",
     "SS_HCH__SSSSSSSSSSSSSSSSSSSS..f...SS",
     "SS_HH_SSSSSSSSSSSSSSSSSSSSSS...Q..SS",
-    "SSSSSSSSSSSSSSSSSSSSSSSSSSSS.P....SS",
+    "SSSSSSSSSSSSSSSSSSSSSSSSSSSS......SS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
   ],
@@ -82,7 +82,6 @@
     { "pos": { "x": 31, "y": 22 }, "owner": 0 },
     { "pos": { "x": 30, "y": 21 }, "owner": 0 },
     { "pos": { "x": 28, "y": 20 }, "owner": 0 },
-    { "pos": { "x": 29, "y": 23 }, "owner": 0 },
     { "pos": { "x": 28, "y": 19 }, "owner": 0 },
     { "pos": { "x": 4, "y": 21 }, "owner": 1 },
     { "pos": { "x": 13, "y": 13 }, "owner": 1 },

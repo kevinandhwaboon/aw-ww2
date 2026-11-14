@@ -96,8 +96,7 @@ const P = {
   hq: [20, 4], // Kuribayashi's command post, in a cave near Kitano Point
   usHq: [31, 22],
   usFactory: [30, 21],
-  usPort1: [28, 20],
-  usPort2: [29, 23],
+  usPort: [28, 20],
   usAirfield: [28, 19], // Stands for the bomber bases in the Marianas
 };
 set(...P.suribachi, "C");
@@ -109,8 +108,7 @@ set(...P.depot, "f");
 set(...P.hq, "Q");
 set(...P.usHq, "Q");
 set(...P.usFactory, "f");
-set(...P.usPort1, "P");
-set(...P.usPort2, "P");
+set(...P.usPort, "P");
 set(...P.usAirfield, "A");
 // The runways run on from each airfield as open ground.
 each([[12, 13], [14, 12], [18, 10], [20, 8], [26, 8]], ".");
@@ -183,7 +181,7 @@ const units = [
 ];
 
 const owners = [
-  [P.usHq, 0], [P.usFactory, 0], [P.usPort1, 0], [P.usPort2, 0], [P.usAirfield, 0],
+  [P.usHq, 0], [P.usFactory, 0], [P.usPort, 0], [P.usAirfield, 0],
   [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1], [P.minami, 1],
   [P.nishi, 1], [P.kita, 1], [P.higashi, 1], [P.depot, 1], [P.hq, 1],
 ];

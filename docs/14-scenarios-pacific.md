@@ -20,7 +20,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 - **36 × 26 squares**, about 300 m each. North is up. The island runs from Mount Suribachi at the south-west tip to Kitano Point and Tachiiwa Point in the north-east, about 27 squares long.
 - The outline is a polygon traced from the real map in `tools/maps/iwo-jima.mjs`. The neck behind the landing beaches is 3 to 4 squares wide, as the real one was under a kilometre.
-- **The US anchorage** is a block of land in the south-east corner. It stands for the transport area offshore, which the game can't show as ships that build units, and for the Marianas, where the bombers flew from: it holds the US HQ, a Factory, two Ports and an Airfield. No US unit starts on it. The fleet itself is real ships offshore (below). An anchorage Airfield standing in for the carriers was removed on 2026-11-09 when real Carriers arrived; **since 2026-11-14, at the developer's request, it's back as the Marianas airfield**, so Bombers have somewhere to refuel and rearm. It's in the anchorage's north-west corner (28,19), about 13 squares (two Bomber turns) from the nearest manned bunker. It's about 12 squares, two Landing Craft turns, from the beaches.
+- **The US anchorage** is a block of land in the south-east corner. It stands for the transport area offshore, which the game can't show as ships that build units, and for the Marianas, where the bombers flew from: it holds the US HQ, a Factory, a Port and an Airfield. (It had a second Port, in its south-west corner, until 2026-11-14, when it was removed at the developer's request to cut US income.) No US unit starts on it. The fleet itself is real ships offshore (below). An anchorage Airfield standing in for the carriers was removed on 2026-11-09 when real Carriers arrived; **since 2026-11-14, at the developer's request, it's back as the Marianas airfield**, so Bombers have somewhere to refuel and rearm. It's in the anchorage's north-west corner (28,19), about 13 squares (two Bomber turns) from the nearest manned bunker. It's about 12 squares, two Landing Craft turns, from the beaches.
 
 ### Places
 
@@ -29,11 +29,11 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 | HQ | The anchorage | Kuribayashi's command post near Kitano Point |
 | Factory | The anchorage | The supply depot north of Motoyama |
 | Airfields | The anchorage (stands for the Marianas) | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
-| Ports | Two at the anchorage | none |
+| Ports | One at the anchorage | none |
 | Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
 
 - **Mount Suribachi's summit is a City,** standing for the observation post on the crater rim, so it can be captured: taking it plays the capture scene with the US flag going up, as on 23 February. It's ringed by Hills and bunkers.
-- **Income:** the US starts with 5 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
+- **Income:** the US starts with 4 properties (4,000 a day), Japan with 11. US income is kept low by giving the anchorage few properties, not by a special rule: the second Port was removed on 2026-11-14 for this. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
 
 ### Terrain
 

@@ -358,6 +358,11 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const p of objectives) expect(propertyOwners).toContainEqual({ pos: p, owner: 1 });
     });
 
+    it("the US base holds only four properties, to keep US income low: an HQ, a Factory, a Port and an Airfield", () => {
+      const owned = (propertyOwners ?? []).filter((p) => p.owner === 0).map((p) => terrainAt(map, p.pos)).sort();
+      expect(owned).toEqual(["airfield", "factory", "hq", "port"]);
+    });
+
     it("Japan wins by holding out to the start of day 18", () => {
       expect(victory).toContainEqual({ type: "surviveDays", side: "axis", days: 18 });
     });
