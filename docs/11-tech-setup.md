@@ -201,7 +201,7 @@ All accepted on 2026-10-31.
 | D2 | Can Transport Aircraft drop onto Hills, Bocage and River? | Yes, anywhere foot units can enter | The original has no equivalent. Bocage drops were historically real |
 | D3 | Can a transport unload both passengers in one action? | Yes | Not confirmed for the original, but one at a time would make a two-unit craft much weaker |
 | D4 | Can a loaded Halftrack board a Landing Craft? | No | Simpler rules. Not confirmed for the original |
-| D5 | Are submerged submarines hidden from the enemy? | No: shown to everyone with a marker | The original hides them, but both players share a screen and there's no fog of war. Real hiding belongs with fog of war |
+| D5 | Are submerged submarines hidden from the enemy? | Yes, since 2026-11-14: hidden unless an enemy unit is next to it; running into one is an ambush (05-supply-transport §9) | First decided "no" (both players share a screen, no fog of war). Changed at the developer's request: the screen is drawn for the human whose turn it is, and the computer's view leaves hidden submarines out too |
 | D6 | Is the victory condition list right? | Yes: capture, hold, survive | Enough for "hold Bastogne for 10 turns" and Normandy |
 | D7 | Should the order stay air, naval, landings, then AI? | Yes | The alternative is AI first, on land only, so single-player arrives sooner but has to be extended twice |
 | D8 | Should the AI run in a Web Worker from the start? | No: main thread now, with an async interface | Workers matter once community AIs exist |

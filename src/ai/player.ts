@@ -3,11 +3,14 @@
 //
 // Like the engine, AI code is pure: no DOM, no Phaser, no Math.random, no clock.
 
-import { apply, legalCommands, type Command, type GameEvent, type GameState, type PlayerId } from "../engine";
+import { apply, legalCommands, stateSeenBy, type Command, type GameEvent, type GameState, type PlayerId } from "../engine";
 
 /** What an AI is shown on its turn. */
 export interface AiView {
-  /** The whole game, except that the luck generator is hidden, so luck rolls can't be predicted (09-ai §3). */
+  /**
+   * The game as this player sees it (09-ai §3): the luck generator is hidden, so luck rolls can't be
+   * predicted, and so are enemy submerged submarines it has no unit next to (05-supply-transport §9).
+   */
   readonly state: GameState;
   /** The player this AI controls; always the current player. */
   readonly me: PlayerId;
@@ -25,8 +28,11 @@ export interface AiPlayer {
 const HIDDEN_RNG = 0;
 
 export function makeView(state: GameState): AiView {
-  const hidden: GameState = { ...state, rng: HIDDEN_RNG };
-  return { state: hidden, me: state.currentPlayer, legalCommands: () => legalCommands(hidden) };
+  const me = state.currentPlayer;
+  const unlucky: GameState = { ...state, rng: HIDDEN_RNG };
+  // The commands come from the real game, so every one is accepted; the engine already lists them as
+  // the player sees things (a hidden submarine's tile looks free, and it can't be attacked).
+  return { state: stateSeenBy(unlucky, me), me, legalCommands: () => legalCommands(unlucky) };
 }
 
 /** Most commands an AI may send in one turn before the session ends its turn for it (09-ai §3). */

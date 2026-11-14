@@ -28,6 +28,7 @@ export {
   type DamageInputs,
 } from "./combat";
 export {
+  ambushOnPath,
   canEndOn,
   checkPath,
   cheapestPath,
@@ -71,6 +72,7 @@ export {
   type WeatherPlan,
 } from "./state";
 export { weatherOn } from "./weather";
+export { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./visibility";
 export * as stats from "./stats";
 export type { Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
 export { parseAsciiMap, terrainAt, inBounds, type GameMap, type Point } from "./map";

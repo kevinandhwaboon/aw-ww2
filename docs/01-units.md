@@ -50,7 +50,7 @@
 | Bomber | Air-to-ground strike | The only dedicated air-to-ground unit. Heavy damage vs. ground and naval units. Cannot attack air | B-26, Lancaster / Ju 88 |
 | Transport Aircraft | Airborne drops | Carries 2 foot units, reusable (see section 5). Unarmed | C-47, Dakota / Ju 52 |
 | Dive Bomber | Carrier strike, light | Flies from Carriers and airfields. Hits land and naval units about half as hard as a Bomber, 2 bombs, moves one less. Cannot attack air | SBD Dauntless / D3A (Japan) |
-| Torpedo Bomber | Carrier strike vs. ships | Flies from Carriers and airfields. 1 torpedo, which hits any surface ship for 120% (a full-strength ship sinks). Can't attack land units, aircraft, submarines or fortifications | TBF Avenger / B5N (Japan) |
+| Torpedo Bomber | Carrier strike vs. ships | Flies from Carriers and airfields. 1 torpedo, which hits any surface ship for 60% (halved from 120% on 2026-11-14: two are needed to sink a full-strength ship). Can't attack land units, aircraft, submarines or fortifications | TBF Avenger / B5N (Japan) |
 
 Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter aircraft instead of Bombers. Built at airfields like other aircraft. Only the US, UK and Japan get them (they're carrier aircraft); Germany none.
 

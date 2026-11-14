@@ -183,10 +183,10 @@ describe("a Carrier in combat (05-supply-transport §10, 03-combat §5b)", () =>
     expect(canCounter(state, byId(state, 1) as Unit, byId(state, 0) as Unit)).toBe(false);
   });
 
-  it("torpedoes and bombs hurt a Carrier most: Torpedo Bomber 120, Bomber 85, Submarine 75, Battleship 60, Dive Bomber 45, Torpedo Boat 45, Destroyer 10", () => {
+  it("torpedoes and bombs hurt a Carrier most: Bomber 85, Submarine 75, Torpedo Bomber 60, Battleship 60, Dive Bomber 45, Torpedo Boat 45, Destroyer 10", () => {
     const vsCarrier = (attacker: Parameters<typeof baseDamage>[0]) => baseDamage(attacker, "carrier")?.base;
-    expect(["torpedoBomber", "bomber", "submarine", "battleship", "diveBomber", "torpedoBoat", "destroyer"].map((a) => vsCarrier(a as Parameters<typeof baseDamage>[0])))
-      .toEqual([120, 85, 75, 60, 45, 45, 10]);
+    expect(["bomber", "submarine", "torpedoBomber", "battleship", "diveBomber", "torpedoBoat", "destroyer"].map((a) => vsCarrier(a as Parameters<typeof baseDamage>[0])))
+      .toEqual([85, 75, 60, 60, 45, 45, 10]);
   });
 
   it("Fighters can't attack a Carrier, and artillery shells it at 45, rockets at 60", () => {
@@ -257,14 +257,22 @@ describe("carrier aircraft (05-supply-transport §10, 01-units §3)", () => {
   it("a Torpedo Bomber attacks only ships on the surface: never land units, aircraft, submarines or fortifications", () => {
     const hits = [...UNIT_TYPE_IDS, "fort" as const].filter((t) => baseDamage("torpedoBomber", t) !== null);
     expect(hits.sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "torpedoBoat"]);
-    for (const ship of hits) expect(baseDamage("torpedoBomber", ship)?.base).toBe(120);
+    for (const ship of hits) expect(baseDamage("torpedoBomber", ship)?.base).toBe(60);
   });
 
-  it("one torpedo sinks a full-strength Battleship at sea", () => {
-    const state = makeGame(["SSS"], [u("torpedoBomber", 0, 0), u("battleship", 1, 2)], atSea);
-    const after = run(state, order(0, [P(1, 0)], { type: "attack", target: 1 }));
-    expect(byId(after, 1)).toBeUndefined();
-    expect(byId(after, 0)?.ammo).toBe(0);
+  it("one torpedo no longer sinks a full-strength ship: it hits for 60, halved from 120 on 2026-11-14 (03-combat §5b)", () => {
+    for (const ship of ["carrier", "battleship"] as const) {
+      const state = makeGame(["SSS"], [u("torpedoBomber", 0, 0), u(ship, 1, 2)], atSea);
+      const after = run(state, order(0, [P(1, 0)], { type: "attack", target: 1 }));
+      expect(byId(after, 1)?.hp).toBe(40);
+      expect(byId(after, 0)?.ammo).toBe(0);
+    }
+  });
+
+  it("two torpedoes sink a full-strength Carrier", () => {
+    const state = makeGame(["SSS", "SSS"], [u("torpedoBomber", 0, 0), u("torpedoBomber", 0, 0, { pos: P(2, 1) }), u("carrier", 1, 2)], atSea);
+    const after = run(state, order(0, [P(1, 0)], { type: "attack", target: 2 }), order(1, [], { type: "attack", target: 2 }));
+    expect(byId(after, 2)).toBeUndefined();
   });
 
   it("with its torpedo gone, a Torpedo Bomber can't attack until it's resupplied", () => {

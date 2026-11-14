@@ -3,8 +3,9 @@
 
 import { UNITS } from "./data/units";
 import { inBounds, type Point } from "./map";
-import type { GameState, Unit } from "./state";
+import { unitAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
+import { isHiddenFrom } from "./visibility";
 
 export interface Reach {
   /** Movement points spent to get here by the cheapest path (fuel is this times the unit's fuel per move). */
@@ -49,21 +50,53 @@ function blocks(state: GameState, unit: Unit, occupant: Unit): boolean {
   return !isAir(unit) || isAir(occupant);
 }
 
-/** Whether the unit may pass through this tile: in bounds, passable terrain, no enemy in its way. */
+/**
+ * The unit on this tile as the moving unit's player sees it: a submerged submarine hidden from them
+ * isn't there as far as planning a move goes (05-supply-transport §9). Running into one is an ambush.
+ */
+function seenOccupant(state: GameState, unit: Unit, p: Point): Unit | undefined {
+  const occupant = state.units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+  return occupant && isHiddenFrom(state, occupant, unit.owner) ? undefined : occupant;
+}
+
+/** Whether the unit may pass through this tile: in bounds, passable terrain, no enemy it can see in its way. */
 function enterCost(state: GameState, unit: Unit, p: Point): number | null {
   if (!inBounds(state.map, p)) return null;
   const terrain = state.map.terrain[tileIndex(state, p)];
   if (terrain === undefined) return null;
-  const occupant = state.units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+  const occupant = seenOccupant(state, unit, p);
   if (occupant && blocks(state, unit, occupant)) return null;
   return stats.moveCost(state, unit, terrain);
 }
 
-/** Whether the unit may end its move here: its own tile, or an empty one. (Load/join come later.) */
+/**
+ * Whether the unit may end its move here: its own tile, or one that's empty as far as its player can
+ * see. (Load and Join end on a friendly unit, checked separately.)
+ */
 export function canEndOn(state: GameState, unit: Unit, p: Point): boolean {
-  const occupant = state.units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+  const occupant = seenOccupant(state, unit, p);
   return !occupant || occupant.id === unit.id;
 }
+
+/**
+ * Where a move runs into an enemy its player couldn't see (05-supply-transport §9): a ship sailing
+ * into a hidden submarine's tile, or any unit ending its move on one. Null if it doesn't. Otherwise
+ * the submarine, and the part of the path the unit gets through: up to the last tile before the
+ * submarine that it can stop on (an empty one, or where it started).
+ */
+export function ambushOnPath(state: GameState, unit: Unit, path: readonly Point[]): { readonly by: Unit; readonly path: Point[] } | null {
+  for (const [n, p] of path.entries()) {
+    const occupant = unitAt(state, p);
+    if (!occupant || !isHiddenFrom(state, occupant, unit.owner)) continue;
+    if (!blocks(state, unit, occupant) && n < path.length - 1) continue;
+    let stop = n;
+    while (stop > 0 && !isFree(state, path[stop - 1])) stop--;
+    return { by: occupant, path: path.slice(0, stop) };
+  }
+  return null;
+}
+
+const isFree = (state: GameState, p: Point | undefined) => p !== undefined && unitAt(state, p) === undefined;
 
 /**
  * Every tile the unit can reach this turn (including tiles it can only pass through), keyed by

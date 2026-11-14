@@ -108,6 +108,66 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(withFuel(16), P(0, 0)).unit?.fuel.low).toBe(true); // two days at 8 a day
   });
 
+  describe("an aircraft or ship warns while it can still get home (05-supply-transport §11)", () => {
+    const owned = (x: number) => ({ propertyOwners: [{ pos: P(x, 0), owner: 0 }] });
+    const lowAt = (state: ReturnType<typeof makeGame>, x: number, fuel: number) =>
+      tileInfo({ ...state, units: state.units.map((u) => ({ ...u, fuel })) }, P(x, 0)).unit?.fuel.low;
+
+    it("a Fighter a full move (9) from its airfield warns once one more turn out would leave it unable to fly back", () => {
+      // Out 9 more and back 18 at 2 fuel a square is 54, plus two nights at 5.
+      const state = makeGame(["A........."], [{ type: "fighter", owner: 0, pos: P(9, 0) }], owned(0));
+      expect(lowAt(state, 9, 64)).toBe(false);
+      expect(lowAt(state, 9, 63)).toBe(true);
+    });
+
+    it("the further from home, the sooner it warns", () => {
+      const state = makeGame(["A..........."], [{ type: "fighter", owner: 0, pos: P(11, 0) }], owned(0));
+      expect(lowAt(state, 11, 63)).toBe(true);
+      const near = makeGame(["A..........."], [{ type: "fighter", owner: 0, pos: P(2, 0) }], owned(0));
+      expect(lowAt(near, 2, 63)).toBe(false);
+    });
+
+    it("an aircraft on its own airfield doesn't warn this way: it refuels there", () => {
+      const state = makeGame(["A."], [{ type: "fighter", owner: 0, pos: P(0, 0) }], owned(0));
+      expect(lowAt(state, 0, 30)).toBe(false);
+    });
+
+    it("an enemy airfield isn't home", () => {
+      const state = makeGame(["A........A"], [{ type: "fighter", owner: 0, pos: P(9, 0) }], { propertyOwners: [{ pos: P(9, 0), owner: 1 }, { pos: P(0, 0), owner: 0 }] });
+      expect(lowAt(state, 9, 63)).toBe(true);
+    });
+
+    it("a Carrier with room counts as home for its aircraft", () => {
+      // 2 squares from the Carrier: out 9, back 11, at 2 fuel a square, plus two nights at 5.
+      const state = makeGame(["SSSSSSSSSS"], [{ type: "fighter", owner: 0, pos: P(9, 0) }, { type: "carrier", owner: 0, pos: P(7, 0) }]);
+      expect(lowAt(state, 9, 50)).toBe(false);
+      expect(lowAt(state, 9, 49)).toBe(true);
+    });
+
+    it("with no home anywhere (a full Carrier, no airfield), only the simple rules apply", () => {
+      const full = makeGame(["SSSSSSSSSS"], [
+        { type: "fighter", owner: 0, pos: P(9, 0) },
+        { type: "carrier", owner: 0, pos: P(7, 0), cargo: [{ type: "fighter" }, { type: "fighter" }] },
+      ]);
+      expect(lowAt(full, 9, 49)).toBe(false);
+      expect(lowAt(full, 9, 20)).toBe(true); // a quarter of 80
+    });
+
+    it("a ship with no sea route to any port only gets the simple rules (Japan's port on Midway is cut off)", () => {
+      const state = makeGame(["P.SSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }], owned(0));
+      expect(lowAt(state, 10, 29)).toBe(false);
+      expect(lowAt(state, 10, 20)).toBe(true); // a quarter of 80
+    });
+
+    it("a ship measures the sea route to its nearest port", () => {
+      // Destroyer: moves 6, burns 2 a day, 1 fuel a square. Land in the way makes the port 12 squares
+      // away, not 10: out 6 and back 18 is 24 fuel, plus three nights at 2.
+      const state = makeGame(["P.SSSSSSSSSS", "SSSSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }], owned(0));
+      expect(lowAt(state, 10, 30)).toBe(false);
+      expect(lowAt(state, 10, 29)).toBe(true);
+    });
+  });
+
   it("flags fuel as low for any unit down to a quarter of its tank (05-supply-transport §11)", () => {
     const state = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
     const withFuel = (fuel: number) => ({ ...state, units: state.units.map((u) => ({ ...u, fuel })) });
