@@ -4,6 +4,7 @@
 import type Phaser from "phaser";
 import type { Combatant, GameEvent } from "../engine/commands";
 import type { Point } from "../engine/map";
+import type { UnitTypeId } from "../engine/data/units";
 import type { GameState, Unit, UnitId } from "../engine/state";
 import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
@@ -12,9 +13,14 @@ import { planDrop } from "./battle/drop";
 import { planCombat, planFortAttack } from "./battle/plan";
 import { planCapture, planGarrison } from "./battle/storm";
 import { packColor, packColorNumber } from "./artPack";
+import { moveStyle, stepDirection, type MoveStyle, type StepDirection } from "./facing";
 import { TILE_SIZE } from "./placeholderTiles";
 
-const MOVE_MS_PER_TILE = 70;
+const MOVE_MS_PER_TILE = 90;
+/** How high a moving unit's sprite lifts once per square, in map pixels: soldiers hop, vehicles bump (08-art-pipeline §22). */
+const MOVE_LIFT: Record<MoveStyle, number> = { foot: 1.5, vehicle: 0.5, air: 0, naval: 0 };
+/** Dust behind vehicles and foam behind ships: how long a puff lasts and how far it grows. */
+const PUFF = { ms: 380, size: 1.6, grow: 2 };
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
 /** How long the view takes to pan to the next thing that happens. */
 export const ACTION_PAN_MS = 220;
@@ -37,6 +43,10 @@ export interface PlaybackHost {
   readonly unitSprites: ReadonlyMap<UnitId, Phaser.GameObjects.Container>;
   readonly unitImages: ReadonlyMap<UnitId, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>;
   addUnitSprite(unit: Unit): void;
+  /** Turns a unit's sprite to show it moving this way, or back to rest (null) (08-art-pipeline §22). */
+  setUnitMotion(unitId: UnitId, direction: StepDirection | null): void;
+  /** The type of the unit a sprite draws, if it's on the map. */
+  unitType(unitId: UnitId): UnitTypeId | undefined;
   revealTiles(tiles: readonly Point[], ms: number): Promise<void>;
   textTexture(text: string, color: string, outline?: string): string;
 }
@@ -258,7 +268,12 @@ export class MapPlayback {
     });
   }
 
-  /** Tweens a unit marker tile by tile along a path. Skips if it's already at the end (previewed). */
+  /**
+   * Moves a unit's sprite square by square along a path (08-art-pipeline §22). On each step it turns
+   * to face the way it goes and animates fast: soldiers step and hop, vehicles bump along raising
+   * dust, ships leave foam, aircraft glide. At the end it's back at rest. Skips if it's already at the
+   * end (previewed).
+   */
   async walk(unitId: UnitId, fullPath: readonly Point[]): Promise<void> {
     const sprite = this.unitSprites.get(unitId);
     const end = fullPath[fullPath.length - 1];
@@ -268,21 +283,58 @@ export class MapPlayback {
     const start = fullPath[0];
     if (start) sprite.setPosition(start.x * TILE_SIZE, start.y * TILE_SIZE);
     // A soldier leaving a garrisoned bunker comes out into view.
-    this.unitImages.get(unitId)?.setVisible(true);
+    const image = this.unitImages.get(unitId);
+    image?.setVisible(true);
+    const type = this.host.unitType(unitId);
+    const style = type ? moveStyle(type) : "vehicle";
+    let from = start;
     for (const p of fullPath.slice(1)) {
+      const direction = from ? stepDirection(from, p) : null;
+      if (direction) this.host.setUnitMotion(unitId, direction);
+      if (from && (style === "vehicle" || style === "naval")) this.puff(from, p, style);
       // The view keeps pace with the unit, so a long move never walks off screen.
       await Promise.all([
         this.revealTiles([p], MOVE_MS_PER_TILE),
-        new Promise<void>((resolve) => {
-          this.tweens.add({
-            targets: sprite,
-            x: p.x * TILE_SIZE,
-            y: p.y * TILE_SIZE,
-            duration: MOVE_MS_PER_TILE,
-            onComplete: () => resolve(),
-          });
-        }),
+        this.tween(sprite, { x: p.x * TILE_SIZE, y: p.y * TILE_SIZE }, MOVE_MS_PER_TILE),
+        image && MOVE_LIFT[style] > 0 ? this.hop(image, MOVE_LIFT[style]) : Promise.resolve(),
       ]);
+      from = p;
     }
+    this.host.setUnitMotion(unitId, null);
+  }
+
+  /** The sprite lifts and drops once over a step; its shadow stays on the ground. */
+  private hop(image: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite, lift: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.tweens.add({
+        targets: image,
+        y: -lift,
+        duration: MOVE_MS_PER_TILE / 2,
+        yoyo: true,
+        ease: "Sine.easeOut",
+        onComplete: () => {
+          image.setY(0);
+          resolve();
+        },
+      });
+    });
+  }
+
+  /** A puff of dust (vehicles) or foam (ships) left behind on the square a unit is leaving. */
+  private puff(from: Point, to: Point, style: "vehicle" | "naval"): void {
+    const c = center(from);
+    // Behind the unit's back end, low on the square.
+    const x = c.x - Math.sign(to.x - from.x) * 4;
+    const y = c.y + 4 - Math.sign(to.y - from.y) * 3;
+    const color = packColorNumber(style === "naval" ? "moveFoam" : "moveDust");
+    const puff = this.add.circle(x, y, PUFF.size, color, 0.7);
+    this.tweens.add({
+      targets: puff,
+      scale: PUFF.grow,
+      alpha: 0,
+      y: y - 2,
+      duration: PUFF.ms,
+      onComplete: () => puff.destroy(),
+    });
   }
 }

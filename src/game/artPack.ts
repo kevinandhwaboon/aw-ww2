@@ -45,6 +45,9 @@ const BUILT_IN_COLORS = {
   // Effects and floating labels
   flash: "#ffffff",
   blast: "#ffa030",
+  // Dust kicked up behind vehicles and foam behind ships as they move on the map (08-art-pipeline §22)
+  moveDust: "#d8c49a",
+  moveFoam: "#e8f4ff",
   labelText: "#ffffff",
   labelOutline: "#101018",
   // Shadow under unit sprites
@@ -150,16 +153,27 @@ export interface PlayerArt {
 }
 
 /**
- * A sprite sheet of square frames: one row per unit, with idle frames running across. Frames are
- * 16 or 32 pixels; either way a unit fills one map square (08-art-pipeline §17).
+ * How a unit's sprite shows it (08-art-pipeline §22): from the side, drawn facing right and mirrored
+ * for left; from the front, coming toward you (moving down the map); or from the back, going away
+ * (moving up the map).
+ */
+export type UnitView = "side" | "down" | "up";
+export const UNIT_VIEWS: readonly UnitView[] = ["side", "down", "up"];
+
+/**
+ * A sprite sheet of square frames: one row per unit, with frames running across. Frames are 16 or
+ * 32 pixels; either way a unit fills one map square (08-art-pipeline §17). Each view in `facings`
+ * takes `frames` columns, in that order (§22).
  */
 export interface UnitSheet {
   readonly nation: NationId;
   readonly team: string;
   /** Relative to the pack's folder. */
   readonly path: string;
-  /** Idle animation frames per row. */
+  /** Animation frames per view. */
   readonly frames: number;
+  /** The views each row holds, left to right; always starts with "side". */
+  readonly facings: readonly UnitView[];
   /** The unit on each row, top to bottom; null for an empty row. */
   readonly rows: readonly (UnitTypeId | null)[];
   /** Frame width and height in pixels: 16 or 32. */
@@ -252,6 +266,7 @@ const isObject = (value: unknown): value is Json => typeof value === "object" &&
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 const isUnitType = (value: unknown): value is UnitTypeId => UNIT_TYPE_IDS.includes(value as UnitTypeId);
 const isTerrain = (value: unknown): value is TerrainId => TERRAIN_IDS.includes(value as TerrainId);
+const isUnitView = (value: unknown): value is UnitView => UNIT_VIEWS.includes(value as UnitView);
 
 /** Packs load files from their own folder. Web addresses and absolute paths aren't allowed. */
 const isRelativePath = (value: unknown): value is string =>
@@ -307,7 +322,7 @@ const isTileNumber = (value: unknown): value is number => Number.isInteger(value
 function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   const where = `unit sheet ${index}`;
   if (!isObject(raw)) return fail(`${where} must be an object`);
-  const { nation, team, path, frames, rows, frameSize = 16, paratroopers = [] } = raw;
+  const { nation, team, path, frames, rows, frameSize = 16, paratroopers = [], facings = ["side"] } = raw;
   if (typeof nation !== "string" || !Object.hasOwn(NATIONS, nation)) return fail(`${where}: unknown nation ${String(nation)}`);
   if (typeof team !== "string" || team === "") return fail(`${where} needs a team`);
   if (!isRelativePath(path)) return fail(`${where}: "path" must be a file in the pack`);
@@ -317,7 +332,21 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
   if (bad !== undefined) return fail(`${where}: unknown unit type ${JSON.stringify(bad)}`);
   if (!isTileHeight(frameSize)) return fail(`${where}: "frameSize" must be 16 or 32`);
   if (!Array.isArray(paratroopers) || !paratroopers.every(isTileNumber)) return fail(`${where}: "paratroopers" must be a list of row numbers`);
-  return { nation: nation as NationId, team, path, frames: frames as number, rows: rows as (UnitTypeId | null)[], frameSize, paratroopers };
+  if (
+    !Array.isArray(facings) || facings[0] !== "side" || !facings.every(isUnitView) || new Set(facings).size !== facings.length
+  ) {
+    return fail(`${where}: "facings" must list "side" first, then any of "down" and "up", once each`);
+  }
+  return {
+    nation: nation as NationId,
+    team,
+    path,
+    frames: frames as number,
+    facings,
+    rows: rows as (UnitTypeId | null)[],
+    frameSize,
+    paratroopers,
+  };
 }
 
 
@@ -413,12 +442,22 @@ export function parseArtPack(raw: unknown): ArtPack {
   };
 }
 
-/** A sprite's location in a pack: which sheet and which row. */
+/** A sprite's location in a pack: which sheet and which row, and the views and frames the row holds. */
 export interface UnitArt {
   readonly sheet: number;
   readonly row: number;
   readonly frames: number;
   readonly frameSize: 16 | 32;
+  readonly facings: readonly UnitView[];
+}
+
+/**
+ * The sheet frame number for one frame of one view of a unit. A view the sheet doesn't have falls
+ * back to the side view (08-art-pipeline §22).
+ */
+export function unitFrame(art: UnitArt, view: UnitView, frame = 0): number {
+  const column = Math.max(0, art.facings.indexOf(view)) * art.frames + frame;
+  return art.row * art.frames * art.facings.length + column;
 }
 
 /**
@@ -493,7 +532,7 @@ export function findUnitArt(
       ? def.paratroopers[unit.id % def.paratroopers.length]
       : undefined;
     const row = paratrooper ?? def.rows.indexOf(type);
-    if (row >= 0) return { sheet, row, frames: def.frames, frameSize: def.frameSize };
+    if (row >= 0) return { sheet, row, frames: def.frames, frameSize: def.frameSize, facings: def.facings };
   }
   return null;
 }

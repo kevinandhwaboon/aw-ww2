@@ -25,6 +25,11 @@
       "team": "olive",
       "path": "../../units/us-land-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
@@ -37,6 +42,11 @@
       "team": "olive",
       "path": "../../units/us-air-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": ["fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber"]
     },
@@ -45,6 +55,11 @@
       "team": "olive",
       "path": "../../units/us-naval-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
     }

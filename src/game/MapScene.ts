@@ -5,7 +5,12 @@ import { terrainAt, type Point } from "../engine/map";
 import { displayHp, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
-import { activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, unitName, type ColorKey } from "./artPack";
+import type { UnitTypeId } from "../engine/data/units";
+import {
+  activePack, findPropertyArt, findUnitArt, packColor, packColorNumber, unitFrame, unitName,
+  type ColorKey, type UnitArt, type UnitView,
+} from "./artPack";
+import { movingPose, type StepDirection } from "./facing";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
 import { center, MapPlayback } from "./mapPlayback";
@@ -44,12 +49,25 @@ export interface MapSceneOptions {
 const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack" };
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
+/** Moving units animate faster: soldiers step, treads and wheels roll, propellers spin (08-art-pipeline §22). */
+const MOVE_FRAMES_PER_SECOND = 12;
 /** How long the view takes to pan to the cursor. */
 const CURSOR_PAN_MS = 90;
 /** Unit shadows fall to the lower right, like the terrain's (08-art-pipeline §16). */
 const UNIT_SHADOW_OFFSET = { x: 2, y: 1 };
 const UNIT_SHADOW_ALPHA = 0.35;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
+
+/** What a unit's sprite was drawn from, so it can be turned to face the way it moves. */
+interface UnitLook {
+  readonly type: UnitTypeId;
+  /** Null for a placeholder marker, which never turns. */
+  readonly art: UnitArt | null;
+  /** Mirrored at rest: the map faces this player left (08-art-pipeline §12). */
+  readonly restingFlip: boolean;
+  readonly acted: boolean;
+  readonly shadow: Phaser.GameObjects.Sprite | null;
+}
 const TERRAIN_SHEET_KEY = "pack-terrain";
 const PROPERTY_SHEET_KEY = "pack-properties";
 /** Winter versions of the two sheets, same layouts (08-art-pipeline §21). */
@@ -86,6 +104,7 @@ export class MapScene extends Phaser.Scene implements MapView {
   private unitSprites = new Map<UnitId, Phaser.GameObjects.Container>();
   /** Each unit's sprite inside its container, and the units drawn inside a garrisoned bunker. */
   private unitImages = new Map<UnitId, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
+  private unitLooks = new Map<UnitId, UnitLook>();
   private garrisoned = new Set<UnitId>();
   private previewed: UnitId | undefined;
   /** A state drawn in place of the game's, e.g. an aircraft out on its Carrier while it's launched. */
@@ -105,6 +124,8 @@ export class MapScene extends Phaser.Scene implements MapView {
     unitSprites: this.unitSprites,
     unitImages: this.unitImages,
     addUnitSprite: (unit) => this.addUnitSprite(unit),
+    setUnitMotion: (unitId, direction) => this.setUnitMotion(unitId, direction),
+    unitType: (unitId) => this.unitLooks.get(unitId)?.type,
     revealTiles: (tiles, ms) => this.revealTiles(tiles, ms),
     textTexture: (text, color, outline) => this.textTexture(text, color, outline),
   });
@@ -662,7 +683,8 @@ export class MapScene extends Phaser.Scene implements MapView {
     host.cargo.forEach((passenger, i) => {
       const top = 2 + i * rowHeight;
       const row = this.add.container(2, top);
-      row.add(this.untintedUnitImage({ ...passenger, hasActed: false }));
+      const shown = { ...passenger, hasActed: false };
+      row.add(this.untintedUnitImage(shown, this.unitArt(shown)));
       const low = supplyWarnings(state, passenger);
       let bottom = TILE_SIZE;
       for (const [warn, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
@@ -767,6 +789,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     layer.removeAll(true);
     this.unitSprites.clear();
     this.unitImages.clear();
+    this.unitLooks.clear();
     this.warningBadges = [];
     this.redrawChangedTerrain();
     const garrisons = this.garrisonArt();
@@ -826,11 +849,14 @@ export class MapScene extends Phaser.Scene implements MapView {
     const sprite = this.add.container(unit.pos.x * TILE_SIZE, unit.pos.y * TILE_SIZE);
     // A soldier in a garrisoned bunker is drawn as the bunker itself; only its badges show.
     const inside = this.garrisoned.has(unit.id);
-    const shadow = inside ? null : this.unitShadow(unit);
+    const art = this.unitArt(unit);
+    const shadow = inside ? null : this.unitShadow(unit, art);
     if (shadow) sprite.add(shadow);
-    const image = this.unitImage(unit).setVisible(!inside);
+    const image = this.unitImage(unit, art).setVisible(!inside);
     sprite.add(image);
     this.unitImages.set(unit.id, image);
+    const restingFlip = this.state.players[unit.owner]?.facing === "left";
+    this.unitLooks.set(unit.id, { type: unit.type, art, restingFlip, acted: unit.hasActed, shadow });
 
     const hp = displayHp(unit.hp);
     if (hp < 10) sprite.add(this.add.image(TILE_SIZE, TILE_SIZE, this.texture(`hp-${hp}`, () => drawHpBadge(hp))).setOrigin(1));
@@ -862,30 +888,35 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.unitSprites.set(unit.id, sprite);
   }
 
+  /** The unit's art in the pack, or null when its sheet isn't loaded and it keeps its placeholder. */
+  private unitArt(unit: Unit): UnitArt | null {
+    const player = this.state.players[unit.owner];
+    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
+    return art && this.textures.exists(unitSheetKey(art.sheet)) ? art : null;
+  }
+
   /**
    * The unit's sprite from the art pack, animated until it has acted, or its placeholder marker.
    * Sprites are mirrored for a player the map faces left. Markers aren't: their letters would read backwards.
    * A submerged submarine is tinted, as if seen through the water.
    */
-  private unitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
-    const image = this.untintedUnitImage(unit);
+  private unitImage(unit: Unit, art: UnitArt | null): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
+    const image = this.untintedUnitImage(unit, art);
     return unit.submerged === true ? image.setTint(packColorNumber("submerged")) : image;
   }
 
-  private untintedUnitImage(unit: Unit): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
-    const player = this.state.players[unit.owner];
-    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
-    if (!art || !this.textures.exists(unitSheetKey(art.sheet))) {
+  private untintedUnitImage(unit: Unit, art: UnitArt | null): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
+    if (!art) {
       const marker = this.add.image(0, 0, this.texture(`unit-${unit.type}-${unit.owner}`, () => drawUnitMarker(unit.type, unit.owner)));
       return marker.setOrigin(0).setAlpha(unit.hasActed ? 0.5 : 1);
     }
     const key = unitSheetKey(art.sheet);
-    const sprite = this.add.sprite(0, 0, key, art.row * art.frames)
+    const sprite = this.add.sprite(0, 0, key, unitFrame(art, "side"))
       .setOrigin(0)
       .setScale(TILE_SIZE / art.frameSize)
-      .setFlipX(player?.facing === "left");
+      .setFlipX(this.state.players[unit.owner]?.facing === "left");
     if (unit.hasActed) return sprite.setAlpha(0.5);
-    return sprite.play(this.idleAnimation(key, art));
+    return sprite.play(this.unitAnimation(art, "side", false));
   }
 
   /**
@@ -893,30 +924,46 @@ export class MapScene extends Phaser.Scene implements MapView {
    * sheet so it still falls to the right when the sprite is mirrored. Placeholder markers and
    * submerged submarines have none.
    */
-  private unitShadow(unit: Unit): Phaser.GameObjects.Sprite | null {
-    if (unit.submerged === true) return null;
-    const player = this.state.players[unit.owner];
-    const art = player ? findUnitArt(activePack(), player.nation, unit.owner, unit.type, unit) : null;
-    if (!art || !this.textures.exists(unitSheetKey(art.sheet))) return null;
-    const key = unitSheetKey(art.sheet);
-    const shadow = this.add.sprite(UNIT_SHADOW_OFFSET.x, UNIT_SHADOW_OFFSET.y, key, art.row * art.frames)
+  private unitShadow(unit: Unit, art: UnitArt | null): Phaser.GameObjects.Sprite | null {
+    if (unit.submerged === true || !art) return null;
+    const shadow = this.add.sprite(UNIT_SHADOW_OFFSET.x, UNIT_SHADOW_OFFSET.y, unitSheetKey(art.sheet), unitFrame(art, "side"))
       .setOrigin(0)
       .setScale(TILE_SIZE / art.frameSize)
-      .setFlipX(player?.facing === "left")
+      .setFlipX(this.state.players[unit.owner]?.facing === "left")
       .setTint(packColorNumber("unitShadow"))
       .setTintMode(Phaser.TintModes.FILL)
       .setAlpha(unit.hasActed ? UNIT_SHADOW_ALPHA / 2 : UNIT_SHADOW_ALPHA);
-    return unit.hasActed ? shadow : shadow.play(this.idleAnimation(key, art));
+    return unit.hasActed ? shadow : shadow.play(this.unitAnimation(art, "side", false));
   }
 
-  private idleAnimation(key: string, art: { row: number; frames: number }): string {
-    const animation = `${key}-row-${art.row}`;
+  /** The looping animation of one view of a unit: slow while idle, fast while it moves. */
+  private unitAnimation(art: UnitArt, view: UnitView, moving: boolean): string {
+    const key = unitSheetKey(art.sheet);
+    const animation = `${key}-row-${art.row}-${view}-${moving ? "move" : "idle"}`;
     if (!this.anims.exists(animation)) {
-      const first = art.row * art.frames;
+      const first = unitFrame(art, view);
       const frames = this.anims.generateFrameNumbers(key, { start: first, end: first + art.frames - 1 });
-      this.anims.create({ key: animation, frames, frameRate: IDLE_FRAMES_PER_SECOND, repeat: -1 });
+      this.anims.create({ key: animation, frames, frameRate: moving ? MOVE_FRAMES_PER_SECOND : IDLE_FRAMES_PER_SECOND, repeat: -1 });
     }
     return animation;
+  }
+
+  /**
+   * Turns a unit's sprite and shadow to show it moving this way (08-art-pipeline §22): its side
+   * mirrored to face left or right, its front coming down the map, its back going up, all animating
+   * fast. Null puts it back at rest, side on and facing the player's way. Placeholder markers don't turn.
+   */
+  private setUnitMotion(unitId: UnitId, direction: StepDirection | null): void {
+    const look = this.unitLooks.get(unitId);
+    const image = this.unitImages.get(unitId);
+    if (!look?.art || !(image instanceof Phaser.GameObjects.Sprite)) return;
+    const { art } = look;
+    const pose = direction === null ? { view: "side" as const, flipX: look.restingFlip } : movingPose(direction, art.facings, look.restingFlip);
+    for (const sprite of look.shadow ? [image, look.shadow] : [image]) {
+      sprite.setFlipX(pose.flipX);
+      if (direction === null && look.acted) sprite.stop().setFrame(unitFrame(art, "side"));
+      else sprite.play(this.unitAnimation(art, pose.view, direction !== null), true);
+    }
   }
 
   /**
