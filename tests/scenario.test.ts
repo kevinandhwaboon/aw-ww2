@@ -10,7 +10,6 @@ import { parseScenario, type Scenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { moveDestinations } from "../src/engine/movement";
-import { propertyIncome } from "../src/engine/stats";
 import { SCENARIOS } from "../src/scenarios";
 import { makeGame } from "./helpers";
 
@@ -357,13 +356,6 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(victory).toContainEqual({ type: "captureProperties", side: "allies", properties: [suribachi, airfield1, airfield2] });
       expect([airfield1, airfield2].map((p) => terrainAt(map, p))).toEqual(["airfield", "airfield"]);
       for (const p of objectives) expect(propertyOwners).toContainEqual({ pos: p, owner: 1 });
-    });
-
-    it("the US earns half the usual income per property, and Japan the usual (04-economy §1)", () => {
-      const state = createGame({ ...iwo.setup, seed: 1 });
-      const owned = (player: number) => state.properties.filter((p) => p.owner === player).length;
-      expect(propertyIncome(state, 0)).toBe((owned(0) * state.settings.incomePerProperty) / 2);
-      expect(propertyIncome(state, 1)).toBe(owned(1) * state.settings.incomePerProperty);
     });
 
     it("Japan wins by holding out to the start of day 18", () => {

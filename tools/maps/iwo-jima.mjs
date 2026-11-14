@@ -212,9 +212,6 @@ const scenario = {
       buildable: ["infantry", "assaultInfantry", "mortar", "lightTank", "mediumTank", "artillery", "rocketArtillery", "flakGun"],
     },
   ],
-  // The US earns half the usual income: its strength is the fleet it brings, not what it builds
-  // (14-scenarios-pacific §1). Japan's income is unchanged.
-  modifiers: [{ source: "scenario:iwo-jima", stat: "income", op: "multiply", value: 0.5, scope: { players: [0] } }],
   propertyOwners: owners.map(([[x, y], owner]) => ({ pos: { x, y }, owner })),
   units: units.map((u) => ({ ...u })),
   victory: [

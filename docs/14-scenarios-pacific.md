@@ -33,7 +33,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 | Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
 
 - **Mount Suribachi's summit is a City,** standing for the observation post on the crater rim, so it can be captured: taking it plays the capture scene with the US flag going up, as on 23 February. It's ringed by Hills and bunkers.
-- **Income:** the US starts with 5 properties, Japan with 11. **Since 2026-11-14, at the developer's request, the US earns half the usual income** (500 a property, so 2,500 a day at the start; a scenario modifier on the US only), so its starting fleet and landing force do most of the work and reinforcements are a trickle. Japan earns the usual 1,000 a property. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
+- **Income:** the US starts with 5 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
 
 ### Terrain
 
@@ -79,7 +79,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 ### How it's made
 
 - `tools/maps/iwo-jima.mjs` builds the scenario file from the island polygon and lists of features, properties and units. Rerun it after editing; `tools/maps/overview.mjs iwo-jima` redraws the picture above.
-- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-18 rule, the US's half income, Suribachi's place and hills, that the US starts entirely at sea with every soldier and tank aboard a Landing Craft, that no Landing Craft can reach a beach on day 1, that every beach is next to a manned bunker or under a Japanese gun, that no Japanese gun reaches a US ship or aircraft at the start, that each Battleship can shell a manned bunker on day 1 without moving, the two Carriers with their Dive Bombers, the anchorage Airfield (the Bombers can fly home to it, a Bomber from it reaches a manned bunker in two turns, and no Japanese gun reaches it), that the Dive Bombers and Bombers can reach a manned bunker on day 1, the Japanese in bunkers, Japan's build list, and that US tanks can drive from the beaches to Japan's HQ.
+- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-18 rule, Suribachi's place and hills, that the US starts entirely at sea with every soldier and tank aboard a Landing Craft, that no Landing Craft can reach a beach on day 1, that every beach is next to a manned bunker or under a Japanese gun, that no Japanese gun reaches a US ship or aircraft at the start, that each Battleship can shell a manned bunker on day 1 without moving, the two Carriers with their Dive Bombers, the anchorage Airfield (the Bombers can fly home to it, a Bomber from it reaches a manned bunker in two turns, and no Japanese gun reaches it), that the Dive Bombers and Bombers can reach a manned bunker on day 1, the Japanese in bunkers, Japan's build list, and that US tanks can drive from the beaches to Japan's HQ.
 
 ## 2. The Slot (`the-slot`)
 
