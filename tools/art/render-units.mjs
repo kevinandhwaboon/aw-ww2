@@ -68,8 +68,27 @@ for (const { id, units, natural } of nations) {
   console.log(`${id}: ${shown.length} land units rendered`);
 }
 
-// ---- 32x32 units (08-art-pipeline §17). Not used by the game until the map moves to a 32-pixel grid.
+// ---- 32x32 units (08-art-pipeline §17). Each row runs side, front (moving down) and rear (moving
+// up) views, two frames each (§22): six 32-pixel frames across.
 const { fixedColors, teamRamps } = await import("./kit32.mjs");
+const { landViews, paratrooperViews } = await import("./facings32.mjs");
+/** Every frame of a row, left to right: side, down, up. */
+const rowFrames = (u) => [...u.frames, ...u.views.down, ...u.views.up];
+const COLUMNS = 6;
+/** Docs preview of the moving views: per unit, the side view, then front and rear, both frames. */
+function facingPreview(list, team, groundFor, file) {
+  const scale = 3, cell = 32 * scale, gap = 6, across = 2, width = 5 * (cell + 2) + gap;
+  const preview = canvas(across * width - gap, Math.ceil(list.length / across) * (cell + gap) - gap);
+  preview.px.fill(255);
+  list.forEach((u, i) => {
+    const x = (i % across) * width, y = Math.floor(i / across) * (cell + gap);
+    [u.frames[0], ...u.views.down, ...u.views.up].forEach((f, col) => {
+      stamp(preview, Array(32).fill("G".repeat(32)), { G: groundFor(u) }, x + col * (cell + 2), y, scale);
+      stamp(preview, f, { ...fixedColors, ...teamRamps[team] }, x + col * (cell + 2), y, scale);
+    });
+  });
+  savePng(preview, join(previewDir, file));
+}
 const { units: us32, paratroopers } = await import("./us-units32.mjs");
 const { units: de32 } = await import("./de-units32.mjs");
 const { units: jp32 } = await import("./jp-units32.mjs");
@@ -83,10 +102,13 @@ const big = [
 ];
 for (const { id, units, extra, teams: names } of big) {
   // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits).
-  const rows = [...landRows.map((code) => units.find((u) => u.code === code)), ...extra];
+  const rows = [
+    ...landRows.map((code) => units.find((u) => u.code === code)).map((u) => u && { ...u, views: landViews(id, u.code) }),
+    ...extra.map((u) => ({ ...u, views: paratrooperViews(u.code.slice(3)) })),
+  ];
   for (const team of names) {
-    const sheet = canvas(64, 32 * rows.length);
-    rows.forEach((u, row) => u?.frames.forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
+    const sheet = canvas(32 * COLUMNS, 32 * rows.length);
+    rows.forEach((u, row) => u && rowFrames(u).forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
     savePng(sheet, join(sheetDir, `${id}-land-32-${team}.png`));
   }
   const shown = rows.filter((u) => u !== undefined);
@@ -101,6 +123,7 @@ for (const { id, units, extra, teams: names } of big) {
     });
   });
   savePng(preview, join(previewDir, `${id}-land-units-32.png`));
+  facingPreview(shown, names[0], () => grass, `${id}-land-facings-32.png`);
   console.log(`${id}: ${shown.length} land units rendered at 32x32`);
 }
 
@@ -118,8 +141,8 @@ for (const { id, air, naval, teams: names } of [
     if (list.length === 0) continue;
     const rows = order.map((code) => list.find((u) => u.code === code));
     for (const team of names) {
-      const sheet = canvas(64, 32 * rows.length);
-      rows.forEach((u, row) => u?.frames.forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
+      const sheet = canvas(32 * COLUMNS, 32 * rows.length);
+      rows.forEach((u, row) => u && rowFrames(u).forEach((f, col) => stamp(sheet, f, { ...fixedColors, ...teamRamps[team] }, col * 32, row * 32)));
       savePng(sheet, join(sheetDir, `${id}-${kind}-32-${team}.png`));
     }
   }
@@ -136,5 +159,6 @@ for (const { id, air, naval, teams: names } of [
     });
   });
   savePng(preview, join(previewDir, naval.length ? `${id}-air-naval-32.png` : `${id}-air-32.png`));
+  facingPreview(shown, names[0], (u) => (air.includes(u) ? grass : "#3f86c8"), naval.length ? `${id}-air-naval-facings-32.png` : `${id}-air-facings-32.png`);
   console.log(`${id}: ${air.length} aircraft and ${naval.length} ships rendered at 32x32`);
 }

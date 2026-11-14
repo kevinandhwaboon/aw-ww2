@@ -6,6 +6,11 @@
       "team": "olive",
       "path": "../../units/us-land-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -34,6 +39,11 @@
       "team": "red",
       "path": "../../units/us-land-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -62,6 +72,11 @@
       "team": "blue",
       "path": "../../units/us-land-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -90,6 +105,11 @@
       "team": "olive",
       "path": "../../units/de-land-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -112,6 +132,11 @@
       "team": "red",
       "path": "../../units/de-land-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -134,6 +159,11 @@
       "team": "blue",
       "path": "../../units/de-land-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -156,6 +186,11 @@
       "team": "olive",
       "path": "../../units/jp-land-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -178,6 +213,11 @@
       "team": "red",
       "path": "../../units/jp-land-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -200,6 +240,11 @@
       "team": "blue",
       "path": "../../units/jp-land-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -222,6 +267,11 @@
       "team": "olive",
       "path": "../../units/su-land-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -244,6 +294,11 @@
       "team": "red",
       "path": "../../units/su-land-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -266,6 +321,11 @@
       "team": "blue",
       "path": "../../units/su-land-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -288,6 +348,11 @@
       "team": "olive",
       "path": "../../units/us-air-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -302,6 +367,11 @@
       "team": "red",
       "path": "../../units/us-air-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -316,6 +386,11 @@
       "team": "blue",
       "path": "../../units/us-air-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -330,6 +405,11 @@
       "team": "olive",
       "path": "../../units/de-air-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -342,6 +422,11 @@
       "team": "red",
       "path": "../../units/de-air-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -354,6 +439,11 @@
       "team": "blue",
       "path": "../../units/de-air-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -366,6 +456,11 @@
       "team": "olive",
       "path": "../../units/jp-air-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -380,6 +475,11 @@
       "team": "red",
       "path": "../../units/jp-air-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -394,6 +494,11 @@
       "team": "blue",
       "path": "../../units/jp-air-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -408,6 +513,11 @@
       "team": "olive",
       "path": "../../units/su-air-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -420,6 +530,11 @@
       "team": "red",
       "path": "../../units/su-air-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -432,6 +547,11 @@
       "team": "blue",
       "path": "../../units/su-air-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -444,6 +564,11 @@
       "team": "olive",
       "path": "../../units/us-naval-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -459,6 +584,11 @@
       "team": "red",
       "path": "../../units/us-naval-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -474,6 +604,11 @@
       "team": "blue",
       "path": "../../units/us-naval-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -489,6 +624,11 @@
       "team": "olive",
       "path": "../../units/de-naval-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         null,
@@ -503,6 +643,11 @@
       "team": "red",
       "path": "../../units/de-naval-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         null,
@@ -517,6 +662,11 @@
       "team": "blue",
       "path": "../../units/de-naval-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         null,
@@ -531,6 +681,11 @@
       "team": "olive",
       "path": "../../units/jp-naval-32-olive.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -546,6 +701,11 @@
       "team": "red",
       "path": "../../units/jp-naval-32-red.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -561,6 +721,11 @@
       "team": "blue",
       "path": "../../units/jp-naval-32-blue.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",
@@ -576,6 +741,11 @@
       "team": "grey",
       "path": "../../units/de-land-32-grey.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -598,6 +768,11 @@
       "team": "khaki",
       "path": "../../units/jp-land-32-khaki.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -620,6 +795,11 @@
       "team": "green4bo",
       "path": "../../units/su-land-32-green4bo.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "infantry",
@@ -642,6 +822,11 @@
       "team": "grey",
       "path": "../../units/de-air-32-grey.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -654,6 +839,11 @@
       "team": "khaki",
       "path": "../../units/jp-air-32-khaki.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -668,6 +858,11 @@
       "team": "green4bo",
       "path": "../../units/su-air-32-green4bo.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "fighter",
@@ -680,6 +875,11 @@
       "team": "grey",
       "path": "../../units/de-naval-32-grey.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         null,
@@ -694,6 +894,11 @@
       "team": "khaki",
       "path": "../../units/jp-naval-32-khaki.png",
       "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
       "frames": 2,
       "rows": [
         "battleship",

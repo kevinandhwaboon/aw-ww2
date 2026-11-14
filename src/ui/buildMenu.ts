@@ -20,7 +20,7 @@ function unitPicture(player: Player | undefined, type: UnitTypeId): HTMLElement 
   if (art && sheet) {
     const tile = TILE_SIZE * SPRITE_SCALE;
     picture.style.backgroundImage = `url("${packFileUrl(sheet.path)}")`;
-    picture.style.backgroundSize = `${art.frames * tile}px auto`;
+    picture.style.backgroundSize = `${art.frames * art.facings.length * tile}px auto`;
     picture.style.backgroundPosition = `0 ${-art.row * tile}px`;
     if (player?.facing === "left") picture.style.transform = "scaleX(-1)";
   } else if (player) {

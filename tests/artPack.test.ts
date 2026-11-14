@@ -15,6 +15,7 @@ import {
   setActivePack,
   setGameNations,
   terrainName,
+  unitFrame,
   unitName,
 } from "../src/game/artPack";
 import defaultPack from "../public/assets/packs/default/pack.json";
@@ -92,6 +93,9 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["zero frames", { unitSheets: [sheet({ frames: 0 })] }, /whole number/],
     ["a frame size other than 16 or 32", { unitSheets: [sheet({ frameSize: 24 })] }, /16 or 32/],
     ["paratrooper rows that aren't row numbers", { unitSheets: [sheet({ paratroopers: ["spade"] })] }, /row numbers/],
+    ["views that don't start with the side view", { unitSheets: [sheet({ facings: ["down", "side"] })] }, /"side" first/],
+    ["an unknown view", { unitSheets: [sheet({ facings: ["side", "diagonal"] })] }, /"side" first/],
+    ["a view listed twice", { unitSheets: [sheet({ facings: ["side", "up", "up"] })] }, /once each/],
     ["an unknown terrain", { terrain: { path: "t.png", tiles: { lava: 0 } } }, /unknown terrain/],
     ["an empty variant list", { terrain: { path: "t.png", tiles: { plains: [] } } }, /list of them/],
     ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
@@ -142,6 +146,12 @@ describe("the packs that ship with the game", () => {
         const usLand = unitSheet.nation === "us" && unitSheet.path.includes("-land-");
         expect(unitSheet.paratroopers).toEqual(usLand ? [13, 14, 15, 16] : []);
       }
+    }
+  });
+
+  it("every shipped unit sheet has front and back views as well as side views (08-art-pipeline §22)", () => {
+    for (const raw of [defaultPack, nightOps]) {
+      for (const unitSheet of parseArtPack(raw).unitSheets) expect(unitSheet.facings, unitSheet.path).toEqual(["side", "down", "up"]);
     }
   });
 
@@ -211,8 +221,29 @@ describe("finding a unit's art", () => {
   });
 
   it("picks the sheet for the unit's nation and its player's team", () => {
-    expect(findUnitArt(pack, "us", 0, "mediumTank")).toEqual({ sheet: 0, row: 2, frames: 2, frameSize: 16 });
-    expect(findUnitArt(pack, "us", 1, "infantry")).toEqual({ sheet: 1, row: 0, frames: 2, frameSize: 16 });
+    expect(findUnitArt(pack, "us", 0, "mediumTank")).toEqual({ sheet: 0, row: 2, frames: 2, frameSize: 16, facings: ["side"] });
+    expect(findUnitArt(pack, "us", 1, "infantry")).toEqual({ sheet: 1, row: 0, frames: 2, frameSize: 16, facings: ["side"] });
+  });
+
+  it("a sheet holds only side views unless it lists more (08-art-pipeline §22)", () => {
+    expect(pack.unitSheets[0]?.facings).toEqual(["side"]);
+  });
+
+  it("each row runs the side, front and back views a sheet lists, each with its frames (08-art-pipeline §22)", () => {
+    const moving = parseArtPack({ name: "x", unitSheets: [sheet({ team: "olive", facings: ["side", "down", "up"] })] });
+    const tank = findUnitArt(moving, "us", 0, "mediumTank");
+    if (!tank) throw new Error("no art");
+    // Row 2, six frames a row: side 12–13, front 14–15, back 16–17.
+    expect([unitFrame(tank, "side"), unitFrame(tank, "side", 1)]).toEqual([12, 13]);
+    expect([unitFrame(tank, "down"), unitFrame(tank, "down", 1)]).toEqual([14, 15]);
+    expect([unitFrame(tank, "up"), unitFrame(tank, "up", 1)]).toEqual([16, 17]);
+  });
+
+  it("a view a sheet doesn't have is drawn with the side view (08-art-pipeline §22)", () => {
+    const tank = findUnitArt(pack, "us", 0, "mediumTank");
+    if (!tank) throw new Error("no art");
+    expect(unitFrame(tank, "down")).toBe(unitFrame(tank, "side"));
+    expect(unitFrame(tank, "up", 1)).toBe(unitFrame(tank, "side", 1));
   });
 
   it("an air-dropped Infantry is drawn as a paratrooper, its suit picked by unit id (08-art-pipeline §17)", () => {
