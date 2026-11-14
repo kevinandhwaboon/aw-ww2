@@ -199,21 +199,19 @@ describe("built-in scenarios (00-master-design §8)", () => {
     const bastogne = SCENARIOS.find((s) => s.id === "bastogne");
     if (!bastogne) throw new Error("missing scenario");
     const { map, units, victory, weather } = bastogne.setup;
-    const town = victory?.find((v) => v.type === "captureProperties")?.properties[0];
-    if (!town) throw new Error("missing objective");
+    const town = P(14, 13); // the town of Bastogne
     const roadsOut = [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx, dy]) => {
       const t = terrainAt(map, P(town.x + (dx ?? 0), town.y + (dy ?? 0)));
       return t === "road" || t === "bridge";
     });
 
-    it("Germany wins by taking the town of Bastogne, which the US holds at the start", () => {
-      expect(terrainAt(map, town)).toBe("city");
-      expect(bastogne.setup.propertyOwners).toContainEqual({ pos: town, owner: 0 });
-      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [town] });
+    it("both sides win the same way: capture the enemy HQ or destroy every enemy unit, with no town to take or days to hold", () => {
+      expect(victory).toEqual([{ type: "hqCapture" }, { type: "rout" }]);
     });
 
-    it("the US wins by holding out to the start of day 12", () => {
-      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 12 });
+    it("the US holds the town of Bastogne at the start", () => {
+      expect(terrainAt(map, town)).toBe("city");
+      expect(bastogne.setup.propertyOwners).toContainEqual({ pos: town, owner: 0 });
     });
 
     it("Bastogne is a crossroads: roads leave it on every side", () => {

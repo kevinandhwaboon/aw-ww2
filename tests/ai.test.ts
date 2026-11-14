@@ -671,10 +671,10 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   };
   const everyone = (state: GameState) => state.players.map(() => greedy);
 
-  // Maps where both sides can reach each other by land, and Midway, whose day limit ends every game
-  // by day 12. On the others, winning needs landings: the AI makes them (09-ai §4b), but those games
-  // often run past 40 days.
-  const LAND_MAPS = ["bastogne", "iwo-jima", "midway"];
+  // Maps whose day limit ends every game: Iwo Jima by day 15, Midway by day 12. On the others the
+  // AIs must defeat each other outright, landing troops where needed (09-ai §4b), and those games
+  // often run past 40 days (Bastogne 59 to over 80).
+  const LAND_MAPS = ["iwo-jima", "midway"];
 
   for (const id of LAND_MAPS) {
     it(`${id}: a game between AIs ends with a winner within 40 days, with no AI bugs`, async () => {
@@ -729,11 +729,11 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   }, 120_000);
 
   it("same seed, same game: an AI vs AI game replays exactly", async () => {
-    const first = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 15);
-    const second = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 15);
+    const first = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 10);
+    const second = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 10);
     expect(second.commands).toEqual(first.commands);
     expect(second.state).toEqual(first.state);
-  });
+  }, 60_000);
 
   it("thinks for under 100 ms per command on the largest map, Normandy (09-ai §6)", async () => {
     const state = start("normandy");

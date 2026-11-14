@@ -286,7 +286,7 @@ outside("mediumTank", US, "Arlon");
 outside("halftrack", US, "Arlon");
 
 // Germany: the main attack massed behind the Our. Tanks start short of fuel (13-scenarios-ardennes §1).
-const LOW_FUEL = { heavyTank: 30, mediumTank: 40 };
+const LOW_FUEL = { heavyTank: 12, mediumTank: 17 }; // of 20 and 30
 const tank = (type, name) => outside(type, GERMANY, name, { fuel: LOW_FUEL[type] });
 tank("heavyTank", "Prüm");
 tank("heavyTank", "Dasburg");
@@ -316,7 +316,7 @@ const scenario = {
   id: "bastogne",
   name: "Bastogne",
   description:
-    "December 1944. Germany's last great offensive bursts out of the snowy Eifel. Its tanks are strong but short of fuel, and the snow keeps them on the roads. Germany wins by taking the crossroads town of Bastogne or the US HQ at Arlon. The US wins by holding out to the start of day 12. Snow falls until day 6; then the skies clear and US aircraft can fly at full range.",
+    "December 1944. Germany's last great offensive bursts out of the snowy Eifel. Its tanks are strong but short of fuel, and the snow keeps them on the roads, which meet at the crossroads town of Bastogne. Capture the enemy HQ or destroy every enemy unit to win. Snow falls until day 6; then the skies clear and US aircraft can fly at full range.",
   map: grid.map((row) => row.join("")),
   players: [
     { name: "US", nation: "us", funds: 4000, buildable: [...LAND, "fighter", "bomber", "transportAircraft"] },
@@ -324,12 +324,8 @@ const scenario = {
   ],
   propertyOwners: PLACES.filter(([, , , , owner]) => owner !== null).map(([name, , , , owner]) => ({ pos: placed.get(name), owner })),
   units,
-  victory: [
-    { type: "hqCapture" },
-    { type: "rout" },
-    { type: "captureProperties", side: "axis", properties: [placed.get("Bastogne")] },
-    { type: "surviveDays", side: "allies", days: 12 },
-  ],
+  // Plain defeat only, at the developer's request (13-scenarios-ardennes, Victory).
+  victory: [{ type: "hqCapture" }, { type: "rout" }],
   weather: {
     season: "winter",
     forecast: [{ fromDay: 1, weather: "snow" }, { fromDay: 6, weather: "clear" }],

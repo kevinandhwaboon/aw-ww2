@@ -28,7 +28,7 @@ In December 1944 Germany attacked through the snowy Ardennes forest, hoping bad 
 | HQ | Arlon | Bitburg | |
 | Factories | Neufchâteau, Marche | Prüm, Neuerburg | |
 | Airfield | Libramont | none | |
-| Cities | **Bastogne** (objective), Martelange, Sibret, Vaux-sur-Sûre, St. Vith, Clervaux, Wiltz, Ettelbruck | Dasburg, Arzfeld, Waxweiler | Houffalize, La Roche, Noville, Vianden |
+| Cities | **Bastogne** (the key crossroads), Martelange, Sibret, Vaux-sur-Sûre, St. Vith, Clervaux, Wiltz, Ettelbruck | Dasburg, Arzfeld, Waxweiler | Houffalize, La Roche, Noville, Vianden |
 
 - **Income:** the US starts with 12 properties, Germany with 6. The US front-line towns along the Our (St. Vith, Clervaux, Wiltz, Ettelbruck) are close to the German start and can be taken quickly.
 - **Germany has no airfield** and can't build aircraft: the Luftwaffe barely flew in the battle. The US can build aircraft from Libramont, at half range while it snows (12-weather §3).
@@ -55,14 +55,13 @@ In December 1944 Germany attacked through the snowy Ardennes forest, hoping bad 
 
 ### Victory
 
-- **Germany** wins by capturing **Bastogne** (`captureProperties`) or the US HQ at Arlon.
-- **The US** wins by still being in the game when **day 12** starts (`surviveDays`), or by capturing Germany's HQ at Bitburg.
-- Rout is on: a side that loses every unit loses. Resign is always available.
+- **Plain defeat, the same for both sides** (since 2026-11-14, at the developer's request): capture the enemy HQ (the US HQ at Arlon, Germany's at Bitburg) or destroy every enemy unit (rout). Resign is always available.
+- Until 2026-11-14 the sides had different objectives: Germany won by capturing Bastogne, the US by holding out to day 12. Removed as too lopsided. Bastogne is still the crossroads every road runs through, so it stays the town to fight over.
 
 ### How it's made
 
 - `tools/maps/bastogne.mjs` generates the scenario file from real longitude/latitude points for towns and rivers, routing roads between towns along the cheapest path. Rerun it after editing; `tools/maps/overview.mjs bastogne` redraws the picture above.
-- Tests (`tests/scenario.test.ts`, "Bastogne") check the objective and its owner, the day-12 survival rule, the crossroads, the weather, Germany's bigger army and low fuel, who can build aircraft, and that German tanks can drive to Bastogne.
+- Tests (`tests/scenario.test.ts`, "Bastogne") check the plain HQ-capture-or-rout victory, who holds Bastogne, the crossroads, the weather, Germany's bigger army and low fuel, who can build aircraft, and that German tanks can drive to Bastogne.
 
 ## 2. Known gaps
 
