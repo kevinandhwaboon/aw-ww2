@@ -417,14 +417,23 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const bb of battleships) expect(manned.some((m) => dist(bb.pos, m) >= min && dist(bb.pos, m) <= max)).toBe(true);
     });
 
-    it("two US Carriers start offshore, each carrying two Dive Bombers, and the US has no airfield of its own (05-supply-transport §10)", () => {
+    it("two US Carriers start offshore, each carrying two Dive Bombers (05-supply-transport §10)", () => {
       const carriers = usUnits.filter((u) => u.type === "carrier");
       expect(carriers).toHaveLength(2);
       for (const c of carriers) {
         expect(terrainAt(map, c.pos)).toBe("sea");
         expect(c.cargo?.map((x) => x.type)).toEqual(["diveBomber", "diveBomber"]);
       }
-      expect(properties(iwo, "airfield", 0)).toHaveLength(0);
+    });
+
+    it("the US anchorage has one Airfield, standing for the Marianas: the Bombers can fly home to it, and a Bomber from it reaches a manned bunker in two turns", () => {
+      const airfields = properties(iwo, "airfield", 0);
+      expect(airfields).toHaveLength(1);
+      const [home] = airfields;
+      if (!home) throw new Error("missing airfield");
+      for (const b of usUnits.filter((u) => u.type === "bomber")) expect(dist(b.pos, home.pos)).toBeLessThanOrEqual(UNITS.bomber.movePoints * 2);
+      expect(manned.some((m) => dist(home.pos, m) <= UNITS.bomber.movePoints * 2 + 1)).toBe(true);
+      for (const g of guns) expect(dist(g.pos, home.pos)).toBeGreaterThan(UNITS[g.type].range?.max ?? 0);
     });
 
     it("each Carrier's Dive Bombers and each US Bomber can reach a manned bunker on the first day", () => {

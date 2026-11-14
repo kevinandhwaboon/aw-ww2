@@ -20,7 +20,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 - **36 × 26 squares**, about 300 m each. North is up. The island runs from Mount Suribachi at the south-west tip to Kitano Point and Tachiiwa Point in the north-east, about 27 squares long.
 - The outline is a polygon traced from the real map in `tools/maps/iwo-jima.mjs`. The neck behind the landing beaches is 3 to 4 squares wide, as the real one was under a kilometre.
-- **The US anchorage** is a block of land in the south-east corner. It stands for the transport area offshore, which the game can't show as ships that build units: it holds the US HQ, a Factory and two Ports, where reinforcements are built. No US unit starts on it. The fleet itself is real ships offshore (below); the anchorage Airfield that once stood in for the carriers is gone (2026-11-09). It's about 12 squares, two Landing Craft turns, from the beaches.
+- **The US anchorage** is a block of land in the south-east corner. It stands for the transport area offshore, which the game can't show as ships that build units, and for the Marianas, where the bombers flew from: it holds the US HQ, a Factory, two Ports and an Airfield. No US unit starts on it. The fleet itself is real ships offshore (below). An anchorage Airfield standing in for the carriers was removed on 2026-11-09 when real Carriers arrived; **since 2026-11-14, at the developer's request, it's back as the Marianas airfield**, so Bombers have somewhere to refuel and rearm. It's in the anchorage's north-west corner (28,19), about 13 squares (two Bomber turns) from the nearest manned bunker. It's about 12 squares, two Landing Craft turns, from the beaches.
 
 ### Places
 
@@ -28,12 +28,12 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 |---|---|---|
 | HQ | The anchorage | Kuribayashi's command post near Kitano Point |
 | Factory | The anchorage | The supply depot north of Motoyama |
-| Airfields | none | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
+| Airfields | The anchorage (stands for the Marianas) | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
 | Ports | Two at the anchorage | none |
 | Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
 
 - **Mount Suribachi's summit is a City,** standing for the observation post on the crater rim, so it can be captured: taking it plays the capture scene with the US flag going up, as on 23 February. It's ringed by Hills and bunkers.
-- **Income:** the US starts with 4 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
+- **Income:** the US starts with 5 properties, Japan with 11. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
 
 ### Terrain
 
@@ -50,7 +50,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 - **US** (6,000 funds), all at sea south-east of the island:
   - **Bombardment group:** three Battleships, each starting within its 6-square reach of a manned beach bunker, and two Destroyers.
   - **Two Carriers**, each carrying two Dive Bombers (at 26,15 and 24,16), close enough for their Dive Bombers to reach a beach bunker on day 1. No Torpedo Bombers: Japan has no ships here. Each Dive Bomber has only 1 bomb before it has to land on a Carrier to rearm.
-  - **Two Bombers** already over the sea, standing for the B-24 raids flown from the Marianas before the landing. The US has no airfield, so they can't refuel or rearm until it takes Airfield No. 1 or No. 2: two bombs each and about a week of fuel. Lost aircraft can't be replaced before then either.
+  - **Two Bombers** already over the sea, standing for the B-24 raids flown from the Marianas before the landing. They have two bombs each and fly back to the anchorage Airfield (the Marianas) to refuel and rearm: about two turns each way, so each Bomber strikes roughly once every four days. The US can build more aircraft there too.
   - **The landing force, all aboard six Landing Craft**, two units each: five Infantry, three Assault Infantry, two Medium Tanks, an Artillery and a Halftrack. The craft start more than 6 squares (a Landing Craft's move) from every beach, so none can land on day 1: day 1 is bombardment and the approach, and the first troops go ashore on day 2 at the earliest (and can't act until day 3, 05-supply-transport §8).
   - **No Japanese gun can reach any US ship or aircraft at the start**, so the first strike is the US's.
 - **Japan** (3,000 funds), 40 units, its foot soldiers almost all in bunkers:
@@ -79,7 +79,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 ### How it's made
 
 - `tools/maps/iwo-jima.mjs` builds the scenario file from the island polygon and lists of features, properties and units. Rerun it after editing; `tools/maps/overview.mjs iwo-jima` redraws the picture above.
-- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-18 rule, Suribachi's place and hills, that the US starts entirely at sea with every soldier and tank aboard a Landing Craft, that no Landing Craft can reach a beach on day 1, that every beach is next to a manned bunker or under a Japanese gun, that no Japanese gun reaches a US ship or aircraft at the start, that each Battleship can shell a manned bunker on day 1 without moving, the two Carriers with their Dive Bombers and no US airfield, that the Dive Bombers and Bombers can reach a manned bunker on day 1, the Japanese in bunkers, Japan's build list, and that US tanks can drive from the beaches to Japan's HQ.
+- Tests (`tests/scenario.test.ts`, "Iwo Jima") check the nations, the objectives and their owner, the day-18 rule, Suribachi's place and hills, that the US starts entirely at sea with every soldier and tank aboard a Landing Craft, that no Landing Craft can reach a beach on day 1, that every beach is next to a manned bunker or under a Japanese gun, that no Japanese gun reaches a US ship or aircraft at the start, that each Battleship can shell a manned bunker on day 1 without moving, the two Carriers with their Dive Bombers, the anchorage Airfield (the Bombers can fly home to it, a Bomber from it reaches a manned bunker in two turns, and no Japanese gun reaches it), that the Dive Bombers and Bombers can reach a manned bunker on day 1, the Japanese in bunkers, Japan's build list, and that US tanks can drive from the beaches to Japan's HQ.
 
 ## 2. The Slot (`the-slot`)
 
@@ -208,7 +208,7 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 ## 4. Known gaps (Iwo Jima)
 
 - Carrier numbers are a first guess, to tune after playtests. Japan has no way to reach Carriers out of artillery range, as historically.
-- Balance is a first guess: whether 17 days is enough for the US to bombard, land and take the objectives, and whether Japan's income is too high for a garrison that was cut off. AI vs AI (seeds 1 to 5 and 7, 2026-11-14): the US shells and bombs from day 1, lands 13 to 15 craft-loads and cuts Japan from 40 units to 16 to 27, but Japan holds out to day 18 every time.
+- Balance is a first guess: whether 17 days is enough for the US to bombard, land and take the objectives, and whether Japan's income is too high for a garrison that was cut off. AI vs AI (seeds 1 to 5 and 7, 2026-11-14, with the Marianas airfield): the US shells and bombs from day 1, lands 13 to 17 craft-loads and cuts Japan from 40 units to as few as 20 to 25, but Japan holds out to day 18 every time.
 - Caves and tunnels (Japanese units reappearing behind the front) aren't a rule.
 - The pre-landing bombardment is played out in the first days, not a special rule: Battleships and bombers soften the beach line before the Landing Craft go in. There's no beach-obstacle terrain yet (02-terrain §4), so nothing has to be cleared from the sand itself.
-- The Greedy AI plays it (09-ai §4b): as the US it bombards, launches and lands, but doesn't yet hold back its Landing Craft until the beach line is broken.
+- The Greedy AI plays it (09-ai §4b): as the US it bombards, launches and lands, but doesn't yet hold back its Landing Craft until the beach line is broken, and it uses each Bomber for about one strike a game instead of flying it home to rearm.

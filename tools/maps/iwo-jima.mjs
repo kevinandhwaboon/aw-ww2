@@ -19,7 +19,8 @@ const ISLAND = [
 ];
 
 // The US staging area: a stand-in for the transport groups offshore, south-east of the island, where
-// reinforcements are built. The fleet itself is real ships (see Forces).
+// reinforcements are built, and for the Marianas, whose bombers fly from its Airfield. The fleet
+// itself is real ships (see Forces).
 const ANCHORAGE = [[28, 19], [34, 19], [34, 24], [28, 24]];
 
 function inside(poly, x, y) {
@@ -97,6 +98,7 @@ const P = {
   usFactory: [30, 21],
   usPort1: [28, 20],
   usPort2: [29, 23],
+  usAirfield: [28, 19], // Stands for the bomber bases in the Marianas
 };
 set(...P.suribachi, "C");
 set(...P.airfield1, "A");
@@ -109,6 +111,7 @@ set(...P.usHq, "Q");
 set(...P.usFactory, "f");
 set(...P.usPort1, "P");
 set(...P.usPort2, "P");
+set(...P.usAirfield, "A");
 // The runways run on from each airfield as open ground.
 each([[12, 13], [14, 12], [18, 10], [20, 8], [26, 8]], ".");
 
@@ -146,8 +149,8 @@ const units = [
   // (05-supply-transport §10). Japan has no ships here, so no Torpedo Bombers.
   us("carrier", 26, 15, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
   us("carrier", 24, 16, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
-  // Two Bombers flown in from the Marianas, already over the sea. The US has no airfield, so they
-  // can't refuel or rearm until it takes Airfield No. 1 or No. 2.
+  // Two Bombers flown in from the Marianas, already over the sea. They fly back to the anchorage
+  // Airfield (the Marianas) to refuel and rearm, two turns each way.
   us("bomber", 23, 17), us("bomber", 21, 19),
   // The landing force, all aboard six Landing Craft: five Infantry, three Assault Infantry, two
   // Medium Tanks, an Artillery and a Halftrack.
@@ -180,7 +183,7 @@ const units = [
 ];
 
 const owners = [
-  [P.usHq, 0], [P.usFactory, 0], [P.usPort1, 0], [P.usPort2, 0],
+  [P.usHq, 0], [P.usFactory, 0], [P.usPort1, 0], [P.usPort2, 0], [P.usAirfield, 0],
   [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1], [P.minami, 1],
   [P.nishi, 1], [P.kita, 1], [P.higashi, 1], [P.depot, 1], [P.hq, 1],
 ];
