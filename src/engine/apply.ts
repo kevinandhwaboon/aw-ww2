@@ -7,7 +7,7 @@ import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from 
 import { UNIT_TYPE_IDS } from "./data/units";
 import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedCaptures } from "./economy";
 import { inBounds, type Point } from "./map";
-import { checkPath } from "./movement";
+import { ambushOnPath, checkPath } from "./movement";
 import { unitAt, type GameState, type PlayerId, type Unit } from "./state";
 import * as stats from "./stats";
 import {
@@ -24,6 +24,7 @@ import {
   unloadTiles,
 } from "./transport";
 import { diveProblem, surfaceProblem } from "./submarine";
+import { isHiddenFrom } from "./visibility";
 import { startTurn } from "./turn";
 import { checkAfterCapture, checkAtDayStart, checkAtTurnEnd, defeatPlayers } from "./victory";
 
@@ -96,6 +97,13 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   const boarding = action.type === "load" || action.type === "join";
   const check = checkPath(state, unit, path, { throughOnly: boarding });
   if (!check.ok) return reject("invalidPath", check.reason);
+  // A unit can only attack what its player could see when giving the order (05-supply-transport §9).
+  if (action.type === "attack") {
+    const target = state.units.find((u) => u.id === action.target);
+    if (target && isHiddenFrom(state, target, unit.owner)) return reject("invalidTarget", `Can't attack unit ${action.target}: you can't see it`);
+  }
+  const ambush = ambushOnPath(state, unit, path);
+  if (ambush) return ambushed(state, unit, ambush.path, ambush.by);
 
   const events: GameEvent[] = [];
   const end = path[path.length - 1] ?? unit.pos;
@@ -181,6 +189,20 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
 }
 
 /**
+ * The unit ran into a submarine it couldn't see (05-supply-transport §9): it stops on the last tile
+ * it could, burns fuel for what it moved, and its turn is over whatever it was ordered to do.
+ */
+function ambushed(state: GameState, unit: Unit, path: readonly Point[], by: Unit): ApplyResult {
+  const check = checkPath(state, unit, path);
+  const fuelUsed = check.ok ? stats.moveFuel(state, unit, check.cost) : 0;
+  const moved: Unit = { ...unit, pos: path[path.length - 1] ?? unit.pos, fuel: unit.fuel - fuelUsed, hasActed: true };
+  const events: GameEvent[] = path.length > 0 ? [{ type: "unitMoved", unitId: unit.id, path: [unit.pos, ...path], fuelUsed }] : [];
+  events.push({ type: "unitAmbushed", unitId: unit.id, by: by.id, pos: by.pos });
+  const after = clearAbandonedCaptures({ ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) });
+  return { ok: true, state: after, events };
+}
+
+/**
  * An aircraft takes off from a Carrier and makes a normal move from the Carrier's tile
  * (05-supply-transport §10). The Carrier can't move for the rest of the turn; once nothing aboard
  * can still take off, it's done for the turn.
@@ -201,8 +223,13 @@ function launch(state: GameState, command: Extract<Command, { type: "launch" }>)
   if (!out) return reject("cannotLaunch", "Can't launch: that aircraft isn't aboard");
   const moved = move(out, { type: "move", unitId, path, action });
   if (!moved.ok) return moved;
+  // Ambushed before it could get clear of the Carrier: it stays aboard, done for the turn.
+  const stuck = moved.state.units.find((u) => u.id === unitId && u.pos.x === carrier.pos.x && u.pos.y === carrier.pos.y);
+  const landed = stuck
+    ? moved.state.units.filter((u) => u.id !== unitId).map((u) => (u.id === carrierId ? { ...u, cargo: [...u.cargo, stuck] } : u))
+    : moved.state.units;
 
-  const units = moved.state.units
+  const units = landed
     .map((u) => (u.id === carrierId && launchable(u).length === 0 ? { ...u, hasActed: true } : u))
     .sort((a, b) => a.id - b.id);
   return {

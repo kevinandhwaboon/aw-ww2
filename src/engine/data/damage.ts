@@ -77,7 +77,7 @@ const VS_OTHER: Record<ArmedUnitId, string> = {
   fighter:         "55   100  100  100  100  —    —    —    5    10   —    —",
   bomber:          "—    —    —    —    —    75   85   95   95   95   85   55",
   diveBomber:      "—    —    —    —    —    40   45   50   50   50   45   30",
-  torpedoBomber:   "—    —    —    —    —    120  120  —    120  120  120  —",
+  torpedoBomber:   "—    —    —    —    —    60   60   —    60   60   60   —",
   battleship:      "—    —    —    —    —    50   85   95   95   95   60   55",
   destroyer:       "55*  65*  105* 65*  65*  10   40   90   50   85   10   20",
   submarine:       "—    —    —    —    —    55   25   55   95   75   75   —",

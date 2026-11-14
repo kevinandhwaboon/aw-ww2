@@ -124,6 +124,10 @@ export class MapPlayback {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
       }
+      if (event.type === "unitAmbushed") {
+        // The submarine it ran into comes into view (05-supply-transport §9).
+        await this.floatLabel(event.pos, "AMBUSH!", packColor("labelWarning"));
+      }
       if (event.type === "unitDived" || event.type === "unitSurfaced") {
         // The sprite has already walked to where the submarine dived or surfaced.
         const sprite = this.unitSprites.get(event.unitId);
@@ -154,6 +158,7 @@ export class MapPlayback {
       case "propertyCaptured":
       case "unitOutOfFuel":
       case "unitLaunched":
+      case "unitAmbushed":
         return [event.pos];
       case "unitJoined": {
         const target = this.state.units.find((u) => u.id === event.targetId);
@@ -259,6 +264,9 @@ export class MapPlayback {
     const end = fullPath[fullPath.length - 1];
     if (!sprite || !end) return;
     if (sprite.x === end.x * TILE_SIZE && sprite.y === end.y * TILE_SIZE) return;
+    // Previewed somewhere it didn't get to (it was ambushed on the way): start again from the beginning.
+    const start = fullPath[0];
+    if (start) sprite.setPosition(start.x * TILE_SIZE, start.y * TILE_SIZE);
     // A soldier leaving a garrisoned bunker comes out into view.
     this.unitImages.get(unitId)?.setVisible(true);
     for (const p of fullPath.slice(1)) {

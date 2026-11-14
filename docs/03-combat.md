@@ -126,7 +126,7 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 | Ftr | 55 | 100 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | — |
 | Bmr | — | — | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 55 |
 | Dive | — | — | — | — | — | 40 | 45 | 50 | 50 | 50 | 45 | 30 |
-| TBmr | — | — | — | — | — | 120 | 120 | — | 120 | 120 | 120 | — |
+| TBmr | — | — | — | — | — | 60 | 60 | — | 60 | 60 | 60 | — |
 | BB | — | — | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 55 |
 | DD | 55* | 65* | 105* | 65* | 65* | 10 | 40 | 90 | 50 | 85 | 10 | 20 |
 | Sub | — | — | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | — |
@@ -140,7 +140,7 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 - **Assault Infantry** is the best ground unit vs. fortifications (65).
 - **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
 - **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
-- **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 120 against every surface ship and nothing else (decided 2026-11-09, first guesses to tune after playtests). Air defenses hit both as hard as they hit a Bomber.
+- **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 60 against every surface ship and nothing else (decided 2026-11-09 at 120; halved on 2026-11-14 at the developer's request, because one torpedo sank a full-strength Carrier. Now a full-strength Torpedo Bomber leaves a ship at sea on about 4 HP, and two sink it). Air defenses hit both as hard as they hit a Bomber.
 - **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It has no weapon, so it never counters.
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
 

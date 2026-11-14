@@ -29,6 +29,8 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
     }
     case "unitWaited":
       return `${unitName(e.unitId)} waits`;
+    case "unitAmbushed":
+      return `${unitName(e.unitId)} was ambushed by ${unitName(e.by)} at (${e.pos.x}, ${e.pos.y}) and stopped`;
     case "combat": {
       const who = (c: Combatant) => `${name(c.owner)} ${unitTypeName(c.type)}`;
       const tag = (c: Combatant) => (c.destroyed ? " (destroyed)" : c.promotedTo ? ` (now ${c.promotedTo})` : "");

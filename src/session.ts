@@ -7,7 +7,8 @@ import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
-import { unitAt, type GameState } from "./engine/state";
+import { unitAt, type GameState, type PlayerId } from "./engine/state";
+import { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./engine/visibility";
 import { packColor } from "./game/artPack";
 import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
@@ -64,6 +65,20 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * by any attack, because luck reveals information that a redo could exploit.
    */
   let history: GameState[] = [];
+  /**
+   * Whose eyes the screen shows the game through (05-supply-transport §9): the human whose turn it
+   * is, or during the computer's turn the last human to play. Null when only computers play, and
+   * once the game is over: then everything shows.
+   */
+  let viewer: PlayerId | null = setup.players.findIndex((_, id) => ais[id] == null);
+  if (viewer < 0) viewer = null;
+  const updateViewer = () => {
+    if (state.result) viewer = null;
+    else if (ais[state.currentPlayer] == null) viewer = state.currentPlayer;
+  };
+  updateViewer();
+  /** The game as the viewer sees it: what the map, the panels and the controls work from. */
+  const seen = (s: GameState): GameState => (viewer === null ? s : stateSeenBy(s, viewer));
 
   const width = state.map.width * TILE_SIZE;
   const height = state.map.height * TILE_SIZE;
@@ -74,11 +89,11 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   const debugPanel = debug ? createDebugPanel(uiRoot) : null;
   const banner = createBanner(uiRoot);
   const handoff = createHandoff(uiRoot);
-  const buildMenu = createBuildMenu(uiRoot, () => state);
+  const buildMenu = createBuildMenu(uiRoot, () => seen(state));
   const results = createResultsScreen(uiRoot);
 
   const scene = new MapScene({
-    state,
+    state: seen(state),
     onCursorMove: (tile) => {
       cursor = tile;
       showCursorInfo();
@@ -89,7 +104,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   scene.setBattlePlayer(battleScenes ? battle : null);
 
   const controller = new InputController({
-    getState: () => state,
+    getState: () => seen(state),
     // The controller frees itself just after an order plays out; refresh the cursor info once it has.
     dispatch: async (command) => {
       const ok = await dispatch(command);
@@ -130,10 +145,10 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
     const onLeft = scene.tileInLeftHalf(cursor);
-    hud.update(state, onLeft);
+    hud.update(seen(state), onLeft);
     // While an aircraft is out on its Carrier being launched, the panel describes it.
     tileInfoPanel.show(scene.shownState(), cursor, onLeft);
-    unitPanel?.show(state, unitAt(state, cursor));
+    unitPanel?.show(state, unitAt(seen(state), cursor));
     refreshCargoPeek();
   }
 
@@ -154,11 +169,21 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       return false;
     }
     const attacked = command.type === "move" && (command.action.type === "attack" || command.action.type === "attackFort");
-    const revealsInformation = command.type === "endTurn" || attacked;
+    const watching = viewer;
+    // A hidden submarine coming into view is news an Undo mustn't let anyone take back.
+    const spotted = watching !== null && [...hiddenUnitIds(state, watching)].some((id) => {
+      const unit = result.state.units.find((u) => u.id === id);
+      return unit !== undefined && !isHiddenFrom(result.state, unit, watching);
+    });
+    const revealsInformation = command.type === "endTurn" || attacked || spotted;
     history = revealsInformation || result.state.result ? [] : [...history, state];
-    await scene.playEvents(result.events);
+    // Only what the viewer could see plays out: a hidden submarine's moves don't (05-supply-transport §9).
+    const shown = watching === null ? { before: state, events: result.events, revealed: [] } : eventsSeenBy(state, result.events, watching);
+    if (shown.revealed.length > 0) scene.setState(shown.before);
+    await scene.playEvents(shown.events);
     const previous = state;
     state = result.state;
+    updateViewer();
     debugPanel?.logEvents(state, previous, result.events);
     render();
     for (const event of result.events) {
@@ -206,7 +231,8 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
           debugPanel?.logNote(`AI bug: ${step.bug}`);
         }
         if (command.type === "move") {
-          const unit = state.units.find((u) => u.id === command.unitId);
+          // The cursor follows the computer's units, except ones the viewer can't see.
+          const unit = seen(state).units.find((u) => u.id === command.unitId);
           if (unit) scene.setCursor(unit.pos);
           await new Promise((resolve) => setTimeout(resolve, AI_PAUSE_MS));
         }
@@ -224,12 +250,13 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     controller.reset();
     history = history.slice(0, -1);
     state = previous;
+    updateViewer();
     debugPanel?.logNote("Undo: last move taken back");
     render();
   }
 
   function render(): void {
-    scene.setState(state);
+    scene.setState(seen(state));
     debugPanel?.update(state);
     showCursorInfo();
   }

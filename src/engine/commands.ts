@@ -85,6 +85,11 @@ export type GameEvent =
   /** `path` includes the start tile. */
   | { readonly type: "unitMoved"; readonly unitId: UnitId; readonly path: readonly Point[]; readonly fuelUsed: number }
   | { readonly type: "unitWaited"; readonly unitId: UnitId }
+  /**
+   * The unit ran into an enemy it couldn't see (a submerged submarine, at `pos`) and stopped short,
+   * its turn over (05-supply-transport §9). Follows the unitMoved event for the part it did move.
+   */
+  | { readonly type: "unitAmbushed"; readonly unitId: UnitId; readonly by: UnitId; readonly pos: Point }
   /** The whole attack as one result, played back by the UI; `counter` is null if there wasn't one. */
   | {
       readonly type: "combat";

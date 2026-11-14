@@ -80,7 +80,13 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **`Dive` and `Surface`** are end actions, so a submarine can move and then change state. It starts surfaced.
 - **Submerged:** burns 5 fuel per day instead of 1, and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
-- **Hidden or not:** in the original a submerged submarine is hidden unless an enemy is adjacent. We have no fog of war and both players share one screen, so submerged submarines are shown to everyone with a marker **(D5)**: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5).
+- **Hidden (since 2026-11-14, D5):** as in the original, a submerged submarine is hidden from the other side unless one of that side's units, of any kind (aircraft too), is on a tile next to it (not diagonally). Its own side always sees it, drawn with a marker: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5). There's still no other fog of war; this is the one exception.
+  - **On a shared screen** the map is drawn for the human whose turn it is (during the computer's turn, for the last human who played; with only computers playing, and once the game is over, everything shows). The enemy doesn't see a hidden submarine's moves, waits or repairs play out, and the cursor doesn't follow it. If it attacks or surfaces it appears where it ended its move.
+  - **The computer** is shown the same: its view of the game leaves out the submarines it can't see (09-ai §3).
+  - **Planning a move**, a hidden submarine isn't there: its tile counts as empty for move ranges and paths.
+  - **Ambush:** a ship whose path runs into a hidden submarine's tile, or any unit (aircraft included) told to end its move there, stops on the last tile before it that it can stop on (an empty one, or where it started), burns fuel only for what it moved, and its turn is over: whatever it was told to do after the move doesn't happen. "AMBUSH!" shows over the submarine, which is now next to an enemy and so in view. Aircraft otherwise fly over it as over any ship. (The original's "trap".)
+  - **Attacking:** a unit can only attack a submarine its player could see when giving the order. Since only Destroyers and Submarines can hit a submerged submarine, and only from next to it, this means one found by moving next to it can be attacked the following turn, not on the move that found it.
+  - **Undo** is cleared when a hidden submarine comes into view, like after an attack.
 
 ## 10. Carriers (decided and built 2026-11-09)
 
@@ -96,7 +102,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 Presentation only: no rule reads these. At the developer's request, a unit short of supplies shows a **flashing can** on the map, stacked up the left edge of its tile (above the capture C, if any):
 
-- **Gas can** (a red jerrycan): fuel is empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (they're lost at 0).
+- **Gas can** (a red jerrycan): fuel is empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (they're lost at 0). Since 2026-11-14, at the developer's request (the warning came too late to get home), aircraft and ships also warn **as soon as one more full turn's move away from home would leave too little fuel to get back**: the fuel for a full move out plus the route back from that far (by the cheapest route over terrain, ignoring units), plus the daily burn for each night on the way. Home is the nearest owned property that refuels it (airfield, port) or, for carrier aircraft, one of the player's Carriers with room. A unit at home doesn't warn this way, and nor does one with no home it could reach anywhere on the map (Japan's port on Midway is cut off from the sea): for those only the simpler rules apply. So a Fighter a full 9 squares from its airfield already shows the can: it can still fly home, but not further out first.
 - **Ammo can** (an olive can with brass rounds): a unit with a main weapon has used it up, or has a quarter or less left (rounded up). A unit that only ever holds 1 shot (the Torpedo Bomber) warns only once it's spent.
 
 Both cans blink together, and the same numbers turn the fuel and ammo lines in the tile info box to the warning color, where they blink too. The rule is one function, `supplyWarnings` in `src/game/tileInfo.ts`.

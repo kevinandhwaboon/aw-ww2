@@ -11,6 +11,7 @@ import { buildOptions, buildProblem, captureProblem } from "./economy";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint } from "./movement";
 import type { GameState, Unit } from "./state";
 import { diveProblem, surfaceProblem } from "./submarine";
+import { isHiddenFrom } from "./visibility";
 import { joinProblem, launchable, launchProblem, launchState, loadProblem, supplyTargets, unloadTiles } from "./transport";
 
 type MoveCommand = Extract<Command, { type: "move" }>;
@@ -49,7 +50,10 @@ export function unitCommands(state: GameState, unit: Unit): Command[] {
     const afterMove: GameState = { ...state, units: state.units.map((u) => (u.id === unit.id ? moved : u)) };
     const moving = path.length > 0;
     move(path, { type: "wait" });
-    for (const target of attackTargets(afterMove, moved, moving)) move(path, { type: "attack", target: target.id });
+    for (const target of attackTargets(afterMove, moved, moving)) {
+      // Only what the player could see when giving the order (05-supply-transport §9).
+      if (!isHiddenFrom(state, target, unit.owner)) move(path, { type: "attack", target: target.id });
+    }
     for (const target of fortTargets(afterMove, moved, moving)) move(path, { type: "attackFort", target });
     if (captureProblem(afterMove, moved) === null) move(path, { type: "capture" });
     if (supplyTargets(afterMove, moved).length > 0) move(path, { type: "supply" });
