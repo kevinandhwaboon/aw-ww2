@@ -9,6 +9,7 @@ import { loadGame, saveGame } from "../src/engine/save";
 import { parseScenario, type Scenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
+import { moveDestinations } from "../src/engine/movement";
 import { SCENARIOS } from "../src/scenarios";
 import { makeGame } from "./helpers";
 
@@ -357,8 +358,8 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const p of objectives) expect(propertyOwners).toContainEqual({ pos: p, owner: 1 });
     });
 
-    it("Japan wins by holding out to the start of day 15", () => {
-      expect(victory).toContainEqual({ type: "surviveDays", side: "axis", days: 15 });
+    it("Japan wins by holding out to the start of day 18", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "axis", days: 18 });
     });
 
     it("Mount Suribachi is a peak at the south-west tip, ringed by hills", () => {
@@ -367,15 +368,57 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(neighbors(suribachi).filter((t) => t === "hills").length).toBeGreaterThanOrEqual(3);
     });
 
-    it("the US first wave starts ashore on the black sand beaches, with the fleet offshore", () => {
-      const ashore = units?.filter((u) => u.owner === 0 && UNITS[u.type].category === "land" && terrainAt(map, u.pos) === "beach") ?? [];
-      expect(ashore.length).toBeGreaterThanOrEqual(6);
-      const fleet = units?.filter((u) => u.owner === 0 && UNITS[u.type].category === "naval").map((u) => u.type) ?? [];
-      expect(fleet).toEqual(expect.arrayContaining(["battleship", "destroyer", "landingCraft"]));
+    const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const tiles = (terrain: string) => map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []));
+    const bunkers = tiles("bunker");
+    const usUnits = units?.filter((u) => u.owner === 0) ?? [];
+    const japanese = units?.filter((u) => u.owner === 1) ?? [];
+    const guns = japanese.filter((u) => UNITS[u.type].range !== null);
+    const manned = bunkers.filter((b) => japanese.some((u) => u.pos.x === b.x && u.pos.y === b.y));
+    // The landing beaches: the sand below the line of Airfield No. 1, from Suribachi to the neck.
+    const landingBeaches = tiles("beach").filter((b) => b.y >= airfield1.y);
+
+    it("the US starts entirely at sea: no US unit is on land, and every soldier and tank is aboard a Landing Craft", () => {
+      for (const u of usUnits) expect(UNITS[u.type].category).not.toBe("land");
+      for (const u of usUnits.filter((u) => UNITS[u.type].category === "naval")) expect(terrainAt(map, u.pos)).toBe("sea");
+      const craft = usUnits.filter((u) => u.type === "landingCraft");
+      expect(craft.length).toBeGreaterThanOrEqual(6);
+      for (const c of craft) expect(c.cargo).toHaveLength(2);
+      const aboard = craft.flatMap((c) => c.cargo ?? []).map((c) => c.type);
+      expect(aboard).toEqual(expect.arrayContaining(["infantry", "assaultInfantry", "mediumTank"]));
+    });
+
+    it("no Landing Craft can reach a beach on day 1, so the first day is for bombardment", () => {
+      const state = createGame({ ...iwo.setup, seed: 1 });
+      for (const craft of state.units.filter((u) => u.type === "landingCraft")) {
+        const beaches = moveDestinations(state, craft).filter((p) => terrainAt(map, p) === "beach");
+        expect(beaches).toEqual([]);
+      }
+    });
+
+    it("Japan is dug in behind the beaches: every beach on the island is next to a manned bunker or under a Japanese gun", () => {
+      expect(landingBeaches.length).toBeGreaterThan(10);
+      for (const b of tiles("beach")) {
+        const nextToPillbox = manned.some((m) => dist(m, b) === 1);
+        const underFire = guns.some((g) => { const r = UNITS[g.type].range; return g.type !== "flakGun" && r !== null && dist(g.pos, b) >= r.min && dist(g.pos, b) <= r.max; });
+        expect({ beach: b, covered: nextToPillbox || underFire }).toEqual({ beach: b, covered: true });
+      }
+    });
+
+    it("no Japanese gun can reach any US ship or aircraft at the start", () => {
+      const afloat = usUnits.filter((u) => UNITS[u.type].category !== "land");
+      for (const g of guns) for (const u of afloat) expect(dist(g.pos, u.pos)).toBeGreaterThan(UNITS[g.type].range?.max ?? 0);
+    });
+
+    it("each Battleship can shell a Japanese soldier in a beach bunker on day 1 without moving (03-combat §4)", () => {
+      const battleships = usUnits.filter((u) => u.type === "battleship");
+      expect(battleships.length).toBeGreaterThanOrEqual(3);
+      const { min, max } = UNITS.battleship.range;
+      for (const bb of battleships) expect(manned.some((m) => dist(bb.pos, m) >= min && dist(bb.pos, m) <= max)).toBe(true);
     });
 
     it("two US Carriers start offshore, each carrying two Dive Bombers, and the US has no airfield of its own (05-supply-transport §10)", () => {
-      const carriers = units?.filter((u) => u.owner === 0 && u.type === "carrier") ?? [];
+      const carriers = usUnits.filter((u) => u.type === "carrier");
       expect(carriers).toHaveLength(2);
       for (const c of carriers) {
         expect(terrainAt(map, c.pos)).toBe("sea");
@@ -384,19 +427,17 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(properties(iwo, "airfield", 0)).toHaveLength(0);
     });
 
-    it("each Carrier's Dive Bombers can reach a bunker on the first day, but no Japanese gun can reach the Carriers", () => {
-      const carriers = units?.filter((u) => u.type === "carrier") ?? [];
-      const bunkers = map.terrain.flatMap((t, i) => (t === "bunker" ? [P(i % map.width, Math.floor(i / map.width))] : []));
-      const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-      const guns = units?.filter((u) => u.owner === 1 && UNITS[u.type].range !== null) ?? [];
-      for (const c of carriers) {
-        expect(bunkers.some((b) => dist(c.pos, b) <= UNITS.diveBomber.movePoints + 1)).toBe(true);
-        for (const g of guns) expect(dist(c.pos, g.pos)).toBeGreaterThan(UNITS[g.type].range?.max ?? 0);
+    it("each Carrier's Dive Bombers and each US Bomber can reach a manned bunker on the first day", () => {
+      const strikers = usUnits.filter((u) => u.type === "carrier" || u.type === "bomber");
+      expect(strikers.filter((u) => u.type === "bomber")).toHaveLength(2);
+      for (const s of strikers) {
+        const reach = (s.type === "carrier" ? UNITS.diveBomber.movePoints : UNITS.bomber.movePoints) + 1;
+        expect(manned.some((m) => dist(s.pos, m) <= reach)).toBe(true);
       }
     });
 
     it("Japan's soldiers start dug into bunkers, and bunkers never stand on the sand", () => {
-      const infantry = units?.filter((u) => u.owner === 1 && u.type === "infantry") ?? [];
+      const infantry = japanese.filter((u) => u.type === "infantry");
       expect(infantry.filter((u) => terrainAt(map, u.pos) === "bunker").length).toBeGreaterThanOrEqual(infantry.length * 0.75);
       for (let i = 0; i < map.terrain.length; i++) {
         if (map.terrain[i] !== "bunker") continue;
@@ -411,10 +452,9 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
 
     it("US tanks landed on the beaches can drive to Japan's HQ in the north", () => {
-      const tank = units?.find((u) => u.owner === 0 && u.type === "mediumTank");
       const [hq] = properties(iwo, "hq", 1);
-      if (!tank || !hq) throw new Error("missing tank or HQ");
-      expect(connected(map, "tracks", tank.pos, hq.pos)).toBe(true);
+      if (!hq) throw new Error("missing HQ");
+      expect(landingBeaches.some((b) => connected(map, "tracks", b, hq.pos))).toBe(true);
       expect(hq.pos.y).toBeLessThan(map.height / 3);
     });
   });

@@ -1,7 +1,7 @@
 {
   "id": "iwo-jima",
   "name": "Iwo Jima",
-  "description": "February 1945. US Marines storm the black sand beaches of a small volcanic island, under the guns of Mount Suribachi. Japan's garrison is dug into bunkers and caves from end to end. The US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ. Japan wins by holding out to the start of day 15.",
+  "description": "February 1945. The US fleet lies off a small volcanic island with the Marines still aboard their landing craft. Japan's garrison is dug into bunkers and caves from end to end, its guns trained on the black sand beaches: shell and bomb the beach line before going in. The US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ. Japan wins by holding out to the start of day 18.",
   "map": [
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
@@ -14,16 +14,16 @@
     "SSSSSSSSSSSSS..FHH.=.X=FHH..Cx.SSSSS",
     "SSSSSSSSSSSS_..Xx==AH==HHH.x._SSSSSS",
     "SSSSSSSSSSSS_.x.=X.==.FC.XF__SSSSSSS",
-    "SSSSSSSSSSS_....==X.X.X.x__SSSSSSSSS",
-    "SSSSSSSSSSS_XF.=..F..x.__SSSSSSSSSSS",
-    "SSSSSSSSSS_..A=X....___SSSSSSSSSSSSS",
-    "SSSSSSSSSS_.==X...__SSSSSSSSSSSSSSSS",
-    "SSSSSSSSS_X.=...._SSSSSSSSSSSSSSSSSS",
-    "SSSSSSSS_X.=...__SSSSSSSSSSSSSSSSSSS",
-    "SSSSSS__..=..__SSSSSSSSSSSSSSSSSSSSS",
-    "SSSS__.X==.__SSSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSS_....==X.X.X.X__SSSSSSSSS",
+    "SSSSSSSSSSS_XF.=..F..xX__SSSSSSSSSSS",
+    "SSSSSSSSSS_X.A=X...X___SSSSSSSSSSSSS",
+    "SSSSSSSSSS_.==X..X__SSSSSSSSSSSSSSSS",
+    "SSSSSSSSS_X.=...X_SSSSSSSSSSSSSSSSSS",
+    "SSSSSSSS_X.=..X__SSSSSSSSSSSSSSSSSSS",
+    "SSSSSS__X.=.X__SSSSSSSSSSSSSSSSSSSSS",
+    "SSSS__.X==X__SSSSSSSSSSSSSSSSSSSSSSS",
     "SSS_HX==.__SSSSSSSSSSSSSSSSS......SS",
-    "SS_H.HX._SSSSSSSSSSSSSSSSSSSP.....SS",
+    "SS_HXHX._SSSSSSSSSSSSSSSSSSSP.....SS",
     "SS_HCH__SSSSSSSSSSSSSSSSSSSS..f...SS",
     "SS_HH_SSSSSSSSSSSSSSSSSSSSSS...Q..SS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSS.P....SS",
@@ -96,20 +96,11 @@
     { "pos": { "x": 20, "y": 4 }, "owner": 1 }
   ],
   "units": [
-    { "type": "infantry", "owner": 0, "pos": { "x": 8, "y": 20 } },
-    { "type": "infantry", "owner": 0, "pos": { "x": 9, "y": 19 } },
-    { "type": "infantry", "owner": 0, "pos": { "x": 11, "y": 18 } },
-    { "type": "infantry", "owner": 0, "pos": { "x": 12, "y": 18 } },
-    { "type": "assaultInfantry", "owner": 0, "pos": { "x": 10, "y": 19 } },
-    { "type": "assaultInfantry", "owner": 0, "pos": { "x": 13, "y": 17 } },
-    { "type": "mediumTank", "owner": 0, "pos": { "x": 14, "y": 17 } },
-    { "type": "mediumTank", "owner": 0, "pos": { "x": 7, "y": 21 } },
-    { "type": "battleship", "owner": 0, "pos": { "x": 15, "y": 21 } },
-    { "type": "battleship", "owner": 0, "pos": { "x": 18, "y": 22 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 14, "y": 20 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 18, "y": 18 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 22, "y": 16 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 16, "y": 19 } },
     { "type": "destroyer", "owner": 0, "pos": { "x": 20, "y": 17 } },
-    { "type": "destroyer", "owner": 0, "pos": { "x": 24, "y": 15 } },
-    { "type": "landingCraft", "owner": 0, "pos": { "x": 17, "y": 19 } },
-    { "type": "landingCraft", "owner": 0, "pos": { "x": 22, "y": 18 } },
     {
       "type": "carrier",
       "owner": 0,
@@ -122,19 +113,89 @@
     {
       "type": "carrier",
       "owner": 0,
-      "pos": { "x": 23, "y": 16 },
+      "pos": { "x": 24, "y": 16 },
       "cargo": [
         { "type": "diveBomber" },
         { "type": "diveBomber" }
       ]
     },
-    { "type": "infantry", "owner": 0, "pos": { "x": 30, "y": 20 } },
-    { "type": "artillery", "owner": 0, "pos": { "x": 31, "y": 21 } },
-    { "type": "halftrack", "owner": 0, "pos": { "x": 32, "y": 22 } },
+    { "type": "bomber", "owner": 0, "pos": { "x": 23, "y": 17 } },
+    { "type": "bomber", "owner": 0, "pos": { "x": 21, "y": 19 } },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 19, "y": 21 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 21, "y": 20 },
+      "cargo": [
+        { "type": "assaultInfantry" },
+        { "type": "assaultInfantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 23, "y": 19 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "infantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 20, "y": 22 },
+      "cargo": [
+        { "type": "mediumTank" },
+        { "type": "mediumTank" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 22, "y": 21 },
+      "cargo": [
+        { "type": "infantry" },
+        { "type": "assaultInfantry" }
+      ]
+    },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 24, "y": 20 },
+      "cargo": [
+        { "type": "artillery" },
+        { "type": "halftrack" }
+      ]
+    },
     { "type": "infantry", "owner": 1, "pos": { "x": 5, "y": 19 } },
     { "type": "mortar", "owner": 1, "pos": { "x": 4, "y": 20 } },
     { "type": "artillery", "owner": 1, "pos": { "x": 6, "y": 19 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 6, "y": 20 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 8, "y": 17 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 10, "y": 18 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 12, "y": 17 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 14, "y": 16 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 16, "y": 15 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 17, "y": 14 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 19, "y": 13 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 22, "y": 12 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 11, "y": 17 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 13, "y": 15 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 16, "y": 13 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 20, "y": 12 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 4, "y": 21 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 13 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 13, "y": 11 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 24, "y": 11 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 26, "y": 9 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 10, "y": 15 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 12, "y": 12 } },
     { "type": "assaultInfantry", "owner": 1, "pos": { "x": 14, "y": 14 } },
@@ -170,7 +231,7 @@
     {
       "type": "surviveDays",
       "side": "axis",
-      "days": 15
+      "days": 18
     }
   ]
 }
