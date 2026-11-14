@@ -76,23 +76,60 @@ function airfield() {
   return compose(ground.map((r) => r.join("")), obj, 3);
 }
 
-function port() {
+// A lattice crane, its jib reaching right over the water and its hook hanging.
+const CRANE = [
+  "KKKKKKKKKKKKK", "KxKxKxKxKxKxK", "KKKKKKKKKKKKK", "..KK......K..", "..KK......K..", "..KK......f..",
+  ".KxxK........", ".KxxK........", ".KxKK........", ".KxxK........", ".KKxK........", ".KxxK........", ".KxKK........",
+  ".KxxK........", ".KKxK........", ".KxxK........", "KKKKKK.......",
+];
+const mirror = (rows) => rows.map((row) => [...row].reverse().join(""));
+
+/**
+ * A port: a paved quay with a warehouse and a crane, and a harbor basin open to the sea on one side
+ * (08-art-pipeline §15). `opening` is the side the basin opens to, N, E, S or W; the map picks the
+ * one facing open water, so the basin always runs straight into the sea beside it.
+ */
+function port(opening) {
+  const vertical = opening === "N" || opening === "S";
+  // Distance from the basin's side: below 16 is water, then the quay's stone edge, then paving.
+  const depth = (x, y) => ({ N: y, S: SIZE - 1 - y, E: SIZE - 1 - x, W: x })[opening];
   const ground = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => {
-    if (y < 15) return y === 14 ? "k" : (x + y * 3) % 7 === 0 ? "k" : "j";
-    if (y === 15) return "K";
-    return hash(x, y, 24) % 13 === 0 ? "f" : (x + y) % 11 === 0 ? "l" : "S";
+    const d = depth(x, y);
+    // Calm harbor water: the sea's own blue with a few soft ripples, so it runs on into the sea.
+    if (d < 16) return hash(x >> 2, y, 24) % 9 === 0 && d < 14 ? "l" : "S";
+    if (d === 16) return "K";
+    if (d === 17) return "k";
+    return (vertical ? x + y * 3 : y + x * 3) % 7 === 0 ? "k" : "j";
   }));
-  for (let x = 2; x < SIZE; x += 7) { ground[13][x] = "x"; ground[13][x + 1] = "x"; }
+  // Bollards along the quay's edge.
+  for (let a = 2; a < SIZE; a += 7) for (let b = 0; b < 2; b++) {
+    const along = a + b;
+    const [x, y] = { S: [along, 13], N: [along, 18], E: [13, along], W: [18, along] }[opening];
+    ground[y][x] = "x";
+  }
   const obj = layer();
-  house(obj, { x: 2, base: 44, w: 14, h: 8, roof: 6, door: 7 });
-  roofTiles(obj, 1, 17, 30, 35);
-  // A lattice crane leaning over the water, its hook hanging.
-  art(obj, [
-    "KKKKKKKKKKKKK", "KxKxKxKxKxKxK", "KKKKKKKKKKKKK", "..KK......K..", "..KK......K..", "..KK......f..",
-    ".KxxK.......", ".KxxK.......", ".KxKK.......", ".KxxK.......", ".KKxK.......", ".KxxK.......", ".KxKK.......",
-    ".KxxK.......", ".KKxK.......", ".KxxK.......", "KKKKKK......",
-  ], 18, 30);
-  for (let x = 4; x < 18; x += 5) art(obj, ["BB", "BB", "BB", "BB", "ff"], x, 48);
+  const piles = (x, y) => art(obj, ["BB", "BB", "BB", "BB", "ff"], x, y);
+  if (opening === "S") {
+    house(obj, { x: 2, base: 44, w: 14, h: 8, roof: 6, door: 7 });
+    roofTiles(obj, 1, 17, 30, 35);
+    art(obj, CRANE, 18, 30);
+    for (let x = 4; x < 18; x += 5) piles(x, 48);
+  } else if (opening === "N") {
+    for (let x = 4; x < 30; x += 6) piles(x, 34);
+    house(obj, { x: 2, base: 60, w: 14, h: 8, roof: 6, door: 7 });
+    roofTiles(obj, 1, 17, 46, 51);
+    art(obj, CRANE, 18, 44);
+  } else if (opening === "E") {
+    for (let y = 36; y < 60; y += 8) piles(25, y);
+    house(obj, { x: 1, base: 59, w: 10, h: 8, roof: 6, door: 4 });
+    roofTiles(obj, 0, 13, 45, 50);
+    art(obj, CRANE, 11, 34);
+  } else {
+    for (let y = 36; y < 60; y += 8) piles(5, y);
+    art(obj, mirror(CRANE), 8, 34);
+    house(obj, { x: 19, base: 59, w: 10, h: 8, roof: 6, door: 22 });
+    roofTiles(obj, 18, 31, 45, 50);
+  }
   return compose(ground.map((r) => r.join("")), obj, 3);
 }
 
@@ -139,9 +176,13 @@ export const rows = [
   ["city", city()],
   ["factory", factory()],
   ["airfield", airfield()],
-  ["port", port()],
+  ["port", port("S")],
   ["hq", hq()],
   ["bunker", garrisonedBunker()],
+  // The same port with its basin opening another way, picked from the map (08-art-pipeline §15).
+  ["port:N", port("N")],
+  ["port:E", port("E")],
+  ["port:W", port("W")],
 ];
 
 export const TILE_WIDTH = 32;

@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
-import { attackTargets, canCounter, chooseWeapon, damageFormula, forecast, MAX_LUCK, threatTiles } from "../src/engine/combat";
+import { attackTargets, canCounter, chooseWeapon, damageFormula, forecast, garrisonBunker, MAX_LUCK, threatTiles } from "../src/engine/combat";
 import type { Command, GameEvent } from "../src/engine/commands";
 import type { UnitTypeId } from "../src/engine/data/units";
 import { UNITS } from "../src/engine/data/units";
@@ -468,8 +468,10 @@ describe("combat properties", () => {
       const f = forecast(state, a, d);
       const { combat } = fight(state);
       if (!f) throw new Error("filtered out");
-      expect(combat.attack.damage).toBe(Math.min(d.hp, combat.attack.damage));
-      if (combat.attack.damage < d.hp) {
+      // A garrison's bunker takes the damage instead (03-combat §4).
+      const pool = garrisonBunker(state, d)?.hp ?? d.hp;
+      expect(combat.attack.damage).toBe(Math.min(pool, combat.attack.damage));
+      if (combat.attack.damage < pool) {
         expect(combat.attack.damage).toBeGreaterThanOrEqual(f.attack.min);
         expect(combat.attack.damage).toBeLessThanOrEqual(f.attack.max);
       } else {
@@ -488,7 +490,12 @@ describe("combat properties", () => {
     fc.assert(fc.property(arbitraryDuel, (state) => {
       const [a, d] = state.units as [Unit, Unit];
       const { combat } = fight(state);
-      expect(combat.defender.hp).toBe(d.hp - combat.attack.damage);
+      const bunker = garrisonBunker(state, d);
+      if (bunker) {
+        // The bunker loses the damage, and the garrison is lost only with it (03-combat §4).
+        expect(combat.bunker?.hp).toBe(bunker.hp - combat.attack.damage);
+        expect(combat.defender.hp).toBe(combat.bunker?.hp === 0 ? 0 : d.hp);
+      } else expect(combat.defender.hp).toBe(d.hp - combat.attack.damage);
       expect(combat.attacker.hp).toBe(a.hp - (combat.counter?.damage ?? 0));
     }));
   });

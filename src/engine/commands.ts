@@ -95,8 +95,14 @@ export type GameEvent =
       readonly type: "combat";
       readonly attacker: Combatant;
       readonly defender: Combatant;
+      /** `damage` went to the defender, or to its bunker when it was garrisoned. */
       readonly attack: CombatStrike;
       readonly counter: CombatStrike | null;
+      /**
+       * Set when the defender was garrisoned in a bunker (03-combat §4): the attack hit the bunker,
+       * which has `hp` left. If it broke (`becomes` is the terrain left), the garrison died with it.
+       */
+      readonly bunker?: { readonly pos: Point; readonly hp: number; readonly becomes: TerrainId | null };
     }
   /** `hp` is what the fortification has left; `becomes` is the terrain left behind if it broke. */
   | {

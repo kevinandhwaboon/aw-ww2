@@ -88,11 +88,16 @@ export function applyUnload(state: GameState, transport: Unit, passenger: Unit, 
   };
 }
 
+/**
+ * Short of fuel or ammo, and something a Halftrack can refill: aircraft can't be, they have to fly
+ * home to an airfield or Carrier (05-supply-transport §3, §5).
+ */
 function needsSupply(state: GameState, unit: Unit): boolean {
+  if (unitDef(unit.type).category === "air") return false;
   return unit.fuel < stats.maxFuel(state, unit) || unit.ammo < stats.maxAmmo(state, unit);
 }
 
-/** Friendly units next to this supply unit that are short of fuel or ammo (05-supply-transport §3). */
+/** Friendly units next to this supply unit that are short of fuel or ammo, never aircraft (05-supply-transport §3). */
 export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
   if (!unitDef(supplier.type).specialActions.includes("resupply")) return [];
   const side = state.players[supplier.owner]?.side;

@@ -220,6 +220,57 @@ function shoreCorner(corner, frame) {
   return toRows(g);
 }
 
+// Beach pieces that are half sand, half sea (08-art-pipeline §14): one for each mask of sides that
+// face open water (N=1, E=2, S=4, W=8), then four inner corners drawn over a piece where water
+// touches only diagonally (NE, SE, SW, NW). The waterline sits exactly halfway at every tile edge,
+// so neighboring pieces always meet; it only bends and wobbles inside the tile.
+const HALF = SIZE / 2;
+/** How far the sea reaches into the tile from a water side; less when the opposite side is water too, to leave a spit. */
+const reach = (mask, side, opposite) => (mask & opposite ? 11 : HALF) * (mask & side ? 1 : 0);
+/** A gentle wave along the waterline, zero at both tile edges so pieces always line up. */
+const wobble = (t) => 1.2 * Math.sin((4 * Math.PI * t) / SIZE);
+const CORNERS = [[SIZE, 0], [SIZE, SIZE], [0, SIZE], [0, 0]];
+
+/** How far into the water each pixel is: above 0 is sea, below 0 sand. */
+function wetness(mask, bites, x, y) {
+  let e = -Infinity;
+  if (mask) {
+    const r = 5;
+    const n = reach(mask, 1, 4), east = reach(mask, 2, 8), s = reach(mask, 4, 1), w = reach(mask, 8, 2);
+    // The sand as a rectangle with rounded corners where two water sides meet.
+    const x0 = mask & 8 ? w + r : -Infinity, x1 = mask & 2 ? SIZE - east - r : Infinity;
+    const y0 = mask & 1 ? n + r : -Infinity, y1 = mask & 4 ? SIZE - s - r : Infinity;
+    const dx = Math.max(x0 - x, 0, x - x1), dy = Math.max(y0 - y, 0, y - y1);
+    e = Math.hypot(dx, dy) - r - (dy >= dx ? wobble(x) : wobble(y));
+  }
+  bites.forEach((on, i) => {
+    if (!on) return;
+    const [cx, cy] = CORNERS[i];
+    const angle = Math.atan2(Math.abs(y - cy), Math.abs(x - cx));
+    e = Math.max(e, HALF + 1.2 * Math.sin(4 * angle) - Math.hypot(x - cx, y - cy));
+  });
+  return e;
+}
+
+function shoreline(mask, bites, frame, overlay) {
+  const sea = water(3, frame);
+  const sand = beach(10, []).map((row) => [...row]);
+  const g = fill(".");
+  // The surf runs up the sand and back between frames.
+  const foam = frame ? -0.7 : 0;
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    const e = wetness(mask, bites, x + 0.5, y + 0.5);
+    let ch;
+    if (e > 4.5) ch = sea[y][x];
+    else if (e > 1.7 + foam) ch = (x + y * 3 + frame) % 5 === 0 ? "f" : "l";
+    else if (e > foam) ch = "f";
+    else if (e > -1.8) ch = "A";
+    else ch = overlay ? null : sand[y][x];
+    if (ch) g[y][x] = ch;
+  }
+  return toRows(g);
+}
+
 // A concrete pillbox: lit top, front face with a firing slit, banked with sandbags and earth.
 function bunker() {
   const obj = layer();
@@ -273,6 +324,9 @@ export const layout = [
   ["bridge-horizontal", still(bridge(true))], ["bridge-vertical", still(bridge(false))],
   ...[0, 1, 2, 3].map((d) => [`shore-${"NESW"[d]}`, moving((f) => shoreEdge(d, f))]),
   ...[0, 1, 2, 3].map((c) => [`shore-${["NE", "SE", "SW", "NW"][c]}`, moving((f) => shoreCorner(c, f))]),
+  // Added 2026-11-14 after the 16-pixel sheet's layout, so only this sheet has them.
+  ...Array.from({ length: 16 }, (_, mask) => [`beach-${mask}`, moving((f) => shoreline(mask, [], f, false))]),
+  ...[0, 1, 2, 3].map((c) => [`beach-${["NE", "SE", "SW", "NW"][c]}`, moving((f) => shoreline(0, [0, 1, 2, 3].map((i) => i === c), f, true))]),
 ];
 
 for (const entry of layout) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));

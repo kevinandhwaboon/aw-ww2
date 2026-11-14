@@ -6,6 +6,7 @@ import {
   distance,
   forecast,
   fortForecast,
+  garrisonBunker,
   inBounds,
   movementBudget,
   threatTiles,
@@ -468,7 +469,8 @@ export abstract class LandingBrain extends BrainBase {
   protected attackScore(afterMove: GameState, moved: Unit, target: Unit): number {
     const f = forecast(afterMove, moved, target);
     if (!f) return -Infinity;
-    const dealt = Math.min(target.hp, (f.attack.min + f.attack.max) / 2);
+    // Against a garrison the damage goes to its bunker, which it dies with (03-combat §4).
+    const dealt = Math.min(garrisonBunker(afterMove, target)?.hp ?? target.hp, (f.attack.min + f.attack.max) / 2);
     const taken = f.counter ? Math.min(moved.hp, (f.counter.min + f.counter.max) / 2) : 0;
     const targetCost = this.cost(target);
     const kill = f.certainKill ? this.w.certainKillBonus : f.canKill ? this.w.possibleKillBonus : 0;

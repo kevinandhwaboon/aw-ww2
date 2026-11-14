@@ -349,8 +349,20 @@ describe("art packs: buildings (08-art-pipeline §15)", () => {
     expect(findPropertyArt(parseArtPack({ name: "x" }), "city", 0)).toBeNull();
   });
 
+  it("a port picks the row drawn with its harbor opening the right way, or the plain port row", () => {
+    const ports = parseArtPack({ name: "x", properties: { ...properties, rows: ["port", "port:E"] } });
+    expect(findPropertyArt(ports, "port", null, "E")).toBe(3);
+    expect(findPropertyArt(ports, "port", null, "W")).toBe(0);
+    expect(findPropertyArt(ports, "port", null)).toBe(0);
+  });
+
+  it("the default pack has a port opening each way (08-art-pipeline §15)", () => {
+    expect(parseArtPack(defaultPack).properties?.rows).toEqual(expect.arrayContaining(["port", "port:N", "port:E", "port:W"]));
+  });
+
   it.each([
     ["a row that isn't a property", { ...properties, rows: ["forest"] }, /isn't a property/],
+    ["a row opening a way that isn't a side", { ...properties, rows: ["port:X"] }, /isn't a property/],
     ["no columns", { ...properties, columns: [] }, /owner names/],
   ])("rejects %s", (_, change, message) => {
     expect(() => parseArtPack({ name: "x", properties: change })).toThrow(message);

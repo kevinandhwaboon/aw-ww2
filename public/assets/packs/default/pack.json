@@ -962,7 +962,8 @@
       "horizontal": 48,
       "vertical": 49
     },
-    "shore": 50
+    "shore": 50,
+    "beach": 58
   },
   "properties": {
     "path": "../../terrain/buildings-32.png",
@@ -986,7 +987,10 @@
       "airfield",
       "port",
       "hq",
-      "bunker"
+      "bunker",
+      "port:N",
+      "port:E",
+      "port:W"
     ]
   }
 }
