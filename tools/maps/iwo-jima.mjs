@@ -88,10 +88,8 @@ const P = {
   airfield2: [19, 9],
   airfield3: [25, 7],
   motoyama: [21, 6],
-  minami: [23, 10],
   nishi: [16, 6],
   kita: [24, 3],
-  higashi: [28, 8],
   depot: [23, 5], // The Japanese supply depot: their only Factory
   hq: [20, 4], // Kuribayashi's command post, in a cave near Kitano Point
   usHq: [31, 22],
@@ -103,7 +101,8 @@ set(...P.suribachi, "C");
 set(...P.airfield1, "A");
 set(...P.airfield2, "A");
 set(...P.airfield3, "A");
-for (const v of ["motoyama", "minami", "nishi", "kita", "higashi"]) set(...P[v], "C");
+// Minami and Higashi were removed on 2026-11-14 to cut Japan's income (14-scenarios-pacific §1).
+for (const v of ["motoyama", "nishi", "kita"]) set(...P[v], "C");
 set(...P.depot, "f");
 set(...P.hq, "Q");
 set(...P.usHq, "Q");
@@ -182,8 +181,8 @@ const units = [
 
 const owners = [
   [P.usHq, 0], [P.usFactory, 0], [P.usPort, 0], [P.usAirfield, 0],
-  [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1], [P.minami, 1],
-  [P.nishi, 1], [P.kita, 1], [P.higashi, 1], [P.depot, 1], [P.hq, 1],
+  [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1],
+  [P.nishi, 1], [P.kita, 1], [P.depot, 1], [P.hq, 1],
 ];
 
 const scenario = {

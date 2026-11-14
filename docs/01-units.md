@@ -1,7 +1,7 @@
 # Topic Doc 01: Units
 
 **Status:** Roster and roles decided. Provisional v0 stats set (section 8); expect them to change after playtesting. Damage values live in 03-combat.
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-14
 **Depends on:** 00-master-design.md. **Feeds:** 02-terrain (movement types, fortifications), 03-combat (damage chart), 05-supply-transport (transport and resupply rules).
 
 ---
@@ -141,7 +141,7 @@ These are starting points for the first playable build, based on the original ga
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
 | Fighter | 20,000 | 9 | 2 | 80 | 5 | Guns (2) | — | 1 | — |
-| Bomber | 22,000 | 7 | 2 | 70 | 8 | Bombs (2) | — | 1 | — |
+| Bomber | 22,000 | 7 | 2 | 70 | 4 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
 | Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (1) | — | 1 | — |
 | Torpedo Bomber | 16,000 | 6 | 2 | 70 | 5 | Torpedo (1) | — | 1 | — |
@@ -171,7 +171,7 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Light Tank | 28 | — | M5 Stuart and Panzer II, about 160–200 km |
 | Heavy Tank | 20 | — | Tiger and Churchill, about 120–145 km: famously thirsty |
 | Fighter | 80 | 5 | Short-legged single-seaters (Spitfire, Bf 109): 1–3 hours aloft |
-| Bomber | 70 | 8 | Developer's balance call: first half the old tank (50), raised to 70 on 2026-11-14 at the developer's request; the heaviest idle burn of any aircraft (multi-engine bombers burn the most per hour) |
+| Bomber | 70 | 4 | Developer's balance call: first half the old tank (50), raised to 70 on 2026-11-14 at the developer's request. The daily burn was 8, the heaviest of any aircraft, until it was halved to 4 later on 2026-11-14 at the developer's request, so Bombers can stay out longer on long runs such as Iwo Jima's from the Marianas airfield |
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
 | Dive Bomber, Torpedo Bomber | 70 | 5 | SBD, TBF, D3A, B5N: about 1,600–1,800 km |
 | Battleship, Carrier | 99 | 1 | 15,000+ nautical miles at cruising speed |

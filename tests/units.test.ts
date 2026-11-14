@@ -76,10 +76,11 @@ describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
     expect(UNITS.bomber.primaryWeapon.maxAmmo).toBe(2);
   });
 
-  it("Bombers carry 70 fuel and burn the most of any aircraft while idling (01-units §8a)", () => {
+  it("Bombers carry 70 fuel and burn 4 a day while idling, less than Fighters and carrier aircraft (01-units §8a)", () => {
     expect(UNITS.bomber.maxFuel).toBe(70);
-    const airBurn = (["fighter", "transportAircraft", "diveBomber", "torpedoBomber"] as const).map((id) => UNITS[id].fuelPerDay);
-    expect(UNITS.bomber.fuelPerDay).toBeGreaterThan(Math.max(...airBurn));
+    expect(UNITS.bomber.fuelPerDay).toBe(4);
+    const airBurn = (["fighter", "diveBomber", "torpedoBomber"] as const).map((id) => UNITS[id].fuelPerDay);
+    expect(UNITS.bomber.fuelPerDay).toBeLessThan(Math.min(...airBurn));
   });
 
   it("Destroyers and Torpedo Boats are thirstier than the big ships, which can stay out longest", () => {
