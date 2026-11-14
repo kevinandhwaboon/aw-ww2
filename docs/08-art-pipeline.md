@@ -227,7 +227,11 @@ Answers so far to section 9. Questions not listed here are still open.
 | Mobile AA | Turret swings from forward to back |
 
 - **Sheet layout (Q13):** `public/assets/units/{nation}-land-{team}.png`, 32 pixels wide, with 2 frames across and one row per unit in section 4 order: IN, AI, MO, RC, HT, LT, MT, HV, TD, AR, RK, AA, FK. A nation with no art for a unit leaves that row empty, so the US and Japanese HV rows are blank. `{nation}` is a two-letter code: `us`, `de`, `jp` or `su` (the Soviet Union).
-- **Team colors:** only the body colors change per team. Wheels, tracks, skin, the stars and the hinomaru stay the same. **Since 2026-11-08 the first player is army green** (team `olive`), the second red and the third blue; every built-in map puts the Allies first (the US, or the Soviet Union on Kursk), so they're army green. Every nation's sheets are rendered in all three, so any player can field any nation. The `grey` (Germany), `khaki` (Japan) and `green4bo` (the Soviet 4BO green) sheets show each nation's natural color and aren't used yet. Buildings get an army green column too (section 15).
+- **Team colors:** only the body colors change per team. Wheels, tracks, skin, the stars and the hinomaru stay the same. **Since 2026-11-14 each army wears its own nation's color**, whichever player fields it: the US olive drab (team `olive`), Germany field grey (`grey`), Japan khaki (`khaki`) and the Soviet Union 4BO protective green (`green4bo`). So the Allies are green and the Axis grey or khaki on every built-in map, and no army is red. The color covers the unit sprites, the battle-scene machines and uniforms, the buildings a player owns, and the player's name and flags in the panels.
+  - **When two players would wear the same color** (two American players, say), or a nation has no color of its own (the UK and Canada, which have no art yet), the player takes a slot color instead: the first of army green, red, blue and gold, starting from their own slot, that nobody else in the game is wearing. Every nation's sheets are still rendered in army green, red and blue for this.
+  - The US and Soviet greens are different colors, so they'd both keep them, but they're close; no built-in map pits the two against each other.
+  - German grey is the iconic field-grey uniform and the panzer grey vehicles wore until 1943; from 1943 German vehicles were painted dark yellow with green and brown camouflage, which isn't drawn. On buildings the German grey is darker than the slate grey of neutral properties, so the two can't be confused.
+  - Since 2026-11-08 the first player slot is army green; that's now the slot color list above, used only for the fallback.
 - **Naming:** Allies and Axis are the sides. Germany and German are the nation. Wehrmacht is only a description of equipment or uniforms, not a label.
 - **German insignia (Q11):** the HUD shows a black Balkenkreuz on grey as Germany's flag. German sprites still carry no national insignia until the rest of Q11 is decided. Camouflage patches fill the space the US star takes, and the sides differ by silhouette.
 - **Japanese insignia (Q11):** Japan's HUD flag is its national flag, the plain red disc. Japanese aircraft carry the same disc (the hinomaru) in a thin white ring, as the US carries its star. Land units and ships carry no marking. The rising-sun ensign is never drawn: it's widely seen as a political symbol.
@@ -257,7 +261,8 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | Field | What it does |
 |---|---|
 | `name` | The pack's name |
-| `players` | One entry per player: `team`, `fill` and `outline`. `team` picks that player's unit sheets |
+| `players` | One entry per player slot: `team`, `fill` and `outline`. `team` picks that player's unit sheets. Used when a player's nation has no color in `nationColors`, or two players would share one (section 12) |
+| `nationColors` | Each nation's own color, the same `team`, `fill` and `outline` as a player entry, keyed by nation (`us`, `germany`, `japan`, `ussr`, ...). Optional: left out, the built-in ones are used (US `olive`, Germany `grey`, Japan `khaki`, Soviet Union `green4bo`); `{}` turns them off so every player keeps their slot's color |
 | `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: HTML panels and screens, the phone game pad, ranges, path arrow, menus, effects |
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows`, and optionally `frameSize` (16 or 32, default 16) and `paratroopers` (section 17) |
 | `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
@@ -339,7 +344,7 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 | Port | Warehouse and crane on a quay, with pier posts in the water |
 | HQ | A chateau with two towers and a tall banner, so it stands out from a City |
 
-**Owner colors:** the sheet has one row per property and one column per owner: neutral, army green (`olive`), red, blue, green, gold. Neutral is weathered slate grey. A captured property switches column at once.
+**Owner colors:** the sheet has one row per property and one column per owner: neutral, army green (`olive`), red, blue, green, gold, then the nations' own colors German grey (`grey`), Japanese khaki (`khaki`) and Soviet 4BO green (`green4bo`) (section 12). Neutral is weathered slate grey; German grey is a darker charcoal so it stands apart. A captured property switches column at once.
 
 **Corner flags:** a property drawn from the sheet shows no corner flag, since its colors show the owner. A property with no art for its owner's team keeps the placeholder and its flag.
 

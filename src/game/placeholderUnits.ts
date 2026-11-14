@@ -3,7 +3,7 @@
 
 import { UNITS, type UnitTypeId } from "../engine/data/units";
 import type { VeterancyLevel } from "../engine/data/veterancy";
-import { activePack } from "./artPack";
+import { activePack, playerArt } from "./artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { TILE_SIZE } from "./placeholderTiles";
 
@@ -25,10 +25,9 @@ function canvas(width: number, height: number): [HTMLCanvasElement, CanvasRender
   return [c, ctx];
 }
 
+/** A player's fill and outline in the game being played: their nation's color (08-art-pipeline §12). */
 export function playerColors(player: number): readonly [string, string] {
-  const { players } = activePack();
-  const art = players[player % players.length];
-  if (!art) throw new Error("No player colors defined");
+  const art = playerArt(activePack(), player);
   return [art.fill, art.outline];
 }
 

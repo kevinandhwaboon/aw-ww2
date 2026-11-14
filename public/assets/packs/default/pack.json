@@ -570,6 +570,139 @@
         "torpedoBoat",
         "carrier"
       ]
+    },
+    {
+      "nation": "germany",
+      "team": "grey",
+      "path": "../../units/de-land-32-grey.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "khaki",
+      "path": "../../units/jp-land-32-khaki.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "green4bo",
+      "path": "../../units/su-land-32-green4bo.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "grey",
+      "path": "../../units/de-air-32-grey.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "khaki",
+      "path": "../../units/jp-air-32-khaki.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "green4bo",
+      "path": "../../units/su-air-32-green4bo.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "grey",
+      "path": "../../units/de-naval-32-grey.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        null,
+        "destroyer",
+        "submarine",
+        null,
+        "torpedoBoat"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "khaki",
+      "path": "../../units/jp-naval-32-khaki.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
     }
   ],
   "terrain": {
@@ -637,7 +770,10 @@
       "red",
       "blue",
       "green",
-      "gold"
+      "gold",
+      "grey",
+      "khaki",
+      "green4bo"
     ],
     "rows": [
       "city",

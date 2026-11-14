@@ -208,7 +208,10 @@ export interface PropertySheet {
 
 export interface ArtPack {
   readonly name: string;
+  /** Colors by player slot: used when a player's nation has no natural color, or two players would share one. */
   readonly players: readonly PlayerArt[];
+  /** Each nation's natural color, which its army wears whichever player fields it (08-art-pipeline §12). */
+  readonly nationColors: Readonly<Partial<Record<NationId, PlayerArt>>>;
   readonly colors: Readonly<Record<ColorKey, string>>;
   readonly unitSheets: readonly UnitSheet[];
   readonly terrain: TerrainSheet | null;
@@ -227,6 +230,14 @@ export const BUILT_IN_PACK: ArtPack = {
     { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
     { team: "gold", fill: "#d8a030", outline: "#6a4a10" },
   ],
+  // What each army actually wore and painted its vehicles: US olive drab, German field grey, Japanese
+  // khaki, Soviet 4BO protective green (08-art-pipeline §12).
+  nationColors: {
+    us: { team: "olive", fill: "#64783a", outline: "#2a3818" },
+    germany: { team: "grey", fill: "#747b72", outline: "#333834" },
+    japan: { team: "khaki", fill: "#9a8648", outline: "#463a1e" },
+    ussr: { team: "green4bo", fill: "#52643a", outline: "#222c18" },
+  },
   colors: BUILT_IN_COLORS,
   unitSheets: [],
   terrain: null,
@@ -250,15 +261,27 @@ const fail = (message: string): never => {
   throw new Error(message);
 };
 
+function parsePlayerArt(entry: unknown, where: string): PlayerArt {
+  if (!isObject(entry)) return fail(`${where} must be an object`);
+  const { team, fill, outline } = entry;
+  if (typeof team !== "string" || team === "") return fail(`${where} needs a team`);
+  if (!isHexColor(fill) || !isHexColor(outline)) return fail(`${where} needs fill and outline colors like "#3a6fd8"`);
+  return { team, fill, outline };
+}
+
 function parsePlayers(raw: unknown): PlayerArt[] {
   if (!Array.isArray(raw) || raw.length === 0) return fail(`"players" must be a list`);
-  return raw.map((entry: unknown, i) => {
-    if (!isObject(entry)) return fail(`player ${i} must be an object`);
-    const { team, fill, outline } = entry;
-    if (typeof team !== "string" || team === "") return fail(`player ${i} needs a team`);
-    if (!isHexColor(fill) || !isHexColor(outline)) return fail(`player ${i} needs fill and outline colors like "#3a6fd8"`);
-    return { team, fill, outline };
-  });
+  return raw.map((entry: unknown, i) => parsePlayerArt(entry, `player ${i}`));
+}
+
+function parseNationColors(raw: unknown): Partial<Record<NationId, PlayerArt>> {
+  if (!isObject(raw)) return fail(`"nationColors" must be an object`);
+  const colors: Partial<Record<NationId, PlayerArt>> = {};
+  for (const [nation, entry] of Object.entries(raw)) {
+    if (!Object.hasOwn(NATIONS, nation)) return fail(`nationColors: unknown nation "${nation}"`);
+    colors[nation as NationId] = parsePlayerArt(entry, `nationColors: ${nation}`);
+  }
+  return colors;
 }
 
 function parseColors(raw: unknown): Record<ColorKey, string> {
@@ -375,11 +398,12 @@ function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key
 export function parseArtPack(raw: unknown): ArtPack {
   if (!isObject(raw)) return fail("a pack must be an object");
   if (typeof raw.name !== "string" || raw.name === "") return fail(`a pack needs a "name"`);
-  const { players, colors, unitSheets, terrain, properties, unitNames, terrainNames } = raw;
+  const { players, nationColors, colors, unitSheets, terrain, properties, unitNames, terrainNames } = raw;
   if (unitSheets !== undefined && !Array.isArray(unitSheets)) return fail(`"unitSheets" must be a list`);
   return {
     name: raw.name,
     players: players === undefined ? BUILT_IN_PACK.players : parsePlayers(players),
+    nationColors: nationColors === undefined ? BUILT_IN_PACK.nationColors : parseNationColors(nationColors),
     colors: colors === undefined ? BUILT_IN_COLORS : parseColors(colors),
     unitSheets: ((unitSheets ?? []) as unknown[]).map(parseUnitSheet),
     terrain: terrain === undefined ? null : parseTerrainSheet(terrain),
@@ -398,13 +422,55 @@ export interface UnitArt {
 }
 
 /**
+ * Each player's colors for a game between these nations, in player order (08-art-pipeline §12). A
+ * player wears their nation's natural color unless another player would wear the same one (two
+ * American players, say); then they take the first slot color, starting from their own slot, that
+ * nobody else is wearing. A nation with no natural color does the same.
+ */
+export function assignPlayerArt(pack: ArtPack, nations: readonly NationId[]): PlayerArt[] {
+  const natural = nations.map((nation) => pack.nationColors[nation]);
+  const unique = natural.map((art) => (art && natural.filter((other) => other?.team === art.team).length === 1 ? art : undefined));
+  const taken = new Set(unique.flatMap((art) => (art ? [art.team] : [])));
+  return unique.map((art, player) => {
+    if (art) return art;
+    const slots = pack.players.length;
+    for (let i = 0; i < slots; i++) {
+      const slot = pack.players[(player + i) % slots];
+      if (slot && !taken.has(slot.team)) {
+        taken.add(slot.team);
+        return slot;
+      }
+    }
+    return slotArt(pack, player);
+  });
+}
+
+const slotArt = (pack: ArtPack, player: number): PlayerArt => {
+  const art = pack.players[player % pack.players.length];
+  if (!art) throw new Error("No player colors defined");
+  return art;
+};
+
+/** The nations in the game being played, in player order. Empty until a game starts. */
+let gameNations: readonly NationId[] = [];
+
+/** Called when a game starts, so every player is drawn in their nation's colors. */
+export function setGameNations(nations: readonly NationId[]): void {
+  gameNations = nations;
+}
+
+/** A player's colors in the game being played; before a game starts, their slot's colors. */
+export const playerArt = (pack: ArtPack, player: number): PlayerArt =>
+  assignPlayerArt(pack, gameNations)[player] ?? slotArt(pack, player);
+
+/**
  * Which frame of the buildings sheet draws this property for this owner (null = unowned), or null to
  * keep the placeholder and its corner flag.
  */
 export function findPropertyArt(pack: ArtPack, terrain: TerrainId, owner: number | null): number | null {
   const sheet = pack.properties;
   if (!sheet) return null;
-  const column = sheet.columns.indexOf(owner === null ? "neutral" : (pack.players[owner % pack.players.length]?.team ?? ""));
+  const column = sheet.columns.indexOf(owner === null ? "neutral" : playerArt(pack, owner).team);
   const row = sheet.rows.indexOf(terrain);
   return column < 0 || row < 0 ? null : row * sheet.columns.length + column;
 }
@@ -420,7 +486,7 @@ export function findUnitArt(
   type: UnitTypeId,
   unit?: Pick<Unit, "id" | "airDropped">,
 ): UnitArt | null {
-  const team = pack.players[player % pack.players.length]?.team;
+  const { team } = playerArt(pack, player);
   for (const [sheet, def] of pack.unitSheets.entries()) {
     if (def.nation !== nation || def.team !== team) continue;
     const paratrooper = type === "infantry" && unit?.airDropped && def.paratroopers.length > 0
