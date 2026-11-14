@@ -78,6 +78,19 @@
       ]
     }
   ],
+  "modifiers": [
+    {
+      "source": "scenario:iwo-jima",
+      "stat": "income",
+      "op": "multiply",
+      "value": 0.5,
+      "scope": {
+        "players": [
+          0
+        ]
+      }
+    }
+  ],
   "propertyOwners": [
     { "pos": { "x": 31, "y": 22 }, "owner": 0 },
     { "pos": { "x": 30, "y": 21 }, "owner": 0 },
