@@ -4,10 +4,12 @@
 // parts: a model's `far` parts go behind its crew and its `near` parts in front of them.
 // US: Willys jeep, M3 halftrack, M16 quad .50, 90mm M2, 105mm M2A1, T34 Calliope.
 // Germany: R75 motorcycle and sidecar, Sd.Kfz. 251, Flakvierling, 88mm Flak, leFH 18, Nebelwerfer 41.
+// Soviet Union: the BM-13 Katyusha; its other machines are the US ones, which the Red Army received
+// by the thousand, with the red star in place of the white (`mark`).
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalX, decalY, decalZ, elevate, elevatePoint, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
-import { camoDecals, roadWheel, running, sherman, starDecal } from "./models";
+import { camoDecals, redStarDecal, roadWheel, running, sherman, starDecal } from "./models";
 
 /** A machine's parts, drawn in order with the crew between them, and the points the rig needs. */
 export interface Built<A extends string> {
@@ -41,7 +43,7 @@ const inside = (z: number, outline: Poly): Face => ({ points: outline.map(([x, y
 // ---- Recon ----
 
 /** Willys jeep: a flat-sided tub, flat hood with a star, upright windshield, pedestal .30 cal. */
-export function willys(t: TeamShades, shake = 0): Built<"gunner" | "driver" | "grip" | "fore" | "muzzle"> {
+export function willys(t: TeamShades, shake = 0, mark = C("battleStar")): Built<"gunner" | "driver" | "grip" | "fore" | "muzzle"> {
   const far: Face[] = [];
   const near: Face[] = [];
   // The tub side with its cut-out beside the seats.
@@ -55,12 +57,12 @@ export function willys(t: TeamShades, shake = 0): Built<"gunner" | "driver" | "g
   far.push(...box(-29, -20, -8, 8, 9, 13, C("battleLeather")));
   far.push(...box(5, 7, -10, 10, 7, 20, t.mid));
   far.push(...extrudeY(-9, 9, [[6, 8], [35, 8], [35, 17], [6, 18]], t.mid));
-  far.push(starDecal(-9.05, 22, 12.5, 3.2));
+  far.push(starDecal(-9.05, 22, 12.5, 3.2, mark));
   far.push(decalZ(17.6, Array.from({ length: 10 }, (_, i) => {
     const a = (i * Math.PI) / 5;
     const r = i % 2 === 0 ? 5 : 2.1;
     return [21 + Math.cos(a) * r, Math.sin(a) * r] as const;
-  }), C("battleStar")));
+  }), mark));
   for (let k = 0; k < 5; k++) far.push(decalX(35.05, [[-6 + k * 3, 10], [-5 + k * 3, 10], [-5 + k * 3, 16], [-6 + k * 3, 16]], ink()));
   far.push(...box(33, 36, -9, -6, 13, 16, C("battleSkyLow")), ...box(33, 36, 6, 9, 13, 16, C("battleSkyLow")));
   far.push(...box(8, 36, 9, 13, 14, 15, t.lo));
@@ -115,7 +117,7 @@ export function r75(t: TeamShades, shake = 0): Built<"rider" | "bars" | "gunner"
 // ---- Halftracks ----
 
 /** M3: a box troop compartment, armored cab with its shutter up, louvred hood, winch roller. */
-function m3Chassis(t: TeamShades): Face[] {
+function m3Chassis(t: TeamShades, mark: string): Face[] {
   const f: Face[] = [];
   f.push(...running(-32, 6, 12, 7, 12, t.lo));
   f.push(...wheel(4, -12.6, 6, 4.4, 1.2, steelDark(), steel()), ...wheel(-30, -12.6, 6, 4, 1.2, steel(), steelDark()));
@@ -125,7 +127,7 @@ function m3Chassis(t: TeamShades): Face[] {
   f.push(...box(-34, 6, -11, 11, 12, 14, t.lo));
   f.push(...box(-34, 6, 10, 11, 12, 27, t.mid), ...box(-34, 6, -11, -10, 12, 27, t.mid), ...box(-34, -33, -10, 10, 12, 27, t.mid));
   f.push(inside(14.05, [[-33, -10], [6, -10], [6, 10], [-33, 10]]));
-  f.push(starDecal(-11.05, -14, 20, 4));
+  f.push(starDecal(-11.05, -14, 20, 4, mark));
   for (let x = -30; x < 6; x += 6) f.push(decalY(-11.05, [[x, 21], [x + 1, 21], [x + 1, 22], [x, 22]], t.lo));
   f.push(...box(-33, 4, -12, -11, 24, 25, steelDark()));
   // Cab with the armored windshield shutter raised, hood with louvres, fenders, bumper and roller.
@@ -166,8 +168,8 @@ function sdkfz251Chassis(t: TeamShades): Face[] {
 /** Where the riflemen's helmets show over the side of the compartment. */
 const TROOPS: readonly V3[] = [[-28, -4, 26], [-19, 4, 26], [-10, -4, 26]];
 
-export function m3(t: TeamShades, shake = 0): Built<"muzzle" | "troop0" | "troop1" | "troop2"> {
-  const far = m3Chassis(t);
+export function m3(t: TeamShades, shake = 0, mark = C("battleStar")): Built<"muzzle" | "troop0" | "troop1" | "troop2"> {
+  const far = m3Chassis(t, mark);
   // The .50 on its ring mount over the cab.
   const g = -shake;
   far.push(...loftZ(30, circle(11, 0, 8, 12), 31, circle(11, 0, 8, 12), steelDark()));
@@ -197,8 +199,8 @@ const AA_PIVOT: V3 = [-14, 0, 35];
  * Flakvierling's four 20mm guns behind their shield. `elevation` raises the guns; `kick` is which
  * barrel just fired (it slides back), or -1.
  */
-export function quadAA(t: TeamShades, german: boolean, elevation: number, kick: number): Built<"gunner" | "muzzle0" | "muzzle1" | "muzzle2" | "muzzle3"> {
-  const far = german ? sdkfz251Chassis(t) : m3Chassis(t);
+export function quadAA(t: TeamShades, german: boolean, elevation: number, kick: number, mark = C("battleStar")): Built<"gunner" | "muzzle0" | "muzzle1" | "muzzle2" | "muzzle3"> {
+  const far = german ? sdkfz251Chassis(t) : m3Chassis(t, mark);
   const [px, , pz] = AA_PIVOT;
   const len = german ? 26 : 22;
   if (german) {
@@ -375,6 +377,53 @@ export function calliope(t: TeamShades, elevation: number): Built<"muzzle0" | "m
   for (const y of [-16, 16]) far.push(...beam([-18, y, 25], [-18, y, elevatePoint([-18, 0, z0], px, pz, elevation)[2]], 1.6, 1.6, steelDark()));
   const muzzle = (r: number): V3 => elevatePoint([x1, 0, z0 + (r + 0.5) * rowH], px, pz, elevation);
   return { far, near: [], at: { muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3), muzzle4: muzzle(4) } };
+}
+
+const KATYUSHA_PIVOT: V3 = [-30, 0, 22];
+/** The eight rails across the frame, side by side. */
+const RAILS: readonly number[] = Array.from({ length: 8 }, (_, k) => -8.75 + k * 2.5);
+
+/**
+ * BM-13 Katyusha on a ZiS-6 truck: three axles, a cab with a long rounded bonnet, and a frame of
+ * eight launch rails over the bed, raised toward the front over the cab, a rocket slung under
+ * each. The red star on the cab door.
+ */
+export function katyusha(t: TeamShades, elevation: number): Built<"muzzle0" | "muzzle1" | "muzzle2" | "muzzle3" | "muzzle4" | "muzzle5" | "muzzle6" | "muzzle7"> {
+  const far: Face[] = [];
+  const [px, , pz] = KATYUSHA_PIVOT;
+  // Wheels: two driven axles at the back, one at the front.
+  for (const x of [-24, -10, 26]) far.push(...tire(x, 10.5, 7, 7), ...tire(x, -10.5, 7, 7));
+  far.push(...box(-34, 22, -8, 8, 8, 12, steelDark()));
+  // Rear fenders over the twin axles, and the bed under the launcher.
+  far.push(...box(-32, -2, -12, -9, 14, 15, t.lo), ...box(-32, -2, 9, 12, 14, 15, t.lo));
+  far.push(...box(-34, 10, -10, 10, 12, 17, t.lo));
+  // The cab, its windshield and door with the red star.
+  far.push(...box(12, 26, -10, 10, 12, 30, t.mid));
+  far.push(decalX(26.05, [[-8, 23], [8, 23], [8, 28], [-8, 28]], glass(t)));
+  far.push(decalY(-10.05, [[15, 22], [22, 22], [22, 27], [15, 27]], glass(t)));
+  far.push(...redStarDecal(-10.1, 18.5, 17.5, 2.8));
+  // The long bonnet with its louvres, front fenders and grille.
+  far.push(...extrudeY(-8, 8, [[26, 12], [40, 12], [40, 21], [26, 24]], t.mid));
+  for (let x = 28; x < 37; x += 2) far.push(decalY(-8.05, [[x, 15], [x + 1, 15], [x + 1, 20], [x, 20]], t.lo));
+  far.push(...box(24, 40, -12, -8, 16, 17, t.lo), ...box(24, 40, 8, 12, 16, 17, t.lo));
+  for (let y = -6; y <= 5; y += 2) far.push(decalX(40.05, [[y, 13], [y + 1, 13], [y + 1, 20], [y, 20]], ink()));
+  // The rail frame: eight rails with a rocket slung under each, two cross members, raised.
+  const rack: Face[] = [];
+  for (const [k, y] of RAILS.entries()) {
+    rack.push(...box(-34, 30, y - 0.5, y + 0.5, pz, pz + 1.4, steelDark()));
+    rack.push(...barrel(-30, 20, y, pz - 1.2, 0.95, k % 2 ? olive() : mix(olive(), steelDark(), 0.3)));
+  }
+  for (const x of [-26, 14]) rack.push(...box(x, x + 2, -10, 10, pz + 1.4, pz + 2.6, steelDark()));
+  far.push(...elevate(rack, px, pz, elevation));
+  // The A-frame under the front of the rails, standing on the bed.
+  const front = elevatePoint([10, 0, pz], px, pz, elevation);
+  for (const y of [-9, 9]) far.push(...beam([4, y, 17], [front[0], y, front[2]], 1.4, 1.4, steelDark()));
+  const muzzle = (k: number): V3 => elevatePoint([20, RAILS[k] ?? 0, pz - 1.2], px, pz, elevation);
+  return {
+    far,
+    near: [],
+    at: { muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3), muzzle4: muzzle(4), muzzle5: muzzle(5), muzzle6: muzzle(6), muzzle7: muzzle(7) },
+  };
 }
 
 // ---- Bunker ----

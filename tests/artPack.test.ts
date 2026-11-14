@@ -163,9 +163,26 @@ describe("the packs that ship with the game", () => {
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank");
   });
 
+  it("the Soviet Union has art for every land unit, Heavy Tank included, plus Fighter, Bomber and Transport Aircraft (01-units §1)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) {
+      const fielded = UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber"].includes(type);
+      expect(drawn.has(type), type).toBe(fielded);
+    }
+  });
+
+  it("the Soviet Union has no ships and no carrier aircraft, as it fielded no carriers (01-units §1)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
+    for (const type of ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "diveBomber", "torpedoBomber"] as const) {
+      expect(drawn.has(type), type).toBe(false);
+    }
+  });
+
   it("every nation's sheets come in each built-in player color, so any player can field any nation (08-art-pipeline §12)", () => {
     const pack = parseArtPack(defaultPack);
-    for (const nation of ["us", "germany", "japan"] as const) {
+    for (const nation of ["us", "germany", "japan", "ussr"] as const) {
       for (const { team } of BUILT_IN_PACK.players.slice(0, 3)) {
         expect(findUnitArt(pack, nation, BUILT_IN_PACK.players.findIndex((p) => p.team === team), "infantry"), `${nation} ${team}`).not.toBeNull();
       }

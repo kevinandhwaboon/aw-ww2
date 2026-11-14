@@ -36,6 +36,8 @@ export const teamRamps = {
   grey: { H: "#c6ccc2", L: "#a2a89e", M: "#747b72", D: "#4e554f", N: "#333834" },
   blue: { H: "#a8d0f8", L: "#7fb0e8", M: "#4a7fcc", D: "#2c5296", N: "#1a3264" },
   red: { H: "#f8b49c", L: "#ec8a70", M: "#c9503a", D: "#8c3022", N: "#5a1c14" },
+  // Soviet 4BO protective green: darker and a little bluer than army green. Natural color only.
+  green4bo: { H: "#a6b48c", L: "#7a8c5a", M: "#52643a", D: "#384628", N: "#222c18" },
 };
 
 /** A blank sprite to paint shapes into. Each rect/oval starts a new shape with its own outline. */
@@ -204,6 +206,21 @@ export function star(s, x, y) {
   for (const [dx, dy] of [[3, 0], [2, 1], [3, 1], [4, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [1, 4], [2, 4], [4, 4], [5, 4]]) {
     s.dot(x + dx, y + dy, "star", 0);
   }
+}
+
+/**
+ * The Soviet red star, painted into the current shape: the US star's shape in red, with a thin
+ * white edge when `edged` (as on aircraft from 1943). No hammer and sickle (08-art-pipeline §12).
+ */
+export function redStar(s, x, y, edged = false) {
+  const cells = [[3, 0], [2, 1], [3, 1], [4, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [1, 4], [2, 4], [4, 4], [5, 4]];
+  if (edged) {
+    const inside = new Set(cells.map(([dx, dy]) => `${dx},${dy}`));
+    for (const [dx, dy] of cells) for (const [ex, ey] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      if (!inside.has(`${dx + ex},${dy + ey}`)) s.dot(x + dx + ex, y + dy + ey, "star", 0);
+    }
+  }
+  for (const [dx, dy] of cells) s.dot(x + dx, y + dy, "sun", 0);
 }
 
 /**

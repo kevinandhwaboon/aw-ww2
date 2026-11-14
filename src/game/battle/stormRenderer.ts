@@ -471,6 +471,7 @@ export class StormRenderer implements Cutscene {
     const bob = stride % 2 === 0 ? -1 : 0;
     const f = soldierFrame(0, bob, "run");
     const de = look.nation === "germany";
+    const su = look.nation === "ussr";
     const plan = this.plan;
     if (plan.unit === "infantry") {
       // Weapon held across the chest at port arms.
@@ -491,6 +492,13 @@ export class StormRenderer implements Cutscene {
         back: { x: f.frontShoulder.x + 4, y: y + 4 },
         front: { x: f.frontShoulder.x + 12, y: y + 4 },
         weapon: () => {
+          if (su) {
+            // The PTRD over his shoulder: a long thin barrel with its muzzle brake.
+            p.rect(-14, y, 42, 1, C("battleSteelDark"));
+            p.rect(-14, y - 1, 12, 3, C("battleWood"));
+            p.rect(25, y - 1, 4, 3, C("battleSteelDark"));
+            return;
+          }
           p.rect(-14, y - 1, 34, de ? 4 : 3, de ? C("battleSteelDark") : look.team.lo);
           if (de) p.rect(6, y - 9, 3, 12, C("battleSteel"));
         },
@@ -511,7 +519,7 @@ export class StormRenderer implements Cutscene {
       return;
     }
     // The other man: a baseplate or a rocket bag on his back, a rifle or carbine in his hands.
-    const kind = de ? "kar98" : "carbine";
+    const kind = de ? "kar98" : su ? "ppsh" : "carbine";
     const butt = { x: f.frontShoulder.x - 6, y: f.hip };
     drawSoldier(p, 0, bob, "run", look, {
       stride,

@@ -2,7 +2,8 @@
 // hatch ring, its lid swung open behind him, shoulders and one arm out over the rim, wearing his
 // nation's tanker headgear with goggles pushed up: US: the M1938 tanker helmet, its padded ribs and
 // ear flaps. Germany: the side cap under headphones, goggles on the cap and a throat microphone.
-// Japan: the cork tanker's helmet with its ribs and short peak. Faces right; the hatch rim's
+// Japan: the cork tanker's helmet with its ribs and short peak. Soviet Union: the black padded
+// shlemofon with its three thick ribs, over dark overalls. Faces right; the hatch rim's
 // centre is at (x, y). The same crewman in a steel helmet mans guns (`headgear: "helmet"`).
 
 import { C, mix, shade, type Painter } from "./paint";
@@ -16,12 +17,13 @@ export interface CommanderOptions {
   readonly headgear?: "tanker" | "helmet";
 }
 
-/** The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki. Gun crews wear the uniform. */
+/** The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki, Soviet dark overalls. Gun crews wear the uniform. */
 function jacketOf(look: Look, headgear: "tanker" | "helmet"): string {
   if (headgear === "helmet") return look.team.cloth;
   const kit = kitOf(look);
   if (kit === "de") return mix(C("battleInk"), C("battleFieldGrey"), 0.3);
   if (kit === "jp") return C("battleKhaki");
+  if (kit === "su") return mix(C("battleInk"), C("battleOlive"), 0.45);
   return mix(C("battleSand"), C("battleOlive"), 0.45);
 }
 
@@ -98,8 +100,14 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     p.px(x - 3, y - 12, shade(C("battleRubber"), 1.6));
     p.rect(x - 1, y - 8, 3, 1, C("battleRubber")); // throat microphone strap
   } else {
-    // A padded tanker's helmet: a ribbed dome with ear flaps; Japan's has a short peak.
-    const hat = kit === "jp" ? mix(C("battleKhaki"), C("battleLeather"), 0.35) : mix(C("battleLeather"), C("battleOlive"), 0.35);
+    // A padded tanker's helmet: a ribbed dome with ear flaps; Japan's has a short peak, the Soviet
+    // shlemofon is black canvas with fatter ribs.
+    const hat =
+      kit === "jp"
+        ? mix(C("battleKhaki"), C("battleLeather"), 0.35)
+        : kit === "su"
+          ? mix(C("battleInk"), C("battleLeather"), 0.3)
+          : mix(C("battleLeather"), C("battleOlive"), 0.35);
     const hatHi = shade(hat, 1.35);
     const hatLo = shade(hat, 0.7);
     p.rect(x - 3, y - 17, 6, 4, hat);
@@ -107,6 +115,7 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     p.rect(x - 2, y - 18, 3, 1, hatHi);
     p.rect(x - 3, y - 17, 1, 3, hatHi);
     for (const rx of [x - 1, x + 1]) p.rect(rx, y - 17, 1, 3, hatLo); // padded ribs
+    if (kit === "su") for (const rx of [x - 2, x, x + 2]) p.rect(rx, y - 18, 1, 4, hatHi); // the shlemofon's fat ribs
     p.rect(x + 3, y - 15, 1, 2, hatLo);
     p.rect(x - 4, y - 14, 3, 5, hat); // ear flap
     p.rect(x - 4, y - 14, 1, 5, hatLo);

@@ -141,7 +141,7 @@ export class BattleEffects {
         const ground = this.slot(h, shot.shooterFigure).y;
         for (let k = 0; k < 3; k++) this.puff({ x: m.x + h.dir * (k * 6 - 4) + h.dir * u * 10, y: ground - 3 - u * 4 }, 3 + u * 6, 0.7 * (1 - u));
       }
-      if (shot.fire === "bazooka" && age < 1000) {
+      if (shot.fire === "bazooka" && h.data.nation !== "ussr" && age < 1000) {
         // Backblast out of the rear of the tube.
         const u = age / 1000;
         const rear = { x: m.x - h.dir * 38, y: m.y };
@@ -310,10 +310,16 @@ export class BattleEffects {
     return { at: { x: lerp(m.x, target.x, u), y: lerp(m.y, target.y, u) }, dir: { x: (target.x - m.x) / len, y: (target.y - m.y) / len } };
   }
 
+  /** What flies: the Soviet Assault Infantry's PTRD fires a bullet, not the others' rocket. */
+  private missileOf(shot: PlannedShot): Missile {
+    if (shot.fire === "bazooka" && this.halves[shot.from].data.nation === "ussr") return "shell";
+    return MISSILE[shot.fire];
+  }
+
   drawMissile(shot: PlannedShot, t: number): void {
     if (t < shot.fireAt || t > shot.landAt) return;
     const u = (t - shot.fireAt) / (shot.landAt - shot.fireAt);
-    const kind = MISSILE[shot.fire];
+    const kind = this.missileOf(shot);
     const here = this.missileAt(shot, u, kind);
     if (!here) return;
     const { at, dir } = here;

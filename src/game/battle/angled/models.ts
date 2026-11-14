@@ -1,11 +1,11 @@
 // 3D models for tanks and tank destroyers in battle scenes, drawn turned 5° toward the viewer (see
 // mesh.ts, 08-art-pipeline §18). Each is built from the shapes that make the real vehicle
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
-// StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. `recoil` slides the gun
-// back along its barrel when it fires.
+// StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. Soviet Union: T-70,
+// T-34/76 (1943), KV-1, SU-152. `recoil` slides the gun back along its barrel when it fires.
 
 import { C, mix, type TeamShades } from "../colors";
-import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
+import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, shift, wheel, type Face, type V3 } from "./mesh";
 
 export interface Model {
   readonly faces: readonly Face[];
@@ -20,14 +20,22 @@ export interface Model {
 
 type Poly = (readonly [number, number])[];
 
-/** A five-pointed star lying on the vehicle's right side (y), centred at (x, z). */
-export function starDecal(y: number, x: number, z: number, r: number): Face {
+/**
+ * A five-pointed star lying on the vehicle's right side (y), centred at (x, z): white for the US, or
+ * any color given (the Soviet red star).
+ */
+export function starDecal(y: number, x: number, z: number, r: number, color = C("battleStar")): Face {
   const pts = Array.from({ length: 10 }, (_, i) => {
     const a = -Math.PI / 2 + (i * Math.PI) / 5;
     const rr = i % 2 === 0 ? r : r * 0.42;
     return [x + Math.cos(a) * rr, z - Math.sin(a) * rr] as const;
   });
-  return decalY(y, pts, C("battleStar"));
+  return decalY(y, pts, color);
+}
+
+/** The Soviet red star with a thin white edge, on the vehicle's right side (08-art-pipeline §12). */
+export function redStarDecal(y: number, x: number, z: number, r: number): Face[] {
+  return [starDecal(y, x, z, r + 0.8), starDecal(y - 0.03, x, z, r, C("battleSun"))];
 }
 
 /** German vehicles carry no insignia (08-art-pipeline §12): camouflage blotches on the side instead. */
@@ -411,18 +419,131 @@ export function hoNi(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: null, crew: [[-5, -3, 35], [3, 4, 35]], muzzle: [51 - recoil, 0, 28.5], mg: [44, 0, 28.5] };
 }
 
+// ---- Soviet Union ----
+
+/**
+ * T-70: small and low, five road wheels and return rollers, a sloped glacis, a one-man turret set
+ * to the left with the 45mm.
+ */
+export function t70(t: TeamShades, recoil = 0): Model {
+  const f: Face[] = [];
+  f.push(...running(-25, 25, 9, 8, 13, t.lo));
+  f.push(...wheel(23, -13.6, 5.5, 3.8, 1.2, steelDark(), steel()));
+  f.push(...wheel(-23, -13.6, 5, 3.4, 1.2, steel(), steelDark()));
+  for (let i = 0; i < 5; i++) f.push(...roadWheel(-17 + i * 8.5, -13.8, 4.2, 4));
+  for (let i = 0; i < 3; i++) f.push(...wheel(-12 + i * 12, -13.6, 8.6, 1.3, 1, steel(), steelDark()));
+  f.push(...extrudeY(-13, 13, [[-25, 9], [24, 9], [28, 12], [14, 19], [-23, 19], [-25, 16]], t.mid));
+  f.push(...box(-22, -10, -9, 9, 19, 19.6, t.lo));
+  const turret: Poly = [[-9, -6], [6, -6], [10, -2], [10, 9], [6, 12], [-9, 12]];
+  const roof: Poly = [[-8, -4.5], [4, -4.5], [8, -1], [8, 8], [4, 10.5], [-8, 10.5]];
+  f.push(...loftZ(19, turret, 28, roof, t.mid));
+  f.push(...redStarDecal(-5.5, -1, 23.5, 2.6));
+  f.push(...box(9, 12, 0, 6, 21, 26, t.lo));
+  f.push(...barrel(11 - recoil, 31 - recoil, 3, 23.5, 1.1, steelDark()));
+  f.push(...loftZ(28, circle(-2, 3, 3.2, 8), 29.5, circle(-2, 3, 2.9, 8), t.lo));
+  return { faces: f, commander: [-2, 3, 29.5], muzzle: [31 - recoil, 3, 23.5], mg: [20, 3, 23.5] };
+}
+
+/**
+ * T-34/76 (1943): five big Christie road wheels with no return rollers, a steeply sloped glacis
+ * and hull sides, spare fuel tanks on the side, the hexagonal turret with its two round roof
+ * hatches, and the 76mm.
+ */
+export function t34(t: TeamShades, recoil = 0): Model {
+  const f: Face[] = [];
+  f.push(...running(-36, 36, 14, 11, 18, t.lo));
+  f.push(...wheel(-33, -18.6, 7, 4.6, 1.2, steelDark(), steel()));
+  for (let i = 0; i < 5; i++) {
+    const x = -25 + i * 13;
+    f.push(...wheel(x, -18.9, 6.6, 6.3, 1.3, steel(), steelDark()));
+    f.push(...wheel(x, -19.4, 6.6, 2.2, 0.6, steelDark(), steel()));
+  }
+  // Sloped hull: the glacis runs back from the nose, the upper sides lean in.
+  f.push(...loftZ(14, [[-36, -18], [37, -18], [39, -12], [39, 12], [37, 18], [-36, 18]], 24, [[-31, -13.5], [17, -13.5], [19, -9], [19, 9], [17, 13.5], [-31, 13.5]], t.mid));
+  f.push(...barrel(28, 36, 7, 18, 0.9, steelDark()));
+  f.push(...box(-31, -21, -9, 9, 24, 24.6, t.lo));
+  for (let x = -30; x < -21; x += 2.5) f.push(...box(x, x + 1, -8, 8, 24.6, 25, steelDark()));
+  // Two fuel tanks strapped to the near side, and the exhausts out the back.
+  f.push(...extrudeX(-30, -20, circle(-16.6, 19.5, 2.2, 8), steelDark()));
+  f.push(...extrudeX(-18, -8, circle(-16.6, 19.5, 2.2, 8), steelDark()));
+  f.push(...extrudeY(-9, -6, circle(-37, 18, 1.4, 8), steelDark()), ...extrudeY(6, 9, circle(-37, 18, 1.4, 8), steelDark()));
+  // The hexagonal turret, set well forward.
+  const hex: Poly = [[-12, -11], [4, -11], [13, -6], [13, 6], [4, 11], [-12, 11]];
+  const hexTop: Poly = [[-10, -9.5], [3, -9.5], [10, -5], [10, 5], [3, 9.5], [-10, 9.5]];
+  f.push(...shift(loftZ(24, hex, 34, hexTop, t.mid), 4, 0, 0));
+  f.push(...redStarDecal(-10.4, 0, 29, 3));
+  f.push(...box(16, 20, -5, 5, 26, 32, t.lo));
+  f.push(...barrel(19 - recoil, 50 - recoil, 0, 29, 1.5, steelDark()));
+  for (const hy of [-4.5, 4.5]) f.push(...loftZ(34, circle(-1, hy, 3, 10), 35.5, circle(-1, hy, 2.7, 10), t.lo));
+  return { faces: f, commander: [-1, 4.5, 35.5], muzzle: [50 - recoil, 0, 29], mg: [36, 7, 18] };
+}
+
+/** The KV chassis: six small road wheels with return rollers, a slab-sided hull, fenders over the tracks. */
+function kvHull(t: TeamShades): Face[] {
+  const f: Face[] = [];
+  f.push(...running(-42, 42, 12, 12, 20, t.lo));
+  f.push(...wheel(-40, -20.6, 7, 4.6, 1.2, steelDark(), steel()));
+  f.push(...wheel(40, -20.6, 6.5, 4.2, 1.2, steel(), steelDark()));
+  for (let i = 0; i < 6; i++) f.push(...roadWheel(-31 + i * 12.4, -20.8, 4.4, 4.2));
+  for (let i = 0; i < 3; i++) f.push(...wheel(-25 + i * 25, -20.6, 10.6, 1.6, 1, steel(), steelDark()));
+  f.push(...box(-42, 42, -21.5, 21.5, 12, 13.5, t.lo));
+  f.push(...extrudeY(-19, 19, [[-41, 13.5], [41, 13.5], [44, 17], [36, 25], [-39, 25], [-42, 21]], t.mid));
+  for (let x = -36; x < 32; x += 6) f.push(decalY(-19.05, [[x, 23], [x + 1, 23], [x + 1, 24], [x, 24]], t.lo));
+  f.push(...box(-38, -28, -11, 11, 25, 25.6, t.lo));
+  // Stowage boxes on the fender, the tow cable.
+  f.push(...box(14, 24, -21.5, -17, 13.5, 17, t.lo), ...box(-24, -14, -21.5, -17, 13.5, 17, t.lo));
+  for (let x = -34; x < 30; x += 6) f.push(...box(x, x + 4, -19.6, -19.1, 20, 21, steelDark()));
+  return f;
+}
+
+/** KV-1: the KV chassis with a huge welded turret, a cupola and the 76mm. */
+export function kv1(t: TeamShades, recoil = 0): Model {
+  const f = kvHull(t);
+  f.push(...barrel(38, 44, 9, 19.5, 0.9, steelDark()));
+  const turret: Poly = [[-17, -14], [9, -14], [15, -10], [15, 10], [9, 14], [-17, 14]];
+  const roof: Poly = [[-15, -12], [7, -12], [13, -8], [13, 8], [7, 12], [-15, 12]];
+  f.push(...loftZ(25, turret, 39, roof, t.mid));
+  f.push(...redStarDecal(-13.1, -2, 32, 3.6));
+  f.push(...box(14, 19, -6, 6, 28, 36, t.lo));
+  f.push(...barrel(18 - recoil, 52 - recoil, 0, 32, 1.6, steelDark()));
+  f.push(...barrel(-22, -16, 5, 31, 0.6, steelDark()));
+  f.push(...loftZ(39, circle(-6, 5, 4, 10), 42, circle(-6, 5, 3.6, 10), t.lo));
+  return { faces: f, commander: [-6, 5, 42], muzzle: [52 - recoil, 0, 32], mg: [44, 9, 19.5] };
+}
+
+/**
+ * SU-152: the KV chassis with a tall, slope-fronted armored box at the front, the 152mm howitzer
+ * in a big round mantlet, its muzzle brake, and a hatch on the roof. New at Kursk.
+ */
+export function su152(t: TeamShades, recoil = 0): Model {
+  const f = kvHull(t);
+  const low: Poly = [[-16, -18], [24, -18], [32, -13], [32, 13], [24, 18], [-16, 18]];
+  const high: Poly = [[-14, -15], [16, -15], [22, -11], [22, 11], [16, 15], [-14, 15]];
+  f.push(...loftZ(25, low, 42, high, t.mid));
+  f.push(...redStarDecal(-17, 0, 33, 3.6));
+  f.push(...extrudeX(25, 32, circle(0, 33, 6.4, 12), t.lo));
+  f.push(...barrel(30 - recoil, 58 - recoil, 0, 33, 2.3, steelDark()));
+  f.push(...barrel(53 - recoil, 60 - recoil, 0, 33, 3.3, steelDark()));
+  f.push(...loftZ(42, circle(-6, 6, 4, 10), 44, circle(-6, 6, 3.6, 10), t.lo));
+  f.push(...box(-2, 8, -10, -4, 42, 43, t.lo));
+  return { faces: f, commander: [-6, 6, 44], muzzle: [60 - recoil, 0, 33], mg: [32, 0, 33] };
+}
+
 export type TankKind = "light" | "medium" | "heavy" | "td";
 
 type MakeModel = (t: TeamShades, recoil?: number) => Model;
 
 /**
- * Each nation's model for each tank kind. Other Allied nations use the US models (08-art-pipeline
+ * Each nation's model for each tank kind. The UK and Canada use the US models (08-art-pipeline
  * §18). Japan fielded no heavy tank, so its scenarios never offer one; the Chi-Ha stands in if one
  * is ever drawn.
  */
-export const TANK_MODELS: Record<TankKind, { us: MakeModel; de: MakeModel; jp: MakeModel }> = {
-  light: { us: stuart, de: panzerII, jp: haGo },
-  medium: { us: sherman, de: panzerIV, jp: chiHa },
-  heavy: { us: churchill, de: tiger, jp: chiHa },
-  td: { us: m10, de: stug, jp: hoNi },
+/** Whose models: the same keys as the battle scenes' `Kit` (rig.ts), kept here so this file needs no DOM types. */
+type ModelKit = "us" | "de" | "jp" | "su";
+
+export const TANK_MODELS: Record<TankKind, Record<ModelKit, MakeModel>> = {
+  light: { us: stuart, de: panzerII, jp: haGo, su: t70 },
+  medium: { us: sherman, de: panzerIV, jp: chiHa, su: t34 },
+  heavy: { us: churchill, de: tiger, jp: chiHa, su: kv1 },
+  td: { us: m10, de: stug, jp: hoNi, su: su152 },
 };

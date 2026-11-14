@@ -2,26 +2,30 @@
 // Each nation's version follows the map art (08-art-pipeline §12, §17) and is drawn so the real
 // vehicle can be told apart: a Sherman's bogies and cast turret, a Panzer IV's skirts and long gun,
 // a Tiger's interleaved wheels and Zimmerit, a Willys jeep's flat hood and upright windshield, a
-// Chi-Ha's bellcranks and handrail antenna. Japan's other machines (recon, halftrack, AA, guns,
-// rockets) take the German shapes, which their real counterparts resembled, with Japanese crews.
+// Chi-Ha's bellcranks and handrail antenna, a T-34's big road wheels and hexagonal turret. Japan's
+// other machines (recon, halftrack, AA, guns, rockets) take the German shapes, which their real
+// counterparts resembled, with Japanese crews. The Soviet Union's take the US shapes, which the Red
+// Army received under Lend-Lease, with the red star and Soviet crews, except its rockets: the
+// Katyusha.
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
 import { BATTLE_VIEW, drawMesh, polished, screenAngle, screenPoint, type Face, type V3 } from "./angled/mesh";
 import { tankCommander } from "./crew";
 import { TANK_MODELS, type Model, type TankKind } from "./angled/models";
-import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys, type Built } from "./angled/vehicleModels";
+import { bunker, calliope, flakGun, howitzer, katyusha, m3, nebelwerfer, quadAA, r75, sdkfz251, willys, type Built } from "./angled/vehicleModels";
 import { C, mix, shade, type Painter } from "./paint";
 import { drawSoldier, earsCovered, sandbags, soldierFrame } from "./soldiers";
 import { FIRE_TIMING } from "./timeline";
 import { justFired, kick, kitOf, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
 /** The Axis shapes: Germany's machines, which Japan's other machines also use (see the top). */
-const de = (look: Look) => kitOf(look) !== "us";
+const de = (look: Look) => kitOf(look) === "de" || kitOf(look) === "jp";
+/** The star on the US shapes: white, or red when the Soviet Union drives them. */
+const markOf = (look: Look) => (kitOf(look) === "su" ? C("battleSun") : C("battleStar"));
 
-/** A white star, the US vehicle marking. */
-export function star(p: Painter, cx: number, cy: number): void {
-  const s = C("battleStar");
+/** A white star, the US vehicle marking (or any color given). */
+export function star(p: Painter, cx: number, cy: number, s = C("battleStar")): void {
   p.rect(cx - 3, cy - 1, 7, 1, s);
   p.rect(cx - 2, cy, 5, 1, s);
   p.rect(cx - 1, cy - 3, 3, 2, s);
@@ -32,14 +36,25 @@ export function star(p: Painter, cx: number, cy: number): void {
   p.px(cx + 3, cy + 2, s);
 }
 
+/** The Soviet red star with a thin white edge, as on its aircraft (08-art-pipeline §12). */
+export function redStar(p: Painter, cx: number, cy: number): void {
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) star(p, cx + dx, cy + dy);
+  star(p, cx, cy, C("battleSun"));
+}
+
 /**
- * A crewman's head in the hatch: a US tanker helmet, German headphones over a side cap, or the
- * Japanese padded tanker's helmet with its peak.
+ * A crewman's head in the hatch: a US tanker helmet, German headphones over a side cap, the
+ * Japanese padded tanker's helmet with its peak, or the Soviet ribbed shlemofon.
  */
 export function commander(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x, y - 6, 5, 6, C("battleSkin"));
   p.px(x + 3, y - 4, C("battleInk"));
-  if (kitOf(look) === "jp") {
+  if (kitOf(look) === "su") {
+    const pad = mix(C("battleInk"), C("battleLeather"), 0.4);
+    p.rect(x - 1, y - 9, 7, 3, pad);
+    p.rect(x - 1, y - 6, 2, 4, pad);
+    for (const rx of [x + 1, x + 3]) p.px(rx, y - 9, shade(pad, 1.5));
+  } else if (kitOf(look) === "jp") {
     const pad = mix(C("battleKhaki"), C("battleLeather"), 0.4);
     p.rect(x - 1, y - 9, 6, 3, pad);
     p.rect(x + 4, y - 7, 3, 1, shade(pad, 0.7));
@@ -141,6 +156,11 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
   } else if (de(look)) {
     p.rect(x - 1, y - 11, 8, 4, look.team.lo);
     p.rect(x - 2, y - 8, 2, 3, look.team.lo);
+  } else if (kitOf(look) === "su") {
+    // SSh-40: a taller dome with a short flared rim.
+    p.rect(x + 1, y - 12, 4, 1, look.team.lo);
+    p.rect(x - 1, y - 11, 8, 3, look.team.lo);
+    p.rect(x - 2, y - 8, 10, 1, look.team.deep);
   } else {
     p.rect(x - 1, y - 11, 8, 4, look.team.lo);
     p.rect(x - 2, y - 8, 10, 1, look.team.deep);
@@ -151,7 +171,7 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
 
 const reconBounce = (pose: Pose, look: Look) => Math.floor(pose.t / (de(look) ? 150 : 160) + pose.index) % 2;
 const reconModel = (look: Look, shake: number) =>
-  de(look) ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake)) : memo(`willys|${look.team.mid}|${shake}`, () => willys(look.team, shake));
+  de(look) ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake)) : memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
 
 export const reconRig: Rig = {
   body: "machine",
@@ -176,7 +196,7 @@ export const reconRig: Rig = {
       mesh(p, m.front, oy);
       return;
     }
-    const m = memo(`willys|${look.team.mid}|${shake}`, () => willys(look.team, shake));
+    const m = memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
     mesh(p, m.far, oy);
     // The driver on the far seat, hands on the wheel.
     const T = look.team;
@@ -206,7 +226,7 @@ export const reconRig: Rig = {
 // ---- Halftracks: an M3 with a .50, or a Sd.Kfz. 251 with an MG 34, the squad aboard ----
 
 const halftrackModel = (look: Look) =>
-  de(look) ? memo(`251|${look.team.mid}`, () => sdkfz251(look.team)) : memo(`m3|${look.team.mid}`, () => m3(look.team));
+  de(look) ? memo(`251|${look.team.mid}`, () => sdkfz251(look.team)) : memo(`m3|${look.nation ?? ""}|${look.team.mid}`, () => m3(look.team, 0, markOf(look)));
 const halftrackBob = (pose: Pose) => Math.floor(pose.t / 170 + pose.index) % 2;
 
 export const halftrackRig: Rig = {
@@ -237,7 +257,7 @@ export const mobileAARig: Rig = {
     const elevation = aaElevation(pose.atAir);
     const shot = pose.fire === "aaGuns" ? justFired(pose.ct, FIRE_TIMING.aaGuns.shots, 45) : -1;
     const kicked = shot >= 0 ? shot % 4 : -1;
-    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () => quadAA(look.team, de(look), elevation, kicked));
+    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () => quadAA(look.team, de(look), elevation, kicked, markOf(look)));
     mesh(p, m.far, -MODEL_LIFT);
     const g = at(m.at.gunner, -MODEL_LIFT);
     // Polish: the gunner as a full crewman in his steel helmet (crew.ts).
@@ -246,7 +266,7 @@ export const mobileAARig: Rig = {
   },
   muzzle(pose, shot, look): Muzzle {
     const elevation = aaElevation(pose.atAir);
-    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|-1`, () => quadAA(look.team, de(look), elevation, -1));
+    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|-1`, () => quadAA(look.team, de(look), elevation, -1, markOf(look)));
     return { ...at(point(m, `muzzle${shot % 4}`), -MODEL_LIFT), angle: elevationAngle(elevation) };
   },
 };
@@ -351,7 +371,7 @@ export const artilleryRig: Rig = {
   },
 };
 
-// ---- Rocket Artillery: a Calliope rack on a Sherman, or a Nebelwerfer ----
+// ---- Rocket Artillery: a Calliope rack on a Sherman, a Nebelwerfer, or a Katyusha ----
 
 /**
  * The rocket unit's forward observer: one soldier, kneeling out in front of the lead launcher,
@@ -379,12 +399,16 @@ function spotter(p: Painter, x: number, look: Look): void {
 
 const NEBEL_ELEVATION = 0.75;
 const CALLIOPE_ELEVATION = 0.38;
-const rocketModel = (look: Look) =>
+const KATYUSHA_ELEVATION = 0.2;
+const rocketModel = (look: Look): Built<string> =>
   de(look)
     ? memo(`nebel|${look.team.mid}`, () => nebelwerfer(look.team, NEBEL_ELEVATION))
-    : memo(`calliope|${look.team.mid}`, () => calliope(look.team, CALLIOPE_ELEVATION));
-/** Which tube a rocket leaves from: six barrels on the Nebelwerfer, five rows on the Calliope rack. */
-const tubeOf = (look: Look, shot: number) => `muzzle${shot % (de(look) ? 6 : 5)}`;
+    : kitOf(look) === "su"
+      ? memo(`katyusha|${look.team.mid}`, () => katyusha(look.team, KATYUSHA_ELEVATION))
+      : memo(`calliope|${look.team.mid}`, () => calliope(look.team, CALLIOPE_ELEVATION));
+/** Which tube a rocket leaves from: six barrels on the Nebelwerfer, five rows on the Calliope rack, eight rails on the Katyusha. */
+const tubeOf = (look: Look, shot: number) => `muzzle${shot % (de(look) ? 6 : kitOf(look) === "su" ? 8 : 5)}`;
+const rocketElevation = (look: Look) => (de(look) ? NEBEL_ELEVATION : kitOf(look) === "su" ? KATYUSHA_ELEVATION : CALLIOPE_ELEVATION);
 
 export const rocketRig: Rig = {
   body: "machine",
@@ -415,7 +439,7 @@ export const rocketRig: Rig = {
   },
   muzzle(_pose, shot, look): Muzzle {
     const tube = point(rocketModel(look), tubeOf(look, shot));
-    return { ...at(tube, de(look) ? -GUN_LIFT : -MODEL_LIFT), angle: elevationAngle(de(look) ? NEBEL_ELEVATION : CALLIOPE_ELEVATION) };
+    return { ...at(tube, de(look) ? -GUN_LIFT : -MODEL_LIFT), angle: elevationAngle(rocketElevation(look)) };
   },
 };
 

@@ -1,5 +1,5 @@
 // Small national flags for the HUD. Placeholder art, and deliberately free of political symbols:
-// the Soviet flag is a plain star, Germany shows the Balkenkreuz, its wartime military marking, and
+// the Soviet flag is a white-edged red star on a plain green field (no hammer and sickle), Germany shows the Balkenkreuz, its wartime military marking, and
 // Japan shows its national flag, the plain red disc, never the rising-sun ensign.
 
 import type { NationId } from "../engine/data/nations";
@@ -11,6 +11,7 @@ export const FLAG_COLORS: Readonly<Record<string, string>> = {
   G: "#e0b030",
   K: "#1a1a16",
   A: "#8a8d86",
+  O: "#4e5c34",
 };
 
 /** Every nation's flag as rows of color letters, all the same size. */
@@ -49,15 +50,15 @@ export const FLAGS: Readonly<Record<NationId, readonly string[]>> = {
     "RRRRRRRRRRRRRRRR",
   ],
   ussr: [
-    "RRRRRRRRRRRRRRRR",
-    "RRRRGRRRRRRRRRRR",
-    "RRGGGGGRRRRRRRRR",
-    "RRRGGGRRRRRRRRRR",
-    "RRRGRGRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRR",
+    "OOOOOOOOOOOOOOOO",
+    "OOOOOOOWOOOOOOOO",
+    "OOOOOOWRWOOOOOOO",
+    "OOOOWWRRRWWOOOOO",
+    "OOOWRRRRRRRWOOOO",
+    "OOOOWRRRRRWOOOOO",
+    "OOOOWRRWRRWOOOOO",
+    "OOOOOWWOWWOOOOOO",
+    "OOOOOOOOOOOOOOOO",
   ],
   germany: [
     "AAAAAWWWWWWAAAAA",
