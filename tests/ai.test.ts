@@ -671,7 +671,7 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   };
   const everyone = (state: GameState) => state.players.map(() => greedy);
 
-  // Maps whose day limit ends every game: Iwo Jima by day 15, Midway by day 12. On the others the
+  // Maps whose day limit ends every game: Iwo Jima by day 18, Midway by day 12. On the others the
   // AIs must defeat each other outright, landing troops where needed (09-ai §4b), and those games
   // often run past 40 days (Bastogne 59 to over 80).
   const LAND_MAPS = ["iwo-jima", "midway"];

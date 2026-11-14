@@ -18,8 +18,9 @@ const ISLAND = [
   [28.5, 11], [26, 12.2], [23, 13.3], [20, 14.6], [17, 16.3], [14, 18], [11, 19.6], [8.5, 21], [6.5, 22.5], [4.5, 23.5],
 ];
 
-// The US staging area: a stand-in for the transport groups offshore, south-east of the island. The
-// carrier groups are real Carriers (see Forces).
+// The US staging area: a stand-in for the transport groups offshore, south-east of the island, where
+// reinforcements are built, and for the Marianas, whose bombers fly from its Airfield. The fleet
+// itself is real ships (see Forces).
 const ANCHORAGE = [[28, 19], [34, 19], [34, 24], [28, 24]];
 
 function inside(poly, x, y) {
@@ -95,8 +96,8 @@ const P = {
   hq: [20, 4], // Kuribayashi's command post, in a cave near Kitano Point
   usHq: [31, 22],
   usFactory: [30, 21],
-  usPort1: [28, 20],
-  usPort2: [29, 23],
+  usPort: [28, 20],
+  usAirfield: [28, 19], // Stands for the bomber bases in the Marianas
 };
 set(...P.suribachi, "C");
 set(...P.airfield1, "A");
@@ -107,8 +108,8 @@ set(...P.depot, "f");
 set(...P.hq, "Q");
 set(...P.usHq, "Q");
 set(...P.usFactory, "f");
-set(...P.usPort1, "P");
-set(...P.usPort2, "P");
+set(...P.usPort, "P");
+set(...P.usAirfield, "A");
 // The runways run on from each airfield as open ground.
 each([[12, 13], [14, 12], [18, 10], [20, 8], [26, 8]], ".");
 
@@ -117,6 +118,12 @@ each([[12, 13], [14, 12], [18, 10], [20, 8], [26, 8]], ".");
 const bunkers = [
   [5, 19], [6, 20], [7, 18], [9, 16], [10, 15], [12, 12], [14, 14], [15, 13], [17, 10], [18, 11],
   [20, 11], [22, 11], [21, 8], [25, 10], [23, 4], [19, 5], [27, 7], [17, 7], [15, 9], [29, 6],
+  // The beach line: a pillbox one square inland all along the landing beaches, from below Suribachi
+  // to the East Boat Basin, one above the west beach, and one more on Suribachi's slope. Each
+  // overlooks the sand, so landing craft have to come in under its guns.
+  [10, 18], [12, 17], [14, 16], [16, 15], [17, 14], [19, 13], [22, 12], [8, 17], [4, 20],
+  // Pillboxes above the west beach by Airfield No. 1 and the East Boat Basin.
+  [11, 13], [24, 11],
 ];
 each(bunkers, "X");
 // The US anchorage is land in the game but stands for ships: keep it plain apart from its properties.
@@ -128,22 +135,40 @@ for (const [x, y] of bunkers) if (grid[y][x] !== "X") throw new Error(`bunker at
 
 const us = (type, x, y, extra = {}) => ({ type, owner: 0, pos: { x, y }, ...extra });
 const jp = (type, x, y, extra = {}) => ({ type, owner: 1, pos: { x, y }, ...extra });
+// The US starts entirely afloat: no one is ashore on day 1. The Landing Craft wait two turns out from
+// the beaches (more than a Landing Craft's 6 squares), so the first day can only be bombardment and
+// the approach. Every Japanese gun is out of range of every US ship at the start.
 const units = [
-  // The first wave ashore on the black sand below Suribachi and Airfield No. 1.
-  us("infantry", 8, 20), us("infantry", 9, 19), us("infantry", 11, 18), us("infantry", 12, 18),
-  us("assaultInfantry", 10, 19), us("assaultInfantry", 13, 17), us("mediumTank", 14, 17), us("mediumTank", 7, 21),
-  // Offshore: battleships and destroyers for the bombardment, and Landing Craft for the next waves.
-  us("battleship", 15, 21), us("battleship", 18, 22), us("destroyer", 20, 17), us("destroyer", 24, 15),
-  us("landingCraft", 17, 19), us("landingCraft", 22, 18),
-  // Two Carriers between the beaches and the anchorage, each with two Dive Bombers that can reach
-  // the bunkers round Airfield No. 2 on the first day (05-supply-transport §10). Japan has no ships
-  // here, so no Torpedo Bombers.
+  // The bombardment group: three Battleships within their 6-square reach of the beach line, and two
+  // Destroyers.
+  us("battleship", 14, 20), us("battleship", 18, 18), us("battleship", 22, 16),
+  us("destroyer", 16, 19), us("destroyer", 20, 17),
+  // Two Carriers, each with two Dive Bombers that can reach a beach bunker on day 1
+  // (05-supply-transport §10). Japan has no ships here, so no Torpedo Bombers.
   us("carrier", 26, 15, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
-  us("carrier", 23, 16, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
-  // Waiting at the anchorage to go ashore.
-  us("infantry", 30, 20), us("artillery", 31, 21), us("halftrack", 32, 22),
+  us("carrier", 24, 16, { cargo: [{ type: "diveBomber" }, { type: "diveBomber" }] }),
+  // Two Bombers flown in from the Marianas, already over the sea. They fly back to the anchorage
+  // Airfield (the Marianas) to refuel and rearm, two turns each way.
+  us("bomber", 23, 17), us("bomber", 21, 19),
+  // The landing force, all aboard six Landing Craft: five Infantry, three Assault Infantry, two
+  // Medium Tanks, an Artillery and a Halftrack.
+  us("landingCraft", 19, 21, { cargo: [{ type: "infantry" }, { type: "infantry" }] }),
+  us("landingCraft", 21, 20, { cargo: [{ type: "assaultInfantry" }, { type: "assaultInfantry" }] }),
+  us("landingCraft", 23, 19, { cargo: [{ type: "infantry" }, { type: "infantry" }] }),
+  us("landingCraft", 20, 22, { cargo: [{ type: "mediumTank" }, { type: "mediumTank" }] }),
+  us("landingCraft", 22, 21, { cargo: [{ type: "infantry" }, { type: "assaultInfantry" }] }),
+  us("landingCraft", 24, 20, { cargo: [{ type: "artillery" }, { type: "halftrack" }] }),
   // Mount Suribachi's garrison.
   jp("infantry", 5, 19), jp("mortar", 4, 20), jp("artillery", 6, 19), jp("infantry", 6, 20),
+  // The beach line: every pillbox behind the sand is manned, with guns and mortars behind it whose
+  // fire falls on the beaches.
+  jp("infantry", 8, 17), jp("infantry", 10, 18), jp("assaultInfantry", 12, 17), jp("infantry", 14, 16),
+  jp("infantry", 16, 15), jp("assaultInfantry", 17, 14), jp("infantry", 19, 13), jp("infantry", 22, 12),
+  jp("mortar", 11, 17), jp("artillery", 13, 15), jp("artillery", 16, 13), jp("mortar", 20, 12),
+  // Guns on Suribachi's summit, and covering the west beach and the East Boat Basin, so there's no
+  // unguarded stretch of sand to land on instead.
+  jp("artillery", 4, 21), jp("infantry", 11, 13), jp("artillery", 13, 11), jp("infantry", 24, 11),
+  jp("artillery", 26, 9),
   // The airfield line and the neck.
   jp("infantry", 10, 15), jp("infantry", 12, 12), jp("assaultInfantry", 14, 14), jp("flakGun", 15, 11),
   jp("mortar", 17, 10), jp("infantry", 18, 11),
@@ -156,7 +181,7 @@ const units = [
 ];
 
 const owners = [
-  [P.usHq, 0], [P.usFactory, 0], [P.usPort1, 0], [P.usPort2, 0],
+  [P.usHq, 0], [P.usFactory, 0], [P.usPort, 0], [P.usAirfield, 0],
   [P.suribachi, 1], [P.airfield1, 1], [P.airfield2, 1], [P.airfield3, 1], [P.motoyama, 1], [P.minami, 1],
   [P.nishi, 1], [P.kita, 1], [P.higashi, 1], [P.depot, 1], [P.hq, 1],
 ];
@@ -164,7 +189,7 @@ const owners = [
 const scenario = {
   id: "iwo-jima",
   name: "Iwo Jima",
-  description: "February 1945. US Marines storm the black sand beaches of a small volcanic island, under the guns of Mount Suribachi. Japan's garrison is dug into bunkers and caves from end to end. The US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ. Japan wins by holding out to the start of day 15.",
+  description: "February 1945. The US fleet lies off a small volcanic island with the Marines still aboard their landing craft. Japan's garrison is dug into bunkers and caves from end to end, its guns trained on the black sand beaches: shell and bomb the beach line before going in. The US wins by taking Mount Suribachi and Airfields No. 1 and No. 2, or Japan's HQ. Japan wins by holding out to the start of day 18.",
   map: rows,
   players: [
     {
@@ -195,7 +220,7 @@ const scenario = {
       side: "allies",
       properties: [P.suribachi, P.airfield1, P.airfield2].map(([x, y]) => ({ x, y })),
     },
-    { type: "surviveDays", side: "axis", days: 15 },
+    { type: "surviveDays", side: "axis", days: 18 },
   ],
 };
 
