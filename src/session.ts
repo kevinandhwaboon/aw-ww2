@@ -182,7 +182,12 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     // Only what the viewer could see plays out: a hidden submarine's moves don't (05-supply-transport §9).
     const shown = watching === null ? { before: state, events: result.events, revealed: [] } : eventsSeenBy(state, result.events, watching);
     if (shown.revealed.length > 0) scene.setState(shown.before);
-    await scene.playEvents(shown.events);
+    try {
+      await scene.playEvents(shown.events);
+    } catch (error) {
+      // The move has already happened in the engine; a broken animation must never freeze the game.
+      console.error("Couldn't animate events:", error);
+    }
     const previous = state;
     state = result.state;
     updateViewer();
@@ -302,7 +307,10 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   });
 
   render();
-  if (aiTurn()) void runAi();
+  // The computer's first turn waits for the map to be up, so its first moves and attacks animate.
+  void scene.ready().then(() => {
+    if (aiTurn()) void runAi();
+  });
   window.addEventListener("resize", () => {
     const next = fitWindow();
     if (next.zoom === view.zoom && next.width === view.width && next.height === view.height) return;

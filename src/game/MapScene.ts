@@ -115,6 +115,9 @@ export class MapScene extends Phaser.Scene implements MapView {
   private forecastPanel: Phaser.GameObjects.Container | undefined;
   private pixelScale = 1;
   private created = false;
+  /** Resolves once Phaser has created the scene, so there's something to animate on. */
+  private readonly whenCreated: Promise<void>;
+  private resolveCreated: () => void = () => undefined;
   /** Plays attacks as split-screen battle scenes (08-art-pipeline §18); null plays them on the map. */
   private battle: BattlePlayer | null = null;
   private readonly playback = new MapPlayback({
@@ -133,6 +136,9 @@ export class MapScene extends Phaser.Scene implements MapView {
   constructor(private readonly options: MapSceneOptions) {
     super("map");
     this.state = options.state;
+    this.whenCreated = new Promise((resolve) => {
+      this.resolveCreated = resolve;
+    });
   }
 
   setBattlePlayer(player: BattlePlayer | null): void {
@@ -374,6 +380,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     window.addEventListener("keydown", (event) => this.onKey(event), { signal: keys.signal });
     window.addEventListener("keyup", (event) => this.releaseKey(event.key), { signal: keys.signal });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
+    this.resolveCreated();
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;
@@ -766,7 +773,17 @@ export class MapScene extends Phaser.Scene implements MapView {
   // ---- Event playback (mapPlayback.ts) ----
 
   /** Animates engine events. Call before setState(newState); resolves when the animations finish. */
-  playEvents(events: readonly GameEvent[]): Promise<void> {
+  /**
+   * Resolves once the scene is up and running. Phaser starts scenes a little after the game is
+   * created, so anything that animates (the computer's first turn) waits for this.
+   */
+  ready(): Promise<void> {
+    return this.whenCreated;
+  }
+
+  /** Animates engine events, once the scene is up. */
+  async playEvents(events: readonly GameEvent[]): Promise<void> {
+    await this.whenCreated;
     return this.playback.playEvents(events);
   }
 
