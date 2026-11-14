@@ -18,7 +18,7 @@ import { objectiveTiles } from "./objectives";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
-import { terrainLayers } from "./terrainTiles";
+import { portOpening, terrainLayers } from "./terrainTiles";
 import { clampScroll, FOLLOW_MARGIN_SQUARES, inLeftHalf, revealScroll, type Scroll, type Size } from "./viewport";
 import { drawAmmoCanBadge, drawFuelCanBadge, drawHpBadge, drawSubmergedBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
 import { supplyWarnings } from "./tileInfo";
@@ -320,7 +320,9 @@ export class MapScene extends Phaser.Scene implements MapView {
             }
           }
           const owner = owners.get(y * map.width + x);
-          const building = buildings && owner !== undefined ? findPropertyArt(pack, terrainAt(map, { x, y }), owner) : null;
+          const terrain = terrainAt(map, { x, y });
+          const opens = terrain === "port" ? portOpening(map, x, y) : undefined;
+          const building = buildings && owner !== undefined ? findPropertyArt(pack, terrain, owner, opens) : null;
           if (buildings && building !== null && pack.properties) {
             const sx = (building % pack.properties.columns.length) * buildingWidth;
             const sy = Math.floor(building / pack.properties.columns.length) * buildingHeight;

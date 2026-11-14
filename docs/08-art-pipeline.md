@@ -265,7 +265,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `nationColors` | Each nation's own color, the same `team`, `fill` and `outline` as a player entry, keyed by nation (`us`, `germany`, `japan`, `ussr`, ...). Optional: left out, the built-in ones are used (US `olive`, Germany `grey`, Japan `khaki`, Soviet Union `green4bo`); `{}` turns them off so every player keeps their slot's color |
 | `colors` | Any of the color names in `src/game/artPack.ts`, as `"#rrggbb"`: HTML panels and screens, the phone game pad, ranges, path arrow, menus, effects |
 | `unitSheets` | Sprite sheets: `nation`, `team`, `path`, `frames` and `rows`, and optionally `frameSize` (16 or 32, default 16), `paratroopers` (section 17) and `facings` (section 22) |
-| `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges` and `shore` (section 14). Tiles are numbered left to right, top to bottom |
+| `terrain` | One sheet: `path`, `tiles`, and optionally `frames`, `connected`, `bridges`, `shore` and `beach` (section 14). Tiles are numbered left to right, top to bottom |
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `properties` | Buildings for properties: `path`, `columns` and `rows` (section 15) |
 | `terrainNames` | Display names by terrain id |
@@ -290,11 +290,12 @@ The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` rend
 
 | Terrain | What's drawn |
 |---|---|
-| Plains, Forest, Hills, Bocage, Beach | One of several variants, picked by map position. A cell always gets the same one |
+| Plains, Forest, Hills, Bocage | One of several variants, picked by map position. A cell always gets the same one |
+| Beach | Since 2026-11-14, at the developer's request: **half sea, half sand**. Each side that faces open sea (Sea or Reef) is drawn as water, with surf along the waterline, so the beach runs down into the sea beside it. Pieces by the mask of those sides: one side gives half sand, two sides that meet a sand corner with a rounded tip, two opposite sides a sand spit, three a point, four a sandbar. The waterline always crosses a tile edge exactly halfway, so neighboring beaches meet. Where sea touches only a corner and a beach is beside it, an inner-corner piece rounds a quarter of sea into the sand, carrying the waterline on. A beach with no sea beside it is all sand, in its variants. Rivers, ports and land beside a beach stay sand |
 | Road | The piece matching which sides join a road or bridge. Roads are 10 pixels wide, most of the tile |
 | River | The piece matching which sides join a river, bridge, sea or reef, so rivers flow into the sea |
 | Bridge | The river piece beneath it, with a deck on top. Water above or below means the deck runs left to right, otherwise top to bottom |
-| Sea, Reef | The water tile, then foam along each side that touches land. A foam corner shows where land touches only diagonally. Rivers, bridges, reefs and the map's edge count as water |
+| Sea, Reef | The water tile, then foam along each side that touches land. A foam corner shows where land touches only diagonally. Rivers, bridges, reefs and the map's edge count as water. Since 2026-11-14 there's **no foam against a Port** (its harbor runs straight into the sea; a line of foam read as a wall), nor against a Beach when the sheet has half-sea beach pieces (its side facing the sea is water already) |
 
 A road or river that dead-ends at the map's edge runs straight on past it. One that turns or branches at the edge keeps its shape.
 
@@ -320,6 +321,8 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | 32–47 | River, by the same mask |
 | 48–49 | Bridge deck: left to right, top to bottom |
 | 50–57 | Shore foam: edges N, E, S, W, then corners NE, SE, SW, NW |
+| 58–73 | Beach, half sea on the sides facing open sea, by the same mask (58 is all sand). 32-pixel sheet only |
+| 74–77 | Beach inner corners, drawn over a beach piece: NE, SE, SW, NW. 32-pixel sheet only |
 
 **Pack fields** for a terrain sheet. Only `path` and `tiles` are required, so a pack with one tile per terrain still works:
 
@@ -331,6 +334,7 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | `connected` | `road` and `river`: the first of their 16 pieces |
 | `bridges` | `horizontal` and `vertical` deck tiles, drawn over the river piece |
 | `shore` | The first of the 8 foam pieces |
+| `beach` | The first of the 20 beach pieces: 16 by sea mask, then 4 inner corners. Without it, beaches are all sand from `tiles` and sea foams against them |
 
 ## 15. Buildings
 
@@ -341,7 +345,7 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 | City | Two stone houses with a chimney |
 | Factory | Brick shed with a sawtooth roof and a tall chimney |
 | Airfield | Round-roofed hangar and windsock beside a runway |
-| Port | Warehouse and crane on a quay, with pier posts in the water |
+| Port | Warehouse and crane on a paved quay beside a harbor basin, with pier posts in the water. Since 2026-11-14, at the developer's request, the basin **opens toward the sea**: the side facing open sea (Sea or Reef), or with sea on several sides the one with the most sea around it (ties go south, east, west, north); south if there's none. So the harbor runs straight into the sea beside it instead of a quay or a line of foam seeming to wall it off |
 | HQ | A chateau with two towers and a tall banner, so it stands out from a City |
 
 **Owner colors:** the sheet has one row per property and one column per owner: neutral, army green (`olive`), red, blue, green, gold, then the nations' own colors German grey (`grey`), Japanese khaki (`khaki`) and Soviet 4BO green (`green4bo`) (section 12). Neutral is weathered slate grey; German grey is a darker charcoal so it stands apart. A captured property switches column at once.
@@ -358,7 +362,7 @@ Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run ar
 |---|---|
 | `path` | The buildings sheet |
 | `columns` | The owner each column is for: `neutral`, or a player's `team` |
-| `rows` | The property on each row, top to bottom |
+| `rows` | The property on each row, top to bottom. A row named like `port:E` is that property opening east; the plain `port` row opens south and is used when the sheet has no row for the way a port opens. The default pack has `port`, `port:N`, `port:E` and `port:W` |
 | `tileHeight` | 16, or 32 for buildings that rise into the tile behind. Default 16 |
 
 **Fortifications** are terrain tiles, not buildings, because no one owns them: a concrete pillbox for the Bunker, broken slabs and rebar for Rubble, and rows of dragon's teeth for the Obstacle. A unit standing on a bunker covers most of it, as before.

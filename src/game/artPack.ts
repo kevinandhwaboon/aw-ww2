@@ -200,9 +200,18 @@ export interface TerrainSheet {
   readonly bridges: { readonly horizontal: number; readonly vertical: number } | null;
   /** First of 8 shore pieces drawn over sea next to land: edges N, E, S, W, then corners NE, SE, SW, NW. */
   readonly shore?: number;
+  /**
+   * First of 20 beach pieces, half sea on the sides facing open water: 16 in mask order of those sides
+   * (N=1, E=2, S=4, W=8; 0 is all sand), then 4 inner corners drawn over one, NE, SE, SW, NW. Without
+   * it, beaches are drawn all sand from `tiles`.
+   */
+  readonly beach?: number;
   /** The same layout drawn in snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
   readonly winterPath?: string;
 }
+
+/** A property sheet row: a property (or "bunker"), optionally with the side it opens to. */
+export type PropertyRow = TerrainId | `${TerrainId}:${"N" | "E" | "S" | "W"}`;
 
 /** Buildings for owned properties: one row per property, one column per owner (08-art-pipeline §15). */
 export interface PropertySheet {
@@ -210,8 +219,12 @@ export interface PropertySheet {
   readonly path: string;
   /** The owner each column is for: "neutral", or a player's `team`. */
   readonly columns: readonly string[];
-  /** The property on each row, top to bottom, or "bunker" for a bunker with Infantry inside. */
-  readonly rows: readonly TerrainId[];
+  /**
+   * The property on each row, top to bottom, or "bunker" for a bunker with Infantry inside. A row
+   * named like "port:E" draws that property when it opens to that side: a port's harbor faces the
+   * sea beside it (08-art-pipeline §15). The plain "port" row is the one opening south.
+   */
+  readonly rows: readonly PropertyRow[];
   /** 16, or 32 for art drawn for the 32-pixel grid and scaled into a square (08-art-pipeline §17). */
   readonly tileWidth: 16 | 32;
   /** The tile width, or twice it for buildings that rise into the tile behind (08-art-pipeline §16). */
@@ -352,7 +365,7 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore, winterPath } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore, beach, winterPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -375,6 +388,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     return fail(`terrain: "bridges" needs whole numbers for horizontal and vertical`);
   }
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
+  if (beach !== undefined && !isTileNumber(beach)) return fail(`terrain: "beach" must be a whole number`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`terrain: "winterPath" must be a file in the pack`);
   return {
     path,
@@ -385,6 +399,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     connected,
     bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
     ...(shore === undefined ? {} : { shore }),
+    ...(beach === undefined ? {} : { beach }),
     ...(winterPath === undefined ? {} : { winterPath }),
   };
 }
@@ -401,13 +416,19 @@ function parsePropertySheet(raw: unknown): PropertySheet {
   const sizeProblem = tileSizeProblem(tileWidth, tileHeight);
   if (sizeProblem) return fail(`properties: ${sizeProblem}`);
   // A "bunker" row is the bunker drawn garrisoned, in the colors of the side holding it.
-  const bad: unknown = rows.find((row: unknown) => !isTerrain(row) || (row !== "bunker" && terrainDef(row).property === undefined));
+  const isRow = (row: unknown): row is PropertyRow => {
+    if (typeof row !== "string") return false;
+    const [base, side, ...rest] = row.split(":");
+    if (rest.length > 0 || (side !== undefined && !["N", "E", "S", "W"].includes(side))) return false;
+    return isTerrain(base) && (base === "bunker" || terrainDef(base).property !== undefined);
+  };
+  const bad: unknown = rows.find((row: unknown) => !isRow(row));
   if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property or "bunker"`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`properties: "winterPath" must be a file in the pack`);
   return {
     path,
     columns: columns as string[],
-    rows: rows as TerrainId[],
+    rows: rows as PropertyRow[],
     tileWidth: tileWidth as 16 | 32,
     tileHeight: tileHeight as number,
     ...(winterPath === undefined ? {} : { winterPath }),
@@ -504,13 +525,20 @@ export const playerArt = (pack: ArtPack, player: number): PlayerArt =>
 
 /**
  * Which frame of the buildings sheet draws this property for this owner (null = unowned), or null to
- * keep the placeholder and its corner flag.
+ * keep the placeholder and its corner flag. `opens` picks the row drawn opening that way, if the sheet
+ * has one (a port's harbor, 08-art-pipeline §15).
  */
-export function findPropertyArt(pack: ArtPack, terrain: TerrainId, owner: number | null): number | null {
+export function findPropertyArt(
+  pack: ArtPack,
+  terrain: TerrainId,
+  owner: number | null,
+  opens?: "N" | "E" | "S" | "W",
+): number | null {
   const sheet = pack.properties;
   if (!sheet) return null;
   const column = sheet.columns.indexOf(owner === null ? "neutral" : playerArt(pack, owner).team);
-  const row = sheet.rows.indexOf(terrain);
+  const facing = opens === undefined ? -1 : sheet.rows.indexOf(`${terrain}:${opens}`);
+  const row = facing >= 0 ? facing : sheet.rows.indexOf(terrain);
   return column < 0 || row < 0 ? null : row * sheet.columns.length + column;
 }
 

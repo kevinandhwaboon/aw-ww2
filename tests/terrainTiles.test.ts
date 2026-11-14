@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseAsciiMap } from "../src/engine/map";
 import type { TerrainSheet } from "../src/game/artPack";
-import { bridgeRunsAcross, joinMask, shorePieces, terrainLayers, variantFor } from "../src/game/terrainTiles";
+import { beachCorners, beachWaterMask, bridgeRunsAcross, joinMask, portOpening, shorePieces, terrainLayers, variantFor } from "../src/game/terrainTiles";
 
 const N = 1, E = 2, S = 4, W = 8;
 const ROAD = ["road", "bridge"] as const;
@@ -160,6 +160,119 @@ describe("terrain tiles: shoreline (08-art-pipeline §14)", () => {
       { kind: "sheet", tile: 9 },
       { kind: "sheet", tile: 50 + 1 },
     ]);
+  });
+});
+
+describe("terrain tiles: beaches run down into the sea (08-art-pipeline §14)", () => {
+  const withBeaches: TerrainSheet = { ...sheet, tiles: { ...sheet.tiles, beach: [11, 12] }, beach: 58 };
+
+  it("each side of a beach that faces open sea is drawn as water", () => {
+    const map = parseAsciiMap([
+      "SSS",
+      "._S",
+      "...",
+    ]);
+    expect(beachWaterMask(map, 1, 1)).toBe(N | E);
+    expect(terrainLayers(map, 1, 1, withBeaches)).toEqual([{ kind: "sheet", tile: 58 + (N | E) }]);
+  });
+
+  it("rivers, ports and land beside a beach stay sand", () => {
+    const map = parseAsciiMap([
+      ".~.",
+      "P__",
+      "...",
+    ]);
+    expect(beachWaterMask(map, 1, 1)).toBe(0);
+  });
+
+  it("a beach with no sea beside it is all sand, in its usual variants", () => {
+    const map = parseAsciiMap([
+      "...",
+      "._.",
+      "...",
+    ]);
+    const [layer] = terrainLayers(map, 1, 1, withBeaches);
+    expect([{ kind: "sheet", tile: 11 }, { kind: "sheet", tile: 12 }]).toContainEqual(layer);
+  });
+
+  it("sea touching only a corner rounds into the sand there, carrying on the beaches' waterline", () => {
+    const map = parseAsciiMap([
+      "__S",
+      "__.",
+    ]);
+    // The beach at the bottom left of the corner: sea only to its north-east, beaches north and east.
+    expect(beachCorners(map, 1, 1)).toEqual([0]);
+    expect(terrainLayers(map, 1, 1, withBeaches)).toContainEqual({ kind: "sheet", tile: 58 + 16 });
+  });
+
+  it("no corner rounds in where only land is beside it", () => {
+    const map = parseAsciiMap([
+      "..S",
+      "._.",
+    ]);
+    expect(beachCorners(map, 1, 1)).toEqual([]);
+  });
+
+  it("sea makes no foam against a beach drawn half sea, so it never looks walled off", () => {
+    const map = parseAsciiMap([
+      "S_",
+      "SS",
+    ]);
+    expect(shorePieces(map, 0, 0, true)).toEqual([]);
+    expect(terrainLayers(map, 0, 0, withBeaches)).toEqual([{ kind: "sheet", tile: 9 }]);
+  });
+
+  it("a pack without half-sea beaches keeps the foam against them", () => {
+    const map = parseAsciiMap([
+      "S_",
+    ]);
+    expect(shorePieces(map, 0, 0)).toEqual([1]);
+  });
+});
+
+describe("terrain tiles: ports open onto the sea (08-art-pipeline §15)", () => {
+  it("sea makes no foam against a port, whose harbor runs straight into it", () => {
+    const map = parseAsciiMap([
+      "SP",
+      "SS",
+    ]);
+    expect(shorePieces(map, 0, 0)).toEqual([]);
+    expect(shorePieces(map, 1, 1)).toEqual([]);
+  });
+
+  it("a port's harbor opens to the side facing open sea", () => {
+    const map = parseAsciiMap([
+      "...",
+      ".PS",
+      "...",
+    ]);
+    expect(portOpening(map, 1, 1)).toBe("E");
+  });
+
+  it("with sea on several sides, the harbor opens to the side with the most sea around it", () => {
+    const map = parseAsciiMap([
+      ".S..",
+      ".P..",
+      "SSSS",
+      "SSSS",
+    ]);
+    expect(portOpening(map, 1, 1)).toBe("S");
+    const north = parseAsciiMap([
+      "SSSS",
+      "SSSS",
+      ".P..",
+      ".S..",
+    ]);
+    expect(portOpening(north, 1, 2)).toBe("N");
+  });
+
+  it("a port with no open sea beside it opens south, the way it's usually drawn", () => {
+    const map = parseAsciiMap([
+      ".~.",
+      ".P.",
+      "...",
+    ]);
+    expect(portOpening(map, 1, 1)).toBe("S");
   });
 });
 
