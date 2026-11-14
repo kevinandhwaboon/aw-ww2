@@ -255,7 +255,7 @@ export const submarineRig: Rig = shipRig({
 
 function landingCraft(look: Look): ShipModel {
   const kit = kitOf(look);
-  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : lct(look.team, kit, look.beached)));
+  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : lct(look.team, kit === "de" ? "de" : "us", look.beached)));
 }
 
 export const landingCraftRig: Rig = shipRig({

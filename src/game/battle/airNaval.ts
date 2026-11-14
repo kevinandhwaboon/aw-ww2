@@ -1,15 +1,17 @@
 // Battle figures for aircraft (08-art-pipeline §18), seen side-on with the near wing below the
 // fuselage. US: P-51, B-26, C-47, SBD Dauntless, TBF Avenger. Germany: Bf 109, Ju 88, Ju 52.
-// Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Germany has no carrier aircraft.
+// Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Soviet Union: Yak-9, Il-2 Sturmovik (its
+// Bomber), Li-2. Germany and the Soviet Union have no carrier aircraft.
 // Ships are in ships.ts.
 
 import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING } from "./timeline";
-import { star } from "./vehicles";
+import { redStar, star } from "./vehicles";
 import { justFired, type Look, type Pose, type Rig } from "./rig";
 
 const de = (look: Look) => look.nation === "germany";
 const jp = (look: Look) => look.nation === "japan";
+const su = (look: Look) => look.nation === "ussr";
 
 /** The hinomaru: a red disc in a thin white ring, Japan's aircraft marking (never the rising-sun ensign). */
 function sun(p: Painter, cx: number, cy: number, r: number): void {
@@ -49,7 +51,25 @@ export const fighterRig: Rig = {
     const shake = pose.fire === "planeGuns" && justFired(pose.ct, FIRE_TIMING.planeGuns.shots, 40) >= 0 ? 1 : 0;
     p.ctx.save();
     p.ctx.translate(-shake, y);
-    if (jp(look)) {
+    if (su(look)) {
+      // Yak-9: slim and rounded, a teardrop canopy over a raised spine, the radiator scoop under
+      // the belly, a red spinner, and red stars on the tail and wing.
+      p.poly([[-26, 0], [-25, -11], [-20, -11], [-16, -3]], T.mid);
+      p.poly([[-27, -1], [-20, -3], [4, -5], [18, -4], [24, -2], [24, 2], [16, 3], [-20, 2], [-27, 1]], T.mid);
+      p.rect(-20, 1, 36, 2, T.lo);
+      p.rect(-18, -4, 34, 1, T.hi);
+      p.poly([[0, -5], [3, -9], [10, -9], [13, -5]], C("battleSkyLow"));
+      p.line(6, -9, 6, -5, T.deep);
+      p.rect(-30, -1, 9, 2, T.lo);
+      redStar(p, -23, -6);
+      p.poly([[-4, 3], [6, 3], [4, 7], [-6, 6]], T.lo);
+      p.poly([[-6, 2], [12, 2], [9, 8], [-8, 7]], T.mid);
+      p.line(-6, 2, 12, 2, T.hi);
+      redStar(p, 2, 5);
+      for (let x = 16; x < 22; x += 2) p.px(x, -1, C("battleSteelDark"));
+      p.poly([[24, -2], [28, 0], [24, 2]], C("battleSun"));
+      prop(p, 28, 0, 10, pose.t);
+    } else if (jp(look)) {
       // A6M Zero: slender, a long glazed canopy, a big round radial cowling, hinomaru on body and wing.
       p.poly([[-26, 0], [-25, -10], [-20, -10], [-16, -3]], T.mid);
       p.poly([[-27, -1], [-20, -3], [4, -5], [16, -5], [21, -4], [21, 3], [14, 4], [-20, 2], [-27, 1]], T.mid);
@@ -131,6 +151,33 @@ export const bomberRig: Rig = {
     const doors = pose.fire === "bombs" && pose.ct !== null;
     p.ctx.save();
     p.ctx.translate(0, y);
+    if (su(look)) {
+      // Il-2 Sturmovik: one big engine in an armored nose, a long canopy for pilot and rear gunner
+      // with his machine gun, the main wheels in pods under the wing, RS-82 rockets on rails.
+      p.poly([[-34, -1], [-32, -14], [-26, -14], [-22, -4]], T.mid);
+      redStar(p, -29, -8);
+      p.rect(-38, -1, 12, 2, T.lo);
+      p.poly([[-36, -1], [-24, -5], [8, -7], [22, -7], [30, -4], [30, 4], [22, 6], [-24, 3], [-36, 1]], T.mid);
+      p.rect(-24, 2, 46, 2, T.lo);
+      p.rect(-22, -5, 44, 1, T.hi);
+      p.rect(18, -6, 11, 10, mix(T.mid, C("battleSteelDark"), 0.3));
+      for (let x = 19; x < 27; x += 2) p.px(x, -1, C("battleSteelDark"));
+      longCanopy(p, -2, 16, -12, T.deep);
+      p.line(-3, -8, -9, -11, C("battleSteelDark"));
+      p.rect(-6, 5, 14, doors ? 3 : 1, doors ? C("battleInk") : T.deep);
+      p.poly([[-10, 3], [18, 3], [14, 13], [-14, 11]], T.mid);
+      p.line(-10, 3, 18, 3, T.hi);
+      p.ellipse(10, 9, 4, 2, T.lo);
+      redStar(p, -2, 7);
+      for (let k = 0; k < 2; k++) {
+        p.rect(-9 + k * 6, 12, 5, 1, C("battleSteelDark"));
+        p.px(-4 + k * 6, 12, C("battleSun"));
+      }
+      p.poly([[30, -3], [34, 0], [30, 3]], C("battleSteel"));
+      prop(p, 34, 0, 11, pose.t);
+      p.ctx.restore();
+      return;
+    }
     // Tail.
     p.poly([[-44, -1], [-42, -20], [-35, -20], [-30, -4]], T.mid);
     p.rect(-48, -2, 14, 3, T.lo);
@@ -202,6 +249,14 @@ export const transportRig: Rig = {
       p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
       p.disc(6, 19, 3, C("battleRubber"));
       mottle(p, -30, -6, 50, look);
+    } else if (su(look)) {
+      // Li-2: the Soviet-built DC-3, cabin windows, a gun turret on the spine, a red star.
+      for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
+      p.rect(-26, -5, 5, 9, T.lo);
+      p.disc(-6, -9, 3, C("battleSkyLow"));
+      p.rect(-6, -11, 6, 1, C("battleSteelDark"));
+      redStar(p, -32, 0);
+      p.disc(25, 6, 4, C("battleSteelDark"));
     } else if (jp(look)) {
       // Ki-57: a row of cabin windows, radial engines, the hinomaru.
       for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));

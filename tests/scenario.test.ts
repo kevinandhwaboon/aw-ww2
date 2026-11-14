@@ -64,8 +64,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Bastogne, Iwo Jima, The Slot and Midway", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "bastogne", "iwo-jima", "the-slot", "midway"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
   });
 
   it("have unique ids", () => {
@@ -240,6 +240,101 @@ describe("built-in scenarios (00-master-design §8)", () => {
       const tank = units?.find((u) => u.owner === 1 && u.type === "mediumTank");
       if (!tank) throw new Error("no tank");
       expect(connected(map, "tracks", tank.pos, town)).toBe(true);
+    });
+  });
+
+  describe("Kursk (15-scenarios-eastern-front)", () => {
+    const kursk = SCENARIOS.find((s) => s.id === "kursk");
+    if (!kursk) throw new Error("missing scenario");
+    const { map, units = [], players, victory } = kursk.setup;
+    const town = P(34, 40); // Kursk
+    const orel = P(30, 4);
+    const prokhorovka = P(44, 60);
+    const owned = (owner: number) => (kursk.setup.propertyOwners ?? []).filter((p) => p.owner === owner);
+    const tiles = (terrain: string) => map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []));
+
+    it("is a theater map of the whole salient, 68 × 80 squares, with the Soviet Union against Germany", () => {
+      expect([map.width, map.height]).toEqual([68, 80]);
+      expect(players.map((p) => p.nation)).toEqual(["ussr", "germany"]);
+    });
+
+    it("the Soviet Union moves first, so it's the army green player; its first turn stands for the barrage it fired the night before the attack (08-art-pipeline §12)", () => {
+      expect(players[0]?.nation).toBe("ussr");
+    });
+
+    it("Kursk is the Soviet HQ, in the salient: Germany holds ground to the north, west and south of it, and none to the east", () => {
+      expect(properties(kursk, "hq", 0).map((p) => p.pos)).toEqual([town]);
+      const german = owned(1).map((p) => p.pos);
+      expect(german.some((p) => p.y < town.y - 15)).toBe(true);
+      expect(german.some((p) => p.y > town.y + 15)).toBe(true);
+      expect(german.some((p) => p.x < town.x - 15)).toBe(true);
+      expect(german.every((p) => p.x < town.x + 10)).toBe(true);
+    });
+
+    it("Orel is the German HQ, behind the north pincer", () => {
+      expect(properties(kursk, "hq", 1).map((p) => p.pos)).toEqual([orel]);
+    });
+
+    it("the Soviets dug in on the north and south faces: belts of bunkers and anti-tank obstacles there", () => {
+      const north = (p: Point) => p.y < town.y - 6;
+      const south = (p: Point) => p.y > town.y + 6;
+      expect(tiles("bunker").filter(north).length).toBeGreaterThanOrEqual(20);
+      expect(tiles("bunker").filter(south).length).toBeGreaterThanOrEqual(20);
+      expect(tiles("obstacle").filter(north).length).toBeGreaterThanOrEqual(5);
+      expect(tiles("obstacle").filter(south).length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("the west face, where no attack came, has no defense belts", () => {
+      expect(tiles("bunker").filter((p) => p.x < 14)).toEqual([]);
+      expect(tiles("obstacle").filter((p) => p.x < 14)).toEqual([]);
+    });
+
+    it("the Soviet riflemen of the first belts start dug in, in the bunkers", () => {
+      const dugIn = units.filter((u) => u.owner === 0 && terrainAt(map, u.pos) === "bunker");
+      expect(dugIn.length).toBeGreaterThanOrEqual(10);
+      for (const u of dugIn) expect(["infantry", "assaultInfantry", "mortar"]).toContain(u.type);
+    });
+
+    it("German tanks from both pincers can drive to Kursk: the obstacles never seal the way", () => {
+      const tanks = units.filter((u) => u.owner === 1 && (u.type === "heavyTank" || u.type === "mediumTank"));
+      const north = tanks.filter((u) => u.pos.y < town.y);
+      const south = tanks.filter((u) => u.pos.y > town.y);
+      expect(north.length).toBeGreaterThan(0);
+      expect(south.length).toBeGreaterThan(north.length);
+      for (const t of tanks) expect(connected(map, "tracks", t.pos, town), `${t.type} at ${t.pos.x},${t.pos.y}`).toBe(true);
+    });
+
+    it("both sides field Heavy Tanks (KV-1 and Tiger), and Germany has more of them", () => {
+      const heavies = (owner: number) => units.filter((u) => u.owner === owner && u.type === "heavyTank").length;
+      expect(heavies(0)).toBeGreaterThan(0);
+      expect(heavies(1)).toBeGreaterThan(heavies(0));
+    });
+
+    it("Prokhorovka, where the tank armies met, is a Soviet town on the road from Belgorod", () => {
+      expect(terrainAt(map, prokhorovka)).toBe("city");
+      expect(kursk.setup.propertyOwners).toContainEqual({ pos: prokhorovka, owner: 0 });
+      const roads = [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx, dy]) => terrainAt(map, P(prokhorovka.x + (dx ?? 0), prokhorovka.y + (dy ?? 0))) === "road");
+      expect(roads.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("the Steppe Front's tank reserve starts far to the east, near Stary Oskol, and can drive to Prokhorovka", () => {
+      const reserve = units.filter((u) => u.owner === 0 && u.pos.x >= 58 && (u.type === "mediumTank" || u.type === "lightTank"));
+      expect(reserve.length).toBeGreaterThanOrEqual(3);
+      for (const t of reserve) expect(connected(map, "tracks", t.pos, prokhorovka)).toBe(true);
+    });
+
+    it("the Soviet Union has the bigger income; Germany starts with more funds", () => {
+      expect(owned(0).length).toBeGreaterThan(owned(1).length);
+      expect(players[1]?.funds ?? 0).toBeGreaterThan(players[0]?.funds ?? 0);
+    });
+
+    it("capturing the enemy HQ is the only way to win: rout is off on a map this size", () => {
+      expect(victory).toEqual([{ type: "hqCapture" }]);
+    });
+
+    it("both sides can build every land unit, Heavy Tank included, and Fighters, Bombers and Transport Aircraft, but nothing else", () => {
+      const expected = [...(Object.keys(UNITS) as UnitTypeId[]).filter((t) => UNITS[t].category === "land"), "fighter", "bomber", "transportAircraft"].sort();
+      for (const p of players) expect([...(p.buildable ?? [])].sort()).toEqual(expected);
     });
   });
 

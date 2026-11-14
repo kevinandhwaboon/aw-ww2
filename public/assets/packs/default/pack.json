@@ -218,6 +218,72 @@
       ]
     },
     {
+      "nation": "ussr",
+      "team": "olive",
+      "path": "../../units/su-land-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "red",
+      "path": "../../units/su-land-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "blue",
+      "path": "../../units/su-land-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
       "nation": "us",
       "team": "olive",
       "path": "../../units/us-air-32-olive.png",
@@ -335,6 +401,42 @@
         "transportAircraft",
         "diveBomber",
         "torpedoBomber"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "olive",
+      "path": "../../units/su-air-32-olive.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "red",
+      "path": "../../units/su-air-32-red.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "blue",
+      "path": "../../units/su-air-32-blue.png",
+      "frameSize": 32,
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
       ]
     },
     {

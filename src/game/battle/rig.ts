@@ -67,9 +67,13 @@ export interface Rig {
   water?(p: Painter, pose: Pose, look: Look, alive: boolean): void;
 }
 
-/** Whose equipment a figure carries: Japan's, Germany's, or the US look every other Allied nation shares. */
-export type Kit = "us" | "de" | "jp";
-export const kitOf = (look: Pick<Look, "nation">): Kit => (look.nation === "germany" ? "de" : look.nation === "japan" ? "jp" : "us");
+/**
+ * Whose equipment a figure carries: Japan's, Germany's, the Soviet Union's, or the US look the UK
+ * and Canada share.
+ */
+export type Kit = "us" | "de" | "jp" | "su";
+export const kitOf = (look: Pick<Look, "nation">): Kit =>
+  look.nation === "germany" ? "de" : look.nation === "japan" ? "jp" : look.nation === "ussr" ? "su" : "us";
 
 export const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 /** 0 before a, 1 after b, a straight ramp between. */
