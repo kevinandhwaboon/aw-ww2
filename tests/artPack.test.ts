@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { TERRAIN } from "../src/engine/data/terrain";
 import { UNITS } from "../src/engine/data/units";
+import { SCENARIOS } from "../src/scenarios";
 import {
   activePack,
+  assignPlayerArt,
   BUILT_IN_PACK,
   findPropertyArt,
   findUnitArt,
   packColor,
   packColorNumber,
   parseArtPack,
+  playerArt,
   setActivePack,
+  setGameNations,
   terrainName,
   unitName,
 } from "../src/game/artPack";
@@ -81,6 +85,8 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["an unknown color", { colors: { sparkle: "#ffffff" } }, /unknown color/],
     ["a player with no colors", { players: [{ team: "blue" }] }, /fill and outline/],
     ["no players", { players: [] }, /must be a list/],
+    ["a nation color for an unknown nation", { nationColors: { atlantis: { team: "teal", fill: "#00ffff", outline: "#003333" } } }, /unknown nation/],
+    ["a nation color with no colors", { nationColors: { germany: { team: "grey" } } }, /fill and outline/],
     ["an unknown nation", { unitSheets: [sheet({ nation: "atlantis" })] }, /unknown nation/],
     ["an unknown unit", { unitSheets: [sheet({ rows: ["dragon"] })] }, /unknown unit type/],
     ["zero frames", { unitSheets: [sheet({ frames: 0 })] }, /whole number/],
@@ -344,5 +350,71 @@ describe("art packs: winter sheets (08-art-pipeline §21)", () => {
     const pack = parseArtPack(defaultPack);
     expect(pack.terrain?.winterPath).toMatch(/terrain-32-winter\.png$/);
     expect(pack.properties?.winterPath).toMatch(/buildings-32-winter\.png$/);
+  });
+});
+
+describe("each nation's colors (08-art-pipeline §12)", () => {
+  const teams = (nations: Parameters<typeof assignPlayerArt>[1], pack = BUILT_IN_PACK) => assignPlayerArt(pack, nations).map((p) => p.team);
+
+  it("each army wears what it wore in the war: US olive drab, German field grey, Japanese khaki, Soviet 4BO green", () => {
+    expect(teams(["us", "germany"])).toEqual(["olive", "grey"]);
+    expect(teams(["us", "japan"])).toEqual(["olive", "khaki"]);
+    expect(teams(["ussr", "germany"])).toEqual(["green4bo", "grey"]);
+  });
+
+  it("a nation keeps its color whichever player slot it's in", () => {
+    expect(teams(["germany", "us"])).toEqual(["grey", "olive"]);
+  });
+
+  it("on every built-in map, each side wears its own nation's color and no one wears red", () => {
+    for (const scenario of SCENARIOS) {
+      const nations = scenario.setup.players.map((p) => p.nation);
+      expect(teams(nations), scenario.name).toEqual(nations.map((n) => BUILT_IN_PACK.nationColors[n]?.team));
+      expect(teams(nations), scenario.name).not.toContain("red");
+    }
+  });
+
+  it("two players of the same nation can still be told apart: the second takes the next free player color", () => {
+    expect(teams(["us", "us"])).toEqual(["olive", "red"]);
+    expect(teams(["germany", "germany"])).toEqual(["olive", "red"]);
+  });
+
+  it("a nation with no color of its own takes a player color nobody else is wearing", () => {
+    expect(teams(["uk", "us"])).toEqual(["red", "olive"]);
+    expect(teams(["germany", "uk"])).toEqual(["grey", "red"]);
+  });
+
+  it("a pack can give nations its own colors, or none so every player keeps their slot's color", () => {
+    const own = parseArtPack({ name: "x", nationColors: { germany: { team: "blue", fill: "#3a6fd8", outline: "#1a3270" } } });
+    expect(teams(["us", "germany"], own)).toEqual(["olive", "blue"]);
+    const none = parseArtPack({ name: "x", nationColors: {} });
+    expect(teams(["us", "germany"], none)).toEqual(["olive", "red"]);
+  });
+
+  it("a pack that doesn't mention nation colors uses the built-in ones", () => {
+    expect(parseArtPack({ name: "x" }).nationColors).toEqual(BUILT_IN_PACK.nationColors);
+  });
+
+  it("once a game starts, units, buildings and panel colors all follow the players' nations", () => {
+    const pack = parseArtPack(defaultPack);
+    try {
+      setGameNations(["us", "germany"]);
+      expect(playerArt(pack, 1).team).toBe("grey");
+      const tank = findUnitArt(pack, "germany", 1, "mediumTank");
+      expect(tank && pack.unitSheets[tank.sheet]?.team).toBe("grey");
+      expect(findPropertyArt(pack, "city", 1)).toBe(pack.properties?.columns.indexOf("grey"));
+    } finally {
+      setGameNations([]);
+    }
+  });
+
+  it("the default pack has unit sheets in every nation's own color, and a buildings column for each", () => {
+    const pack = parseArtPack(defaultPack);
+    for (const [nation, art] of Object.entries(pack.nationColors)) {
+      const own = pack.unitSheets.filter((s) => s.nation === nation && s.team === art.team);
+      const any = pack.unitSheets.filter((s) => s.nation === nation && s.team === "red");
+      expect(own.flatMap((s) => s.rows), nation).toEqual(any.flatMap((s) => s.rows));
+      expect(pack.properties?.columns, nation).toContain(art.team);
+    }
   });
 });

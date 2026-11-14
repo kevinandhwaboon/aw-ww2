@@ -9,7 +9,7 @@ import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
 import { unitAt, type GameState, type PlayerId } from "./engine/state";
 import { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./engine/visibility";
-import { packColor } from "./game/artPack";
+import { packColor, setGameNations } from "./game/artPack";
 import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
@@ -59,6 +59,8 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   const listening = new AbortController();
   let ended = false;
   let state: GameState = createGame(setup);
+  // Each army is drawn in its nation's colors (08-art-pipeline §12).
+  setGameNations(state.players.map((p) => p.nation));
   let cursor: Point = { x: 0, y: 0 };
   /**
    * States before each action this turn, for Undo. A playtesting convenience: cleared at End Turn and
