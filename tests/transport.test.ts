@@ -214,6 +214,15 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
     expect(events.map((e) => e.type)).toEqual(["turnEnded", "turnStarted", "unitResupplied"]);
   });
 
+  it("never refills aircraft, which have to fly home to an airfield (05-supply-transport §3, §5)", () => {
+    const state = makeGame(["==="], [u("halftrack", 0, 1), u("fighter", 0, 0, 0, { ammo: 1, fuel: 30 })]);
+    expect(supplyTargets(state, state.units[0] as Unit)).toEqual([]);
+    expect(apply(state, supply(0))).toMatchObject({ ok: false, code: "cannotSupply" });
+    const { state: after, events } = must(state, endTurn);
+    expect(events).not.toContainEqual({ type: "unitResupplied", unitId: 1 });
+    expect(byId(after, 1)?.ammo).toBe(1);
+  });
+
   it("doesn't reach diagonal units", () => {
     const state = makeGame(["==", "=="], [u("halftrack", 0, 0), u("mediumTank", 0, 1, 1, { ammo: 1 })]);
     expect(supplyTargets(state, state.units[0] as Unit)).toEqual([]);

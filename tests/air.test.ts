@@ -229,10 +229,9 @@ describe("airfields (04-economy §1, §5)", () => {
     expect(after.properties[0]?.owner).toBe(0);
   });
 
-  it("a Halftrack refuels an adjacent aircraft (05-supply-transport §5)", () => {
+  it("a Halftrack can't refuel an aircraft: it has to fly back to an airfield (05-supply-transport §5)", () => {
     const state = makeGame(["==.", "..."], [u("halftrack", 0, 0), { type: "fighter", owner: 0, pos: P(2, 1), fuel: 50 }]);
-    const after = run(state, order(0, [P(1, 0), P(2, 0)], { type: "supply" }));
-    expect(byId(after, 1)?.fuel).toBe(80);
+    expect(apply(state, order(0, [P(1, 0), P(2, 0)], { type: "supply" }))).toMatchObject({ ok: false, code: "cannotSupply" });
   });
 });
 
