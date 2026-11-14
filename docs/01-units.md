@@ -49,7 +49,7 @@
 | Fighter | Air superiority, light ground attack | Strong vs. air units. Can attack ground units with very limited effectiveness (strafing). Burns fuel each day | Spitfire, P-51 / Bf 109, Fw 190 |
 | Bomber | Air-to-ground strike | The only dedicated air-to-ground unit. Heavy damage vs. ground and naval units. Cannot attack air | B-26, Lancaster / Ju 88 |
 | Transport Aircraft | Airborne drops | Carries 2 foot units, reusable (see section 5). Unarmed | C-47, Dakota / Ju 52 |
-| Dive Bomber | Carrier strike, light | Flies from Carriers and airfields. Hits land and naval units about half as hard as a Bomber, 2 bombs, moves one less. Cannot attack air | SBD Dauntless / D3A (Japan) |
+| Dive Bomber | Carrier strike, light | Flies from Carriers and airfields. Hits land and naval units about half as hard as a Bomber, 1 bomb (2 until 2026-11-14), moves one less. Cannot attack air | SBD Dauntless / D3A (Japan) |
 | Torpedo Bomber | Carrier strike vs. ships | Flies from Carriers and airfields. 1 torpedo, which hits any surface ship for 60% (halved from 120% on 2026-11-14: two are needed to sink a full-strength ship). Can't attack land units, aircraft, submarines or fortifications | TBF Avenger / B5N (Japan) |
 
 Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter aircraft instead of Bombers. Built at airfields like other aircraft. Only the US, UK and Japan get them (they're carrier aircraft); Germany none.
@@ -58,12 +58,12 @@ Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter a
 
 | Unit | Role | Key traits | Allied / Axis art examples |
 |---|---|---|---|
-| Battleship | Shore bombardment | Long-range indirect fire vs. land and sea | HMS Warspite, USS Texas / (rare; scenario-dependent) |
+| Battleship | Shore bombardment | Long-range indirect fire vs. land and sea. Light AA that only fires back at aircraft that attack it (03-combat §5d) | HMS Warspite, USS Texas / (rare; scenario-dependent) |
 | Destroyer | Escort | Hunts submarines, anti-air, close bombardment | Fletcher, Tribal / Z-class |
 | Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
 | Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / (rare) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
-| Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Unarmed: it needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
+| Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Its threat range is its aircraft's. Its only gun is light AA that fires back at aircraft that attack it (03-combat §5d), so it still needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
 Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US and UK, the Shōkaku for Japan (08-art-pipeline §17, §18).
 
@@ -141,16 +141,16 @@ These are starting points for the first playable build, based on the original ga
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
 | Fighter | 20,000 | 9 | 2 | 80 | 5 | Guns (2) | — | 1 | — |
-| Bomber | 22,000 | 7 | 2 | 50 | 8 | Bombs (2) | — | 1 | — |
+| Bomber | 22,000 | 7 | 2 | 70 | 8 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
-| Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (2) | — | 1 | — |
+| Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (1) | — | 1 | — |
 | Torpedo Bomber | 16,000 | 6 | 2 | 70 | 5 | Torpedo (1) | — | 1 | — |
-| Battleship | 28,000 | 5 | 2 | 99 | 1 | Main guns (9) | — | 2–6 | — |
+| Battleship | 28,000 | 5 | 2 | 99 | 1 | Main guns (9) | AA guns (return fire only) | 2–6 | — |
 | Destroyer | 16,000 | 6 | 3 | 80 | 2 | Guns/depth charges (9) | AA guns | 1 | — |
 | Submarine | 20,000 | 5 | 5 | 80 | 1 (5 dived) | Torpedoes (6) | — | 1 | — |
 | Landing Craft | 12,000 | 6 | 1 | 70 | 1 | — | — | — | 2 land |
 | Torpedo Boat | 8,000 | 7 | 3 | 50 | 2 | Torpedoes (4) | MG | 1 | — |
-| Carrier | 40,000 | 5 | 2 | 99 | 1 | — | — | — | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
+| Carrier | 40,000 | 5 | 2 | 99 | 1 | — | AA guns (return fire only) | its aircraft's | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
 
 Fighter ground attack (strafing) uses the same guns, with very low damage values in the damage chart.
 
@@ -171,7 +171,7 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Light Tank | 28 | — | M5 Stuart and Panzer II, about 160–200 km |
 | Heavy Tank | 20 | — | Tiger and Churchill, about 120–145 km: famously thirsty |
 | Fighter | 80 | 5 | Short-legged single-seaters (Spitfire, Bf 109): 1–3 hours aloft |
-| Bomber | 50 | 8 | Developer's balance call: half the old tank, and the heaviest idle burn of any aircraft (multi-engine bombers burn the most per hour) |
+| Bomber | 70 | 8 | Developer's balance call: first half the old tank (50), raised to 70 on 2026-11-14 at the developer's request; the heaviest idle burn of any aircraft (multi-engine bombers burn the most per hour) |
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
 | Dive Bomber, Torpedo Bomber | 70 | 5 | SBD, TBF, D3A, B5N: about 1,600–1,800 km |
 | Battleship, Carrier | 99 | 1 | 15,000+ nautical miles at cruising speed |
@@ -182,7 +182,7 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 
 **Moving burns more for aircraft:** every aircraft spends 2 fuel per tile flown (`fuelPerMove`), on top of its daily burn (05-supply-transport §1). Land units and ships spend 1 per movement point.
 
-**Ammo:** Fighters and Bombers carry **2** rounds of ammo (was 9), at the developer's request: they were too strong. A sortie is one or two attacks, then back to an airfield (or, for Fighters, a Carrier) to rearm.
+**Ammo:** Fighters and Bombers carry **2** rounds of ammo (was 9), at the developer's request: they were too strong. A sortie is one or two attacks, then back to an airfield (or, for Fighters, a Carrier) to rearm. The **Dive Bomber** carries **1** bomb (2 until 2026-11-14, reduced at the developer's request): one strike per sortie, like the Torpedo Bomber.
 
 ### Reasoning behind the main choices
 

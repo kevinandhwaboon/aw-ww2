@@ -4,9 +4,9 @@
 // Functions take the attacker as it will be when it fires: at its destination, after moving.
 
 import type { CombatStrike, GameEvent } from "./commands";
-import { baseDamage, type DamageEntry, type DamageTarget } from "./data/damage";
+import { baseDamage, returnFireDamage, type DamageEntry, type DamageTarget } from "./data/damage";
 import { terrainDef } from "./data/terrain";
-import { UNITS } from "./data/units";
+import { unitDef, UNITS } from "./data/units";
 import { veterancyFor } from "./data/veterancy";
 import { inBounds, type Point } from "./map";
 import { moveDestinations, tileIndex, tilePoint } from "./movement";
@@ -118,12 +118,24 @@ export function attackTargets(state: GameState, attacker: Unit, moved: boolean):
   return state.units.filter((u) => u.id !== attacker.id && targetProblem(state, attacker, u, moved) === null);
 }
 
-/** Every tile the unit could fire on this turn, moving first if it's able to (for threat ranges). */
+/**
+ * Every tile the unit could fire on this turn, moving first if it's able to (for threat ranges).
+ * A Carrier's range is its aircraft's: every tile they could strike if launched from where it is
+ * now (05-supply-transport §10).
+ */
 export function threatTiles(state: GameState, unit: Unit): Point[] {
-  const range = stats.attackRange(state, unit);
-  if (!range) return [];
-  const origins = UNITS[unit.type].canMoveAndFire ? moveDestinations(state, unit) : [unit.pos];
   const tiles = new Set<number>();
+  addThreatTiles(state, unit, tiles);
+  if (unitDef(unit.type).specialActions.includes("launch")) {
+    for (const aircraft of unit.cargo) addThreatTiles(state, { ...aircraft, pos: unit.pos }, tiles);
+  }
+  return [...tiles].sort((a, b) => a - b).map((i) => tilePoint(state, i));
+}
+
+function addThreatTiles(state: GameState, unit: Unit, tiles: Set<number>): void {
+  const range = stats.attackRange(state, unit);
+  if (!range) return;
+  const origins = UNITS[unit.type].canMoveAndFire ? moveDestinations(state, unit) : [unit.pos];
   for (const from of origins) {
     for (let dy = -range.max; dy <= range.max; dy++) {
       const reach = range.max - Math.abs(dy);
@@ -133,22 +145,26 @@ export function threatTiles(state: GameState, unit: Unit): Point[] {
       }
     }
   }
-  return [...tiles].sort((a, b) => a - b).map((i) => tilePoint(state, i));
 }
 
 /**
- * Whether a defender that survived hits back (03-combat §2): only direct-fire units, only against
- * an adjacent attacker, and only with a usable weapon. Indirect units never counter or get countered.
+ * The weapon a defender that survived hits back with, or null if it doesn't (03-combat §2): only
+ * against an adjacent attacker it can reach. Direct-fire units use their usual weapon; indirect units
+ * never counter, except that a unit with return-fire AA (Battleship, Carrier) fires it back at an
+ * aircraft that attacked it (03-combat §5d).
  */
-export function canCounter(state: GameState, attacker: Unit, defender: Unit): boolean {
+export function counterWeapon(state: GameState, attacker: Unit, defender: Unit): DamageEntry | null {
+  if (distance(attacker.pos, defender.pos) !== 1 || !canReach(defender, attacker)) return null;
   const range = stats.attackRange(state, defender);
-  return (
-    range !== null &&
-    range.min === 1 &&
-    distance(attacker.pos, defender.pos) === 1 &&
-    chooseWeapon(defender, attacker.type) !== null &&
-    canReach(defender, attacker)
-  );
+  const usual = range !== null && range.min === 1 ? chooseWeapon(defender, attacker.type) : null;
+  if (usual) return usual;
+  if (UNITS[attacker.type].category !== "air" || !UNITS[defender.type].returnFireAA) return null;
+  return returnFireDamage(defender.type, attacker.type);
+}
+
+/** Whether a defender that survived hits back (03-combat §2, §5d). */
+export function canCounter(state: GameState, attacker: Unit, defender: Unit): boolean {
+  return counterWeapon(state, attacker, defender) !== null;
 }
 
 export interface CombatForecast {
@@ -181,8 +197,8 @@ export function forecast(state: GameState, attacker: Unit, defender: Unit): Comb
   const certainKill = min >= defender.hp;
 
   let counter: CombatForecast["counter"] = null;
-  const counterEntry = chooseWeapon(defender, attacker.type);
-  if (!certainKill && counterEntry && canCounter(state, attacker, defender)) {
+  const counterEntry = counterWeapon(state, attacker, defender);
+  if (!certainKill && counterEntry) {
     const strongest = damageWith(state, { ...defender, hp: defender.hp - min }, attacker, counterEntry, luckCap);
     const weakest = canKill ? 0 : damageWith(state, { ...defender, hp: defender.hp - max }, attacker, counterEntry, 0);
     counter = { min: weakest, max: strongest };
@@ -311,8 +327,8 @@ export function resolveCombat(
   let d: Unit = { ...defender, hp: defender.hp - attack.strike.damage };
 
   let counter: CombatStrike | null = null;
-  const counterEntry = chooseWeapon(d, a.type);
-  if (d.hp > 0 && counterEntry && canCounter(state, a, d)) {
+  const counterEntry = counterWeapon(state, a, d);
+  if (d.hp > 0 && counterEntry) {
     const hit = strike(state, rng, d, a, counterEntry);
     rng = hit.rng;
     counter = hit.strike;

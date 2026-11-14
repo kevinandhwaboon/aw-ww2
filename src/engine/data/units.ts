@@ -46,6 +46,11 @@ export interface UnitDef {
   readonly primaryWeapon: { readonly name: string; readonly maxAmmo: number } | null;
   /** Unlimited ammo. null = no secondary weapon. */
   readonly secondaryWeapon: { readonly name: string } | null;
+  /**
+   * Light anti-aircraft guns that only fire back, at an aircraft that attacks this unit from next
+   * door, never first (03-combat §2, §5d). Unlimited ammo. null = none.
+   */
+  readonly returnFireAA: { readonly name: string } | null;
   /** Attack range in tiles; null = unarmed. Direct fire is 1–1. */
   readonly range: { readonly min: number; readonly max: number } | null;
   /** false for indirect-fire units: they can't move and attack in the same turn. */
@@ -85,6 +90,7 @@ const BASE = {
   attacksSubmerged: false,
   primaryWeapon: null,
   secondaryWeapon: null,
+  returnFireAA: null,
   range: DIRECT,
   canMoveAndFire: true,
   canCapture: false,
@@ -162,7 +168,7 @@ export const UNITS = {
   },
   bomber: {
     ...BASE, phase: 2, name: "Bomber", category: "air", cost: 22000, movePoints: 7, movementType: "air",
-    vision: 2, maxFuel: 50, fuelPerDay: 8, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bombs", maxAmmo: 2 },
+    vision: 2, maxFuel: 70, fuelPerDay: 8, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bombs", maxAmmo: 2 },
   },
   transportAircraft: {
     ...BASE, phase: 2, name: "Transport Aircraft", category: "air", cost: 10000, movePoints: 8,
@@ -171,7 +177,7 @@ export const UNITS = {
   },
   diveBomber: {
     ...BASE, phase: 2, name: "Dive Bomber", category: "air", cost: 14000, movePoints: 6, movementType: "air",
-    vision: 2, maxFuel: 70, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bomb", maxAmmo: 2 },
+    vision: 2, maxFuel: 70, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Bomb", maxAmmo: 1 },
   },
   torpedoBomber: {
     ...BASE, phase: 2, name: "Torpedo Bomber", category: "air", cost: 16000, movePoints: 6, movementType: "air",
@@ -182,7 +188,7 @@ export const UNITS = {
   battleship: {
     ...BASE, phase: 2, name: "Battleship", category: "naval", cost: 28000, movePoints: 5, movementType: "sea",
     vision: 2, maxFuel: 99, fuelPerDay: 1, primaryWeapon: { name: "Main guns", maxAmmo: 9 },
-    range: { min: 2, max: 6 }, canMoveAndFire: false,
+    returnFireAA: { name: "AA guns" }, range: { min: 2, max: 6 }, canMoveAndFire: false,
   },
   destroyer: {
     ...BASE, phase: 2, name: "Destroyer", category: "naval", cost: 16000, movePoints: 6, movementType: "sea",
@@ -206,7 +212,7 @@ export const UNITS = {
   },
   carrier: {
     ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 40000, movePoints: 5, movementType: "sea",
-    vision: 2, maxFuel: 99, fuelPerDay: 1, range: null,
+    vision: 2, maxFuel: 99, fuelPerDay: 1, range: null, returnFireAA: { name: "AA guns" },
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
   },
 } as const satisfies Record<UnitTypeId, UnitDef>;

@@ -64,9 +64,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("there are at least 3, one of them bocage country (11-tech-setup §6)", () => {
-    expect(SCENARIOS.length).toBeGreaterThanOrEqual(3);
-    expect(SCENARIOS.map((s) => s.id)).toContain("bocage-country");
+  it("every built-in map is modeled on a WW2 battle: Normandy, Bastogne, Iwo Jima, The Slot and Midway", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "bastogne", "iwo-jima", "the-slot", "midway"]);
   });
 
   it("have unique ids", () => {
@@ -116,8 +115,8 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
   });
 
-  it.each(["twin-bridges", "contested-skies", "narrow-sea", "the-slot"])("%s is a fair mirror: the map and starting units rotate onto each other", (id) => {
-    const scenario = SCENARIOS.find((s) => s.id === id);
+  it("The Slot is a fair mirror: the map and starting units rotate onto each other", () => {
+    const scenario = SCENARIOS.find((s) => s.id === "the-slot");
     if (!scenario) throw new Error("missing scenario");
     const { map, units, propertyOwners } = scenario.setup;
     expect(map.terrain).toEqual([...map.terrain].reverse());
@@ -200,21 +199,19 @@ describe("built-in scenarios (00-master-design §8)", () => {
     const bastogne = SCENARIOS.find((s) => s.id === "bastogne");
     if (!bastogne) throw new Error("missing scenario");
     const { map, units, victory, weather } = bastogne.setup;
-    const town = victory?.find((v) => v.type === "captureProperties")?.properties[0];
-    if (!town) throw new Error("missing objective");
+    const town = P(14, 13); // the town of Bastogne
     const roadsOut = [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx, dy]) => {
       const t = terrainAt(map, P(town.x + (dx ?? 0), town.y + (dy ?? 0)));
       return t === "road" || t === "bridge";
     });
 
-    it("Germany wins by taking the town of Bastogne, which the US holds at the start", () => {
-      expect(terrainAt(map, town)).toBe("city");
-      expect(bastogne.setup.propertyOwners).toContainEqual({ pos: town, owner: 0 });
-      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [town] });
+    it("both sides win the same way: capture the enemy HQ or destroy every enemy unit, with no town to take or days to hold", () => {
+      expect(victory).toEqual([{ type: "hqCapture" }, { type: "rout" }]);
     });
 
-    it("the US wins by holding out to the start of day 12", () => {
-      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 12 });
+    it("the US holds the town of Bastogne at the start", () => {
+      expect(terrainAt(map, town)).toBe("city");
+      expect(bastogne.setup.propertyOwners).toContainEqual({ pos: town, owner: 0 });
     });
 
     it("Bastogne is a crossroads: roads leave it on every side", () => {
@@ -537,36 +534,6 @@ describe("built-in scenarios (00-master-design §8)", () => {
     it("neither side builds Heavy Tanks (01-units §1)", () => {
       for (const p of players) expect(p.buildable).not.toContain("heavyTank");
     });
-  });
-
-  it("the coastal map gives each side a port and starts both with a Destroyer and a Submarine (11-tech-setup §6, milestone 10)", () => {
-    const scenario = SCENARIOS.find((s) => s.id === "narrow-sea");
-    if (!scenario) throw new Error("missing scenario");
-    for (const owner of [0, 1]) {
-      expect(properties(scenario, "port", owner), `player ${owner} port`).toHaveLength(1);
-      const ships = (scenario.setup.units ?? []).filter((u) => u.owner === owner).map((u) => u.type);
-      expect(ships).toEqual(expect.arrayContaining(["destroyer", "submarine"]));
-    }
-  });
-
-  it("the amphibious map gives the Allies a Landing Craft and a Transport Aircraft, and the Axis bunkers above the beaches (11-tech-setup §6, milestone 11)", () => {
-    const scenario = SCENARIOS.find((s) => s.id === "beachhead");
-    if (!scenario) throw new Error("missing scenario");
-    const { map, units } = scenario.setup;
-    const allied = (units ?? []).filter((u) => u.owner === 0).map((u) => u.type);
-    expect(allied).toEqual(expect.arrayContaining(["landingCraft", "transportAircraft"]));
-    const axisOnBunkers = (units ?? []).filter((u) => u.owner === 1 && terrainAt(map, u.pos) === "bunker");
-    expect(axisOnBunkers.length).toBeGreaterThan(0);
-  });
-
-  it("Crossroads uses scenario objectives: the Allies must capture the village, the Axis must hold it (11-tech-setup §6, milestone 12)", () => {
-    const scenario = SCENARIOS.find((s) => s.id === "crossroads");
-    expect(scenario?.setup.victory?.map((v) => v.type)).toEqual(["hqCapture", "rout", "captureProperties", "holdProperties"]);
-  });
-
-  it("the demo keeps the US from building Heavy Tanks, as the availability rule requires (01-units §1)", () => {
-    const scenario = SCENARIOS.find((s) => s.id === "proving-ground");
-    expect(scenario?.setup.players[0]?.buildable).not.toContain("heavyTank");
   });
 });
 

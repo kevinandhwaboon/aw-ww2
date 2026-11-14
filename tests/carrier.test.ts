@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
-import { canCounter } from "../src/engine/combat";
+import { canCounter, threatTiles } from "../src/engine/combat";
 import type { Command, UnitAction } from "../src/engine/commands";
 import { baseDamage } from "../src/engine/data/damage";
 import { buildOptions } from "../src/engine/economy";
@@ -177,10 +177,12 @@ describe("a Carrier in combat (05-supply-transport §10, 03-combat §5b)", () =>
     expect(byId(after, 1)?.kills).toBe(1);
   });
 
-  it("the Carrier is unarmed: it never attacks or counters", () => {
+  it("the Carrier never attacks; its only weapon is light AA that fires back at aircraft (03-combat §5d)", () => {
     for (const target of [...UNIT_TYPE_IDS, "fort" as const]) expect(baseDamage("carrier", target)).toBeNull();
-    const state = makeGame(["SS"], [u("carrier", 0, 0), u("bomber", 1, 1)]);
-    expect(canCounter(state, byId(state, 1) as Unit, byId(state, 0) as Unit)).toBe(false);
+    const state = makeGame(["SSS"], [u("carrier", 0, 0), u("bomber", 1, 1), u("destroyer", 1, 2)]);
+    expect(canCounter(state, byId(state, 1) as Unit, byId(state, 0) as Unit)).toBe(true);
+    const destroyer = { ...(byId(state, 2) as Unit), pos: P(1, 0) };
+    expect(canCounter(state, destroyer, byId(state, 0) as Unit)).toBe(false);
   });
 
   it("torpedoes and bombs hurt a Carrier most: Bomber 85, Submarine 75, Torpedo Bomber 60, Battleship 60, Dive Bomber 45, Torpedo Boat 45, Destroyer 10", () => {
@@ -193,6 +195,34 @@ describe("a Carrier in combat (05-supply-transport §10, 03-combat §5b)", () =>
     expect(baseDamage("fighter", "carrier")).toBeNull();
     expect(baseDamage("artillery", "carrier")?.base).toBe(45);
     expect(baseDamage("rocketArtillery", "carrier")?.base).toBe(60);
+  });
+});
+
+describe("a Carrier's range is its aircraft's (05-supply-transport §10)", () => {
+  const key = (p: Point) => `${p.x},${p.y}`;
+  const keys = (points: readonly Point[]) => points.map(key).sort();
+  const ocean = Array.from({ length: 21 }, () => "S".repeat(21));
+  const at = (cargo: UnitSetup["cargo"]) => makeGame(ocean, [{ type: "carrier", owner: 0, pos: P(10, 10), ...(cargo ? { cargo } : {}) }]);
+
+  it("a Carrier with nothing aboard threatens nothing", () => {
+    const state = at([]);
+    expect(threatTiles(state, byId(state, 0) as Unit)).toEqual([]);
+  });
+
+  it("a Carrier threatens every tile its aircraft could strike if launched from where it is", () => {
+    const carrier = at([{ type: "diveBomber" }]);
+    // The same Dive Bomber standing on an empty ocean where the Carrier is.
+    const alone = makeGame(ocean, [{ type: "diveBomber", owner: 0, pos: P(10, 10) }]);
+    const reach = keys(threatTiles(alone, byId(alone, 0) as Unit));
+    expect(keys(threatTiles(carrier, byId(carrier, 0) as Unit))).toEqual(reach);
+    expect(reach).toContain("17,10"); // moves 6, then strikes 1 more
+    expect(reach).not.toContain("18,10");
+  });
+
+  it("with two different aircraft aboard, it threatens wherever either could strike", () => {
+    const state = at([{ type: "diveBomber" }, { type: "fighter" }]);
+    const tiles = keys(threatTiles(state, byId(state, 0) as Unit));
+    expect(tiles).toContain("20,10"); // the Fighter moves 9, then strikes 1 more
   });
 });
 
@@ -233,8 +263,8 @@ describe("carrier aircraft (05-supply-transport §10, 01-units §3)", () => {
     expect(buildOptions(port, P(0, 0)).map((o) => o.type)).not.toContain("diveBomber");
   });
 
-  it("a Dive Bomber costs 14,000, carries 2 bombs and moves 6, one less than a Bomber", () => {
-    expect(UNITS.diveBomber).toMatchObject({ cost: 14000, movePoints: 6, primaryWeapon: { maxAmmo: 2 } });
+  it("a Dive Bomber costs 14,000, carries 1 bomb and moves 6, one less than a Bomber (01-units §8)", () => {
+    expect(UNITS.diveBomber).toMatchObject({ cost: 14000, movePoints: 6, primaryWeapon: { maxAmmo: 1 } });
     expect(UNITS.bomber.movePoints).toBe(7);
   });
 
