@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
-import { fortForecast, fortTargets, MAX_LUCK } from "../src/engine/combat";
+import { attackTargets, forecast, fortForecast, fortTargets, garrisonBunker, MAX_LUCK } from "../src/engine/combat";
 import type { Command, GameEvent } from "../src/engine/commands";
 import type { Point } from "../src/engine/map";
 import { terrainAt } from "../src/engine/map";
@@ -26,6 +26,12 @@ function must(state: GameState, command: Command) {
   return result;
 }
 const run = (state: GameState, ...commands: Command[]) => commands.reduce((s, c) => must(s, c).state, state);
+const attack = (unitId: number, target: number, path: Point[] = []): Command => ({ type: "move", unitId, path, action: { type: "attack", target } });
+const combatEvent = (events: readonly GameEvent[]) => {
+  const event = events.find((e): e is Extract<GameEvent, { type: "combat" }> => e.type === "combat");
+  if (!event) throw new Error("no combat event");
+  return event;
+};
 const fortEvent = (events: readonly GameEvent[]) => {
   const event = events.find((e): e is Extract<GameEvent, { type: "fortAttacked" }> => e.type === "fortAttacked");
   if (!event) throw new Error("no fortAttacked event");
@@ -121,10 +127,10 @@ describe("occupied fortifications (03-combat §4)", () => {
     expect(apply(friendly, hit(0, P(1, 0)))).toMatchObject({ ok: false, code: "invalidTarget" });
   });
 
-  it("attacks hit the unit instead, which gets the bunker's 5 stars", () => {
-    const state = occupied();
-    const { state: after } = must(state, { type: "move", unitId: 0, path: [], action: { type: "attack", target: 1 } });
-    expect(after.units[1]?.hp).toBe(68); // 65 × (200 − 100 − 50) / 100 = 32 damage
+  it("a vehicle on a bunker is hit directly, and gets the bunker's 5 stars", () => {
+    const state = game(["=X"], [u("assaultInfantry", 0), u("mediumTank", 1, { owner: 1 })]);
+    const { state: after } = must(state, attack(0, 1));
+    expect(after.units[1]?.hp).toBe(73); // 55 × (200 − 100 − 50) / 100 = 27 damage
     expect(fortAt(after, P(1, 0))?.hp).toBe(100);
   });
 
@@ -145,6 +151,61 @@ describe("occupied fortifications (03-combat §4)", () => {
     const after = run(state, hit(0, P(1, 0)), endTurn, endTurn, { type: "move", unitId: 1, path: [P(1, 0)], action: { type: "wait" } });
     expect(fortAt(after, P(1, 0))?.hp).toBe(35);
     expect(stats.terrainStars(after, after.units[1] as Unit)).toBe(5);
+  });
+});
+
+describe("garrisoned bunkers: the attacker must break the bunker (03-combat §4)", () => {
+  const garrisoned = (attacker: UnitSetup["type"] = "assaultInfantry") =>
+    game(["=X"], [u(attacker, 0), u("infantry", 1, { owner: 1 })]);
+
+  it("Infantry, Assault Infantry and Mortar Teams in a bunker are a garrison; vehicles aren't", () => {
+    for (const type of ["infantry", "assaultInfantry", "mortar"] as const) {
+      const state = game(["X"], [u(type, 0)]);
+      expect(garrisonBunker(state, state.units[0] as Unit), type).toBeDefined();
+    }
+    const tank = game(["X"], [u("mediumTank", 0)]);
+    expect(garrisonBunker(tank, tank.units[0] as Unit)).toBeUndefined();
+  });
+
+  it("an attack on a garrison hits the bunker instead, with the bunker's HP and defense", () => {
+    const { state, events } = must(garrisoned(), attack(0, 1));
+    expect(fortAt(state, P(1, 0))?.hp).toBe(35); // Assault Infantry vs Fort: 65, no terrain stars
+    expect(state.units[1]?.hp).toBe(100);
+    expect(events).toContainEqual(expect.objectContaining({ type: "combat", bunker: { pos: P(1, 0), hp: 35, becomes: null } }));
+  });
+
+  it("the garrison fires back at full strength while the bunker stands", () => {
+    const { state, events } = must(garrisoned(), attack(0, 1));
+    expect(state.units[0]?.hp).toBe(55); // a 10 HP Infantry vs Assault Infantry: 45
+    expect(combatEvent(events).counter?.damage).toBe(45);
+  });
+
+  it("when the bunker breaks, the garrison dies with it, and that counts as a kill", () => {
+    const state = game(["==X"], [u("artillery", 0), u("infantry", 2, { owner: 1 })]);
+    const shell = attack(0, 1);
+    const once = run(state, shell, endTurn, endTurn);
+    expect(fortAt(once, P(2, 0))?.hp).toBe(50); // Artillery vs Fort: 50
+    const { state: after, events } = must(once, shell);
+    expect(terrainAt(after.map, P(2, 0))).toBe("rubble");
+    expect(after.units.map((x) => x.id)).toEqual([0]);
+    expect(after.units[0]?.kills).toBe(1);
+    expect(combatEvent(events).defender.destroyed).toBe(true);
+    expect(combatEvent(events).bunker).toEqual({ pos: P(2, 0), hp: 0, becomes: "rubble" });
+  });
+
+  it("a unit with no weapon against fortifications can't attack a garrison", () => {
+    const state = garrisoned("recon");
+    expect(attackTargets(state, state.units[0] as Unit, false)).toEqual([]);
+    expect(apply(state, attack(0, 1))).toMatchObject({ ok: false, code: "invalidTarget" });
+  });
+
+  it("the forecast shows the damage to the bunker and the garrison's full-strength counter", () => {
+    const state = garrisoned();
+    expect(forecast(state, state.units[0] as Unit, state.units[1] as Unit)).toMatchObject({
+      attack: { min: 65, max: 65 },
+      counter: { min: 45, max: 45 },
+      canKill: false,
+    });
   });
 });
 

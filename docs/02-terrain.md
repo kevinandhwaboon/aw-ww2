@@ -59,7 +59,7 @@ Fortifications and obstacles are terrain objects with HP, similar to the origina
 | Rubble **(new)** | 1 | 1 | 1 | 2 | 1 | 1 | — | — |
 | Obstacle **(new)** | 0 | — | — | — | — | 1 | 100 | Plains (or Beach for a beach obstacle) |
 
-- **Bunker:** occupiable. It has the highest defense in the game (5 stars, one more than HQ) but only matters when a unit sits in it. It can be attacked only when empty (03-combat section 4).
+- **Bunker:** occupiable. It has the highest defense in the game (5 stars, one more than HQ) but only matters when a unit sits in it. It can be attacked only when empty (03-combat section 4), except that foot soldiers inside are a garrison: attacks on them hit the bunker, and they die with it when it breaks (03-combat section 4, since 2026-11-14).
 - **Rubble:** a destroyed bunker. Plains-like, slightly worse for wheels.
 - **Obstacle:** anti-tank obstacles, dragon's teeth, beach obstacles. Impassable to all land units, like a pipe seam. It doesn't block attacks or line of fire (there is no line of fire in this game). Air units fly over it.
 - **Damage to fortifications** comes from the `Fort` column of the damage chart (03-combat section 5b). Assault Infantry is the best ground unit against them.

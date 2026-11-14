@@ -35,6 +35,11 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
       const who = (c: Combatant) => `${name(c.owner)} ${unitTypeName(c.type)}`;
       const tag = (c: Combatant) => (c.destroyed ? " (destroyed)" : c.promotedTo ? ` (now ${c.promotedTo})` : "");
       const counter = e.counter ? `, counter ${e.counter.damage}% (luck ${e.counter.luck})` : ", no counter";
+      if (e.bunker) {
+        // A garrison: the bunker took the hit, and the soldiers die only if it breaks (03-combat §4).
+        const outcome = e.bunker.becomes ? `bunker destroyed, garrison lost` : `bunker ${displayHp(e.bunker.hp)} HP left`;
+        return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}'s bunker for ${e.attack.damage}% (luck ${e.attack.luck}): ${outcome}${counter}`;
+      }
       return `${who(e.attacker)}${tag(e.attacker)} hit ${who(e.defender)}${tag(e.defender)} for ${e.attack.damage}% (luck ${e.attack.luck})${counter}`;
     }
     case "unitLoaded":

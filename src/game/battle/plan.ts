@@ -223,7 +223,9 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
   const side = halves(state, attacker.owner, defender.owner);
   const before = (id: number, fallback: number) => state.units.find((u) => u.id === id)?.hp ?? fallback;
   const attackerHp = displayHp(before(attacker.unitId, attacker.hp));
-  const defenderHp = displayHp(before(defender.unitId, defender.hp + attack.damage));
+  // A garrison's bar shows its bunker, which took the hit (03-combat §4).
+  const bunker = event.bunker;
+  const defenderHp = displayHp(bunker ? bunker.hp + attack.damage : before(defender.unitId, defender.hp + attack.damage));
 
   const a = half(state, side.attacker, attacker.type, attacker.owner, attacker.pos, attackerHp, attacker.unitId);
   const d = half(state, side.defender, defender.type, defender.owner, defender.pos, defenderHp, defender.unitId);
@@ -233,7 +235,7 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
       from: side.attacker,
       fire: fireKind(attacker.type, attack.weapon, defender.type),
       hpBefore: defenderHp,
-      hpAfter: displayHp(defender.hp),
+      hpAfter: displayHp(bunker ? bunker.hp : defender.hp),
       atAir: isAir(defender.type),
     },
   ];

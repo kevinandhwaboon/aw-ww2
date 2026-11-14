@@ -5,13 +5,13 @@
 
 import type { CombatStrike, GameEvent } from "./commands";
 import { baseDamage, returnFireDamage, type DamageEntry, type DamageTarget } from "./data/damage";
-import { terrainDef } from "./data/terrain";
-import { unitDef, UNITS } from "./data/units";
+import { terrainDef, type TerrainId } from "./data/terrain";
+import { FOOT_UNITS, unitDef, UNITS, type UnitTypeId } from "./data/units";
 import { veterancyFor } from "./data/veterancy";
-import { inBounds, type Point } from "./map";
+import { inBounds, terrainAt, type Point } from "./map";
 import { moveDestinations, tileIndex, tilePoint } from "./movement";
 import { nextInt, type RngState } from "./rng";
-import { displayHp, fortAt, unitAt, type GameState, type Unit } from "./state";
+import { displayHp, fortAt, unitAt, type FortificationState, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
 
 export const MAX_LUCK = 9;
@@ -29,6 +29,25 @@ export function chooseWeapon(unit: Unit, targetType: DamageTarget): DamageEntry 
   const entry = baseDamage(unit.type, targetType);
   if (!entry) return null;
   return entry.weapon === "primary" && unit.ammo <= 0 ? null : entry;
+}
+
+const FOOT: readonly UnitTypeId[] = FOOT_UNITS;
+
+/**
+ * The bunker shielding this unit, or undefined if it isn't garrisoned (03-combat §4): Infantry,
+ * Assault Infantry or a Mortar Team in a standing bunker. Attacks on a garrison hit the bunker.
+ */
+export function garrisonBunker(state: GameState, unit: Unit): FortificationState | undefined {
+  if (!FOOT.includes(unit.type) || terrainAt(state.map, unit.pos) !== "bunker") return undefined;
+  return fortAt(state, unit.pos);
+}
+
+/**
+ * The weapon the attacker would use on this defender, or null if it has none (03-combat §2, §4).
+ * Against a garrison it fires at the bunker, so it needs a weapon against fortifications.
+ */
+export function weaponAgainst(state: GameState, attacker: Unit, defender: Unit): DamageEntry | null {
+  return chooseWeapon(attacker, garrisonBunker(state, defender) ? "fort" : defender.type);
 }
 
 export interface DamageInputs {
@@ -90,7 +109,9 @@ export function targetProblem(state: GameState, attacker: Unit, defender: Unit, 
   if (sameSide(state, attacker, defender)) return "the target is on your side";
   const problem = rangeProblem(state, attacker, defender.pos, moved);
   if (problem) return problem;
-  if (!chooseWeapon(attacker, defender.type)) return "no usable weapon against that target";
+  if (!weaponAgainst(state, attacker, defender)) {
+    return garrisonBunker(state, defender) ? "it's garrisoned, and this unit has no weapon against the bunker" : "no usable weapon against that target";
+  }
   if (!canReach(attacker, defender)) return "this unit can't attack a submerged submarine";
   return null;
 }
@@ -188,6 +209,8 @@ export interface CombatForecast {
  * counter's range covers both luck rolls: most damage when the defender took the least, and vice versa.
  */
 export function forecast(state: GameState, attacker: Unit, defender: Unit): CombatForecast | null {
+  const bunker = garrisonBunker(state, defender);
+  if (bunker) return garrisonForecast(state, attacker, defender, bunker);
   const entry = chooseWeapon(attacker, defender.type);
   if (!entry) return null;
   const luckCap = state.settings.luck ? MAX_LUCK : 0;
@@ -214,9 +237,36 @@ export function forecast(state: GameState, attacker: Unit, defender: Unit): Comb
   };
 }
 
-function fortDamage(state: GameState, attacker: Unit, pos: Point, entry: DamageEntry, luck: number): number {
-  const terrain = state.map.terrain[tileIndex(state, pos)];
-  if (terrain === undefined) throw new Error(`(${pos.x}, ${pos.y}) is outside the map`);
+/**
+ * An attack on a garrison (03-combat §4): the damage goes to the bunker, with the bunker's HP and
+ * defense. The soldiers inside are unhurt, so they fire back at full strength unless it breaks.
+ */
+function garrisonForecast(state: GameState, attacker: Unit, defender: Unit, bunker: FortificationState): CombatForecast | null {
+  const entry = chooseWeapon(attacker, "fort");
+  if (!entry) return null;
+  const luckCap = state.settings.luck ? MAX_LUCK : 0;
+  const min = fortDamage(state, attacker, bunker, entry, 0);
+  const max = fortDamage(state, attacker, bunker, entry, luckCap);
+  const canKill = max >= bunker.hp;
+  const certainKill = min >= bunker.hp;
+  const counterEntry = certainKill ? null : counterWeapon(state, attacker, defender);
+  const counter = counterEntry
+    ? { min: canKill ? 0 : damageWith(state, defender, attacker, counterEntry, 0), max: damageWith(state, defender, attacker, counterEntry, luckCap) }
+    : null;
+  return {
+    weapon: entry.weapon,
+    attack: { min, max },
+    counter,
+    canKill,
+    certainKill,
+    counterCanKill: counter !== null && counter.max >= attacker.hp,
+    counterCertainKill: counter !== null && counter.min >= attacker.hp,
+  };
+}
+
+function fortDamage(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry, luck: number): number {
+  const terrain = state.map.terrain[tileIndex(state, fort.pos)];
+  if (terrain === undefined) throw new Error(`(${fort.pos.x}, ${fort.pos.y}) is outside the map`);
   return damageFormula({
     base: entry.base,
     attackMod: stats.attackMod(state, attacker),
@@ -224,8 +274,24 @@ function fortDamage(state: GameState, attacker: Unit, pos: Point, entry: DamageE
     attackerHp: displayHp(attacker.hp),
     defenseMod: stats.fortDefenseMod(state, terrain),
     terrainStars: 0,
-    defenderHp: displayHp(fortAt(state, pos)?.hp ?? 0),
+    defenderHp: displayHp(fort.hp),
   });
+}
+
+/** The state with this fortification down to `hp`, replaced by its broken terrain at 0. */
+function damageFort(state: GameState, fort: FortificationState, hp: number): { state: GameState; becomes: TerrainId | null } {
+  const index = tileIndex(state, fort.pos);
+  const terrain = state.map.terrain[index];
+  if (terrain === undefined) throw new Error(`(${fort.pos.x}, ${fort.pos.y}) is outside the map`);
+  const becomes = hp === 0 ? (terrainDef(terrain).breakable?.becomes ?? null) : null;
+  return {
+    state: {
+      ...state,
+      map: becomes ? { ...state.map, terrain: state.map.terrain.map((t, i) => (i === index ? becomes : t)) } : state.map,
+      fortifications: state.fortifications.flatMap((f) => (f !== fort ? [f] : hp > 0 ? [{ ...f, hp }] : [])),
+    },
+    becomes,
+  };
 }
 
 /** Expected result of attacking a fortification. They never counter (03-combat §4). */
@@ -233,8 +299,8 @@ export function fortForecast(state: GameState, attacker: Unit, pos: Point): Comb
   const entry = chooseWeapon(attacker, "fort");
   const fort = fortAt(state, pos);
   if (!entry || !fort) return null;
-  const min = fortDamage(state, attacker, pos, entry, 0);
-  const max = fortDamage(state, attacker, pos, entry, state.settings.luck ? MAX_LUCK : 0);
+  const min = fortDamage(state, attacker, fort, entry, 0);
+  const max = fortDamage(state, attacker, fort, entry, state.settings.luck ? MAX_LUCK : 0);
   return {
     weapon: entry.weapon,
     attack: { min, max },
@@ -258,24 +324,17 @@ export function resolveFortAttack(
 ): { state: GameState; event: Extract<GameEvent, { type: "fortAttacked" }> } {
   const entry = chooseWeapon(attacker, "fort");
   const fort = fortAt(state, pos);
-  const index = tileIndex(state, pos);
-  const terrain = state.map.terrain[index];
-  if (!entry || !fort || terrain === undefined) throw new Error(`Can't attack a fortification at (${pos.x}, ${pos.y})`);
+  if (!entry || !fort) throw new Error(`Can't attack a fortification at (${pos.x}, ${pos.y})`);
 
   const roll = state.settings.luck ? nextInt(state.rng, 0, MAX_LUCK) : { value: 0, rng: state.rng };
-  const damage = Math.min(fort.hp, fortDamage(state, attacker, pos, entry, roll.value));
+  const damage = Math.min(fort.hp, fortDamage(state, attacker, fort, entry, roll.value));
   const hp = fort.hp - damage;
   const fired = fire(attacker, entry);
-  const becomes = hp === 0 ? (terrainDef(terrain).breakable?.becomes ?? null) : null;
+  const broken = damageFort({ ...state, rng: roll.rng, units: state.units.map((u) => (u.id === fired.id ? fired : u)) }, fort, hp);
+  const becomes = broken.becomes;
 
   return {
-    state: {
-      ...state,
-      rng: roll.rng,
-      units: state.units.map((u) => (u.id === fired.id ? fired : u)),
-      map: becomes ? { ...state.map, terrain: state.map.terrain.map((t, i) => (i === index ? becomes : t)) } : state.map,
-      fortifications: state.fortifications.flatMap((f) => (f !== fort ? [f] : hp > 0 ? [{ ...f, hp }] : [])),
-    },
+    state: broken.state,
     event: {
       type: "fortAttacked",
       attackerId: attacker.id,
@@ -300,6 +359,13 @@ function strike(
   return { strike: { weapon: entry.weapon, luck: roll.value, damage }, rng: roll.rng };
 }
 
+/** A shot at a garrison's bunker, using the bunker's HP and defense (03-combat §4). */
+function strikeFort(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry): { strike: CombatStrike; rng: RngState } {
+  const roll = state.settings.luck ? nextInt(state.rng, 0, MAX_LUCK) : { value: 0, rng: state.rng };
+  const damage = Math.min(fort.hp, fortDamage(state, attacker, fort, entry, roll.value));
+  return { strike: { weapon: entry.weapon, luck: roll.value, damage }, rng: roll.rng };
+}
+
 const fire = (unit: Unit, entry: DamageEntry): Unit =>
   entry.weapon === "primary" ? { ...unit, ammo: unit.ammo - 1 } : unit;
 
@@ -318,13 +384,16 @@ export function resolveCombat(
   attacker: Unit,
   defender: Unit,
 ): { state: GameState; event: Extract<GameEvent, { type: "combat" }> } {
-  const entry = chooseWeapon(attacker, defender.type);
+  const entry = weaponAgainst(state, attacker, defender);
   if (!entry) throw new Error(`${attacker.type} has no weapon against ${defender.type}`);
 
-  const attack = strike(state, state.rng, attacker, defender, entry);
+  // A garrison's bunker takes the hit; the soldiers inside are lost only if it breaks (03-combat §4).
+  const bunker = garrisonBunker(state, defender);
+  const attack = bunker ? strikeFort(state, attacker, bunker, entry) : strike(state, state.rng, attacker, defender, entry);
   let rng = attack.rng;
   let a = fire(attacker, entry);
-  let d: Unit = { ...defender, hp: defender.hp - attack.strike.damage };
+  const bunkerHp = bunker ? bunker.hp - attack.strike.damage : null;
+  let d: Unit = { ...defender, hp: bunkerHp === null ? defender.hp - attack.strike.damage : bunkerHp === 0 ? 0 : defender.hp };
 
   let counter: CombatStrike | null = null;
   const counterEntry = counterWeapon(state, a, d);
@@ -351,15 +420,17 @@ export function resolveCombat(
   const units = state.units
     .map((u) => (u.id === a.id ? a : u.id === d.id ? d : u))
     .filter((u) => u.hp > 0);
+  const after = bunker && bunkerHp !== null ? damageFort({ ...state, units, rng }, bunker, bunkerHp) : null;
 
   return {
-    state: { ...state, units, rng },
+    state: after?.state ?? { ...state, units, rng },
     event: {
       type: "combat",
       attacker: { unitId: a.id, type: a.type, owner: a.owner, pos: a.pos, hp: a.hp, destroyed: a.hp === 0, promotedTo: attackerPromotion },
       defender: { unitId: d.id, type: d.type, owner: d.owner, pos: d.pos, hp: d.hp, destroyed: d.hp === 0, promotedTo: defenderPromotion },
       attack: attack.strike,
       counter,
+      ...(bunker && bunkerHp !== null ? { bunker: { pos: bunker.pos, hp: bunkerHp, becomes: after?.becomes ?? null } } : {}),
     },
   };
 }
