@@ -106,9 +106,9 @@ describe("daily fuel (05-supply-transport §5, 04-economy §2)", () => {
     expect(byId(nextRound(fighter(50)).state, 0)?.fuel).toBe(45); // Fighter: 5 per turn
   });
 
-  it("Bombers burn 8 fuel a day just staying aloft", () => {
+  it("Bombers burn 4 fuel a day just staying aloft (01-units §8a)", () => {
     const state = makeGame(["."], [u("bomber", 0, 0, { fuel: 50 })]);
-    expect(byId(nextRound(state).state, 0)?.fuel).toBe(42);
+    expect(byId(nextRound(state).state, 0)?.fuel).toBe(46);
   });
 
   it("a Bomber with 2 bombs can strike twice, then has nothing left to attack with", () => {

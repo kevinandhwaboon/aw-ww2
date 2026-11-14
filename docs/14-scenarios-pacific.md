@@ -30,10 +30,10 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 | Factory | The anchorage | The supply depot north of Motoyama |
 | Airfields | The anchorage (stands for the Marianas) | **No. 1** (objective), **No. 2** (objective), No. 3 (unfinished, north-east) |
 | Ports | One at the anchorage | none |
-| Cities | | **Mount Suribachi's summit** (objective), Motoyama, Minami, Nishi, Kita, Higashi |
+| Cities | | **Mount Suribachi's summit** (objective), Motoyama, Nishi, Kita |
 
 - **Mount Suribachi's summit is a City,** standing for the observation post on the crater rim, so it can be captured: taking it plays the capture scene with the US flag going up, as on 23 February. It's ringed by Hills and bunkers.
-- **Income:** the US starts with 4 properties (4,000 a day), Japan with 11. US income is kept low by giving the anchorage few properties, not by a special rule: the second Port was removed on 2026-11-14 for this. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
+- **Income:** the US starts with 4 properties (4,000 a day), Japan with 9 (9,000 a day). Japan had 11 until 2026-11-14, when a third of its cities (Minami and Higashi, two of its six) were removed at the developer's request, to cut its income. US income is kept low by giving the anchorage few properties, not by a special rule: the second Port was removed on 2026-11-14 for this. Japan was cut off and short of everything; its income lets it replace losses slowly, but its starting army does most of the fighting.
 
 ### Terrain
 

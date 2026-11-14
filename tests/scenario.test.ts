@@ -363,6 +363,14 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(owned).toEqual(["airfield", "factory", "hq", "port"]);
     });
 
+    it("Japan holds 9 properties, only 4 of them cities: Mount Suribachi and three villages", () => {
+      const owned = (propertyOwners ?? []).filter((p) => p.owner === 1);
+      expect(owned).toHaveLength(9);
+      const cities = owned.filter((p) => terrainAt(map, p.pos) === "city").map((p) => p.pos);
+      expect(cities).toHaveLength(4);
+      expect(cities).toContainEqual(suribachi);
+    });
+
     it("Japan wins by holding out to the start of day 18", () => {
       expect(victory).toContainEqual({ type: "surviveDays", side: "axis", days: 18 });
     });
