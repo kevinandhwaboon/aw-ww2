@@ -237,10 +237,18 @@ describe("breaking fortifications (02-terrain §4, 03-combat §4)", () => {
     expect(apply(next, hit(0, P(1, 0)))).toMatchObject({ ok: false, code: "invalidTarget" });
   });
 
-  it("rubble gives far less cover than a bunker", () => {
+  it("rubble gives no cover at all (02-terrain §4)", () => {
     const state = twoHits(["=X"], 1).state;
     const moved = run(state, endTurn, endTurn, { type: "move", unitId: 0, path: [P(1, 0)], action: { type: "wait" } });
-    expect(stats.terrainStars(moved, moved.units[0] as Unit)).toBe(1);
+    expect(stats.terrainStars(moved, moved.units[0] as Unit)).toBe(0);
+  });
+
+  it("a destroyed bunker is gone for good: soldiers on the rubble are no garrison and are hit directly", () => {
+    const state = twoHits(["=X"], 1).state;
+    const moved = run(state, endTurn, endTurn, { type: "move", unitId: 0, path: [P(1, 0)], action: { type: "wait" } });
+    expect(garrisonBunker(moved, moved.units[0] as Unit)).toBeUndefined();
+    expect(fortAt(moved, P(1, 0))).toBeUndefined();
+    expect(terrainAt(moved.map, P(1, 0))).toBe("rubble");
   });
 
   it("breaking one doesn't count as a kill", () => {

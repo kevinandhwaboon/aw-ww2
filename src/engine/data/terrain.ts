@@ -75,7 +75,7 @@ export const TERRAIN = {
     moveCost: costs(1, 1, 1, 1, 1, _, _),
     breakable: { hp: 100, becomes: "rubble" },
   },
-  rubble: { name: "Rubble", defenseStars: 1, moveCost: costs(1, 1, 2, 1, 1, _, _) },
+  rubble: { name: "Rubble", defenseStars: 0, moveCost: costs(1, 1, 2, 1, 1, _, _) },
   obstacle: {
     name: "Obstacle",
     defenseStars: 0,
