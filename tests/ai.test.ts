@@ -724,8 +724,16 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
     expect(result.bugs).toEqual([]);
     expect(count.launches).toBeGreaterThan(0);
     expect(count.landings).toBeGreaterThan(5);
-    const taken = result.state.properties.filter((p) => { const before = propertyAt(state, p.pos)?.owner ?? null; return before !== null && p.owner !== before; });
-    expect(taken.length).toBeGreaterThan(0);
+    // Counted as they happen: a property taken and later retaken still changed hands.
+    let replay = state;
+    let captures = 0;
+    for (const command of result.commands) {
+      const step = apply(replay, command);
+      if (!step.ok) throw new Error(`replay rejected: ${step.message}`);
+      replay = step.state;
+      captures += step.events.filter((e) => e.type === "propertyCaptured" && e.previousOwner !== null).length;
+    }
+    expect(captures).toBeGreaterThan(0);
   }, 120_000);
 
   it("same seed, same game: an AI vs AI game replays exactly", async () => {

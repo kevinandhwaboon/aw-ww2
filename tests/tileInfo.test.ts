@@ -48,7 +48,7 @@ describe("tile info box (00-master-design §12)", () => {
     // Drained after setup: the Carrier's turn-start service would otherwise top the Fighter up.
     const state = { ...fresh, units: fresh.units.map((u) => ({ ...u, cargo: u.cargo.map((c, i) => (i === 0 ? { ...c, fuel: 12, ammo: 1 } : c)) })) };
     expect(tileInfo(state, P(0, 0)).unit?.cargo).toEqual([
-      { name: "Fighter", hp: 7, fuel: { left: 12, max: 80, low: true }, ammo: { left: 1, max: 2, low: true } },
+      { name: "Fighter", hp: 7, fuel: { left: 12, max: 90, low: true }, ammo: { left: 1, max: 2, low: true } },
       { name: "Torpedo Bomber", hp: 10, fuel: { left: 70, max: 70, low: false }, ammo: { left: 1, max: 1, low: false } },
     ]);
   });

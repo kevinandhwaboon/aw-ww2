@@ -140,7 +140,7 @@ These are starting points for the first playable build, based on the original ga
 | Unit | Cost | Move | Vision | Fuel | Fuel/day | Primary (ammo) | Secondary | Range | Carries |
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
-| Fighter | 20,000 | 9 | 2 | 80 | 5 | Guns (2) | — | 1 | — |
+| Fighter | 20,000 | 9 | 2 | 90 | 5 | Guns (2) | — | 1 | — |
 | Bomber | 22,000 | 7 | 2 | 70 | 4 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
 | Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (1) | — | 1 | — |
@@ -170,7 +170,7 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Medium Tank | 30 | — | Sherman and Panzer IV, about 190–210 km |
 | Light Tank | 28 | — | M5 Stuart and Panzer II, about 160–200 km |
 | Heavy Tank | 20 | — | Tiger and Churchill, about 120–145 km: famously thirsty |
-| Fighter | 80 | 5 | Short-legged single-seaters (Spitfire, Bf 109): 1–3 hours aloft |
+| Fighter | 90 | 5 | Short-legged single-seaters (Spitfire, Bf 109): 1–3 hours aloft. Raised from 80 on 2026-11-15 to meet the range rule below |
 | Bomber | 70 | 4 | Developer's balance call: first half the old tank (50), raised to 70 on 2026-11-14 at the developer's request. The daily burn was 8, the heaviest of any aircraft, until it was halved to 4 later on 2026-11-14 at the developer's request, so Bombers can stay out longer on long runs such as Iwo Jima's from the Marianas airfield |
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
 | Dive Bomber, Torpedo Bomber | 70 | 5 | SBD, TBF, D3A, B5N: about 1,600–1,800 km |
@@ -181,6 +181,8 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Torpedo Boat | 50 | 2 | PT boats and E-boats: fast coastal raiders that had to return to base often |
 
 **Moving burns more for aircraft:** every aircraft spends 2 fuel per tile flown (`fuelPerMove`), on top of its daily burn (05-supply-transport §1). Land units and ships spend 1 per movement point.
+
+**Range rule for Fighters and Bombers** (since 2026-11-15, at the developer's request): a full tank must cover **two days of full movement out from an airfield and two days back**. That is four full moves at 2 fuel a tile, plus three nights' daily burn away from the airfield (it burns nothing the night it's home). Fighter: 4 × 9 × 2 + 3 × 5 = 87, so its tank is 90. Bomber: 4 × 7 × 2 + 3 × 4 = 68, within its 70. Dive and Torpedo Bombers (63) already meet it too. An engine test flies the trip for both.
 
 **Ammo:** Fighters and Bombers carry **2** rounds of ammo (was 9), at the developer's request: they were too strong. A sortie is one or two attacks, then back to an airfield (or, for Fighters, a Carrier) to rearm. The **Dive Bomber** carries **1** bomb (2 until 2026-11-14, reduced at the developer's request): one strike per sortie, like the Torpedo Bomber.
 
