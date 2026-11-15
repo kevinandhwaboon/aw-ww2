@@ -180,6 +180,33 @@ describe("daily fuel (05-supply-transport §5, 04-economy §2)", () => {
   });
 });
 
+describe("range: two days out from an airfield and back (01-units §8a)", () => {
+  // Out at full move for two days, back for two, landing on the airfield: four days flown and
+  // three nights' burn away from it. Starts on day 2, so day 1's free night doesn't help.
+  it.each(["fighter", "bomber"] as const)("a %s can fly two full days out and still get home", (type) => {
+    const move = UNITS[type].movePoints;
+    const map = ["A" + ".".repeat(2 * move)];
+    let state = nextRound(makeGame(map, [u(type, 0, 0)], {
+      players: [{ name: "A", nation: "us" }, { name: "B", nation: "germany" }],
+      propertyOwners: [{ pos: P(0, 0), owner: 0 }],
+    })).state;
+    const fly = (from: number, to: number) => {
+      const step = Math.sign(to - from);
+      const path = Array.from({ length: Math.abs(to - from) }, (_, i) => P(from + (i + 1) * step, 0));
+      state = nextRound(run(state, wait(0, path))).state;
+    };
+    fly(0, move);
+    fly(move, 2 * move);
+    fly(2 * move, move);
+    const before = byId(state, 0);
+    fly(move, 0);
+    expect(byId(state, 0)?.pos).toEqual(P(0, 0));
+    // It made it with fuel to spare, and is refuelled at home.
+    expect(before?.fuel).toBeGreaterThanOrEqual(2 * move);
+    expect(byId(state, 0)?.fuel).toBe(UNITS[type].maxFuel);
+  });
+});
+
 describe("airfields (04-economy §1, §5)", () => {
   const owned = (terrain: string, unit: UnitSetup, funds = 50_000) => makeGame([terrain], [unit], {
     players: [{ name: "A", nation: "us", funds }, { name: "B", nation: "germany" }],
@@ -189,7 +216,7 @@ describe("airfields (04-economy §1, §5)", () => {
 
   it("an aircraft on its own airfield burns nothing, so it can't crash there", () => {
     const { state, events } = nextRound(owned("A", u("fighter", 0, 0, { fuel: 3 })));
-    expect(byId(state, 0)?.fuel).toBe(80);
+    expect(byId(state, 0)?.fuel).toBe(UNITS.fighter.maxFuel);
     expect(events.map((e) => e.type)).not.toContain("unitOutOfFuel");
   });
 

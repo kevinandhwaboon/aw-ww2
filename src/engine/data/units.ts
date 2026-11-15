@@ -164,7 +164,7 @@ export const UNITS = {
   // ---- Air, phase 2 ----
   fighter: {
     ...BASE, phase: 2, name: "Fighter", category: "air", cost: 20000, movePoints: 9, movementType: "air",
-    vision: 2, maxFuel: 80, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Guns", maxAmmo: 2 },
+    vision: 2, maxFuel: 90, fuelPerDay: 5, fuelPerMove: AIR_FUEL_PER_MOVE, primaryWeapon: { name: "Guns", maxAmmo: 2 },
   },
   bomber: {
     ...BASE, phase: 2, name: "Bomber", category: "air", cost: 22000, movePoints: 7, movementType: "air",
