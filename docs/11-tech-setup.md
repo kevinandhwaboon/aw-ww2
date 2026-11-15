@@ -190,6 +190,7 @@ Rules: 05-supply-transport §5–9, 04-economy §8, 09-ai. Each milestone ends p
 | 15 | First AI | The Greedy AI (09-ai §4), AI vs AI tests, a performance benchmark | Playable single-player on every map |
 | 16 | Greedy v2 | Part 1: threat-aware production (09-ai §4a). Part 2: Landing Craft, Transport Aircraft and Carriers (09-ai §4b, lifts D9) | Single-player on the sea and island maps. The goal that every built-in map ends with a winner in AI vs AI is not met for The Slot and Normandy (09-ai §4b) |
 | 17 | Greedy v3 | Focus fire and a one-turn look ahead; massed, escorted landings and a home garrison; the ship fuel problem; Easy and Normal levels (09-ai §4c) | An "Easy computer opponent" box on the map select screen, and `?level=easy` |
+| 18 | Greedy v4 | A mixed army (no more one unit type over and over), guarded scenario objectives, and transports that refuel (09-ai §4d) | None |
 
 Air and naval rules come first because the AI has to handle them. The Normandy theater stays in phase 4.
 

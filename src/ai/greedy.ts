@@ -21,6 +21,7 @@ import {
   type Unit,
 } from "../engine";
 import {
+  HOLD,
   IDLE,
   type LaunchCommand,
   type MoveCommand,
@@ -145,6 +146,16 @@ class Brain extends ProductionBrain {
       .sort((a, b) => b.score - a.score);
   }
 
+  /**
+   * Whether a loaded transport that lacks the fuel for its trip should go home to refuel first: only
+   * when a full tank, less the way back out from home, is clearly more than it has now. So one that
+   * set out on a full tank keeps going.
+   */
+  private shouldTopUp(unit: Unit, homeward: number, fuelHome: number): boolean {
+    if (!this.w.topUpTransports || !Number.isFinite(homeward) || homeward === 0 || unit.fuel < fuelHome) return false;
+    return unit.fuel < stats.maxFuel(this.state, unit) - fuelHome - 3 * stats.fuelPerDay(this.state, unit);
+  }
+
   private plan(unit: Unit): Plan {
     const def = defOf(unit.type);
     const home = this.repairTiles(unit);
@@ -162,13 +173,28 @@ class Brain extends ProductionBrain {
         const fuelFor = (steps: number) =>
           stats.moveFuel(this.state, unit, steps) + Math.ceil(steps / Math.max(1, stats.movePoints(this.state, unit))) * stats.fuelPerDay(this.state, unit);
         if (unit.fuel >= fuelFor(trip + back) || (trip <= homeward && unit.fuel >= fuelFor(trip))) return ferry;
+        // Not the fuel for this trip: top up first, when a port or airfield would leave it with
+        // clearly more than it has now (09-ai §4d). One that has just refuelled goes regardless.
+        if (this.shouldTopUp(unit, homeward, fuelFor(homeward))) return { kind: "retreat", dist: this.distances(unit, home, "repair") };
       }
     }
     const homeward = this.headingHome(unit, home);
     if (homeward) return { kind: "retreat", dist: homeward };
 
-    if (isLandingCraft(unit.type) || isAirTransport(unit.type)) return this.planFerry(unit);
+    if (isLandingCraft(unit.type) || isAirTransport(unit.type)) {
+      // An empty transport under half a tank refuels before it goes to collect anyone (09-ai §4d).
+      if (this.w.topUpTransports && unit.cargo.length === 0 && home.length > 0 && unit.fuel < stats.maxFuel(this.state, unit) / 2) {
+        const dist = this.distances(unit, home, "repair");
+        const homeward = dist[this.index(unit.pos)] ?? Infinity;
+        if (homeward > 0 && Number.isFinite(homeward)) return { kind: "retreat", dist };
+      }
+      return this.planFerry(unit);
+    }
     if (isCarrier(unit.type)) return this.planCarrier(unit);
+
+    // The guard of an objective we have to keep goes to stand on it, and stays (09-ai §4d).
+    const post = this.guardPosts().get(unit.id);
+    if (post) return post.x === unit.pos.x && post.y === unit.pos.y ? HOLD : this.advance(unit, [post], `post${unit.id}`);
 
     // A land unit with nothing left to do on its landmass heads for a transport (09-ai §4b).
     if (this.isStranded(unit)) {

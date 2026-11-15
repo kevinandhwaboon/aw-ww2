@@ -178,8 +178,50 @@ export abstract class LandingBrain extends BrainBase {
         .sort((a, b) => distance(a.pos, hq.pos) - distance(b.pos, hq.pos) || a.id - b.id);
       for (const u of local.slice(0, this.w.garrisonSize)) ids.add(u.id);
     }
+    // Every land unit on the landmass of an objective we have to keep stays there too (09-ai §4d).
+    for (const objective of this.guardedObjectives()) {
+      for (const u of this.state.units) {
+        if (u.owner === this.me && defOf(u.type).category === "land" && !defOf(u.type).transport && this.connected(u.type, u.pos, objective)) ids.add(u.id);
+      }
+    }
     this.garrisonCache = ids;
     return ids;
+  }
+
+  /**
+   * The scenario objectives we own and have to keep (09-ai §4d): properties the other side wins by
+   * capturing, or that our side wins by holding.
+   */
+  protected guardedObjectives(): Point[] {
+    if (!this.w.guardObjectives) return [];
+    const side = this.state.players[this.me]?.side;
+    const points = new Map<number, Point>();
+    for (const c of this.state.victoryConditions) {
+      const ours = (c.type === "captureProperties" && c.side !== side) || (c.type === "holdProperties" && c.side === side);
+      if (!ours) continue;
+      for (const p of c.properties) if (propertyAt(this.state, p)?.owner === this.me) points.set(this.index(p), p);
+    }
+    return [...points.keys()].sort((a, b) => a - b).map((i) => points.get(i) ?? { x: 0, y: 0 });
+  }
+
+  /**
+   * The guard posts (09-ai §4d): for each objective we have to keep, the nearest of our land units
+   * that can reach it stands on it, since a property with a unit on it can't be captured. Not on an
+   * airfield or port, which would keep our own aircraft and ships from refuelling there.
+   */
+  protected guardPosts(): ReadonlyMap<number, Point> {
+    if (this.guardCache) return this.guardCache;
+    const posts = new Map<number, Point>();
+    for (const objective of this.guardedObjectives()) {
+      const repairs = propertyDefAt(this.state, objective)?.repairs;
+      if (repairs === "air" || repairs === "naval") continue;
+      const guard = this.state.units
+        .filter((u) => u.owner === this.me && !posts.has(u.id) && defOf(u.type).category === "land" && !defOf(u.type).transport && this.connected(u.type, u.pos, objective))
+        .sort((a, b) => distance(a.pos, objective) - distance(b.pos, objective) || a.id - b.id)[0];
+      if (guard) posts.set(guard.id, objective);
+    }
+    this.guardCache = posts;
+    return posts;
   }
 
   /** Whether any enemy has, or could build, a Landing Craft or Transport Aircraft. */
