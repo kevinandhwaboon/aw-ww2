@@ -16,6 +16,7 @@ import { C, mix, Painter, ShadowPainter, teamShades } from "./paint";
 import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
 import { clamp01, seg, type Look, type Pose, type Pt, type Rig } from "./rig";
 import { assaultRig, infantryRig, mortarRig } from "./soldiers";
+import { battleCues, type SoundCue } from "../sound/sounds";
 import { buildTimeline, deathTimes, figureTiming, hash, hpAt, SCENE_MS, torpedoRun, type Shot, type Timeline } from "./timeline";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "./vehicles";
 
@@ -151,6 +152,8 @@ const isAirKind = (kind: FigureKind) => kind !== "bunker" && UNITS[kind].categor
 
 export class BattleRenderer {
   readonly timeline: Timeline;
+  /** Gunfire, impacts and explosions, on the timeline (16-sound §3). */
+  readonly cues: readonly SoundCue[];
   private readonly p: Painter;
   private readonly halves: Record<HalfId, HalfView>;
   private readonly shots: readonly PlannedShot[];
@@ -182,6 +185,7 @@ export class BattleRenderer {
     this.shadeCanvas = hc;
     this.shade = new ShadowPainter(hctx, C("battleShadeTint"));
     this.timeline = buildTimeline(plan);
+    this.cues = battleCues(plan, this.timeline);
     this.halves = { left: this.halfView(plan.left), right: this.halfView(plan.right) };
     this.shots = this.timeline.shots.map((s) => this.planShot(s));
     this.effects = new BattleEffects(this.p, this.halves, this.shots, (h, i) => this.slot(h, i));

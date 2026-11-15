@@ -139,6 +139,20 @@ export function stormTimes(plan: StormPlan): { readonly start: number; readonly 
   return times.map((t) => ({ start: t.start, enter: t.start + STORM_MS.run }));
 }
 
+/** When cover man `i` fires: every 260 ms from just after the scene opens until just before he runs in himself. */
+export function coverShotTimes(times: readonly { readonly start: number }[], i: number): number[] {
+  const time = times[i];
+  if (!time) return [];
+  const shots: number[] = [];
+  for (let s = STORM_MS.intro + 120 + i * 90; s < time.start - 100; s += 260) shots.push(s);
+  return shots;
+}
+
+/** When the squad is all inside, or, for a follow-up capture, when the flag stops rising. */
+export function lastInside(plan: StormPlan): number {
+  return isFollowUp(plan) ? STORM_MS.intro + STORM_MS.haul : Math.max(...stormTimes(plan).map((x) => x.enter), 0);
+}
+
 export function stormLength(plan: StormPlan): { settled: number; total: number } {
   if (isFollowUp(plan)) {
     const settled = STORM_MS.intro + STORM_MS.haul + STORM_MS.flag;

@@ -15,6 +15,9 @@ import { planCapture, planGarrison } from "./battle/storm";
 import { packColor, packColorNumber } from "./artPack";
 import { moveStyle, stepDirection, type MoveStyle, type StepDirection } from "./facing";
 import { TILE_SIZE } from "./placeholderTiles";
+import { sounds } from "./sound/player";
+import { DESTROYED, FIRE_SOUND, IMPACT_SOUND, mapEventSound, moveSound } from "./sound/sounds";
+import type { FireKind } from "./battle/plan";
 
 const MOVE_MS_PER_TILE = 90;
 /** How high a moving unit's sprite lifts once per square, in map pixels: soldiers hop, vehicles bump (08-art-pipeline §22). */
@@ -95,6 +98,8 @@ export class MapPlayback {
     setBattleWeather({ season: this.state.weather.season, snowing: weatherOn(this.state) === "snow" });
     for (const event of events) {
       await this.revealTiles(this.eventTiles(event), ACTION_PAN_MS);
+      const sound = mapEventSound(event);
+      if (sound) sounds.play(sound);
       if (event.type === "unitLaunched" && !this.unitSprites.has(event.unitId)) {
         // Takes off from the Carrier's tile, unless the launch preview already put it there.
         const aircraft = this.state.units.find((u) => u.id === event.carrierId)?.cargo.find((c) => c.id === event.unitId);
@@ -112,11 +117,12 @@ export class MapPlayback {
       }
       if (event.type === "combat") await this.playCombat(event);
       if (event.type === "fortAttacked") {
-        const plan = this.battle && planFortAttack(this.state, event);
+        const plan = planFortAttack(this.state, event);
         if (this.battle && plan) await this.battle.play(plan);
         else {
           const shooter = { unitId: event.attackerId, pos: event.attackerPos };
-          await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0);
+          const fire = plan?.strikes[0]?.fire ?? null;
+          await this.playStrike(shooter, { pos: event.pos }, event.attack.damage, event.hp === 0, fire);
         }
       }
       if (event.type === "captureProgress" || event.type === "propertyCaptured") {
@@ -124,7 +130,10 @@ export class MapPlayback {
         const plan = this.battle && planCapture(this.state, event);
         if (this.battle && plan) await this.battle.playStorm(plan);
         else if (event.type === "captureProgress") await this.floatLabel(event.pos, `${event.capturePoints} LEFT`, packColor("labelText"));
-        else await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
+        else {
+          sounds.play("captured");
+          await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
+        }
       }
       if (event.type === "unitOutOfFuel") {
         const lost = { pos: event.pos, unitId: event.unitId };
@@ -145,7 +154,9 @@ export class MapPlayback {
         if (tile) await this.floatLabel(tile, event.type === "unitDived" ? "DIVE" : "SURFACE", packColor("submerged"));
       }
     }
-    await Promise.all(this.repairLabels(events));
+    const labels = this.repairLabels(events);
+    if (labels.length > 0) sounds.play("supply");
+    await Promise.all(labels);
   }
 
   /** Foot soldiers going into a bunker play a storming scene, when scenes are on (08-art-pipeline §19). */
@@ -206,26 +217,30 @@ export class MapPlayback {
    */
   private async playCombat(event: Extract<GameEvent, { type: "combat" }>): Promise<void> {
     const { attacker, defender, attack, counter } = event;
+    const plan = planCombat(this.state, event);
     if (this.battle) {
-      await this.battle.play(planCombat(this.state, event));
+      await this.battle.play(plan);
       const lost = [attacker, defender].filter((u) => u.destroyed).map((u) => this.explode({ pos: u.pos, unitId: u.unitId }));
       await Promise.all(lost);
     } else {
-      await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed);
-      if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed);
+      const [attackFire, counterFire] = plan.strikes.map((s) => s.fire);
+      await this.playStrike(attacker, defender, attack.damage, counter === null && defender.destroyed, attackFire ?? null);
+      if (counter) await this.playStrike(defender, attacker, counter.damage, attacker.destroyed, counterFire ?? null);
     }
     for (const unit of [attacker, defender]) {
       if (unit.promotedTo) await this.floatLabel(unit.pos, unit.promotedTo.toUpperCase(), packColor("labelGold"));
     }
   }
 
-  /** The shooter nudges toward its target, which flashes and shows the damage. */
+  /** The shooter nudges toward its target, which flashes and shows the damage. `fire` is the weapon, for its sounds (16-sound §3). */
   private async playStrike(
     shooter: Pick<Combatant, "unitId" | "pos">,
     target: StrikeTarget,
     damage: number,
     destroyed: boolean,
+    fire: FireKind | null,
   ): Promise<void> {
+    if (fire) sounds.play(FIRE_SOUND[fire]);
     const sprite = this.unitSprites.get(shooter.unitId);
     if (sprite) {
       const { x, y } = sprite;
@@ -234,6 +249,7 @@ export class MapPlayback {
       await this.tween(sprite, { x: x + dx, y: y + dy }, COMBAT_MS.nudge);
       await this.tween(sprite, { x, y }, COMBAT_MS.nudge);
     }
+    if (fire) sounds.play(IMPACT_SOUND[fire].sound, { volume: IMPACT_SOUND[fire].volume });
     const flash = this.add.rectangle(target.pos.x * TILE_SIZE, target.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, packColorNumber("flash")).setOrigin(0);
     await this.tween(flash, { alpha: 0 }, COMBAT_MS.flash);
     flash.destroy();
@@ -245,6 +261,7 @@ export class MapPlayback {
 
   private async explode(target: StrikeTarget): Promise<void> {
     const { x, y } = center(target.pos);
+    sounds.play(DESTROYED.sound, { volume: DESTROYED.volume, detune: DESTROYED.detune });
     const blast = this.add.rectangle(x, y, 8, 8, packColorNumber("blast"));
     const sprite = target.unitId === undefined ? undefined : this.unitSprites.get(target.unitId);
     await Promise.all([
@@ -287,18 +304,24 @@ export class MapPlayback {
     image?.setVisible(true);
     const type = this.host.unitType(unitId);
     const style = type ? moveStyle(type) : "vehicle";
+    // Footsteps, wheels, tracks, propellers or an engine and wake, for as long as it moves (16-sound §3).
+    const stopSound = type ? sounds.loop(moveSound(type)) : () => undefined;
     let from = start;
-    for (const p of fullPath.slice(1)) {
-      const direction = from ? stepDirection(from, p) : null;
-      if (direction) this.host.setUnitMotion(unitId, direction);
-      if (from && (style === "vehicle" || style === "naval")) this.puff(from, p, style);
-      // The view keeps pace with the unit, so a long move never walks off screen.
-      await Promise.all([
-        this.revealTiles([p], MOVE_MS_PER_TILE),
-        this.tween(sprite, { x: p.x * TILE_SIZE, y: p.y * TILE_SIZE }, MOVE_MS_PER_TILE),
-        image && MOVE_LIFT[style] > 0 ? this.hop(image, MOVE_LIFT[style]) : Promise.resolve(),
-      ]);
-      from = p;
+    try {
+      for (const p of fullPath.slice(1)) {
+        const direction = from ? stepDirection(from, p) : null;
+        if (direction) this.host.setUnitMotion(unitId, direction);
+        if (from && (style === "vehicle" || style === "naval")) this.puff(from, p, style);
+        // The view keeps pace with the unit, so a long move never walks off screen.
+        await Promise.all([
+          this.revealTiles([p], MOVE_MS_PER_TILE),
+          this.tween(sprite, { x: p.x * TILE_SIZE, y: p.y * TILE_SIZE }, MOVE_MS_PER_TILE),
+          image && MOVE_LIFT[style] > 0 ? this.hop(image, MOVE_LIFT[style]) : Promise.resolve(),
+        ]);
+        from = p;
+      }
+    } finally {
+      stopSound();
     }
     this.host.setUnitMotion(unitId, null);
   }

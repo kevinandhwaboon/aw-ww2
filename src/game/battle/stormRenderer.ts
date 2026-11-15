@@ -13,7 +13,8 @@ import type { Cutscene } from "./BattleScene";
 import { C, mix, Painter, shade, teamShades } from "./paint";
 import { along, clamp01, lerp, seg, type Look, type Pt } from "./rig";
 import { drawGun, drawSoldier, GUN, sandbags, soldierFrame, squadGun } from "./soldiers";
-import { capturePointsAt, coverFigures, flagHeight, isFollowUp, stormLength, stormTimes, STORM_MS, type StormPlan } from "./storm";
+import { stormCues, type SoundCue } from "../sound/sounds";
+import { capturePointsAt, coverFigures, coverShotTimes, flagHeight, isFollowUp, lastInside, stormLength, stormTimes, STORM_MS, type StormPlan } from "./storm";
 import { hash } from "./timeline";
 
 const BOX = { w: 120, h: 100, ox: 50, oy: 80 };
@@ -307,6 +308,8 @@ export class StormRenderer implements Cutscene {
   private readonly times: readonly { start: number; enter: number }[];
   private readonly length: { settled: number; total: number };
   private readonly cover: number;
+  /** Cover fire, footsteps and the captured tune (16-sound §3). */
+  readonly cues: readonly SoundCue[];
 
   constructor(
     readonly plan: StormPlan,
@@ -334,6 +337,7 @@ export class StormRenderer implements Cutscene {
     this.times = stormTimes(plan);
     this.length = stormLength(plan);
     this.cover = coverFigures(plan);
+    this.cues = stormCues(plan);
   }
 
   get total(): number {
@@ -367,7 +371,7 @@ export class StormRenderer implements Cutscene {
     }
     const followUp = isFollowUp(this.plan);
     // When the squad is all inside (or, for a follow-up, when the flag stops rising).
-    const lastIn = followUp ? STORM_MS.intro + STORM_MS.haul : Math.max(...this.times.map((x) => x.enter), 0);
+    const lastIn = lastInside(this.plan);
     const building = this.drawBuilding(t, lastIn);
     if (this.plan.terrain === "airfield") runway(p);
     else if (this.plan.terrain !== "city" && this.plan.terrain !== "port") {
@@ -558,12 +562,8 @@ export class StormRenderer implements Cutscene {
     });
   }
 
-  private shotTimes(i: number): number[] {
-    const time = this.times[i];
-    if (!time) return [];
-    const shots: number[] = [];
-    for (let s = STORM_MS.intro + 120 + i * 90; s < time.start - 100; s += 260) shots.push(s);
-    return shots;
+  private shotTimes(i: number): readonly number[] {
+    return coverShotTimes(this.times, i);
   }
 
   /** Muzzle flashes, tracers to the windows, and breaking glass. */

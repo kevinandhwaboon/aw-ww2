@@ -19,7 +19,9 @@ import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
 import { createBuildMenu } from "./ui/buildMenu";
 import { createDebugPanel } from "./ui/debugPanel";
-import { createHud } from "./ui/hud";
+import { createHud, type SoundControl } from "./ui/hud";
+import { sounds } from "./game/sound/player";
+import { nextSoundLevel } from "./game/sound/settings";
 import { createBanner, createHandoff } from "./ui/overlays";
 import { createResultsScreen } from "./ui/results";
 import { createTileInfo } from "./ui/tileInfoPanel";
@@ -85,7 +87,20 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   const width = state.map.width * TILE_SIZE;
   const height = state.map.height * TILE_SIZE;
 
-  const hud = createHud(uiRoot);
+  /** The HUD's sound button (16-sound §8); its listener goes when the game ends. */
+  const soundListeners: (() => void)[] = [];
+  const soundControl: SoundControl = {
+    get level() {
+      return sounds.level;
+    },
+    cycle: () => sounds.setLevel(nextSoundLevel(sounds.level)),
+    onChange: (listener) => {
+      const stop = sounds.onChange(listener);
+      soundListeners.push(stop);
+      return stop;
+    },
+  };
+  const hud = createHud(uiRoot, soundControl);
   const tileInfoPanel = createTileInfo(uiRoot);
   const unitPanel = debug ? createUnitPanel(uiRoot) : null;
   const debugPanel = debug ? createDebugPanel(uiRoot) : null;
@@ -123,15 +138,24 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     onCursorMove: (tile) => controller.onCursorMove(tile),
     nextCursor: (from, step) => controller.nextCursor(from, step),
     onConfirm: (tile) => {
-      if (!aiTurn()) controller.onConfirm(tile);
+      if (!aiTurn()) {
+        sounds.play("uiSelect");
+        controller.onConfirm(tile);
+      }
       showCursorInfo();
     },
     onCancel: () => {
-      if (!aiTurn()) controller.onCancel();
+      if (!aiTurn()) {
+        sounds.play("uiCancel");
+        controller.onCancel();
+      }
       showCursorInfo();
     },
     onMenuChoice: (id) => {
-      if (!aiTurn()) controller.onMenuChoice(id);
+      if (!aiTurn()) {
+        sounds.play("uiSelect");
+        controller.onMenuChoice(id);
+      }
       showCursorInfo();
     },
     onPeekStart: (tile) => {
@@ -205,12 +229,14 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       const earned = income ? ` +${income.amount.toLocaleString("en-US")}` : "";
       scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
+      sounds.play("turnStart");
       // The pass-the-device screen only matters between two people (09-ai §5).
       if (passDevice && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
     render();
     if (state.result) {
+      sounds.play("gameOver");
       controller.finish();
       results.show(state, onNewGame);
     }
@@ -275,6 +301,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       if (!aiTurn()) undo();
     } else if (event.key === "e" || event.key === "E") {
       if (!aiTurn()) controller.endTurn();
+    } else if (event.key === "m" || event.key === "M") {
+      // Sound off, or back on (16-sound §8).
+      sounds.toggleMute();
     }
   }, { signal: listening.signal });
 
@@ -325,6 +354,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       if (ended) return;
       ended = true;
       listening.abort();
+      for (const stop of soundListeners) stop();
       unmountPad?.();
       game.destroy(true); // the scenes remove their own listeners as they're destroyed
       uiRoot.replaceChildren();

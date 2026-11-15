@@ -13,6 +13,8 @@ import type { DropPlan } from "./drop";
 import { DropRenderer } from "./dropRenderer";
 import type { StormPlan } from "./storm";
 import { StormRenderer } from "./stormRenderer";
+import { sounds } from "../sound/player";
+import { cuesBetween, type SoundCue } from "../sound/sounds";
 
 const TEXTURE_KEY = "battle-scene";
 const SKIP_KEYS = new Set(["z", "Z", "x", "X", "Enter", " ", "Escape"]);
@@ -33,6 +35,8 @@ export interface Cutscene {
   readonly total: number;
   /** How opaque the whole scene is: it fades in and out over the map. */
   opacity(t: number): number;
+  /** The sounds it plays, on its own clock (16-sound §3). */
+  readonly cues: readonly SoundCue[];
 }
 
 interface Playing {
@@ -102,7 +106,9 @@ export class BattleScene extends Phaser.Scene implements BattlePlayer {
   override update(_time: number, delta: number): void {
     const playing = this.playing;
     if (!playing) return;
+    const before = playing.t;
     playing.t += Math.min(delta, 100);
+    for (const cue of cuesBetween(playing.renderer.cues, before, playing.t)) sounds.playCue(cue);
     if (playing.t >= playing.renderer.total) {
       this.finish();
       return;
@@ -110,8 +116,11 @@ export class BattleScene extends Phaser.Scene implements BattlePlayer {
     this.draw();
   }
 
+  /** Skipping stops the scene's sounds too (16-sound §3); a scene that plays to its end lets them ring out. */
   private skip(): void {
-    if (this.playing && this.playing.t > SKIP_GRACE_MS) this.finish();
+    if (!this.playing || this.playing.t <= SKIP_GRACE_MS) return;
+    sounds.stopAll();
+    this.finish();
   }
 
   private finish(): void {

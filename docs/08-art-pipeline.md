@@ -269,6 +269,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `properties` | Buildings for properties: `path`, `columns` and `rows` (section 15) |
 | `terrainNames` | Display names by terrain id |
+| `sounds` | Sound files by sound id, one file or a list to pick from (16-sound §7) |
 
 **Unit sheets** use 16×16 or 32×32 frames (`frameSize`); either way a unit fills one map square, with one row per unit and frames running across: the side view's frames, then the front and back views' if `facings` lists them (section 22). Draw units facing right: maps mirror them when a side faces left (section 12). `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.
 
@@ -516,7 +517,9 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **The Soviet Union** (since 2026-11-14): soldiers in the SSh-40, tall boots and the greatcoat roll across the chest, with a canvas sack on the back; squads carry Mosins (worked bolt between shots, spike bayonet), two PPSh-41s with their drums, and a DP light machine gun with its flat pan magazine on top. Assault Infantry is a PTRD-41 team: the gunner kneels behind the long anti-tank rifle on its bipod while the loader hands up the big 14.5mm rounds; it fires a bullet, not a rocket, with no backblast. Tank crews wear the black ribbed shlemofon and dark overalls. Tanks are 3D models: T-70, T-34/76 (hexagonal turret with two round hatches, big road wheels, fuel tanks on the side), KV-1 and SU-152, each with a white-edged red star. Rocket Artillery is a BM-13 Katyusha: a ZiS-6 truck with eight rails raised over the cab. The jeep, halftrack, Mobile AA and guns are the US shapes (a Willys, an M3, the M16 quad .50, the 90mm and 105mm), as the Red Army received them under Lend-Lease, with the red star in place of the white. Aircraft: Yak-9 with a red spinner, the Il-2 with its armored nose, rear gunner and rockets, and the Li-2 with its dorsal turret. `?battle=demo&allies=ussr` puts the Soviet Union on the Allied side of every preview scene.
 
-**Not done yet:** separate art for UK and Canadian units; Soviet ships; Soviet versions of the jeep, halftrack, Mobile AA, flak gun and howitzer in battle scenes; sound; a faster speed setting; pack-supplied battle sprites.
+**Sound** (since 2026-11-15): battle, capture and drop scenes play gunfire, impacts and explosions on their own timeline (16-sound §3).
+
+**Not done yet:** separate art for UK and Canadian units; Soviet ships; Soviet versions of the jeep, halftrack, Mobile AA, flak gun and howitzer in battle scenes; a faster speed setting; pack-supplied battle sprites.
 
 ## 19. Storming scenes: captures and bunkers
 

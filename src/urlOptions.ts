@@ -14,6 +14,7 @@
 //                        ?ai=none is all human). Without it, the computer plays everyone but the first player.
 //   ?level=easy          the computer plays on Easy (09-ai §4c); Normal without it
 //   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
+//   ?sound=off           starts with sound off, without changing the saved sound level (16-sound §8)
 
 import type { AiLevel } from "./ai/weights";
 
@@ -40,6 +41,8 @@ export interface UrlOptions {
   readonly level: AiLevel;
   /** Forces the phone game-pad layout on or off; null decides by the screen. */
   readonly pad: boolean | null;
+  /** False: start this visit with sound off. */
+  readonly sound: boolean;
 }
 
 export function parseUrlOptions(params: UrlParams): UrlOptions {
@@ -59,6 +62,7 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
     computer: ai === null ? null : ai === "none" ? [] : playerIds(ai),
     level: params.get("level") === "easy" ? "easy" : "normal",
     pad: pad === "on" ? true : pad === "off" ? false : null,
+    sound: params.get("sound") !== "off",
   };
 }
 

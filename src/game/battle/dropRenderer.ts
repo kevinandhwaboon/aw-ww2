@@ -13,6 +13,7 @@ import { C, mix, Painter, shade, teamShades } from "./paint";
 import { clamp01, lerp, seg, type Look, type Pt } from "./rig";
 import { drawGun, drawSoldier, GUN, soldierFrame, squadGun } from "./soldiers";
 import { hash } from "./timeline";
+import { dropCues, type SoundCue } from "../sound/sounds";
 
 const BOX = { w: 200, h: 120, ox: 100, oy: 90 };
 
@@ -36,6 +37,8 @@ export class DropRenderer implements Cutscene {
   private readonly look: Look;
   private readonly jumps: readonly { exit: number; land: number }[];
   private readonly length: { settled: number; total: number };
+  /** The plane's engine and the chutes opening (16-sound §3). */
+  readonly cues: readonly SoundCue[];
 
   constructor(
     readonly plan: DropPlan,
@@ -62,6 +65,7 @@ export class DropRenderer implements Cutscene {
     };
     this.jumps = jumpTimes(plan);
     this.length = dropLength(plan);
+    this.cues = dropCues(plan);
   }
 
   get total(): number {

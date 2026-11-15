@@ -7,6 +7,7 @@ import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "../engine/data
 import { WEATHER, type WeatherId } from "../engine/data/weather";
 import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "../engine/data/units";
 import type { Unit } from "../engine/state";
+import { SOUND_IDS, type SoundId } from "./sound/sounds";
 
 const BUILT_IN_COLORS = {
   // HTML panels and screens
@@ -245,6 +246,8 @@ export interface ArtPack {
   readonly properties: PropertySheet | null;
   readonly unitNames: Readonly<Partial<Record<UnitTypeId, string>>>;
   readonly terrainNames: Readonly<Partial<Record<TerrainId, string>>>;
+  /** Files for each sound id, relative to the pack's folder; several are variants to pick from (16-sound §7). */
+  readonly sounds: Readonly<Partial<Record<SoundId, readonly string[]>>>;
 }
 
 /** The look when no pack loads: everything drawn in code. */
@@ -271,6 +274,7 @@ export const BUILT_IN_PACK: ArtPack = {
   properties: null,
   unitNames: {},
   terrainNames: {},
+  sounds: {},
 };
 
 type Json = Record<string, unknown>;
@@ -280,6 +284,7 @@ const isHexColor = (value: unknown): value is string => typeof value === "string
 const isUnitType = (value: unknown): value is UnitTypeId => UNIT_TYPE_IDS.includes(value as UnitTypeId);
 const isTerrain = (value: unknown): value is TerrainId => TERRAIN_IDS.includes(value as TerrainId);
 const isUnitView = (value: unknown): value is UnitView => UNIT_VIEWS.includes(value as UnitView);
+const isSoundId = (value: unknown): value is SoundId => SOUND_IDS.includes(value as SoundId);
 
 /** Packs load files from their own folder. Web addresses and absolute paths aren't allowed. */
 const isRelativePath = (value: unknown): value is string =>
@@ -444,11 +449,24 @@ function parseNames<K extends string>(raw: unknown, isKey: (key: unknown) => key
   return raw as Partial<Record<K, string>>;
 }
 
+/** Sound ids to a file, or a list of files to pick from (16-sound §7). */
+function parseSounds(raw: unknown): Partial<Record<SoundId, string[]>> {
+  if (!isObject(raw)) return fail(`"sounds" must be an object`);
+  const sounds: Partial<Record<SoundId, string[]>> = {};
+  for (const [id, files] of Object.entries(raw)) {
+    if (!isSoundId(id)) return fail(`sounds: unknown sound "${id}"`);
+    const list: unknown[] = Array.isArray(files) ? files : [files];
+    if (list.length === 0 || !list.every(isRelativePath)) return fail(`sounds: "${id}" must be a file in the pack, or a list of them`);
+    sounds[id] = list;
+  }
+  return sounds;
+}
+
 /** Reads a pack.json, or throws an Error saying what's wrong with it. */
 export function parseArtPack(raw: unknown): ArtPack {
   if (!isObject(raw)) return fail("a pack must be an object");
   if (typeof raw.name !== "string" || raw.name === "") return fail(`a pack needs a "name"`);
-  const { players, nationColors, colors, unitSheets, terrain, properties, unitNames, terrainNames } = raw;
+  const { players, nationColors, colors, unitSheets, terrain, properties, unitNames, terrainNames, sounds } = raw;
   if (unitSheets !== undefined && !Array.isArray(unitSheets)) return fail(`"unitSheets" must be a list`);
   return {
     name: raw.name,
@@ -460,6 +478,7 @@ export function parseArtPack(raw: unknown): ArtPack {
     properties: properties === undefined ? null : parsePropertySheet(properties),
     unitNames: unitNames === undefined ? {} : parseNames(unitNames, isUnitType, "unitNames"),
     terrainNames: terrainNames === undefined ? {} : parseNames(terrainNames, isTerrain, "terrainNames"),
+    sounds: sounds === undefined ? {} : parseSounds(sounds),
   };
 }
 

@@ -33,6 +33,7 @@ describe("URL options (11-tech-setup §7)", () => {
       computer: null,
       level: "normal",
       pad: null,
+      sound: true,
     });
   });
 
@@ -90,5 +91,10 @@ describe("URL options (11-tech-setup §7)", () => {
     expect(options("?pad=on").pad).toBe(true);
     expect(options("?pad=off").pad).toBe(false);
     expect(options("?pad=maybe").pad).toBeNull();
+  });
+
+  it("?sound=off starts with sound off; anything else leaves the saved level alone (16-sound §8)", () => {
+    expect(options("?sound=off").sound).toBe(false);
+    expect(options("?sound=on").sound).toBe(true);
   });
 });

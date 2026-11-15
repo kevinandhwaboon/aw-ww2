@@ -992,5 +992,33 @@
       "port:E",
       "port:W"
     ]
+  },
+  "sounds": {
+    "fireRifle": "../../sounds/fireRifle.wav",
+    "fireMg": "../../sounds/fireMg.wav",
+    "fireBazooka": "../../sounds/fireBazooka.wav",
+    "fireMortar": "../../sounds/fireMortar.wav",
+    "fireCannon": "../../sounds/fireCannon.wav",
+    "fireHowitzer": "../../sounds/fireHowitzer.wav",
+    "fireRockets": "../../sounds/fireRockets.wav",
+    "bombWhistle": "../../sounds/bombWhistle.wav",
+    "waterSplash": "../../sounds/waterSplash.wav",
+    "impactBullet": "../../sounds/impactBullet.wav",
+    "impactShell": "../../sounds/impactShell.wav",
+    "explosion": "../../sounds/explosion.wav",
+    "moveFoot": "../../sounds/moveFoot.wav",
+    "moveWheels": "../../sounds/moveWheels.wav",
+    "moveTracks": "../../sounds/moveTracks.wav",
+    "moveAir": "../../sounds/moveAir.wav",
+    "moveNaval": "../../sounds/moveNaval.wav",
+    "chute": "../../sounds/chute.wav",
+    "captured": "../../sounds/captured.wav",
+    "built": "../../sounds/built.wav",
+    "alert": "../../sounds/alert.wav",
+    "supply": "../../sounds/supply.wav",
+    "turnStart": "../../sounds/turnStart.wav",
+    "gameOver": "../../sounds/gameOver.wav",
+    "uiSelect": "../../sounds/uiSelect.wav",
+    "uiCancel": "../../sounds/uiCancel.wav"
   }
 }
