@@ -5,7 +5,36 @@ import { weatherName } from "../game/artPack";
 import { objectiveLines, type ObjectiveLine } from "../game/objectives";
 import { FLAG_COLORS, FLAGS } from "../game/placeholderFlags";
 import { playerColors } from "../game/placeholderUnits";
+import type { SoundLevel } from "../game/sound/settings";
 import { el } from "./dom";
+
+/** What the HUD's sound button needs (16-sound §8). */
+export interface SoundControl {
+  readonly level: SoundLevel;
+  /** Off → Low → Medium → High → Off. */
+  cycle(): void;
+  onChange(listener: (level: SoundLevel) => void): () => void;
+}
+
+const SOUND_ICONS: Record<SoundLevel, string> = { off: "🔇", low: "🔈", medium: "🔉", high: "🔊" };
+const SOUND_NAMES: Record<SoundLevel, string> = { off: "Off", low: "Low", medium: "Medium", high: "High" };
+
+/** The sound button: shows the level, and each click moves to the next one. */
+function soundButton(control: SoundControl): HTMLButtonElement {
+  const button = el("button", "hud-sound");
+  // Never takes the keyboard focus, so Z, X and the arrows keep going to the map.
+  button.tabIndex = -1;
+  const show = (level: SoundLevel) => {
+    button.textContent = SOUND_ICONS[level];
+    button.title = `Sound: ${SOUND_NAMES[level]} (click to change, M to mute)`;
+    button.setAttribute("aria-label", button.title);
+  };
+  show(control.level);
+  control.onChange(show);
+  button.addEventListener("mousedown", (event) => event.preventDefault());
+  button.addEventListener("click", () => control.cycle());
+  return button;
+}
 
 function drawFlag(nation: NationId): HTMLCanvasElement {
   const rows = FLAGS[nation];
@@ -24,14 +53,14 @@ function drawFlag(nation: NationId): HTMLCanvasElement {
 }
 
 /** The current player's flag, the day and their funds. Sits on the side of the map away from the cursor. */
-export function createHud(root: HTMLElement): { update: (state: GameState, cursorOnLeft: boolean) => void } {
+export function createHud(root: HTMLElement, sound: SoundControl): { update: (state: GameState, cursorOnLeft: boolean) => void } {
   const hud = el("div", "panel hud");
   const flag = el("span", "hud-flag");
   const day = el("span", "hud-day");
   const weather = el("span", "hud-weather");
   const funds = el("span", "hud-funds");
   const objectives = el("div", "hud-objectives");
-  hud.append(flag, day, weather, funds, objectives);
+  hud.append(flag, day, weather, funds, soundButton(sound), objectives);
   root.append(hud);
   let shownNation: NationId | undefined;
 

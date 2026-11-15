@@ -33,11 +33,12 @@
 │  │  ├─ data/               unit, terrain, damage chart as typed data
 │  │  └─ ...
 │  ├─ game/                  Phaser scenes: map rendering, input → commands, event playback
+│  │  └─ sound/              sound effects: which play when (pure), and the player (16-sound)
 │  ├─ ui/                    HTML/CSS overlay: HUD, menus, screens
 │  └─ main.ts                wires engine, Phaser and UI together
 ├─ tests/                    engine tests (*.test.ts), mirroring src/engine
-├─ public/assets/            sprite sheets, fonts, maps (Tiled JSON)
-├─ tools/                    scripts (sprite generation, map conversion)
+├─ public/assets/            sprite sheets, sounds, art packs
+├─ tools/                    scripts (sprite generation, placeholder sounds, map conversion)
 └─ .github/workflows/        CI and deploy
 ```
 
@@ -87,6 +88,7 @@
 | End turn | END TURN in the turn menu | Z twice on any tile with no unit ready to move, or E |
 | Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |
 | Menus and screens | Click | Arrow keys, Z to choose, X to go back. On map select, arrows pick a map, Z moves to Start, and Up from there reaches the options |
+| Sound level (16-sound §8) | The speaker button in the HUD: Off, Low, Medium, High | M turns sound off, and back on |
 
 ## 3d. Combat notes (milestone 3)
 
@@ -213,5 +215,5 @@ A playable deathmatch exists after milestone 3: the first real playtest.
 
 - A toggleable rules-debug overlay: current state as JSON, RNG seed, command log. **Exists since milestone 1:** the hello map runs a demo game (`src/game/maps/hello.ts`) with a unit panel showing engine-computed stats and the modifiers affecting them, and a collapsible Debug panel (event log + state JSON). Since 2026-11-01 these only appear with `?debug=on`.
 - `npm run test:ui`: Vitest's browser UI, for reading and rerunning the rule tests.
-- URL parameters: `?map=bastogne` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?ai=1` has the computer play those players (`?ai=0,1` for AI vs AI, `?ai=none` for all human), `?level=easy` has it play on Easy (09-ai §4c), `?battle=off` plays attacks on the map instead of as battle scenes, `?polish=off` draws battle machines without the polish pass (08-art-pipeline §18). They are read in `src/urlOptions.ts`, which has its own tests. A blank or unreadable `?seed=` picks a random seed, and a blank `?ai=` means everyone is human.
+- URL parameters: `?map=bastogne` skips the menus and starts that scenario, `?seed=123` fixes the luck rolls, `?luck=off` turns luck off, `?handoff=off` skips the pass-the-device screen, `?pack=night-ops` uses that art pack, `?debug=on` shows the unit and debug panels, `?ai=1` has the computer play those players (`?ai=0,1` for AI vs AI, `?ai=none` for all human), `?level=easy` has it play on Easy (09-ai §4c), `?battle=off` plays attacks on the map instead of as battle scenes, `?polish=off` draws battle machines without the polish pass (08-art-pipeline §18), `?sound=off` starts with sound off without changing the saved level (16-sound §8). They are read in `src/urlOptions.ts`, which has its own tests. A blank or unreadable `?seed=` picks a random seed, and a blank `?ai=` means everyone is human.
 - Battle preview: `?battle=demo` plays a battle scene for every unit in turn, `&a=mortar&d=infantry` just that matchup, `&at=forest&dt=beach` sets each side's terrain, `&para=1` makes the attacking squad paratroopers with that card suit. `&storm=all` (or `capture`, `garrison`) shows the capture and bunker scenes instead, and `&t=end` holds each at its outcome. `&drop=on` shows airborne drops. `&t=fire` (or `&t=hit`, or a time in ms) shows every matchup frozen side by side, `&zoom=0,150,192,72` enlarges that part of each, `&scale=1` sets the size, `&flip=on` swaps the nations, and `&axis=japan` puts Japan on the Axis side in place of Germany, and `&allies=ussr` the Soviet Union on the Allied side in place of the US (08-art-pipeline §18).

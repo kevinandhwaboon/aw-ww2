@@ -22,6 +22,8 @@ import { portOpening, terrainLayers } from "./terrainTiles";
 import { clampScroll, FOLLOW_MARGIN_SQUARES, inLeftHalf, revealScroll, type Scroll, type Size } from "./viewport";
 import { drawAmmoCanBadge, drawFuelCanBadge, drawHpBadge, drawSubmergedBadge, drawUnitMarker, drawVeterancyBadge, playerColors } from "./placeholderUnits";
 import { supplyWarnings } from "./tileInfo";
+import { sounds, soundKey } from "./sound/player";
+import { SOUND_IDS, type SoundId } from "./sound/sounds";
 
 /** How long one blink of the low-supply cans takes, on and off. */
 const WARNING_BLINK_MS = 900;
@@ -260,6 +262,20 @@ export class MapScene extends Phaser.Scene implements MapView {
       this.load.image(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path));
       if (pack.properties.winterPath) this.load.image(winterKey(PROPERTY_SHEET_KEY), packFileUrl(pack.properties.winterPath));
     }
+    // Sounds download with the art, before the map shows (16-sound §6).
+    for (const id of SOUND_IDS) pack.sounds[id]?.forEach((path, i) => this.load.audio(soundKey(id, i), packFileUrl(path)));
+  }
+
+  /** Hands the loaded sounds to the sound player. A file that failed to load, and every one after it for that sound, is left out. */
+  private attachSounds(): void {
+    const loaded = new Map<SoundId, number>();
+    for (const id of SOUND_IDS) {
+      let count = 0;
+      while (this.cache.audio.exists(soundKey(id, count))) count++;
+      loaded.set(id, count);
+    }
+    sounds.attach(this.sound, loaded);
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => sounds.detach());
   }
 
   /** The sheet to draw from: its winter version on a winter map, if the pack has one (12-weather §5). */
@@ -341,6 +357,7 @@ export class MapScene extends Phaser.Scene implements MapView {
 
   create(): void {
     this.created = true;
+    this.attachSounds();
     this.setPixelScale(this.pixelScale);
     this.paintTerrain();
     this.terrainImage = this.add.image(0, 0, terrainFrameKey(0)).setOrigin(0).setScale(1 / this.terrainResolution);

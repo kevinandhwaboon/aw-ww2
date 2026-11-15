@@ -7,10 +7,12 @@ import { greedyAi } from "./ai/greedy";
 import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
 import { parseUrlOptions } from "./urlOptions";
+import { sounds } from "./game/sound/player";
 import "./ui/style.css";
 
 const url = parseUrlOptions(new URLSearchParams(window.location.search));
 setPolish(url.polish);
+if (!url.sound) sounds.forceOff();
 
 const gameRoot = document.getElementById("game");
 const uiRoot = document.getElementById("ui");
