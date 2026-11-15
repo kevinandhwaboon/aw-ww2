@@ -11,6 +11,7 @@ import {
   type Command,
   type Point,
   type Unit,
+  type UnitCategory,
   type UnitTypeId,
 } from "../engine";
 import {
@@ -19,6 +20,9 @@ import {
   isLandingCraft,
 } from "./greedyBase";
 import { LandingBrain } from "./greedyLandings";
+
+/** An armed land unit that can't move and fire in the same turn: Mortar Team, Artillery, Rocket Artillery, Flak Gun. */
+const isIndirect = (type: UnitTypeId) => defOf(type).category === "land" && defOf(type).range !== null && !defOf(type).canMoveAndFire;
 
 export abstract class ProductionBrain extends LandingBrain {
   /** Distances home to repair and resupply, or null when the unit needn't go (in ai/greedy.ts). */
@@ -54,17 +58,35 @@ export abstract class ProductionBrain extends LandingBrain {
       const opponents = this.opponentsFor(pos);
       const capturers = propertyDefAt(this.state, pos)?.builds === "land" ? this.capturersNeeded() : "enough";
       const capturersOnly = capturers === "belowMinimum" && options.some((o) => o.cost <= budget && defOf(o.type).canCapture);
+      const mix = this.armyMix(propertyDefAt(this.state, pos)?.builds ?? "land");
+      // Enough artillery: no more indirect fire while it's already its full share of the land army.
+      const directOnly = mix.indirectShare >= this.w.maxIndirectShare && options.some((o) => o.cost <= budget && !isIndirect(o.type));
       let best: { type: UnitTypeId; score: number } | null = null;
       for (const option of options) {
         const canCapture = defOf(option.type).canCapture;
-        if (option.cost > budget || (capturersOnly && !canCapture)) continue;
+        if (option.cost > budget || (capturersOnly && !canCapture) || (directOnly && isIndirect(option.type))) continue;
         const bonus = canCapture && capturers !== "enough" ? this.w.capturerBonus : 0;
-        const score = this.buildScore(option.type, option.cost, budget, pos, opponents, bonus);
+        const raw = this.buildScore(option.type, option.cost, budget, pos, opponents, bonus);
+        // A mixed army: the more of this type we already have, the less another one is worth.
+        const keep = Math.max(0.1, 1 - this.w.mixWeight * (mix.shares.get(option.type) ?? 0));
+        const score = raw > 0 ? raw * keep : raw / keep;
         if ((score > 0 || threatened || capturersOnly) && (!best || score > best.score)) best = { type: option.type, score };
       }
       if (best) return { type: "build", unitType: best.type, pos };
     }
     return null;
+  }
+
+  /**
+   * What our army of this kind (land, air or naval) is made of, passengers included: each type's
+   * share of the units, and the share that is indirect fire (09-ai §4d).
+   */
+  protected armyMix(category: UnitCategory): { shares: ReadonlyMap<UnitTypeId, number>; indirectShare: number; count: number } {
+    const mine = this.state.units.flatMap((u) => (u.owner === this.me ? [u, ...u.cargo] : [])).filter((u) => defOf(u.type).category === category);
+    const shares = new Map<UnitTypeId, number>();
+    for (const u of mine) shares.set(u.type, (shares.get(u.type) ?? 0) + 1 / mine.length);
+    const indirect = mine.filter((u) => isIndirect(u.type)).length;
+    return { shares, indirectShare: mine.length > 0 ? indirect / mine.length : 0, count: mine.length };
   }
 
   /**
@@ -124,7 +146,10 @@ export abstract class ProductionBrain extends LandingBrain {
     const capturers = mine.filter((u) => defOf(u.type).canCapture).length;
     const toTake = this.state.properties.filter((p) => p.owner === null || this.isEnemy(p.owner)).length;
     const wanted = Math.min(this.w.maxCapturers, Math.max(this.w.minCapturers, Math.ceil(toTake / this.w.propertiesPerCapturer)));
-    return capturers < this.w.minCapturers ? "belowMinimum" : capturers < wanted ? "belowWanted" : "enough";
+    // The minimum grows with the army, so a big one can still take and hold ground (09-ai §4d).
+    const land = mine.filter((u) => defOf(u.type).category === "land").length;
+    const minimum = Math.max(this.w.minCapturers, Math.ceil(this.w.capturerShare * land));
+    return capturers < minimum ? "belowMinimum" : capturers < wanted ? "belowWanted" : "enough";
   }
 
   /**

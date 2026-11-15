@@ -92,6 +92,20 @@ export interface GreedyWeights {
   readonly pressRatio: number;
   /** How many enemy attackers that estimate counts on one tile. */
   readonly dangerAttackers: number;
+  /**
+   * A mixed army (09-ai §4d): how much another unit of a type is marked down by the share of our
+   * units of that kind (land, air or naval) that are already that type. 0 = not at all; 1 = worth
+   * nothing once every unit is that type.
+   */
+  readonly mixWeight: number;
+  /** Indirect-fire units aren't built once they are this share of our land units (09-ai §4d). 1 = no cap. */
+  readonly maxIndirectShare: number;
+  /** The minimum of capture-capable units grows with the army: at least this share of our land units (09-ai §4d). */
+  readonly capturerShare: number;
+  /** Land units stay on the landmass of an objective of ours the enemy must capture, and one stands on it (09-ai §4d). */
+  readonly guardObjectives: boolean;
+  /** A Landing Craft or Transport Aircraft short of fuel for its next trip refuels first (09-ai §4d). */
+  readonly topUpTransports: boolean;
   /** Days of fuel burn an aircraft or ship keeps in hand on top of what the trip home needs (09-ai §4c). */
   readonly fuelReserveDays: number;
   /** Leave a port or airfield unbuilt while one of our units is coming in to it for fuel or repairs (09-ai §4c). */
@@ -129,7 +143,7 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   minCapturers: 3,
   maxCapturers: 8,
   propertiesPerCapturer: 3,
-  buildRisk: 0.5,
+  buildRisk: 0.25,
   blockSitePenalty: 2500,
   threatTurns: 2,
   nearThreatWeight: 3,
@@ -151,6 +165,11 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   dangerWeight: 0.1,
   pressRatio: 2,
   dangerAttackers: 2,
+  mixWeight: 1,
+  maxIndirectShare: 0.34,
+  capturerShare: 0.25,
+  guardObjectives: true,
+  topUpTransports: true,
   fuelReserveDays: 2,
   keepSitesForService: true,
   carrierDangerPenalty: 3000,
@@ -163,7 +182,8 @@ export type AiLevel = "easy" | "normal";
 /**
  * Easy is the same AI, by the same rules and with no handicap: it doesn't coordinate (no focus fire,
  * no look ahead, no waves, escorts or garrison), doesn't weigh nearby threats more when building,
- * and counts only half of the damage it will take back when it attacks.
+ * builds the best-scoring unit over and over, leaves objectives unguarded, and counts only half of
+ * the damage it will take back when it attacks.
  */
 export const EASY_WEIGHTS: GreedyWeights = {
   ...GREEDY_WEIGHTS,
@@ -175,6 +195,12 @@ export const EASY_WEIGHTS: GreedyWeights = {
   waveSize: 1,
   escortsPerCraft: 0,
   garrisonSize: 0,
+  // Nor does it mix its army or guard objectives, and it stays shy of expensive units (09-ai §4d).
+  buildRisk: 0.5,
+  mixWeight: 0,
+  maxIndirectShare: 1,
+  capturerShare: 0,
+  guardObjectives: false,
 };
 
 export function weightsFor(level: AiLevel): GreedyWeights {

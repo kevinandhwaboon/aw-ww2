@@ -12,7 +12,6 @@ import { parseScenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import { propertyAt, type GameState, type Unit } from "../src/engine/state";
 import { SCENARIOS } from "../src/scenarios";
-import bocageCountry from "./fixtures/maps/bocage-country.json";
 import twinBridges from "./fixtures/maps/twin-bridges.json";
 import { makeGame } from "./helpers";
 
@@ -647,20 +646,144 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
 
   // The built-in maps are historical and lopsided, so their winner says more about the map than the
   // AI. These two fair test maps (no longer in the game) measure the AI itself.
-  it("Normal beats Easy from either side on the fair test maps Twin Bridges and Bocage Country", async () => {
+  it("Normal beats Easy from either side on the fair test map Twin Bridges: at least 6 games of 8", async () => {
+    // Bocage Country isn't used here: the same seat wins it whichever AI plays (09-ai §7).
     const normal = greedyAi(weightsFor("normal"));
     const easy = greedyAi(weightsFor("easy"));
+    const scenario = parseScenario(twinBridges);
     let wins = 0;
-    for (const scenario of [parseScenario(twinBridges), parseScenario(bocageCountry)]) {
+    for (const seed of [1, 2, 3, 4]) {
       for (const seat of [0, 1]) {
-        const state = createGame({ ...scenario.setup, seed: 1 });
+        const state = createGame({ ...scenario.setup, seed });
         const result = await playMatch(state, state.players.map((p) => (p.id === seat ? normal : easy)), 60);
         expect(result.bugs).toEqual([]);
         if (result.state.result?.winners.includes(seat)) wins++;
       }
     }
-    expect(wins).toBeGreaterThanOrEqual(3);
+    expect(wins).toBeGreaterThanOrEqual(6);
   }, 120_000);
+});
+
+describe("Greedy v4: a mixed army and guarded objectives (09-ai §4d)", () => {
+  const wide = Array.from({ length: 3 }, (_, y) => (y === 0 ? "f" : ".") + ".".repeat(23));
+  const ownFactory = { propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
+  const players = (buildable: readonly UnitTypeId[], funds = 30000) => ({
+    players: [{ name: "Allies", nation: "us" as const, funds, buildable }, { name: "Axis", nation: "germany" as const }],
+  });
+  const enemyTanks = [0, 1, 2].flatMap((y) => [22, 23].map((x) => ({ type: "heavyTank" as const, owner: 1, pos: P(x, y) })));
+  const own = (type: UnitTypeId, count: number) => Array.from({ length: count }, (_, i) => ({ type, owner: 0, pos: P(1 + (i % 8), 1 + Math.floor(i / 8)) }));
+  /** What the AI builds next with these weights, once its units have acted. */
+  const builds = (state: GameState, weights = GREEDY_WEIGHTS): UnitTypeId | null => {
+    const command = chooseCommand(waitAll(state), weights);
+    return command.type === "build" ? command.unitType : null;
+  };
+  const unmixed = { ...GREEDY_WEIGHTS, mixWeight: 0, maxIndirectShare: 1, capturerShare: 0 };
+
+  it("the more of a type it already has, the less another is worth: with six Tank Destroyers it builds something else", () => {
+    const setup = { ...players(["infantry", "tankDestroyer", "artillery", "mediumTank"]), ...ownFactory };
+    const army = [...own("infantry", 3), ...own("tankDestroyer", 6).map((u) => ({ ...u, pos: P(u.pos.x, 2) }))];
+    const state = makeGame(wide, [...army, ...enemyTanks], setup);
+    expect(builds(state, unmixed)).toBe("tankDestroyer");
+    const mixed = builds(state);
+    expect(mixed).not.toBeNull();
+    expect(mixed).not.toBe("tankDestroyer");
+  });
+
+  it("no more indirect fire is built once it's a third of the land army", () => {
+    const setup = { ...players(["infantry", "artillery", "lightTank"]), ...ownFactory };
+    const army = [...own("infantry", 3), ...own("artillery", 3).map((u) => ({ ...u, pos: P(u.pos.x, 2) }))];
+    const state = makeGame(wide, [...army, ...enemyTanks], setup);
+    expect(builds(state, { ...GREEDY_WEIGHTS, mixWeight: 0, maxIndirectShare: 1 })).toBe("artillery");
+    expect(builds(state, { ...GREEDY_WEIGHTS, mixWeight: 0 })).toBe("lightTank");
+  });
+
+  it("the minimum of capture-capable units grows with the army: a quarter of its land units", () => {
+    const setup = { ...players(["infantry", "tankDestroyer"]), ...ownFactory };
+    const army = [...own("infantry", 3), ...own("tankDestroyer", 13).map((u) => ({ ...u, pos: P(u.pos.x, u.pos.y === 1 ? 2 : 1) }))];
+    const state = makeGame(wide, [...army.map((u, i) => ({ ...u, pos: P(1 + (i % 12), 1 + Math.floor(i / 12)) })), ...enemyTanks], setup);
+    expect(builds(state, { ...GREEDY_WEIGHTS, mixWeight: 0, capturerShare: 0 })).toBe("tankDestroyer");
+    expect(builds(state, { ...GREEDY_WEIGHTS, mixWeight: 0 })).toBe("infantry");
+  });
+
+  const atoll = ["C.._SSSS_..Q", "..._SSSS_..."];
+  /** Our property at the top-left corner is one the Axis must capture to win. */
+  const mustKeep = {
+    victory: [{ type: "hqCapture" as const }, { type: "captureProperties" as const, side: "axis" as const, properties: [P(0, 0)] }],
+    propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }],
+  };
+
+  it("the defenders of an objective the enemy must capture don't sail away, and one goes to stand on it", async () => {
+    const setup = mustKeep;
+    const state = makeGame(atoll, [
+      { type: "infantry", owner: 0, pos: P(2, 0) },
+      { type: "infantry", owner: 0, pos: P(2, 1) },
+      { type: "landingCraft", owner: 0, pos: P(3, 0) },
+    ], setup);
+    const guarded = await playTurn(state);
+    expect(guarded.commands.some((c) => c.type === "move" && c.action.type === "load")).toBe(false);
+    expect(guarded.state.units.some((u) => u.type === "infantry" && u.pos.x === 0 && u.pos.y === 0)).toBe(true);
+
+    const careless = chooseCommand(state, { ...GREEDY_WEIGHTS, guardObjectives: false });
+    expect(careless).toMatchObject({ type: "move", action: { type: "load" } });
+  });
+
+  it("the guard on an objective stays put: it doesn't leave the property to chase an enemy", () => {
+    const setup = mustKeep;
+    const state = makeGame(["C....", "....."], [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "infantry", owner: 1, pos: P(3, 0), hp: 20 },
+    ], { ...setup, propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    expect(chooseCommand(state)).toMatchObject({ type: "move", path: [], action: { type: "wait" } });
+    expect(chooseCommand(state, { ...GREEDY_WEIGHTS, guardObjectives: false })).toMatchObject({ type: "move", action: { type: "attack" } });
+  });
+
+  it("nobody stands on an airfield objective, so our own aircraft can still land there", () => {
+    const setup = mustKeep;
+    const state = makeGame(["A.._SSSS_..Q", "..._SSSS_..."], [{ type: "infantry", owner: 0, pos: P(1, 0) }], setup);
+    expect(destination(state, chooseCommand(state))).not.toEqual(P(0, 0));
+  });
+
+  it("a loaded Landing Craft without the fuel for its trip refuels at a port first", () => {
+    // On a beach one tile from our port with 10 fuel, and the landing 17 tiles away.
+    const state = makeGame(["._P" + "S".repeat(17) + "_.Q", ".SS" + "S".repeat(17) + "S.."], [
+      { type: "landingCraft", owner: 0, pos: P(1, 0), fuel: 10, cargo: [{ type: "infantry" }] },
+    ], { propertyOwners: [{ pos: P(2, 0), owner: 0 }, { pos: P(22, 0), owner: 1 }] });
+    expect(destination(state, chooseCommand(state))).toEqual(P(2, 0));
+    const before = chooseCommand(state, { ...GREEDY_WEIGHTS, topUpTransports: false });
+    expect(destination(state, before)).not.toEqual(P(2, 0));
+  });
+
+  it("an empty Landing Craft under half a tank refuels before it goes to collect anyone", () => {
+    const state = makeGame(["._SP" + "S".repeat(8) + "_.Q", "..SS" + "S".repeat(8) + "S.."], [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "landingCraft", owner: 0, pos: P(2, 1), fuel: 20 },
+    ], { propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(14, 0), owner: 1 }] });
+    const craft = find(state, "landingCraft", 0);
+    const best = scoreUnitCommands(state, craft)[0]?.command;
+    expect(best && destination(state, best)).toEqual(P(3, 0));
+  });
+
+  it("midway: the US Marines stay on the atoll for the first three days", async () => {
+    const scenario = SCENARIOS.find((s) => s.id === "midway");
+    if (!scenario) throw new Error("no midway");
+    const state = createGame({ ...scenario.setup, seed: 7 });
+    const result = await playMatch(state, state.players.map(() => greedy), 3);
+    expect(result.bugs).toEqual([]);
+    let current = state;
+    let boarded = 0;
+    for (const command of result.commands) {
+      const mover = command.type === "move" ? current.units.find((u) => u.id === command.unitId) : undefined;
+      if (command.type === "move" && command.action.type === "load" && mover?.owner === 0 && UNITS[mover.type].category === "land") boarded++;
+      const next = apply(current, command);
+      if (!next.ok) throw new Error(next.message);
+      current = next.state;
+    }
+    expect(boarded).toBe(0);
+  }, 120_000);
+
+  it("Easy doesn't mix its army or guard objectives", () => {
+    expect(EASY_WEIGHTS).toMatchObject({ mixWeight: 0, maxIndirectShare: 1, capturerShare: 0, guardObjectives: false });
+  });
 });
 
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
