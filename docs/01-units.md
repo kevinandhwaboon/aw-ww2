@@ -140,7 +140,7 @@ These are starting points for the first playable build, based on the original ga
 | Unit | Cost | Move | Vision | Fuel | Fuel/day | Primary (ammo) | Secondary | Range | Carries |
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
-| Fighter | 20,000 | 9 | 2 | 80 | 5 | Guns (2) | — | 1 | — |
+| Fighter | 20,000 | 9 | 2 | 90 | 5 | Guns (2) | — | 1 | — |
 | Bomber | 22,000 | 7 | 2 | 70 | 4 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
 | Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (1) | — | 1 | — |
