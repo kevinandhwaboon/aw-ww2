@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseUrlOptions, withNations, type UrlParams } from "../src/urlOptions";
+import { commandersFor, parseUrlOptions, withCommanders, withNations, type UrlParams } from "../src/urlOptions";
 
 /** "?seed=1&ai=0,1" as URL parameters. */
 function query(text: string): UrlParams {
@@ -35,7 +35,26 @@ describe("URL options (11-tech-setup §7)", () => {
       pad: null,
       sound: true,
       nations: [],
+      commanders: [],
     });
+  });
+
+  it("?commanders= gives each player a commander, in player order; blanks and unknown names mean no commander (06-commanders §5)", () => {
+    expect(options("?commanders=harlan,falk").commanders).toEqual(["harlan", "falk"]);
+    expect(options("?commanders=,arakawa").commanders).toEqual([null, "arakawa"]);
+    expect(options("?commanders=napoleon").commanders).toEqual([null]);
+  });
+
+  it("a player may pick any commander of their own side, whatever the nation (06-commanders §2)", () => {
+    expect(commandersFor("canada")).toEqual(["harlan", "calloway", "ashdown", "tremblay", "morozov"]);
+    expect(commandersFor("italy")).toEqual(["falk", "ferrante", "arakawa"]);
+  });
+
+  it("a commander chosen for the other side is dropped, and no choice leaves the player without one (06-commanders §2)", () => {
+    const players = [{ name: "Allies", nation: "us" as const }, { name: "Axis", nation: "germany" as const }];
+    expect(withCommanders(players, ["ashdown", "arakawa"]).map((p) => p.commander)).toEqual(["ashdown", "arakawa"]);
+    expect(withCommanders(players, ["falk", "harlan"]).map((p) => p.commander)).toEqual([undefined, undefined]);
+    expect(withCommanders(players, [null]).map((p) => p.commander)).toEqual([undefined, undefined]);
   });
 
   it("?nations= swaps which nation each player fields, in player order, to show a nation's art on any map", () => {

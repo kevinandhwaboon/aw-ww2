@@ -1,8 +1,11 @@
 // The screens around a game: title and map select (00-master-design §12, HTML full screens).
 
 import type { AiLevel } from "../ai/weights";
+import type { CommanderId } from "../engine/data/commanders";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
+import { commandersFor } from "../urlOptions";
+import { commanderPicker, type CommanderPicker } from "./commanders";
 import { defaultComputerPlayers } from "./computerPlayers";
 import { el } from "./dom";
 import { menuKeys } from "./menuKeys";
@@ -20,6 +23,8 @@ export interface GameOptions {
   readonly computer: readonly number[] | null;
   /** How well the computer plays (09-ai §4c). */
   readonly level: AiLevel;
+  /** Each player's commander, in player order; null or missing is no commander (06-commanders §5). */
+  readonly commanders: readonly (CommanderId | null)[];
 }
 
 
@@ -92,16 +97,31 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
 
   const players = el("div", "player-options");
   let computerBoxes: HTMLInputElement[] = [];
-  /** One "Computer plays …" box per player of the chosen map. */
+  let commanderPickers: CommanderPicker[] = [];
+  let shownFor: Scenario | undefined;
+  /**
+   * One "Computer plays …" box and one commander choice per player of the chosen map
+   * (06-commanders §5). Coming back to the same map keeps what was picked.
+   */
   function showPlayers(scenario: Scenario): void {
+    if (scenario === shownFor) return;
+    shownFor = scenario;
     const chosenIds = defaults.computer ?? defaultComputerPlayers(scenario);
     players.replaceChildren();
-    computerBoxes = scenario.setup.players.map((player, id) => {
+    computerBoxes = [];
+    commanderPickers = [];
+    scenario.setup.players.forEach((player, id) => {
       const box = checkbox(`Computer plays ${player.name} (${NATIONS[player.nation].name})`, chosenIds.includes(id));
-      players.append(box.row);
-      return box.input;
+      const allowed = commandersFor(player.nation);
+      const wanted = defaults.commanders[id] ?? null;
+      const picker = commanderPicker(player.name, allowed, wanted !== null && allowed.includes(wanted) ? wanted : null);
+      players.append(box.row, picker.row);
+      computerBoxes.push(box.input);
+      commanderPickers.push(picker);
     });
   }
+  /** The players' boxes and commander buttons, in the order they show. */
+  const playerControls = (): HTMLElement[] => computerBoxes.flatMap((box, id) => [box, ...(commanderPickers[id] ? [commanderPickers[id].button] : [])]);
 
   const luck = checkbox("Luck in combat", defaults.luck);
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
@@ -118,6 +138,7 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
       battleScenes: battleScenes.input.checked,
       computer,
       level: easy.input.checked ? "easy" : "normal",
+      commanders: commanderPickers.map((picker) => picker.chosen),
     });
   });
 
@@ -145,7 +166,7 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
     () => {
       const mapRows = rows.map(({ row }) => row);
       const onList = mapRows.some((row) => row === document.activeElement);
-      return onList ? mapRows : [chosenRow(), ...computerBoxes, easy.input, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
+      return onList ? mapRows : [chosenRow(), ...playerControls(), easy.input, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
     },
     () => {
       close();

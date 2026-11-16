@@ -18,8 +18,11 @@
 //   ?nations=uk,germany  each player fields that nation instead of the scenario's, in player order, to
 //                        see a nation's art on any map (art only; what a player can build stays the
 //                        scenario's). Blanks and unknown names keep the scenario's nation.
+//   ?commanders=harlan,falk  each player fights under that commander, in player order (06-commanders).
+//                        Blanks, unknown names and commanders of the other side mean no commander.
 
 import type { AiLevel } from "./ai/weights";
+import { COMMANDER_IDS, COMMANDERS, type CommanderId } from "./engine/data/commanders";
 import { NATIONS, type NationId } from "./engine/data/nations";
 
 /** Anything that looks up a URL parameter by name, like URLSearchParams. */
@@ -49,6 +52,8 @@ export interface UrlOptions {
   readonly sound: boolean;
   /** Nations to field instead of the scenario's, in player order; null keeps that player's. */
   readonly nations: readonly (NationId | null)[];
+  /** Each player's commander, in player order; null is no commander. */
+  readonly commanders: readonly (CommanderId | null)[];
 }
 
 export function parseUrlOptions(params: UrlParams): UrlOptions {
@@ -75,7 +80,31 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
         const n = name.trim();
         return Object.hasOwn(NATIONS, n) ? (n as NationId) : null;
       }) ?? [],
+    commanders: (params.get("commanders") || null)
+      ?.split(",")
+      .map((name) => {
+        const n = name.trim();
+        return COMMANDER_IDS.includes(n as CommanderId) ? (n as CommanderId) : null;
+      }) ?? [],
   };
+}
+
+/** The commanders a nation may fight under: those of its own side, in roster order (06-commanders §2). */
+export const commandersFor = (nation: NationId): CommanderId[] =>
+  COMMANDER_IDS.filter((id) => NATIONS[COMMANDERS[id].nation].side === NATIONS[nation].side);
+
+/**
+ * The scenario's players, each under the commander chosen for them, if any. A commander of the
+ * other side is dropped: they serve only their own side (06-commanders §2).
+ */
+export function withCommanders<P extends { readonly nation: NationId }>(
+  players: readonly P[],
+  commanders: readonly (CommanderId | null)[],
+): (P & { readonly commander?: CommanderId })[] {
+  return players.map((player, i) => {
+    const commander = commanders[i];
+    return commander && commandersFor(player.nation).includes(commander) ? { ...player, commander } : player;
+  });
 }
 
 /** The scenario's players, each fielding the nation `?nations=` gives it, if any. */

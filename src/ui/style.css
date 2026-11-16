@@ -189,7 +189,7 @@ body {
   font-weight: bold;
   /* The scenario's objectives wrap onto their own lines under the day and funds. */
   flex-wrap: wrap;
-  max-width: 300px;
+  max-width: 380px;
 }
 
 .hud-right {
@@ -708,3 +708,198 @@ body.pad-layout {
 
 .pad-z { right: 0; top: 4%; }
 .pad-x { left: 0; bottom: 4%; }
+
+/* ---- Commanders (06-commanders §5) ---- */
+.flag,
+.commander-head,
+.commander-full {
+  image-rendering: pixelated;
+}
+
+.commander-head {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.commander-none {
+  border: 2px dashed var(--panel-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+}
+
+.hud-commander {
+  display: flex;
+}
+
+/* In the turn bar the head is as tall as the flag row and the funds row together. */
+.hud-commander .commander-head {
+  width: 64px;
+  height: 64px;
+}
+
+.hud-rows {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  max-width: 276px;
+}
+
+.pad-layout .hud-rows {
+  flex-wrap: nowrap;
+  gap: 8px;
+  max-width: none;
+}
+
+/* A phone's status bar is one row: with a portrait in it, the rest tightens up to fit. */
+.pad-layout .hud-with-commander,
+.pad-layout .hud-with-commander .hud-rows {
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pad-layout .hud-with-commander .hud-flag canvas {
+  width: 24px;
+}
+
+.pad-layout .hud-commander .commander-head {
+  width: 32px;
+  height: 32px;
+}
+
+.hud-commander[hidden] {
+  display: none;
+}
+
+.commander-pick {
+  margin: 0 0 6px 21px;
+}
+
+.commander-pick-button {
+  width: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.commander-pick-next {
+  margin-left: auto;
+}
+
+.commander-pick-summary {
+  font-size: 12px;
+  opacity: 0.8;
+  padding: 2px 10px;
+}
+
+.commanders-panel {
+  width: min(680px, 100%);
+  text-align: left;
+}
+
+.commanders-note {
+  font-size: 13px;
+  font-style: italic;
+}
+
+.commanders-body {
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+}
+
+.commanders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+  overflow-y: auto;
+}
+
+.commander-row {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.commander-flags {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.commander-flags .flag {
+  width: 24px;
+  border: 1px solid var(--panel-ink);
+}
+
+.commander-details {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.commander-full {
+  width: 144px;
+  height: 192px;
+  flex: none;
+  border: 2px solid var(--panel-ink);
+}
+
+.commander-name {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.commander-origin,
+.commander-holders {
+  font-size: 13px;
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+.commander-style {
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.commander-bonuses,
+.commander-drawback {
+  margin: 2px 0 6px;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.commander-drawback {
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .commanders-body {
+    flex-direction: column;
+  }
+  .commanders-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .commanders-list .panel-subtitle {
+    flex-basis: 100%;
+  }
+  .commander-row-name {
+    display: none;
+  }
+  .commander-full {
+    width: 96px;
+    height: 128px;
+  }
+}

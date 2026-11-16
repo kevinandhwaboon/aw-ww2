@@ -109,6 +109,8 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["a 32-wide tile only 48 tall", { terrain: { path: "t.png", tiles: {}, tileWidth: 32, tileHeight: 48 } }, /32 or 64/],
     ["an unknown unit name", { unitNames: { dragon: "Puff" } }, /unknown id/],
     ["an empty name", { unitNames: { infantry: "" } }, /must be text/],
+    ["an unknown commander name", { commanderNames: { napoleon: "Nap" } }, /unknown id/],
+    ["commander portraits that aren't a folder in the pack", { commanderPortraits: "https://example.com/art/" }, /folder in the pack/],
   ])("rejects %s", (_, change, message) => {
     expect(() => parseArtPack({ name: "x", ...change })).toThrow(message);
   });

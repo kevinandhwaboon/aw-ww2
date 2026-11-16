@@ -27,6 +27,7 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
     commands: [] as Command[],
     preview: null as GameState | null,
   };
+  const commanders = { opened: 0, close: null as (() => void) | null };
   const built = { options: null as readonly BuildOption[] | null, pick: null as ((type: UnitTypeId) => void) | null };
   const view: MapView = {
     showRanges: (layers) => { seen.ranges = layers; },
@@ -56,13 +57,14 @@ function setup(rows: string[], units: UnitSetup[], owners: { pos: Point; owner: 
     },
     view,
     buildMenu,
+    showCommanders: (onClose) => { commanders.opened++; commanders.close = onClose; },
   });
   const labels = () => seen.menu?.map((i) => i.id);
   /** Lets the controller's awaited preview finish. */
   const settle = async () => {
     for (let i = 0; i < 10; i++) await Promise.resolve();
   };
-  return { controller, seen, built, labels, settle, getState: () => state };
+  return { controller, seen, built, commanders, labels, settle, getState: () => state };
 }
 
 describe("action menu", () => {
@@ -545,17 +547,47 @@ describe("turn menu (11-tech-setup §3c)", () => {
     { type: "infantry", owner: 1, pos: P(5, 0) },
   ];
 
-  it("Z on an empty tile opens the menu with Resign, then End Turn highlighted last", () => {
+  it("Z on an empty tile opens the menu with Commanders, Resign, then End Turn highlighted last", () => {
     const { controller, seen, labels } = setup(["======"], units);
     controller.onConfirm(P(2, 0));
-    expect(labels()).toEqual(["resign", "endTurn"]);
-    expect(seen.menuSelected).toBe(1);
+    expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
+    expect(seen.menuSelected).toBe(2);
+  });
+
+  it("Commanders opens the Commanders screen without using an action or ending the turn (06-commanders §5)", () => {
+    const { controller, seen, commanders } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("commanders");
+    expect(commanders.opened).toBe(1);
+    expect(seen.menu).toBeNull();
+    expect(seen.commands).toEqual([]);
+  });
+
+  it("the map ignores Z and X while the Commanders screen is open (06-commanders §5)", () => {
+    const { controller, seen, commanders } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("commanders");
+    controller.onConfirm(P(0, 0));
+    controller.onCancel();
+    expect(seen.menu).toBeNull();
+    expect(seen.ranges).toEqual([]);
+    expect(commanders.opened).toBe(1);
+  });
+
+  it("closing the Commanders screen comes back to the turn menu on Commanders, so a stray Z can't end the turn (06-commanders §5)", () => {
+    const { controller, seen, commanders, labels } = setup(["======"], units);
+    controller.onConfirm(P(2, 0));
+    controller.onMenuChoice("commanders");
+    commanders.close?.();
+    expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
+    expect(seen.menuSelected).toBe(0);
+    expect(seen.commands).toEqual([]);
   });
 
   it("Z on an enemy unit opens the menu too", () => {
     const { controller, labels } = setup(["======"], units);
     controller.onConfirm(P(5, 0));
-    expect(labels()).toEqual(["resign", "endTurn"]);
+    expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
   });
 
   it("Z on your unit that has already moved opens the menu instead of selecting it", async () => {
@@ -566,7 +598,7 @@ describe("turn menu (11-tech-setup §3c)", () => {
     controller.onMenuChoice("wait");
     await settle();
     controller.onConfirm(P(1, 0));
-    expect(labels()).toEqual(["resign", "endTurn"]);
+    expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
     expect(seen.ranges).toEqual([]);
   });
 
@@ -593,7 +625,7 @@ describe("turn menu (11-tech-setup §3c)", () => {
     await settle();
     controller.onConfirm(P(0, 0));
     expect(built.options).toBeNull();
-    expect(labels()).toEqual(["resign", "endTurn"]);
+    expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
   });
 
   it("End Turn sends one endTurn command and closes the menu", async () => {
@@ -650,8 +682,8 @@ describe("turn menu (11-tech-setup §3c)", () => {
     for (const back of [() => controller.onMenuChoice("keepPlaying"), () => controller.onCancel()]) {
       controller.onMenuChoice("resign");
       back();
-      expect(labels()).toEqual(["resign", "endTurn"]);
-      expect(seen.menuSelected).toBe(1);
+      expect(labels()).toEqual(["commanders", "resign", "endTurn"]);
+      expect(seen.menuSelected).toBe(2);
     }
   });
 

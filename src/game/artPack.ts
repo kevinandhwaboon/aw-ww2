@@ -2,6 +2,7 @@
 // Every field is optional, and anything a pack leaves out falls back to the built-in look, so a
 // pack can replace one unit or everything. Art never affects the rules.
 
+import { COMMANDER_IDS, COMMANDERS, type CommanderId } from "../engine/data/commanders";
 import { NATIONS, type NationId } from "../engine/data/nations";
 import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "../engine/data/terrain";
 import { WEATHER, type WeatherId } from "../engine/data/weather";
@@ -280,6 +281,12 @@ export interface ArtPack {
   readonly properties: PropertySheet | null;
   readonly unitNames: Readonly<Partial<Record<UnitTypeId, string>>>;
   readonly terrainNames: Readonly<Partial<Record<TerrainId, string>>>;
+  /**
+   * The folder of commander portraits, relative to the pack's folder: `<id>.png` from the waist up
+   * and `<id>-head.png` for the turn bar (06-commanders §4). Null: commanders show by name alone.
+   */
+  readonly commanderPortraits: string | null;
+  readonly commanderNames: Readonly<Partial<Record<CommanderId, string>>>;
   /** Files for each sound id, relative to the pack's folder; several are variants to pick from (16-sound §7). */
   readonly sounds: Readonly<Partial<Record<SoundId, readonly string[]>>>;
 }
@@ -312,6 +319,8 @@ export const BUILT_IN_PACK: ArtPack = {
   properties: null,
   unitNames: {},
   terrainNames: {},
+  commanderPortraits: null,
+  commanderNames: {},
   sounds: {},
 };
 
@@ -320,6 +329,7 @@ type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === "object" && value !== null && !Array.isArray(value);
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 const isUnitType = (value: unknown): value is UnitTypeId => UNIT_TYPE_IDS.includes(value as UnitTypeId);
+const isCommander = (value: unknown): value is CommanderId => COMMANDER_IDS.includes(value as CommanderId);
 const isTerrain = (value: unknown): value is TerrainId => TERRAIN_IDS.includes(value as TerrainId);
 const isUnitView = (value: unknown): value is UnitView => UNIT_VIEWS.includes(value as UnitView);
 const isSoundId = (value: unknown): value is SoundId => SOUND_IDS.includes(value as SoundId);
@@ -517,7 +527,10 @@ function parseSounds(raw: unknown): Partial<Record<SoundId, string[]>> {
 export function parseArtPack(raw: unknown): ArtPack {
   if (!isObject(raw)) return fail("a pack must be an object");
   if (typeof raw.name !== "string" || raw.name === "") return fail(`a pack needs a "name"`);
-  const { players, nationColors, colors, unitSheets, terrain, properties, unitNames, terrainNames, sounds } = raw;
+  const { players, nationColors, colors, unitSheets, terrain, properties, unitNames, terrainNames, sounds, commanderPortraits, commanderNames } = raw;
+  if (commanderPortraits !== undefined && !(isRelativePath(commanderPortraits) && commanderPortraits.endsWith("/"))) {
+    return fail(`"commanderPortraits" must be a folder in the pack, ending in "/"`);
+  }
   if (unitSheets !== undefined && !Array.isArray(unitSheets)) return fail(`"unitSheets" must be a list`);
   return {
     name: raw.name,
@@ -529,6 +542,8 @@ export function parseArtPack(raw: unknown): ArtPack {
     properties: properties === undefined ? null : parsePropertySheet(properties),
     unitNames: unitNames === undefined ? {} : parseNames(unitNames, isUnitType, "unitNames"),
     terrainNames: terrainNames === undefined ? {} : parseNames(terrainNames, isTerrain, "terrainNames"),
+    commanderPortraits: commanderPortraits ?? null,
+    commanderNames: commanderNames === undefined ? {} : parseNames(commanderNames, isCommander, "commanderNames"),
     sounds: sounds === undefined ? {} : parseSounds(sounds),
   };
 }
@@ -680,4 +695,5 @@ export const packColorNumber = (key: ColorKey): number => parseInt(active.colors
 export const unitName = (type: UnitTypeId): string => active.unitNames[type] ?? UNITS[type].name;
 
 export const terrainName = (id: TerrainId): string => active.terrainNames[id] ?? TERRAIN[id].name;
+export const commanderName = (id: CommanderId): string => active.commanderNames[id] ?? COMMANDERS[id].name;
 export const weatherName = (id: WeatherId): string => WEATHER[id].name;
