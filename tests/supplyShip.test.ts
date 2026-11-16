@@ -155,3 +155,69 @@ describe("the Supply Ship (01-units §4, 05-supply-transport §3a)", () => {
     expect(baseDamage("submarine", "supplyShip")?.base).toBe(95);
   });
 });
+
+describe("Supply Ship supplies (05-supply-transport §3b)", () => {
+  /** Two of player 0's Destroyers on either side of their Supply Ship, at sea. */
+  const fleet = (ship: Partial<UnitSetup> = {}, destroyer: Partial<UnitSetup> = {}) =>
+    makeGame(["SSS"], [u("supplyShip", 0, 1, 0, ship), u("destroyer", 0, 0, 0, destroyer), u("destroyer", 0, 2, 0, destroyer)], funded(10_000));
+
+  it("carries 5 supplies, kept as its ammo count", () => {
+    expect(UNITS.supplyShip.supplyLoads).toBe(5);
+    expect(unit(fleet(), 0).ammo).toBe(5);
+  });
+
+  it("each start-of-turn resupply spends one supply, however many ships it tops up", () => {
+    // Day 1 burns no fuel, so nobody needs anything; the next turn both Destroyers have burned 2.
+    const after = nextRound(fleet()).state;
+    expect(unit(after, 1).fuel).toBe(65);
+    expect(unit(after, 2).fuel).toBe(65);
+    expect(unit(after, 0).ammo).toBe(4);
+  });
+
+  it("a turn when nobody next to it needs anything costs nothing", () => {
+    const state = makeGame(["SSS"], [u("supplyShip", 0, 1)]);
+    expect(unit(nextRound(state).state, 0).ammo).toBe(5);
+  });
+
+  it("the Supply action spends one supply too", () => {
+    const state = makeGame(["SSS"], [u("supplyShip", 0, 0), u("destroyer", 0, 2, 0, { fuel: 10 })]);
+    expect(unit(must(state, order(0, [P(1, 0)], { type: "supply" })).state, 0).ammo).toBe(4);
+  });
+
+  it("with no supplies left it refuels and rearms nobody, and has no Supply action", () => {
+    const state = fleet({ ammo: 0 }, { fuel: 10, ammo: 1 });
+    const after = nextRound(state).state;
+    expect(unit(after, 1)).toMatchObject({ fuel: 8, ammo: 1 });
+    expect(ofType(nextRound(state).events, "unitResupplied")).toEqual([]);
+    const refused = apply(state, order(0, [], { type: "supply" }));
+    expect(refused.ok ? null : refused.code).toBe("cannotSupply");
+  });
+
+  it("with no supplies left it still repairs its own ships: repairs are paid for in funds (05-supply-transport §3a)", () => {
+    const after = nextRound(fleet({ ammo: 0 }, { hp: 50 })).state;
+    expect(unit(after, 1).hp).toBe(70);
+  });
+
+  it("two Supply Ships top up each other's fuel but never each other's supplies, so they can't keep each other going forever", () => {
+    const pair = makeGame(["SS"], [u("supplyShip", 0, 0, 0, { ammo: 2 }), u("supplyShip", 0, 1, 0, { ammo: 2 })]);
+    const once = nextRound(pair).state;
+    expect([unit(once, 0), unit(once, 1)].map((s) => [s.fuel, s.ammo])).toEqual([[99, 1], [99, 1]]);
+    const dry = nextRound(nextRound(once).state).state;
+    expect([unit(dry, 0), unit(dry, 1)].map((s) => [s.fuel, s.ammo])).toEqual([[98, 0], [98, 0]]);
+  });
+
+  it("an owned port refills its supplies, as it refuels any ship (04-economy §5)", () => {
+    const state = makeGame(["PS"], [u("supplyShip", 0, 0, 0, { ammo: 0 })], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
+    expect(unit(nextRound(state).state, 0).ammo).toBe(5);
+  });
+
+  it("a ship stranded with no fuel is refuelled next to it and can sail again (05-supply-transport §7)", () => {
+    const after = nextRound(fleet({}, { fuel: 0 })).state;
+    expect(unit(after, 1).fuel).toBe(65);
+  });
+
+  it("its supplies are a stat like any other: a commander's or scenario's ammo modifier changes them too", () => {
+    const state = makeGame(["S"], [u("supplyShip", 0, 0)], { modifiers: [{ source: "test", stat: "maxAmmo", op: "add", value: -2 }] });
+    expect(unit(state, 0).ammo).toBe(3);
+  });
+});

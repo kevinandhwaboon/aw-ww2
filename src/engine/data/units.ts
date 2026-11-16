@@ -48,6 +48,11 @@ export interface UnitDef {
   readonly attacksSubmerged: boolean;
   /** Uses ammo. null = no primary weapon. */
   readonly primaryWeapon: { readonly name: string; readonly maxAmmo: number } | null;
+  /**
+   * Resupplies it can hand out before it must go back to an owned or allied port, kept in its ammo
+   * count since it has no weapon (05-supply-transport §3b). null = unlimited (the Halftrack) or not a supply unit.
+   */
+  readonly supplyLoads: number | null;
   /** Unlimited ammo. null = no secondary weapon. */
   readonly secondaryWeapon: { readonly name: string } | null;
   /**
@@ -93,6 +98,7 @@ const BASE = {
   fuelPerDaySubmerged: null,
   attacksSubmerged: false,
   primaryWeapon: null,
+  supplyLoads: null,
   secondaryWeapon: null,
   returnFireAA: null,
   range: DIRECT,
@@ -220,10 +226,12 @@ export const UNITS = {
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
   },
   // Fleet supply at sea (05-supply-transport §3a): refuels and rearms neighbors like a Halftrack,
-  // and repairs its own player's ships next to it 1 HP a day. Unarmed.
+  // and repairs its own player's ships next to it 1 HP a day. Unarmed. Each resupply spends one of
+  // its loads, refilled only at a port (§3b).
   supplyShip: {
     ...BASE, phase: 2, name: "Supply Ship", category: "naval", cost: 10000, movePoints: 5, movementType: "sea",
-    vision: 1, maxFuel: 99, fuelPerDay: 1, range: null, specialActions: ["resupply", "repairShips"],
+    vision: 1, maxFuel: 99, fuelPerDay: 1, range: null, supplyLoads: 5,
+    specialActions: ["resupply", "repairShips"],
   },
 } as const satisfies Record<UnitTypeId, UnitDef>;
 

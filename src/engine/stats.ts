@@ -147,8 +147,17 @@ export function maxFuel(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "maxFuel", UNITS[unit.type].maxFuel);
 }
 
+/**
+ * The ammo count a unit type carries before modifiers: its primary weapon's, or for a Supply Ship its
+ * supply loads (05-supply-transport §3b); 0 for anything else.
+ */
+export function baseMaxAmmo(type: UnitTypeId): number {
+  const def = UNITS[type];
+  return def.primaryWeapon?.maxAmmo ?? def.supplyLoads ?? 0;
+}
+
 export function maxAmmo(state: GameState, unit: Unit): number {
-  return unitStat(state, unit, "maxAmmo", UNITS[unit.type].primaryWeapon?.maxAmmo ?? 0);
+  return unitStat(state, unit, "maxAmmo", baseMaxAmmo(unit.type));
 }
 
 /** Fuel burned at the start of the owner's turn. A submerged submarine burns more (05-supply-transport §9). */

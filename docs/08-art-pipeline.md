@@ -159,7 +159,7 @@ Today's are simple flashes and tweens.
 | Indirect fire | Shell or rocket impact |
 | Smoke | Destroyed vehicles, optional |
 | Bunker destroyed | Crumble or blast |
-| Aircraft crash, ship sinking | Out of fuel, or destroyed |
+| Aircraft crash, ship sinking | An aircraft out of fuel, or any unit destroyed (a ship out of fuel is stranded instead and just shows "OUT OF FUEL", 05-supply-transport §7) |
 | Capture | Flag raising |
 | Repair, resupply | Small sparkle or icon |
 

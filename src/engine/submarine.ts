@@ -7,6 +7,8 @@ import type { Unit } from "./state";
 export function diveProblem(unit: Unit): string | null {
   if (!unitDef(unit.type).specialActions.includes("dive")) return "only submarines can dive";
   if (unit.submerged === true) return "it's already submerged";
+  // A submarine out of fuel surfaces and stays up until refuelled (05-supply-transport §7).
+  if (unit.fuel <= 0) return "it has no fuel";
   return null;
 }
 

@@ -5,6 +5,7 @@ import { TERRAIN, type TerrainDef } from "../engine/data/terrain";
 import { terrainAt, type Point } from "../engine/map";
 import { UNIT_TYPE_IDS, UNITS, unitDef } from "../engine/data/units";
 import { servicesUnit } from "../engine/economy";
+import { usesSupplyLoads } from "../engine/transport";
 import { CAPTURE_POINTS, displayHp, propertyAt, unitAt, type GameState, type PlayerId, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
 import { terrainName, unitName } from "./artPack";
@@ -12,6 +13,8 @@ import { objectiveTiles } from "./objectives";
 
 /** An amount left out of the most the unit can hold. `low`: worth a warning color. */
 export interface Supply {
+  /** What it is: "Fuel", "Ammo", or a Supply Ship's "Supplies" (05-supply-transport §3b). */
+  readonly label: string;
   readonly left: number;
   readonly max: number;
   readonly low: boolean;
@@ -32,14 +35,14 @@ export interface Passenger {
  * - Fuel: empty, a quarter of a tank or less, or (aircraft and ships) two days' burn or less, or
  *   too little to fly or sail one more full turn away from home and still get back.
  * - Ammo: a unit with a main weapon that has used it up, or has a quarter or less left (rounded up),
- *   counting a single shot still left as full.
+ *   counting a single shot still left as full. A Supply Ship's supply loads count as its ammo (§3b).
  */
 export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: boolean; readonly ammo: boolean } {
   const maxFuel = stats.maxFuel(state, unit);
   const burn = stats.fuelPerDay(state, unit);
   const fuel = unit.fuel === 0 || unit.fuel <= Math.floor(maxFuel / 4) || (burn > 0 && unit.fuel <= burn * 2) || tooFarFromHome(state, unit);
   const maxAmmo = stats.maxAmmo(state, unit);
-  const armed = UNITS[unit.type].primaryWeapon !== null;
+  const armed = stats.baseMaxAmmo(unit.type) > 0;
   const ammo = armed && (unit.ammo === 0 || (unit.ammo < maxAmmo && unit.ammo <= Math.ceil(maxAmmo / 4)));
   return { fuel, ammo };
 }
@@ -48,7 +51,7 @@ export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: b
  * For aircraft and ships, which are lost when their fuel runs out (05-supply-transport §11): whether
  * one more full turn's move away from home, and that night's burn, would leave too little fuel to get
  * back to the nearest place that refuels it (never while it's there). Home is an owned airfield or port, or (for carrier
- * aircraft) one of the player's Carriers with room, or (for ships) a square next to a friendly Supply Ship. Units aboard a transport are refuelled there, and
+ * aircraft) one of the player's Carriers with room, or (for ships) a square next to a friendly Supply Ship with supplies left. Units aboard a transport are refuelled there, and
  * with no home it could reach anywhere on the map there's nothing to measure against: neither warns this way.
  */
 function tooFarFromHome(state: GameState, unit: Unit): boolean {
@@ -73,6 +76,8 @@ function homeTiles(state: GameState, unit: Unit): Set<number> {
     const side = state.players[unit.owner]?.side;
     for (const supplier of state.units) {
       if (supplier.id === unit.id || state.players[supplier.owner]?.side !== side || !unitDef(supplier.type).specialActions.includes("repairShips")) continue;
+      // One with no supplies left refuels nobody (05-supply-transport §3b).
+      if (usesSupplyLoads(supplier) && supplier.ammo <= 0) continue;
       for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
         const x = supplier.pos.x + dx;
         const y = supplier.pos.y + dy;
@@ -122,8 +127,11 @@ function costToNearest(state: GameState, unit: Unit, goals: ReadonlySet<number>)
 function supplies(state: GameState, unit: Unit): { fuel: Supply; ammo: Supply | null } {
   const low = supplyWarnings(state, unit);
   return {
-    fuel: { left: unit.fuel, max: stats.maxFuel(state, unit), low: low.fuel },
-    ammo: UNITS[unit.type].primaryWeapon ? { left: unit.ammo, max: stats.maxAmmo(state, unit), low: low.ammo } : null,
+    fuel: { label: "Fuel", left: unit.fuel, max: stats.maxFuel(state, unit), low: low.fuel },
+    ammo:
+      stats.baseMaxAmmo(unit.type) > 0
+        ? { label: usesSupplyLoads(unit) ? "Supplies" : "Ammo", left: unit.ammo, max: stats.maxAmmo(state, unit), low: low.ammo }
+        : null,
   };
 }
 
@@ -131,7 +139,7 @@ export interface TileInfo {
   readonly terrain: string;
   readonly stars: number;
   /** `cargo`: the units aboard a transport, or null if it isn't one (05-supply-transport §4). */
-  /** `ammo`: null for a unit with no primary weapon (05-supply-transport). */
+  /** `ammo`: null for a unit with no primary weapon, or a Supply Ship's loads (05-supply-transport §3b). */
   readonly unit: {
     readonly name: string;
     readonly owner: PlayerId;

@@ -134,7 +134,7 @@ export function createGame(setup: GameSetup): GameState {
       pos,
       hp,
       fuel: u.fuel ?? def.maxFuel,
-      ammo: u.ammo ?? def.primaryWeapon?.maxAmmo ?? 0,
+      ammo: u.ammo ?? stats.baseMaxAmmo(u.type),
       kills: u.kills ?? 0,
       hasActed: false,
       cargo,
@@ -206,7 +206,7 @@ export function createGame(setup: GameSetup): GameState {
   const fitted = (u: Unit): Unit => ({
     ...u,
     fuel: fit(u.fuel, UNITS[u.type].maxFuel, stats.maxFuel(state, u)),
-    ammo: fit(u.ammo, UNITS[u.type].primaryWeapon?.maxAmmo ?? 0, stats.maxAmmo(state, u)),
+    ammo: fit(u.ammo, stats.baseMaxAmmo(u.type), stats.maxAmmo(state, u)),
     cargo: u.cargo.map(fitted),
   });
   // Day 1 is a normal turn: the first player collects income too, as in the original (04-economy §2).

@@ -824,6 +824,30 @@ describe("Greedy: Supply Ships (09-ai §4f, 05-supply-transport §3a)", () => {
     expect(dest && Math.abs(dest.x - 26) + Math.abs(dest.y - 1)).toBe(1); // right beside it
   });
 
+  it("a Supply Ship out of supplies goes back to port to refill them (05-supply-transport §3b)", () => {
+    const map = ["S".repeat(40), "P" + "S".repeat(39), "S".repeat(40)];
+    const units = (ammo: number) => [
+      { type: "supplyShip" as const, owner: 0, pos: P(10, 1), ammo },
+      { type: "destroyer" as const, owner: 0, pos: P(24, 1), fuel: 20 },
+      { type: "battleship" as const, owner: 1, pos: P(39, 1) },
+    ];
+    const port = { propertyOwners: [{ pos: P(0, 1), owner: 0 }] };
+    const dry = makeGame(map, units(0), port);
+    expect(destination(dry, best(dry, find(dry, "supplyShip", 0)) as Command)?.x).toBeLessThan(10);
+    const stocked = makeGame(map, units(5), port);
+    expect(destination(stocked, best(stocked, find(stocked, "supplyShip", 0)) as Command)?.x).toBeGreaterThan(10);
+  });
+
+  it("our ships don't count on a Supply Ship that has no supplies left", () => {
+    const units = [
+      { type: "torpedoBoat" as const, owner: 0, pos: P(20, 1), fuel: 25 },
+      { type: "supplyShip" as const, owner: 0, pos: P(26, 1), ammo: 0 },
+      { type: "destroyer" as const, owner: 1, pos: P(39, 1) },
+    ];
+    const state = makeGame(["S".repeat(40), "P" + "S".repeat(39), "S".repeat(40)], units, { propertyOwners: [{ pos: P(0, 1), owner: 0 }] });
+    expect(destination(state, best(state, find(state, "torpedoBoat", 0)) as Command)?.x).toBeLessThan(20);
+  });
+
   it("builds a Supply Ship at its port once it has four warships, and not with three", () => {
     const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 12000 }, { name: "Axis", nation: "japan" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
     const fleet = (n: number) => [
