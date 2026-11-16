@@ -114,6 +114,13 @@ export interface GreedyWeights {
   readonly carrierDangerPenalty: number;
   /** A Carrier closes to within its aircraft's flying range of a target, and no nearer than this many tiles less. */
   readonly carrierStandoff: number;
+  /**
+   * Value of blowing a Major Bridge that enemy vehicles could reach next turn while none of ours
+   * needs it soon (02-terrain §4a, 09-ai §4e).
+   */
+  readonly blowBridge: number;
+  /** Value of each rebuild action on a Blown Bridge that one of our vehicles is waiting to cross (09-ai §4e). */
+  readonly rebuildBridge: number;
   /** Bonus value of a capture-capable unit while we have fewer than the capture rule wants, above the minimum. */
   readonly capturerBonus: number;
 }
@@ -174,6 +181,8 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   keepSitesForService: true,
   carrierDangerPenalty: 3000,
   carrierStandoff: 2,
+  blowBridge: 6000,
+  rebuildBridge: 3000,
 };
 
 /** The levels the player can choose for the computer (09-ai §4c). */

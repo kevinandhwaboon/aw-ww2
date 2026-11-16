@@ -106,6 +106,14 @@ export interface FortificationState {
   readonly hp: number;
 }
 
+/** A Blown Bridge partway through being rebuilt (02-terrain §4a). Progress is lost if the unit leaves or dies. */
+export interface BridgeWork {
+  readonly pos: Point;
+  /** Points still needed; the bridge stands again at 0. */
+  readonly points: number;
+  readonly unit: UnitId;
+}
+
 export interface Settings {
   /** false = luck always 0 (03-combat §3). */
   readonly luck: boolean;
@@ -148,6 +156,8 @@ export interface GameState {
   readonly properties: readonly PropertyState[];
   /** One entry per standing fortification or obstacle, in row-major order. */
   readonly fortifications: readonly FortificationState[];
+  /** Blown Bridges being rebuilt, in no particular order (02-terrain §4a). */
+  readonly bridgeWorks: readonly BridgeWork[];
   readonly day: number;
   /** Index into players of whose turn it is. */
   readonly currentPlayer: PlayerId;

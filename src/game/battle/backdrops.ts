@@ -575,6 +575,8 @@ export function drawBackdrop(p: Painter, x0: number, terrain: TerrainId, view: B
       break;
     case "river":
     case "bridge":
+    case "majorBridge":
+    case "blownBridge":
       treeline(p, x0, horizon - 10, 10, true);
       water(p, x0, horizon - 10, horizon + 2, t);
       break;
@@ -597,12 +599,19 @@ export function drawBackdrop(p: Painter, x0: number, terrain: TerrainId, view: B
       p.line(hx + 5, groundTop + 2, hx - 5, groundTop + 12, C("battleSteelDark"), 2);
     }
   }
-  if (terrain === "road" || terrain === "bridge" || terrain === "city" || terrain === "hq" || terrain === "airfield") {
+  const paved: readonly TerrainId[] = ["road", "bridge", "majorBridge", "city", "hq", "airfield"];
+  if (paved.includes(terrain)) {
     const surface = terrain === "airfield" ? C("battleSteel") : terrain === "bridge" ? C("battleStone") : C("battleRoad");
     p.rect(x0, horizon + 4, SCENE.half, 16, surface);
     p.rect(x0, horizon + 9, SCENE.half, 1, shade(surface, 0.85));
     p.rect(x0, horizon + 15, SCENE.half, 1, shade(surface, 0.85));
     if (terrain === "bridge") p.rect(x0, horizon + 2, SCENE.half, 3, shade(C("battleStone"), 0.75));
+    if (terrain === "majorBridge") {
+      // A steel girder along the far side, with its lattice bracing (02-terrain §4a).
+      p.rect(x0, horizon - 6, SCENE.half, 2, C("battleSteelDark"));
+      p.rect(x0, horizon + 2, SCENE.half, 2, C("battleSteelDark"));
+      for (let gx = x0; gx < x0 + SCENE.half; gx += 16) p.line(gx, horizon + 2, gx + 8, horizon - 5, C("battleSteelDark"), 1);
+    }
   }
   if (terrain === "forest") {
     for (let i = 0; i < 4; i++) p.disc(x0 + 20 + i * 52, SCENE.bottom - 2, 9, C("battleTreeDark"));

@@ -19,7 +19,11 @@ export function loadGame(text: string): GameState {
   }
   if (saved?.version !== SAVE_VERSION) throw new Error(`Unsupported save version: ${String(saved?.version)}`);
   if (typeof saved.state !== "object" || saved.state === null) throw new Error("This save file has no game in it");
-  // Saves from before weather existed are clear all game (12-weather §1).
-  const state = saved.state as Omit<GameState, "weather"> & { weather?: GameState["weather"] };
-  return { ...state, weather: state.weather ?? DEFAULT_WEATHER };
+  // Saves from before weather existed are clear all game (12-weather §1); saves from before Major
+  // Bridges have no bridge being rebuilt (02-terrain §4a).
+  const state = saved.state as Omit<GameState, "weather" | "bridgeWorks"> & {
+    weather?: GameState["weather"];
+    bridgeWorks?: GameState["bridgeWorks"];
+  };
+  return { ...state, weather: state.weather ?? DEFAULT_WEATHER, bridgeWorks: state.bridgeWorks ?? [] };
 }

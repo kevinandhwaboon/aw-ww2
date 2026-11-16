@@ -116,6 +116,31 @@ describe("capture and build", () => {
     expect(labels()).toEqual(["capture", "wait", "cancel"]);
   });
 
+  it("offers Blow Bridge to Assault Infantry on a Major Bridge, and blowing it leaves a Blown Bridge (02-terrain §4a)", async () => {
+    const { controller, labels, settle, getState } = setup([".%."], [{ type: "assaultInfantry", owner: 0, pos: P(0, 0) }]);
+    controller.onConfirm(P(0, 0));
+    controller.onConfirm(P(1, 0));
+    await settle();
+    expect(labels()).toEqual(["blowBridge", "wait", "cancel"]);
+    controller.onMenuChoice("blowBridge");
+    await settle();
+    expect(getState().map.terrain[1]).toBe("blownBridge");
+  });
+
+  it("offers Rebuild to Assault Infantry on a Blown Bridge, but nothing to Infantry (02-terrain §4a)", async () => {
+    const engineers = setup([".!."], [{ type: "assaultInfantry", owner: 0, pos: P(0, 0) }]);
+    engineers.controller.onConfirm(P(0, 0));
+    engineers.controller.onConfirm(P(1, 0));
+    await engineers.settle();
+    expect(engineers.labels()).toEqual(["rebuildBridge", "wait", "cancel"]);
+
+    const soldiers = setup([".!."], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
+    soldiers.controller.onConfirm(P(0, 0));
+    soldiers.controller.onConfirm(P(1, 0));
+    await soldiers.settle();
+    expect(soldiers.labels()).toEqual(["wait", "cancel"]);
+  });
+
   it("doesn't offer Capture to vehicles or on your own property", async () => {
     const tank = setup([".C."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
     tank.controller.onConfirm(P(0, 0));

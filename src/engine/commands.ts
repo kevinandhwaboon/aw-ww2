@@ -33,7 +33,11 @@ export type UnitAction =
   | { readonly type: "supply" }
   /** A submarine goes below the surface, or comes back up (05-supply-transport §9). */
   | { readonly type: "dive" }
-  | { readonly type: "surface" };
+  | { readonly type: "surface" }
+  /** Assault Infantry blows the Major Bridge it stands on (02-terrain §4a). */
+  | { readonly type: "blowBridge" }
+  /** Assault Infantry works on rebuilding the Blown Bridge it stands on (02-terrain §4a). */
+  | { readonly type: "rebuildBridge" };
 
 /** One shot in a combat. `damage` is the internal HP actually removed. */
 export interface CombatStrike {
@@ -114,6 +118,12 @@ export type GameEvent =
       readonly hp: number;
       readonly becomes: TerrainId | null;
     }
+  /** The Major Bridge at `pos` was blown and is now a Blown Bridge (02-terrain §4a). Not a kill. */
+  | { readonly type: "bridgeBlown"; readonly unitId: UnitId; readonly pos: Point }
+  /** Work on the Blown Bridge at `pos` that hasn't finished yet; `points` is what's left. */
+  | { readonly type: "bridgeRebuildProgress"; readonly unitId: UnitId; readonly pos: Point; readonly points: number }
+  /** The Blown Bridge at `pos` stands again as a Major Bridge. */
+  | { readonly type: "bridgeRebuilt"; readonly unitId: UnitId; readonly pos: Point }
   /** A capture that hasn't finished yet; `capturePoints` is what's left. */
   | { readonly type: "captureProgress"; readonly pos: Point; readonly unitId: UnitId; readonly capturePoints: number }
   | {
@@ -177,6 +187,8 @@ export type RejectionCode =
   | "cannotSupply"
   | "cannotDive"
   | "cannotSurface"
+  | "cannotBlowBridge"
+  | "cannotRebuildBridge"
   /** The game has ended: nothing more can be done. */
   | "gameOver";
 

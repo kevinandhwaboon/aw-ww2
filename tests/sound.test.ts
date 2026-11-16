@@ -249,6 +249,7 @@ describe("map sounds (16-sound §3)", () => {
     expect(mapEventSound({ type: "unitDived", unitId: 1 })).toBe("waterSplash");
     expect(mapEventSound({ type: "unitSurfaced", unitId: 1 })).toBe("waterSplash");
     expect(mapEventSound({ type: "unitWaited", unitId: 1 })).toBeNull();
+    expect(mapEventSound({ type: "bridgeRebuilt", unitId: 1, pos: { x: 0, y: 0 } })).toBe("built");
   });
 });
 

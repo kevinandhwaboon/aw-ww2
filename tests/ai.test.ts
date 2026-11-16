@@ -881,3 +881,36 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
     expect(changed.length).toBeGreaterThan(0);
   });
 });
+
+describe("Greedy AI: Major Bridges (09-ai §4e, 02-terrain §4a)", () => {
+  const blows = (commands: Command[]) => commands.some((c) => c.type === "move" && c.action.type === "blowBridge");
+
+  it("blows a Major Bridge that enemy tanks could reach next turn when it has no vehicles near", async () => {
+    const state = makeGame(["....~....", "....%....", "....~...."], [
+      { type: "assaultInfantry", owner: 0, pos: P(3, 1) },
+      { type: "mediumTank", owner: 1, pos: P(8, 1) },
+    ]);
+    const { state: after, commands } = await playTurn(state);
+    expect(blows(commands)).toBe(true);
+    expect(after.map.terrain[1 * 9 + 4]).toBe("blownBridge");
+  });
+
+  it("doesn't blow a bridge its own tanks are about to use", async () => {
+    const state = makeGame(["....~....", "....%....", "....~...."], [
+      { type: "assaultInfantry", owner: 0, pos: P(3, 1) },
+      { type: "mediumTank", owner: 0, pos: P(1, 1) },
+      { type: "mediumTank", owner: 1, pos: P(8, 1) },
+    ]);
+    expect(blows((await playTurn(state)).commands)).toBe(false);
+  });
+
+  it("rebuilds a Blown Bridge its tank is waiting to cross", async () => {
+    const state = makeGame(["....~....", "....!....", "....~...."], [
+      { type: "assaultInfantry", owner: 0, pos: P(4, 1) },
+      { type: "mediumTank", owner: 0, pos: P(2, 1) },
+      { type: "infantry", owner: 1, pos: P(8, 0) },
+    ]);
+    const { commands } = await playTurn(state);
+    expect(commands.some((c) => c.type === "move" && c.unitId === 0 && c.action.type === "rebuildBridge")).toBe(true);
+  });
+});

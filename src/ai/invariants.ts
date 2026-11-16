@@ -3,7 +3,7 @@
 //
 // Pure, like the engine: no DOM, no Phaser, no Math.random, no clock.
 
-import { inBounds, stats, terrainAt, CAPTURE_POINTS, MAX_HP, UNITS, type GameState, type Unit, type UnitDef } from "../engine";
+import { inBounds, stats, terrainAt, CAPTURE_POINTS, MAX_HP, TERRAIN, UNITS, type GameState, type TerrainDef, type Unit, type UnitDef } from "../engine";
 
 const at = (unit: Unit) => `${unit.type} #${unit.id} at ${unit.pos.x},${unit.pos.y}`;
 
@@ -60,6 +60,25 @@ export function stateProblems(state: GameState): string[] {
     const where = `${fort.pos.x},${fort.pos.y}`;
     check(fort.hp > 0 && fort.hp <= MAX_HP, `the fortification at ${where} has ${fort.hp} HP`);
     check(/bunker|obstacle/.test(terrainAt(state.map, fort.pos)), `a fortification at ${where} stands on ${terrainAt(state.map, fort.pos)}`);
+  }
+
+  // Bridges being rebuilt (02-terrain §4a).
+  const worked = new Set<string>();
+  for (const work of state.bridgeWorks) {
+    const where = `${work.pos.x},${work.pos.y}`;
+    check(!worked.has(where), `two rebuilds of the bridge at ${where}`);
+    worked.add(where);
+    const terrain: TerrainDef = TERRAIN[terrainAt(state.map, work.pos)];
+    const rebuild = terrain.rebuild;
+    check(rebuild !== undefined, `a bridge is being rebuilt at ${where}, which is ${terrainAt(state.map, work.pos)}`);
+    check(work.points > 0 && work.points < (rebuild?.points ?? 0), `the bridge at ${where} has ${work.points} rebuild points left`);
+    const worker = state.units.find((u) => u.id === work.unit);
+    check(
+      worker?.pos.x === work.pos.x && worker.pos.y === work.pos.y,
+      `the bridge at ${where} is being rebuilt by unit #${work.unit}, which isn't standing on it`,
+    );
+    const engineer = (unit: Unit) => (UNITS[unit.type] as UnitDef).specialActions.includes("demolish");
+    check(worker === undefined || engineer(worker), `the bridge at ${where} is being rebuilt by a ${worker?.type}`);
   }
 
   for (const property of state.properties) {

@@ -337,6 +337,8 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | `tileHeight` | 16, or 32 for tiles that rise into the tile behind. Default 16 |
 | `connected` | `road` and `river`: the first of their 16 pieces |
 | `bridges` | `horizontal` and `vertical` deck tiles, drawn over the river piece |
+| `majorBridges` | Optional. `horizontal` and `vertical` Major Bridge decks (02-terrain §4a), drawn over the river piece; the default pack's is a steel girder bridge with a paved deck. Without it, the `bridges` deck is used |
+| `blownBridges` | Optional. `horizontal` and `vertical` Blown Bridge wrecks, drawn over the river piece: girder stubs at both banks and fallen spans in the water. Without it, a Blown Bridge is drawn as river |
 | `shore` | The first of the 8 foam pieces |
 | `beach` | The first of the 20 beach pieces: 16 by sea mask, then 4 inner corners. Without it, beaches are all sand from `tiles` and sea foams against them |
 

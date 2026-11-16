@@ -4,6 +4,7 @@ import type { Command } from "../src/engine/commands";
 import { TERRAIN, type MovementType } from "../src/engine/data/terrain";
 import { baseDamage } from "../src/engine/data/damage";
 import { UNITS, type UnitTypeId } from "../src/engine/data/units";
+import { NATIONS } from "../src/engine/data/nations";
 import { terrainAt, type GameMap, type Point } from "../src/engine/map";
 import { loadGame, saveGame } from "../src/engine/save";
 import { parseScenario, type Scenario } from "../src/engine/scenario";
@@ -11,6 +12,7 @@ import { createGame } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { moveDestinations } from "../src/engine/movement";
 import { SCENARIOS } from "../src/scenarios";
+import { defaultComputerPlayers } from "../src/ui/computerPlayers";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -29,6 +31,14 @@ const properties = (scenario: Scenario, terrain: string, owner: number) => {
   const { map, propertyOwners } = scenario.setup;
   return (propertyOwners ?? []).filter((p) => p.owner === owner && terrainAt(map, p.pos) === terrain);
 };
+
+/** Player ids on each side, Allies first (Market Garden has two Allied players). */
+const sides = (scenario: Scenario): [number[], number[]] => {
+  const ids = scenario.setup.players.map((_, id) => id);
+  const allied = (id: number) => NATIONS[scenario.setup.players[id]?.nation ?? "us"].side === "allies";
+  return [ids.filter(allied), ids.filter((id) => !allied(id))];
+};
+const sideProperties = (scenario: Scenario, terrain: string, side: number[]) => side.flatMap((owner) => properties(scenario, terrain, owner));
 
 /** Every tile a unit of one of these movement types could ever reach from a starting tile, ignoring other units. */
 function reachable(map: GameMap, types: readonly MovementType[], from: Point): Set<string> {
@@ -65,8 +75,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
   });
 
   it("have unique ids", () => {
@@ -75,20 +85,21 @@ describe("built-in scenarios (00-master-design §8)", () => {
 
   describe.each(SCENARIOS.map((s) => [s.name, s] as const))("%s", (_, scenario) => {
     it("both sides have an HQ and a factory", () => {
-      for (const owner of [0, 1]) {
-        expect(properties(scenario, "hq", owner), `player ${owner} HQ`).toHaveLength(1);
-        expect(properties(scenario, "factory", owner).length, `player ${owner} factory`).toBeGreaterThan(0);
+      for (const side of sides(scenario)) {
+        expect(sideProperties(scenario, "hq", side), `players ${side.join(", ")} HQ`).toHaveLength(1);
+        expect(sideProperties(scenario, "factory", side).length, `players ${side.join(", ")} factory`).toBeGreaterThan(0);
       }
     });
 
-    it("both sides start with units", () => {
-      for (const owner of [0, 1]) expect((scenario.setup.units ?? []).some((u) => u.owner === owner)).toBe(true);
+    it("every player starts with units", () => {
+      scenario.setup.players.forEach((_, owner) => expect((scenario.setup.units ?? []).some((u) => u.owner === owner), `player ${owner}`).toBe(true));
     });
 
     it("infantry and tanks can reach the enemy HQ, on land or carried across the sea by Landing Craft", () => {
       const { map } = scenario.setup;
-      const [a] = properties(scenario, "hq", 0);
-      const [b] = properties(scenario, "hq", 1);
+      const [allies, axis] = sides(scenario);
+      const [a] = sideProperties(scenario, "hq", allies);
+      const [b] = sideProperties(scenario, "hq", axis);
       if (!a || !b) throw new Error("missing HQ");
       for (const type of ["foot", "tracks"] as const) {
         const byLand = connected(map, type, a.pos, b.pos);
@@ -105,14 +116,15 @@ describe("built-in scenarios (00-master-design §8)", () => {
 
     it("the side starting on the left faces right, and the side starting on the right faces left (08-art-pipeline §12)", () => {
       const units = scenario.setup.units ?? [];
-      const averageColumn = (owner: number) => {
-        const columns = units.filter((u) => u.owner === owner).map((u) => u.pos.x);
+      const averageColumn = (side: number[]) => {
+        const columns = units.filter((u) => side.includes(u.owner)).map((u) => u.pos.x);
         return columns.reduce((sum, x) => sum + x, 0) / columns.length;
       };
-      const [left, right] = averageColumn(0) < averageColumn(1) ? [0, 1] : [1, 0];
+      const [allies, axis] = sides(scenario);
+      const [left, right] = averageColumn(allies) < averageColumn(axis) ? [allies, axis] : [axis, allies];
       const facing = createGame({ ...scenario.setup, seed: 1 }).players.map((p) => p.facing);
-      expect(facing[left]).toBe("right");
-      expect(facing[right]).toBe("left");
+      for (const id of left) expect(facing[id], `player ${id}`).toBe("right");
+      for (const id of right) expect(facing[id], `player ${id}`).toBe("left");
     });
   });
 
@@ -807,5 +819,124 @@ describe("saving and loading (00-master-design §11)", () => {
     expect(() => loadGame("not json")).toThrow(/damaged/);
     expect(() => loadGame(JSON.stringify({ version: 99, state: {} }))).toThrow(/Unsupported save version/);
     expect(() => loadGame(JSON.stringify({ version: 1 }))).toThrow(/no game/);
+  });
+});
+
+describe("Market Garden (17-scenarios-market-garden)", () => {
+  const scenario = SCENARIOS.find((s) => s.id === "market-garden");
+  if (!scenario) throw new Error("missing scenario");
+  const { map } = scenario.setup;
+  const US = 0;
+  const UK = 1;
+  const GERMANY = 2;
+  const start = () => createGame({ ...scenario.setup, seed: 1 });
+  const run = (state: GameState, ...commands: Command[]) =>
+    commands.reduce((s, c) => {
+      const result = apply(s, c);
+      if (!result.ok) throw new Error(result.message);
+      return result.state;
+    }, state);
+  const endTurns = (n: number): Command[] => Array.from({ length: n }, () => ({ type: "endTurn" }));
+  const hold = scenario.setup.victory?.find((v) => v.type === "holdProperties");
+  const [ukHq] = properties(scenario, "hq", UK);
+  const [kleve] = properties(scenario, "factory", GERMANY).filter((p) => p.pos.x > map.width * 0.7);
+  const [eindhoven, nijmegen, arnhem] = hold?.type === "holdProperties" ? hold.properties : [];
+  if (!ukHq || !kleve || !eindhoven || !nijmegen || !arnhem) throw new Error("missing places");
+
+  /** Tank movement points from one tile to another by the cheapest route, ignoring units; Infinity if there's none. */
+  function tankRoute(from: Point, to: Point, blown: ReadonlySet<string> = new Set()): number {
+    const best = new Map([[`${from.x},${from.y}`, 0]]);
+    const queue: [number, Point][] = [[0, from]];
+    while (queue.length > 0) {
+      queue.sort((a, b) => a[0] - b[0]);
+      const [cost, p] = queue.shift() ?? [0, from];
+      if (p.x === to.x && p.y === to.y) return cost;
+      for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+        const q = P(p.x + dx, p.y + dy);
+        if (q.x < 0 || q.y < 0 || q.x >= map.width || q.y >= map.height) continue;
+        const terrain = blown.has(`${q.x},${q.y}`) ? "blownBridge" : terrainAt(map, q);
+        const step = TERRAIN[terrain].moveCost.tracks;
+        if (step === null || cost + step >= (best.get(`${q.x},${q.y}`) ?? Infinity)) continue;
+        best.set(`${q.x},${q.y}`, cost + step);
+        queue.push([cost + step, q]);
+      }
+    }
+    return Infinity;
+  }
+  const majorBridges = map.terrain.flatMap((t, i) => (t === "majorBridge" ? [P(i % map.width, Math.floor(i / map.width))] : []));
+
+  it("the US moves first, then the UK, then Germany", () => {
+    expect(scenario.setup.players.map((p) => p.nation)).toEqual(["us", "uk", "germany"]);
+  });
+
+  it("the computer plays only Germany by default (09-ai §5)", () => {
+    expect(defaultComputerPlayers(scenario)).toEqual([GERMANY]);
+  });
+
+  it("the Allies win by holding Eindhoven, Nijmegen and Arnhem for 2 days, whichever Allied player holds each", () => {
+    const state = start();
+    const owners = new Map([[`${eindhoven.x},${eindhoven.y}`, US], [`${nijmegen.x},${nijmegen.y}`, UK], [`${arnhem.x},${arnhem.y}`, UK]]);
+    const held: GameState = { ...state, properties: state.properties.map((p) => ({ ...p, owner: owners.get(`${p.pos.x},${p.pos.y}`) ?? p.owner })) };
+    const after = run(held, ...endTurns(6)); // to the start of day 3
+    expect(after.result?.winningSide).toBe("allies");
+    expect(after.result?.reason).toBe("holdProperties");
+  });
+
+  it("Germany wins at the start of day 12", () => {
+    const after = run(start(), ...endTurns(33));
+    expect(after.day).toBe(12);
+    expect(after.result?.winningSide).toBe("axis");
+    expect(after.result?.reason).toBe("surviveDays");
+  });
+
+  it("the US has no HQ, so it plays on after the UK is out", () => {
+    expect(properties(scenario, "hq", US)).toEqual([]);
+    const after = run(start(), { type: "endTurn" }, { type: "resign" });
+    expect(after.result).toBeNull();
+    expect(after.players[UK]?.defeated).toBe(true);
+    expect(after.players[US]?.defeated).toBe(false);
+  });
+
+  it("Allied tanks can drive from Belgium to Arnhem with every bridge standing", () => {
+    expect(tankRoute(ukHq.pos, arnhem)).toBeLessThan(Infinity);
+  });
+
+  it("the big-river crossings lie on the tanks' road north: blowing any one of at least four makes the drive to Arnhem longer", () => {
+    const direct = tankRoute(ukHq.pos, arnhem);
+    const onTheRoad = majorBridges.filter((b) => tankRoute(ukHq.pos, arnhem, new Set([`${b.x},${b.y}`])) > direct);
+    expect(onTheRoad.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("with every Major Bridge blown, the drive to Arnhem takes a Medium Tank at least two more days, the long way round through Germany", () => {
+    const direct = tankRoute(ukHq.pos, arnhem);
+    const allBlown = tankRoute(ukHq.pos, arnhem, new Set(majorBridges.map((b) => `${b.x},${b.y}`)));
+    expect(allBlown - direct).toBeGreaterThanOrEqual(2 * UNITS.mediumTank.movePoints);
+  });
+
+  it("Germany can reinforce Nijmegen from Kleve without crossing a Major Bridge, so blowing them doesn't cut it off", () => {
+    const allBlown = new Set(majorBridges.map((b) => `${b.x},${b.y}`));
+    expect(tankRoute(kleve.pos, nijmegen, allBlown)).toBeLessThan(Infinity);
+  });
+
+  it("there are ordinary bridges too, which can never be blown", () => {
+    expect(map.terrain.filter((t) => t === "bridge").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("every first-lift Transport Aircraft starts loaded and out of German flak range", () => {
+    const units = scenario.setup.units ?? [];
+    const flakRange = UNITS.flakGun.range.max;
+    const flak = units.filter((u) => u.type === "flakGun" && u.owner === GERMANY);
+    const lift = units.filter((u) => u.type === "transportAircraft");
+    expect(lift.length).toBeGreaterThanOrEqual(6);
+    for (const plane of lift) {
+      expect(plane.cargo?.length, `plane at ${plane.pos.x},${plane.pos.y}`).toBe(2);
+      for (const gun of flak) expect(Math.abs(plane.pos.x - gun.pos.x) + Math.abs(plane.pos.y - gun.pos.y)).toBeGreaterThan(flakRange);
+    }
+  });
+
+  it("Germany has sappers next to the Son and Nijmegen bridges, ready to blow them", () => {
+    const sappers = (scenario.setup.units ?? []).filter((u) => u.type === "assaultInfantry" && u.owner === GERMANY);
+    const besideBridge = sappers.filter((u) => majorBridges.some((b) => Math.abs(b.x - u.pos.x) + Math.abs(b.y - u.pos.y) <= 2));
+    expect(besideBridge.length).toBeGreaterThanOrEqual(2);
   });
 });

@@ -56,6 +56,12 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
     }
     case "unitOutOfFuel":
       return `${name(e.owner)} ${unitTypeName(e.unitType)} ran out of fuel and was lost`;
+    case "bridgeBlown":
+      return `${unitName(e.unitId)} blew the bridge at (${e.pos.x}, ${e.pos.y})`;
+    case "bridgeRebuildProgress":
+      return `${unitName(e.unitId)} is rebuilding the bridge at (${e.pos.x}, ${e.pos.y}): ${e.points} left`;
+    case "bridgeRebuilt":
+      return `${unitName(e.unitId)} rebuilt the bridge at (${e.pos.x}, ${e.pos.y})`;
     case "captureProgress":
       return `${unitName(e.unitId)} is capturing (${e.pos.x}, ${e.pos.y}): ${e.capturePoints} left`;
     case "propertyCaptured":

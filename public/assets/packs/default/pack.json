@@ -1242,6 +1242,14 @@
       "horizontal": 48,
       "vertical": 49
     },
+    "majorBridges": {
+      "horizontal": 78,
+      "vertical": 79
+    },
+    "blownBridges": {
+      "horizontal": 80,
+      "vertical": 81
+    },
     "shore": 50,
     "beach": 58
   },

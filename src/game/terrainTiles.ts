@@ -21,10 +21,13 @@ const SIDES = [
 ] as const;
 const OPPOSITE: Readonly<Record<number, number>> = { [N]: S, [E]: W, [S]: N, [W]: E };
 
-const ROAD_JOINS: readonly TerrainId[] = ["road", "bridge"];
-const RIVER_JOINS: readonly TerrainId[] = ["river", "bridge", "sea", "reef"];
+/** Bridges of every kind, drawn as a deck or wreck over a river piece (02-terrain §4a). */
+const BRIDGES: readonly TerrainId[] = ["bridge", "majorBridge", "blownBridge"];
+/** A road runs up to a Blown Bridge's stub too. */
+const ROAD_JOINS: readonly TerrainId[] = ["road", ...BRIDGES];
+const RIVER_JOINS: readonly TerrainId[] = ["river", ...BRIDGES, "sea", "reef"];
 /** Shore foam never forms against these: they're water too. */
-const WATER: readonly TerrainId[] = ["sea", "reef", "river", "bridge"];
+const WATER: readonly TerrainId[] = ["sea", "reef", "river", ...BRIDGES];
 
 const at = (map: GameMap, x: number, y: number): TerrainId | undefined =>
   x >= 0 && y >= 0 && x < map.width && y < map.height ? map.terrain[y * map.width + x] : undefined;
@@ -51,7 +54,7 @@ export function joinMask(map: GameMap, x: number, y: number, joins: readonly Ter
 
 /** A bridge spans the water beside it: water above or below means it runs left to right. */
 export function bridgeRunsAcross(map: GameMap, x: number, y: number): boolean {
-  const water = (t: TerrainId | undefined) => t !== undefined && t !== "bridge" && WATER.includes(t);
+  const water = (t: TerrainId | undefined) => t !== undefined && !BRIDGES.includes(t) && WATER.includes(t);
   if (water(at(map, x, y - 1)) || water(at(map, x, y + 1))) return true;
   return !(water(at(map, x - 1, y)) || water(at(map, x + 1, y)));
 }
@@ -150,9 +153,11 @@ export function terrainLayers(map: GameMap, x: number, y: number, sheet: Terrain
   const tile = (n: number): TerrainLayer => ({ kind: "sheet", tile: n });
   const { connected, bridges, shore, beach } = sheet;
 
-  if (id === "bridge" && connected.river !== undefined && bridges) {
-    const base = connected.river + joinMask(map, x, y, RIVER_JOINS);
-    return [tile(base), tile(bridgeRunsAcross(map, x, y) ? bridges.horizontal : bridges.vertical)];
+  // A Major Bridge falls back to the plain deck, and a Blown Bridge to bare river, in packs without them.
+  const deck = id === "bridge" ? bridges : id === "majorBridge" ? (sheet.majorBridges ?? bridges) : id === "blownBridge" ? sheet.blownBridges : undefined;
+  if (BRIDGES.includes(id) && connected.river !== undefined) {
+    const base = tile(connected.river + joinMask(map, x, y, RIVER_JOINS));
+    return deck ? [base, tile(bridgeRunsAcross(map, x, y) ? deck.horizontal : deck.vertical)] : [base];
   }
   if (id === "road" && connected.road !== undefined) return [tile(connected.road + joinMask(map, x, y, ROAD_JOINS))];
   if (id === "river" && connected.river !== undefined) return [tile(connected.river + joinMask(map, x, y, RIVER_JOINS))];

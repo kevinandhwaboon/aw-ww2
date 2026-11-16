@@ -19,7 +19,8 @@ export const UNIT_TYPE_IDS = [
 export type UnitTypeId = (typeof UNIT_TYPE_IDS)[number];
 
 export type UnitCategory = "land" | "air" | "naval";
-export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch";
+/** "demolish": blow and rebuild Major Bridges (02-terrain §4a). */
+export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch" | "demolish";
 
 export interface UnitDef {
   readonly name: string;
@@ -107,7 +108,7 @@ export const UNITS = {
   assaultInfantry: {
     ...BASE, name: "Assault Infantry", category: "land", cost: 3000, movePoints: 2, movementType: "heavyFoot",
     vision: 2, maxFuel: 50, primaryWeapon: { name: "Bazooka", maxAmmo: 3 }, secondaryWeapon: { name: "MG" },
-    canCapture: true,
+    canCapture: true, specialActions: ["demolish"],
   },
   mortar: {
     ...BASE, name: "Mortar Team", category: "land", cost: 3000, movePoints: 2, movementType: "heavyFoot",

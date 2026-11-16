@@ -5,6 +5,7 @@
 import { attackTargets, forecast, fortForecast, fortTargets, threatTiles, type CombatForecast } from "../engine/combat";
 import type { Command, UnitAction } from "../engine/commands";
 import { UNITS, type UnitTypeId } from "../engine/data/units";
+import { blowProblem, rebuildProblem } from "../engine/bridges";
 import { buildOptions, captureProblem, type BuildOption } from "../engine/economy";
 import { inBounds, type Point } from "../engine/map";
 import { canEndOn, cheapestPath, reachableTiles, tilePoint, type Reach } from "../engine/movement";
@@ -121,6 +122,8 @@ const UNLOAD: MenuItem = { id: "unload", label: "UNLOAD" };
 const LAUNCH: MenuItem = { id: "launch", label: "LAUNCH" };
 const SUPPLY: MenuItem = { id: "supply", label: "SUPPLY" };
 const DIVE: MenuItem = { id: "dive", label: "DIVE" };
+const BLOW_BRIDGE: MenuItem = { id: "blowBridge", label: "BLOW BRIDGE" };
+const REBUILD_BRIDGE: MenuItem = { id: "rebuildBridge", label: "REBUILD" };
 const SURFACE: MenuItem = { id: "surface", label: "SURFACE" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
@@ -364,6 +367,8 @@ export class InputController {
     else if (id === "join") void this.commit(mode, { type: "join" });
     else if (id === "supply") void this.commit(mode, { type: "supply" });
     else if (id === "dive") void this.commit(mode, { type: "dive" });
+    else if (id === "blowBridge") void this.commit(mode, { type: "blowBridge" });
+    else if (id === "rebuildBridge") void this.commit(mode, { type: "rebuildBridge" });
     else if (id === "surface") void this.commit(mode, { type: "surface" });
     else if (id === "unload") this.startUnloading(mode, this.unloadable(mode)[0]?.id);
     else if (id.startsWith("unload:")) this.startUnloading(mode, Number(id.slice("unload:".length)));
@@ -502,6 +507,8 @@ export class InputController {
     return [
       ...(canFire ? [FIRE] : []),
       ...(captureProblem(state, moved) === null ? [CAPTURE] : []),
+      ...(blowProblem(state, moved) === null ? [BLOW_BRIDGE] : []),
+      ...(rebuildProblem(state, moved) === null ? [REBUILD_BRIDGE] : []),
       ...this.unloadItems(this.unloadable({ unitId: unit.id, path: [at] })),
       ...this.launchItems(at.x === unit.pos.x && at.y === unit.pos.y ? this.launchable({ unitId: unit.id, path: [] }) : []),
       ...(supplyTargets(state, moved).length > 0 ? [SUPPLY] : []),

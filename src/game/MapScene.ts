@@ -120,6 +120,8 @@ export class MapScene extends Phaser.Scene implements MapView {
   /** Resolves once Phaser has created the scene, so there's something to animate on. */
   private readonly whenCreated: Promise<void>;
   private resolveCreated: () => void = () => undefined;
+  /** A cargo peek asked for before the scene was created, shown as soon as it is. */
+  private pendingPeek: Point | null = null;
   /** Plays attacks as split-screen battle scenes (08-art-pipeline §18); null plays them on the map. */
   private battle: BattlePlayer | null = null;
   private readonly playback = new MapPlayback({
@@ -400,6 +402,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     window.addEventListener("keyup", (event) => this.releaseKey(event.key), { signal: keys.signal });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
     this.resolveCreated();
+    this.showCargoPeek(this.pendingPeek);
   }
 
   private snowLayer?: Phaser.GameObjects.Graphics;
@@ -686,6 +689,12 @@ export class MapScene extends Phaser.Scene implements MapView {
    * the flashing cans if it's short of fuel or ammo (05-supply-transport §4, §11). null hides it.
    */
   showCargoPeek(tile: Point | null): void {
+    // A player with no HQ (the US on Market Garden) starts its turn on a loaded transport, which can
+    // come before Phaser has created the scene.
+    if (!this.created) {
+      this.pendingPeek = tile;
+      return;
+    }
     this.cargoPeek?.destroy();
     this.cargoPeek = undefined;
     this.peekBadges = [];

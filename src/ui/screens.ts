@@ -3,8 +3,11 @@
 import type { AiLevel } from "../ai/weights";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
+import { defaultComputerPlayers } from "./computerPlayers";
 import { el } from "./dom";
 import { menuKeys } from "./menuKeys";
+
+export { defaultComputerPlayers };
 
 export interface GameOptions {
   /** Random variation in damage (03-combat §3). */
@@ -13,16 +16,12 @@ export interface GameOptions {
   readonly passDevice: boolean;
   /** Attacks play as split-screen battle scenes (08-art-pipeline §18). */
   readonly battleScenes: boolean;
-  /** Player ids the computer plays (09-ai §5). On the map select, null means every player but the first. */
+  /** Player ids the computer plays (09-ai §5). On the map select, null means everyone not on the first player's side. */
   readonly computer: readonly number[] | null;
   /** How well the computer plays (09-ai §4c). */
   readonly level: AiLevel;
 }
 
-/** Who the computer plays unless the player says otherwise: everyone but the first player. */
-export function defaultComputerPlayers(scenario: Scenario): number[] {
-  return scenario.setup.players.map((_, id) => id).filter((id) => id > 0);
-}
 
 type OnStart = (scenario: Scenario, options: GameOptions) => void;
 

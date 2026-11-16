@@ -100,6 +100,7 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["an empty variant list", { terrain: { path: "t.png", tiles: { plains: [] } } }, /list of them/],
     ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
     ["a bridge without both directions", { terrain: { path: "t.png", tiles: {}, bridges: { horizontal: 1 } } }, /horizontal and vertical/],
+    ["a Major Bridge without both directions", { terrain: { path: "t.png", tiles: {}, majorBridges: { vertical: 1 } } }, /"majorBridges" needs/],
     ["zero terrain frames", { terrain: { path: "t.png", tiles: {}, frames: 0 } }, /whole number/],
     ["a tile height that isn't 16 or 32", { terrain: { path: "t.png", tiles: {}, tileHeight: 24 } }, /16 or 32/],
     ["a tile width that isn't 16 or 32", { terrain: { path: "t.png", tiles: {}, tileWidth: 24 } }, /16 or 32/],

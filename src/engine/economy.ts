@@ -1,6 +1,7 @@
 // Capture and production (04-economy §3–4). Used both by apply() and by the UI for menus, so what
 // the menus offer is exactly what the engine accepts.
 
+import { clearAbandonedBridgeWork } from "./bridges";
 import type { GameEvent } from "./commands";
 import { terrainDef, type PropertyDef } from "./data/terrain";
 import { UNITS, type UnitTypeId } from "./data/units";
@@ -13,6 +14,17 @@ import * as stats from "./stats";
 export function propertyDefAt(state: GameState, p: Point): PropertyDef | undefined {
   const terrain = state.map.terrain[tileIndex(state, p)];
   return terrain === undefined ? undefined : terrainDef(terrain).property;
+}
+
+/**
+ * Whether the property at `pos` repairs and resupplies this unit: it serves the unit's category and
+ * belongs to the unit's owner or an ally (04-economy §5).
+ */
+export function servicesUnit(state: GameState, pos: Point, unit: Unit): boolean {
+  const owner = propertyAt(state, pos)?.owner;
+  if (owner === null || owner === undefined) return false;
+  const side = state.players[unit.owner]?.side;
+  return state.players[owner]?.side === side && propertyDefAt(state, pos)?.repairs === UNITS[unit.type].category;
 }
 
 /** Why this unit can't capture where it stands, or null if it can. */
@@ -42,8 +54,15 @@ export function applyCapture(state: GameState, unit: Unit): { state: GameState; 
   };
 }
 
-/** Resets capture progress whose capturing unit has left the tile or been destroyed (04-economy §3). */
+/**
+ * Resets capture progress whose capturing unit has left the tile or been destroyed (04-economy §3),
+ * and drops bridge rebuilding the same way (02-terrain §4a).
+ */
 export function clearAbandonedCaptures(state: GameState): GameState {
+  return clearAbandonedBridgeWork(clearAbandonedPropertyCaptures(state));
+}
+
+function clearAbandonedPropertyCaptures(state: GameState): GameState {
   const abandoned = (capturingUnit: number, pos: Point) => {
     const unit = state.units.find((u) => u.id === capturingUnit);
     return !unit || unit.pos.x !== pos.x || unit.pos.y !== pos.y;

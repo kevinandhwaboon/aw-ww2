@@ -90,7 +90,7 @@ Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK a
 
 - **Fortifications are terrain** with a large defense bonus (decided). They do nothing on their own; the defending player must place units on them. Atlantic Wall positions are only dangerous when occupied.
 - **Clearing works like attacking**, similar to the original's breakable pipe seams. Fortifications and obstacles are terrain objects with HP. Units attack them; at 0 HP they become broken or cleared terrain.
-- There is no separate engineer unit or special engineering action. Engineering is expressed through the damage chart: **Assault Infantry deals high damage to fortifications and obstacles.**
+- There is no separate engineer unit. Engineering is mostly expressed through the damage chart: **Assault Infantry deals high damage to fortifications and obstacles.** The one special engineering action is **blowing and rebuilding Major Bridges** (added 2026-11-15), which only Assault Infantry can do (02-terrain §4a). Ordinary bridges can't be blown.
 - To settle in 02-terrain: which units can attack these objects, their HP, what the broken versions become, and how attacking an occupied fortification works (attack the unit, the fortification, or both).
 
 ## 7. Cut or deferred

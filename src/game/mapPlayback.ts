@@ -135,6 +135,12 @@ export class MapPlayback {
           await this.floatLabel(event.pos, "CAPTURED", packColor("labelGold"));
         }
       }
+      // Major Bridges (02-terrain §4a). The terrain under them is redrawn with the next state.
+      if (event.type === "bridgeBlown") {
+        await Promise.all([this.explode({ pos: event.pos }), this.floatLabel(event.pos, "BRIDGE BLOWN", packColor("labelWarning"))]);
+      }
+      if (event.type === "bridgeRebuildProgress") await this.floatLabel(event.pos, `${event.points} LEFT`, packColor("labelText"));
+      if (event.type === "bridgeRebuilt") await this.floatLabel(event.pos, "BRIDGE REBUILT", packColor("labelGold"));
       if (event.type === "unitOutOfFuel") {
         const lost = { pos: event.pos, unitId: event.unitId };
         await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"))]);
@@ -177,6 +183,9 @@ export class MapPlayback {
         return [event.attackerPos, event.pos];
       case "captureProgress":
       case "propertyCaptured":
+      case "bridgeBlown":
+      case "bridgeRebuildProgress":
+      case "bridgeRebuilt":
       case "unitOutOfFuel":
       case "unitLaunched":
       case "unitAmbushed":

@@ -11,7 +11,7 @@
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 //   ?debug=on            shows the unit and debug panels
 //   ?ai=1                the computer plays these players (comma-separated ids; ?ai=0,1 watches AI vs AI,
-//                        ?ai=none is all human). Without it, the computer plays everyone but the first player.
+//                        ?ai=none is all human). Without it, the computer plays everyone not on the first player's side.
 //   ?level=easy          the computer plays on Easy (09-ai §4c); Normal without it
 //   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
 //   ?sound=off           starts with sound off, without changing the saved sound level (16-sound §8)
@@ -40,7 +40,7 @@ export interface UrlOptions {
   readonly polish: boolean;
   readonly pack: string;
   readonly debug: boolean;
-  /** Player ids the computer plays; null means the default (everyone but the first player). */
+  /** Player ids the computer plays; null means the default (everyone not on the first player's side). */
   readonly computer: readonly number[] | null;
   readonly level: AiLevel;
   /** Forces the phone game-pad layout on or off; null decides by the screen. */

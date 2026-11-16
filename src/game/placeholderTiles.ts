@@ -22,6 +22,8 @@ const STYLE: Record<TerrainId, { base: string; detail: string; motif: Motif }> =
   bunker: { base: "#8cc56a", detail: "#7a7a72", motif: "bunker" },
   rubble: { base: "#a49a80", detail: "#6e6656", motif: "rocks" },
   obstacle: { base: "#8cc56a", detail: "#5a5a5a", motif: "teeth" },
+  majorBridge: { base: "#8a8f96", detail: "#4f555c", motif: "planks" },
+  blownBridge: { base: "#5ea8e0", detail: "#6e6656", motif: "rocks" },
 };
 
 type Motif =

@@ -41,8 +41,9 @@ export {
   type PathCheck,
   type Reach,
 } from "./movement";
-export { buildOptions, buildProblem, captureProblem, propertyDefAt, type BuildOption } from "./economy";
+export { buildOptions, buildProblem, captureProblem, propertyDefAt, servicesUnit, type BuildOption } from "./economy";
 export { buildCommands, launchCommands, legalCommands, unitCommands } from "./legal";
+export { blowProblem, bridgeWorkAt, rebuildProblem } from "./bridges";
 export { loadGame, saveGame } from "./save";
 export { parseScenario, type Scenario } from "./scenario";
 export { createGame, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";

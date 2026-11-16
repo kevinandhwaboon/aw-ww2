@@ -195,3 +195,21 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(withObjective, P(2, 0)).objective).toBe(false);
   });
 });
+
+describe("tile info: Major Bridges (02-terrain §4a)", () => {
+  it("a Major Bridge says Assault Infantry can blow it", () => {
+    expect(tileInfo(makeGame(["%"]), { x: 0, y: 0 }).bridge).toEqual({ action: "blow", by: "Assault Infantry" });
+  });
+
+  it("a Blown Bridge says Assault Infantry can rebuild it, with the progress so far", () => {
+    const state = makeGame(["!."], [{ type: "assaultInfantry", owner: 0, pos: { x: 0, y: 0 }, hp: 60 }]);
+    expect(tileInfo(state, { x: 0, y: 0 }).bridge).toEqual({ action: "rebuild", by: "Assault Infantry", left: 20, total: 20 });
+    const result = apply(state, { type: "move", unitId: 0, path: [], action: { type: "rebuildBridge" } });
+    if (!result.ok) throw new Error(result.message);
+    expect(tileInfo(result.state, { x: 0, y: 0 }).bridge).toEqual({ action: "rebuild", by: "Assault Infantry", left: 14, total: 20 });
+  });
+
+  it("an ordinary Bridge says nothing about blowing it", () => {
+    expect(tileInfo(makeGame(["#"]), { x: 0, y: 0 }).bridge).toBeNull();
+  });
+});

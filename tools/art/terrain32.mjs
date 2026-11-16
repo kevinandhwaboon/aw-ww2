@@ -195,6 +195,50 @@ function bridge(horizontal) {
   return toRows(g);
 }
 
+// A Major Bridge (02-terrain §4a): a steel girder bridge with a paved deck, drawn over the river
+// piece, so it reads apart from the plank Bridge at a glance. Heavy grey girders run along both
+// sides with a zigzag of lattice bracing, and cross beams show through the deck's edges.
+function girderSide(b, a) {
+  if (b === 3 || b === 28) return "K";
+  if (b === 4 || b === 27) return "j";
+  if (b === 5 || b === 26) return ((a + (b === 5 ? 0 : 4)) % 8 < 4 ? (a % 4 === (b === 5 ? 0 : 3) ? "K" : "k") : "k");
+  return "K";
+}
+function majorBridge(horizontal) {
+  const g = fill(".");
+  for (let a = 0; a < SIZE; a++) for (let b = 3; b <= 28; b++) {
+    const [x, y] = horizontal ? [a, b] : [b, a];
+    if (b <= 6 || b >= 25) g[y][x] = girderSide(b, a);
+    else if (a % 8 === 0) g[y][x] = "k"; // cross beams
+    else if (b === 15 || b === 16) g[y][x] = a % 6 < 3 ? "p" : "R"; // a painted center line
+    else g[y][x] = hash(a, b, 70) % 9 === 0 ? "r" : "R";
+  }
+  return toRows(g);
+}
+
+// A Blown Bridge (02-terrain §4a): the girder stubs still stand at both banks, the middle spans lie
+// broken in the river, so the water shows through between them.
+function blownBridge(horizontal) {
+  const whole = majorBridge(horizontal).map((r) => [...r]);
+  const g = fill(".");
+  for (let a = 0; a < SIZE; a++) for (let b = 3; b <= 28; b++) {
+    const [x, y] = horizontal ? [a, b] : [b, a];
+    // The stubs: jagged ends where the charges cut the girders.
+    const cut = a < 6 + (hash(b, 1, 71) % 3) || a > SIZE - 7 - (hash(b, 2, 72) % 3);
+    if (cut) g[y][x] = whole[y][x];
+  }
+  // Fallen girders and slabs, tilted in the water.
+  const debris = [[10, 9, 7, 1], [15, 20, 6, -1], [12, 14, 3, 1], [19, 8, 4, 0], [20, 23, 3, 1]];
+  for (const [a0, b0, len, slope] of debris) for (let i = 0; i < len; i++) {
+    const a = a0 + i, b = b0 + Math.round((i * slope) / 2);
+    for (const [da, db, ch] of [[0, 0, "K"], [0, 1, "k"], [0, -1, "j"]]) {
+      const [x, y] = horizontal ? [a + da, b + db] : [b + db, a + da];
+      if (inTile(x, y)) g[y][x] = ch;
+    }
+  }
+  return toRows(g);
+}
+
 // Shore foam over sea next to land: edges N, E, S, W, then outer corners NE, SE, SW, NW.
 function shoreEdge(dir, frame) {
   const g = fill(".");
@@ -327,6 +371,9 @@ export const layout = [
   // Added 2026-11-14 after the 16-pixel sheet's layout, so only this sheet has them.
   ...Array.from({ length: 16 }, (_, mask) => [`beach-${mask}`, moving((f) => shoreline(mask, [], f, false))]),
   ...[0, 1, 2, 3].map((c) => [`beach-${["NE", "SE", "SW", "NW"][c]}`, moving((f) => shoreline(0, [0, 1, 2, 3].map((i) => i === c), f, true))]),
+  // Added 2026-11-15: Major Bridges, standing and blown (02-terrain §4a), drawn over the river piece.
+  ["majorBridge-horizontal", still(majorBridge(true))], ["majorBridge-vertical", still(majorBridge(false))],
+  ["blownBridge-horizontal", still(blownBridge(true))], ["blownBridge-vertical", still(blownBridge(false))],
 ];
 
 for (const entry of layout) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));

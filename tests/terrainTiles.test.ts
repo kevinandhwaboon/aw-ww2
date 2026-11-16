@@ -113,6 +113,39 @@ describe("terrain tiles: bridges (08-art-pipeline §14)", () => {
   });
 });
 
+describe("terrain tiles: Major and Blown Bridges (02-terrain §4a, 08-art-pipeline §14)", () => {
+  const withMajor: TerrainSheet = { ...sheet, majorBridges: { horizontal: 78, vertical: 79 }, blownBridges: { horizontal: 80, vertical: 81 } };
+  const across = (bridge: string) => parseAsciiMap([".~.", `=${bridge}=`, ".~."]);
+
+  it("a Major Bridge draws its steel deck over the river, and joins the road and river like a bridge", () => {
+    expect(terrainLayers(across("%"), 1, 1, withMajor)).toEqual([
+      { kind: "sheet", tile: 32 + (N | S) },
+      { kind: "sheet", tile: 78 },
+    ]);
+    expect(joinMask(parseAsciiMap(["..~", ".=%", "..~"]), 1, 1, ["road", "majorBridge"])).toBe(E);
+  });
+
+  it("a Blown Bridge draws its wreck over the river piece", () => {
+    expect(terrainLayers(across("!"), 1, 1, withMajor)).toEqual([
+      { kind: "sheet", tile: 32 + (N | S) },
+      { kind: "sheet", tile: 80 },
+    ]);
+  });
+
+  it("a pack without them draws a Major Bridge as a plain bridge and a Blown Bridge as river", () => {
+    expect(terrainLayers(across("%"), 1, 1, sheet)).toEqual([
+      { kind: "sheet", tile: 32 + (N | S) },
+      { kind: "sheet", tile: 48 },
+    ]);
+    expect(terrainLayers(across("!"), 1, 1, sheet)).toEqual([{ kind: "sheet", tile: 32 + (N | S) }]);
+  });
+
+  it("a river flows under a Major Bridge and past a Blown Bridge", () => {
+    const map = parseAsciiMap(["~", "%", "~", "!", "~"]);
+    expect(terrainLayers(map, 0, 2, withMajor)[0]).toEqual({ kind: "sheet", tile: 32 + (N | S) });
+  });
+});
+
 describe("terrain tiles: shoreline (08-art-pipeline §14)", () => {
   it("sea next to land gets foam on each side that touches land", () => {
     const map = parseAsciiMap([

@@ -14,6 +14,7 @@ const scenario = JSON.parse(readFileSync(new URL(`src/scenarios/${id}.json`, roo
 const TERRAIN = {
   ".": "#9ccc65", "=": "#d7c9a0", "#": "#8d6e63", F: "#2e7d32", H: "#a1887f", "~": "#4fc3f7", b: "#558b2f",
   S: "#1565c0", _: "#fff59d", r: "#5d4037", X: "#616161", x: "#9e9e9e", o: "#000000",
+  "%": "#ff6f00", "!": "#263238", // Major Bridge (bright, so the ones that matter stand out), Blown Bridge
 };
 const KIND = { f: "#ffeb3b", A: "#ffffff", P: "#00e5ff", Q: "#000000" };
 // Colored by side, not by player order, so a scenario where the Axis moves first (Midway) reads the same.
