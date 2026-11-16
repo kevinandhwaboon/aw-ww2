@@ -39,6 +39,7 @@ Requires Node.js 24+.
 npm install
 npm run dev       # play locally
 npm run check     # typecheck + lint + tests
+npm run selfplay  # AI games with engine checks; see docs/09-ai.md §7
 npm run test:ui   # browser test viewer
 ```
 
