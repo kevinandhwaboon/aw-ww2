@@ -40,8 +40,8 @@ Three players, in this turn order:
 - **Each Allied player has its own funds, properties and build list.** The US earns from the towns its paratroopers take. The UK earns from Belgium and from what XXX Corps and the 1st Airborne take. An ally's property can't be captured (04-economy §3, by side).
 - **The US has no HQ.** It's out only if every US unit is destroyed. If the UK loses its HQ, the UK is out and the US plays on alone (04-economy §8).
 - **Victory is by side** (04-economy §8): an objective held by either Allied player counts for the Allies.
-- **Repair on an ally's property (proposed, not yet decided):** today a property repairs and resupplies only its owner's units (04-economy §5). On this map that would mean XXX Corps tanks couldn't refuel in Eindhoven if US paratroopers had taken it, which makes the link-up worth less. The proposal: a property also repairs and resupplies an ally's units, paid from the unit owner's funds. No current map has two players on one side, so no current map would change.
-- **Who the computer plays (proposed, not yet decided):** by default the computer plays every player except the first (09-ai §5). Here that would hand the US paratroopers' ally, the UK, to the computer. The proposal: by default the computer plays every player who isn't on the first player's side, so one person plays both the US and the UK against a computer Germany. The map select's "Computer plays …" boxes still allow any mix, such as two people playing co-op as the US and the UK. Every current map has one player per side, so none changes.
+- **An ally's property repairs and resupplies your units**, paid from your own funds (04-economy §5, decided 2026-11-15). So XXX Corps tanks can refuel and repair in a town US paratroopers took, which makes linking up with them worth something.
+- **By default the computer plays everyone not on the first player's side** (09-ai §5, decided 2026-11-15). So one person plays both the US and the UK against a computer Germany. The map select's "Computer plays …" boxes still allow any mix, such as two people playing co-op as the US and the UK.
 
 ### Places
 
@@ -152,7 +152,7 @@ The first-lift Transport Aircraft start loaded, short of the drop zones and out 
 
 ### Build order
 
-0. **Two players on a side:** repair on an ally's property and the computer playing the other side by default, once both are decided (§1 "Players").
+0. **Two players on a side:** repair on an ally's property (04-economy §5) and the computer playing the other side by default (09-ai §5).
 1. **Engine:** Major Bridge and Blown Bridge terrain data, Blow Bridge and Rebuild Bridge commands, rebuild progress in `GameState`, legal commands for both. The self-play state checker learns that rebuild progress exists only under an Assault Infantry.
 2. **Presentation:** bridge art, the two action menu items, tile info lines, the explosion and the rebuild cue.
 3. **Map:** the generator, the scenario file and its overview picture.
@@ -179,6 +179,8 @@ Scenario tests ("Market Garden"):
 - "The Allies win by holding Eindhoven, Nijmegen and Arnhem for 2 days, whichever Allied player holds each"
 - "The US plays on after the UK loses its HQ"
 - "The US moves first, then the UK, then Germany"
+- "A British tank in a US-held town is repaired at the UK's cost" (04-economy §5)
+- "The computer plays only Germany by default" (09-ai §5)
 - "Germany wins at the start of day 12"
 - "Every crossing on the road from Neerpelt to Arnhem is a Major Bridge"
 - "Germany's reinforcement crossings at Venlo, Doesburg and Zutphen can't be blown"

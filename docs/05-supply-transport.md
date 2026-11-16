@@ -51,7 +51,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
 - **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit. It flies over enemy ground units and ships, but enemy aircraft block its path (02-terrain §5).
-- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a), on top of 2 fuel per tile flown (§1). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it, since that refuels it anyway.
+- **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a), on top of 2 fuel per tile flown (§1). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it (its own or, since 2026-11-15, an ally's: 04-economy §5), since that refuels it anyway.
 - **Service:** owned airfields repair and resupply air units (04-economy §5), and Carriers their aircraft (§10). Nothing else does: a Halftrack can't resupply an aircraft (§3), so it has to return to an airfield.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
 
