@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui --watch",
     "check": "npm run typecheck && npm run lint && npm run test",
+    "selfplay": "node tools/selfplay.mjs",
     "art": "node tools/art/render-units.mjs && node tools/art/render-terrain.mjs",
     "sounds": "node tools/audio/placeholders.mjs"
   },

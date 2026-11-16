@@ -37,6 +37,7 @@ The developer is an experienced software engineer, new to game development, and 
 - `npm run dev`: local dev server
 - `npm run check`: typecheck + lint + tests
 - `npm test`: tests only
+- `npm run selfplay`: many AI games with the engine checked after every command (09-ai §7). Run it after engine or AI changes; a failure is saved in `selfplay-failures/` with the seed and commands to replay it
 - `npm run test:ui`: browser test viewer (Vitest UI), lists every rule test by name
 - `npm run build`: production build into `dist/`
 
