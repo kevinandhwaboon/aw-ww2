@@ -1,6 +1,6 @@
 # Topic Doc 11: Tech Setup and Build Plan
 
-**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (first AI) are done, and 16 (Greedy v2: threat-aware production, then landings, drops and carriers) and 17 (Greedy v3: coordination, fuel, Easy and Normal levels) were done on 2026-11-13. Milestone 13 (CO hooks) was skipped for now on 2026-11-09 to get single-player sooner; it is still to do.
+**Status:** Decided. Phase 0 done (live at https://kevinandhwaboon.github.io/aw-ww2/). Phase 1 milestones 1 (engine skeleton), 2 (movement), 3 (combat), 4 (economy), All of Phase 1 is done: milestones 1 to 8. Phase 2 is under way: milestones 9 (air), 10 (naval), 11 (landings and drops), 12 (victory conditions), 14 (AI interface) and 15 (first AI) are done, and 16 (Greedy v2: threat-aware production, then landings, drops and carriers) and 17 (Greedy v3: coordination, fuel, Easy and Normal levels) were done on 2026-11-13. Milestone 13 (CO hooks) was skipped on 2026-11-09 to get single-player sooner and done on 2026-11-16 (06-commanders §6).
 **Last updated:** 2026-10-24
 **Depends on:** 00-master-design.md (sections 10, 11, 16).
 
@@ -54,8 +54,8 @@
 
 - **RNG:** mulberry32. Its whole state is one unsigned 32-bit integer in `GameState.rng`, so it serializes exactly.
 - **Modifier layer:** game logic reads unit and terrain numbers only through `src/engine/stats.ts`, never from the data tables. A modifier is data: `{ source, stat, op: add | multiply | set, value, scope? }`. For one stat, adds are summed onto the base, then multiplies apply, then a set overrides (last wins). The result is rounded down and never below 0.
-  - Scenario, commander and weather modifiers live in `GameState.modifiers`. Veterancy isn't stored; it's derived from each unit's kill count at lookup time.
-  - Scopes can limit a modifier to players, unit types, unit categories and the terrain the unit stands on.
+  - Scenario modifiers live in `GameState.modifiers`. The rest is derived at lookup time and not stored: weather from the day, commanders from each player's `commander` (06-commanders §6), veterancy from each unit's kill count.
+  - Scopes can limit a modifier to players, unit types, unit categories and the terrain the unit stands on, and, while a fight is being worked out, to the unit that started it or the one attacked, and to the opponent's type or category.
 - **Damage chart:** stored as row strings that match the tables in 03-combat §5 cell for cell ("55", "55*", "—"), so the doc and the data can be compared side by side. It's parsed and validated when the module loads.
 - **Player ids** are indexes into `GameState.players`, which is also the turn order.
 - **Setup errors** (bad scenario data) throw. **Command errors** (illegal moves) return a typed rejection.
@@ -185,7 +185,7 @@ Rules: 05-supply-transport §5–9, 04-economy §8, 09-ai. Each milestone ends p
 | 10 | Naval | Ships, daily fuel and sinking, port build and repair, Dive and Surface | Ship markers, submerged marker, a coastal map |
 | 11 | Landings and drops | Unload action takes one or two passengers; Landing Craft beach rules; Transport Aircraft drops | Multi-unload flow, drop tiles, a small amphibious map |
 | 12 | Victory conditions | `captureProperties`, `holdProperties`, `surviveDays` | Objectives shown in-game and on the results screen |
-| 13 | CO hooks | Modifier scopes that depend on the target (for example attack vs infantry); luck modifiers (03-combat §7) | Modifier list in the unit panel |
+| 13 | CO hooks | Modifier scopes that depend on the opponent and on who started the fight; a commander per player, as data (06-commanders §6). Luck modifiers (03-combat §7) not built: no commander uses luck | None yet: the commander screens (06-commanders §5) come next |
 | 14 | AI interface | `legalCommands`, `AiView`, session support for AI players, command limit | Human or AI choice per player, locked input during AI turns |
 | 15 | First AI | The Greedy AI (09-ai §4), AI vs AI tests, a performance benchmark | Playable single-player on every map |
 | 16 | Greedy v2 | Part 1: threat-aware production (09-ai §4a). Part 2: Landing Craft, Transport Aircraft and Carriers (09-ai §4b, lifts D9) | Single-player on the sea and island maps. The goal that every built-in map ends with a winner in AI vs AI is not met for The Slot and Normandy (09-ai §4b) |

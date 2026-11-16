@@ -25,10 +25,20 @@ export const MODIFIABLE_STATS = [
   "terrainStars",
   /** A player's funds per day from all owned properties. */
   "income",
+  /** Displayed HP a unit repairs per turn on a property that repairs it (04-economy §5). */
+  "repairHp",
+  /** Kills at which a unit becomes a Veteran, and an Elite (03-combat §6). */
+  "veteranKills", "eliteKills",
 ] as const;
 export type ModifiableStat = (typeof MODIFIABLE_STATS)[number];
 
 export type PlayerId = number;
+
+/**
+ * A unit's part in a fight (03-combat §2): it started it, or it is the one attacked. Its attack
+ * while "answered" is its counterattack; its defense while "started" is against that counter.
+ */
+export type FightRole = "started" | "answered";
 
 /** Which lookups a modifier applies to. Every listed field must match; omitted fields match anything. */
 export interface ModifierScope {
@@ -37,6 +47,11 @@ export interface ModifierScope {
   readonly categories?: readonly UnitCategory[];
   readonly terrain?: readonly TerrainId[];
   readonly movementTypes?: readonly MovementType[];
+  /** Only in a fight, and only for the unit that started it or the one that was attacked. */
+  readonly fight?: readonly FightRole[];
+  /** Only in a fight against one of these unit types, or a unit of one of these categories. */
+  readonly opponentTypes?: readonly UnitTypeId[];
+  readonly opponentCategories?: readonly UnitCategory[];
 }
 
 export interface Modifier {
@@ -55,6 +70,10 @@ export interface StatContext {
   readonly category?: UnitCategory;
   readonly terrain?: TerrainId;
   readonly movementType?: MovementType;
+  /** Set only while working out a fight. A fortification as the opponent leaves the opponent fields unset. */
+  readonly fight?: FightRole;
+  readonly opponentType?: UnitTypeId;
+  readonly opponentCategory?: UnitCategory;
 }
 
 /** Whether a modifier's scope covers this lookup (ignores which stat it modifies). */
@@ -71,7 +90,10 @@ function matches(scope: ModifierScope | undefined, ctx: StatContext): boolean {
     fieldMatches(scope.unitTypes, ctx.unitType) &&
     fieldMatches(scope.categories, ctx.category) &&
     fieldMatches(scope.terrain, ctx.terrain) &&
-    fieldMatches(scope.movementTypes, ctx.movementType)
+    fieldMatches(scope.movementTypes, ctx.movementType) &&
+    fieldMatches(scope.fight, ctx.fight) &&
+    fieldMatches(scope.opponentTypes, ctx.opponentType) &&
+    fieldMatches(scope.opponentCategories, ctx.opponentCategory)
   );
 }
 

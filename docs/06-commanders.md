@@ -1,7 +1,7 @@
 # Topic Doc 06: Commanders
 
-**Status:** designed (v2) on 2026-11-15, not built. Portraits drawn. Names and numbers are provisional.
-**Last updated:** 2026-11-15
+**Status:** rules built on 2026-11-16 (milestone 13); the screens in §5 are not built yet. Portraits drawn. Names and numbers are provisional.
+**Last updated:** 2026-11-16
 **Depends on:** 00-master-design.md §7, 01-units.md, 02-terrain.md, 03-combat.md (§6 veterancy), 04-economy-production.md §5 (repair), 05-supply-transport.md, 08-art-pipeline.md, 11-tech-setup.md (milestone 13, CO hooks; §3c controls).
 
 ---
@@ -35,7 +35,7 @@ Real names thinly disguised (same initials, sound-alike names) were rejected: th
 - There are **eight commanders: one from each nation, and a second American for the navy** (§3). The first roster had two per nation; on 2026-11-15 the developer asked for fewer, so each pair was merged into one, and on 2026-11-16 asked for the American admiral back as a naval specialist.
 - **A commander serves a side, not a nation.** A player may fight under any commander from their own side: any of the five Allied commanders for an Allied nation, any of the three Axis commanders for an Axis nation. A commander never serves the other side. Two players on one side may pick the same commander.
 - **"No commander" is always a choice**, and it is the default. A player with no commander has no bonus and no drawback, so a battle where nobody picks one plays exactly as the game did before commanders.
-- A commander has **bonuses and one drawback**, all always on. They are entries in the modifier layer (`GameState.modifiers`), so a commander is data with no logic.
+- A commander has **bonuses and one drawback**, all always on. They are modifiers in the modifier layer, so a commander is data with no logic (§6).
 - Bonuses and drawbacks are built on unit classes and terrain that every nation shares, so a commander works for any nation on their side.
 - Unit stats stay identical between nations (00-master-design §6). Commanders are the only thing that makes two armies fight differently.
 
@@ -63,8 +63,8 @@ All numbers are starting points for balancing.
 | | Commander | Style | Bonuses | Drawback |
 |---|---|---|---|---|
 | ![Konrad Falk](art/commanders/falk-x3.png) | **Konrad Falk**<br>Germany | Bold, fast strikes that outrun his supply columns | Tanks and Tank Destroyers +15% attack when they start the fight. Recon +1 move | All units carry 20% less fuel and ammo |
-| ![Aldo Ferrante](art/commanders/ferrante-x3.png) | **Aldo Ferrante**<br>Italy | A patient defender. Lets the ground do the work and makes an attacker pay for every step | All units +15% defense on Hills, Ridges and Cities. All units +20% damage on counterattacks | All units −10% attack when they start the fight |
-| ![Kenji Arakawa](art/commanders/arakawa-x3.png) | **Kenji Arakawa**<br>Japan | Strikes first from the air, and digs in deep on the ground | Dive Bombers and Torpedo Bombers +1 move and +10% attack. Land units on Bunkers and Hills take 25% less damage from indirect fire, ships and bombers | Tanks −1 move |
+| ![Aldo Ferrante](art/commanders/ferrante-x3.png) | **Aldo Ferrante**<br>Italy | A patient defender. Lets the ground do the work and makes an attacker pay for every step | All units +15% defense on Hills, Ridges and Cities. All units +20% attack on counterattacks | All units −10% attack when they start the fight |
+| ![Kenji Arakawa](art/commanders/arakawa-x3.png) | **Kenji Arakawa**<br>Japan | Strikes first from the air, and digs in deep on the ground | Dive Bombers and Torpedo Bombers +1 move and +10% attack. Land units on Bunkers and Hills +25% defense against indirect fire, ships and bombers (a Bomber, Dive Bomber or Torpedo Bomber) | Tanks −1 move |
 
 ### What the merge dropped
 
@@ -121,15 +121,32 @@ The turn menu (11-tech-setup §3c) gains a third item, above the other two:
 - Arrow keys or a click move through the list. X, Esc or a click outside closes it.
 - Opening it uses no action and doesn't end the turn. It is also offered while watching the computer's turn.
 
-## 6. What the engine needs first
+## 6. How the engine does it (built 2026-11-16, milestone 13)
 
-Nothing is built. Milestone 13 (CO hooks, 11-tech-setup) is still to do, and this roster needs all of it and a little more:
+The rules are built and tested (`tests/commanders.test.ts`). The screens in §5 are not, so a commander can't be picked in the game yet.
 
-- **A commander per player** in `GameState`, optional, and the rule that it must be from the player's side.
-- **Scopes that depend on the target**: "damage taken from indirect fire, ships and bombers".
-- **Scopes that depend on who started the fight**: "when they start the fight", "on counterattacks".
-- **Scopes that depend on the terrain the unit stands on**: "in Cities", "on Bunkers and Hills".
-- **New modifiable values**: fuel and ammo capacity, the repair amount on a property, the kill counts for veterancy levels. Move, attack, defense, cost, vision and terrain move cost already go through the modifier layer.
+- **Data.** `src/engine/data/commanders.ts` holds each commander: name, nation, the words of §3, and a list of effects. An effect is a modifier without a source or a player.
+- **A commander per player.** `Player.commander` is optional; missing means no commander. `createGame` takes it per player and refuses a commander from the other side.
+- **Derived, not stored.** The engine turns each player's commander into modifiers for that player alone, at lookup time, as it does for weather. `GameState.modifiers` keeps only scenario modifiers, so a saved game holds just who commands whom.
+- **Percentages add.** "+15% attack" adds 15 to the attack value of the damage formula (03-combat §1), which starts at 100, as veterancy does. A Veteran under a +15% commander attacks at 125. Defense works the same way.
+- **New scopes** in the modifier layer:
+  - *who started the fight*: `started` for the unit that attacked, `answered` for the one attacked. A unit's attack while `answered` is its counterattack.
+  - *the opponent*: its unit type or its category.
+  - These only match while a fight is being worked out, so the unit panel's Attack and Defense rows show the values without them.
+- **New modifiable values**: the HP repaired on a property (`repairHp`), and the kills for Veteran and Elite (`veteranKills`, `eliteKills`).
+- **The forecast and the fight use the same lookups**, so a forecast still promises exactly what happens.
+
+Rulings made while building:
+
+- **A garrisoned bunker defends as its holder would.** An attack on soldiers in a bunker hits the bunker (03-combat §4). The bunker's defense takes its holder's commander into account, against that attacker, so Arakawa's soldiers in a bunker get his bonus against shelling. The soldiers' own veterancy still doesn't count for the bunker. An empty bunker belongs to nobody and gets nothing.
+- **"In Cities" means the City terrain**, not factories, airfields, ports or HQs.
+- **Harlan's extra repair is on properties only.** Aircraft aboard a Carrier still repair 1 HP.
+- **Falk's units start with what they can carry**: a Medium Tank starts with 24 fuel and 7 ammo, not 30 and 9. A smaller amount a scenario sets for a unit is kept, but never more than the unit can carry.
+- **Morozov's lower cost also lowers his repair bills**, since a repair costs a tenth of the unit's price per HP (04-economy §5).
+- **Tremblay's units can be promoted on the spot** when he takes over a unit with enough kills already; there is no way to change commander mid-game, so this only matters for a scenario's starting units.
+- **Luck modifiers** (03-combat §7) were part of milestone 13's plan. No commander uses luck, so they are not built.
+
+`npm run selfplay -- --commanders` plays the computer against itself with every player under a commander.
 
 ## 7. Open questions
 

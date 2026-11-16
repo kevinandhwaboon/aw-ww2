@@ -1,6 +1,7 @@
 // Building the initial GameState from a scenario-style setup. Setup errors are programming or
 // scenario-authoring mistakes, so they throw instead of returning a rejection.
 
+import { commanderDef, type CommanderId } from "./data/commanders";
 import { NATIONS, type NationId } from "./data/nations";
 import { terrainDef } from "./data/terrain";
 import { UNIT_TYPE_IDS, UNITS, type UnitDef, type UnitTypeId } from "./data/units";
@@ -24,6 +25,7 @@ import {
   type WeatherPlan,
 } from "./state";
 import { weatherPlanProblem } from "./weather";
+import * as stats from "./stats";
 import { startTurn } from "./turn";
 
 /** What a player can build unless the scenario says otherwise: every unit (01-units availability rule). */
@@ -37,6 +39,8 @@ export interface PlayerSetup {
   readonly buildable?: readonly UnitTypeId[];
   /** Which way this player's units are drawn; defaults to right (08-art-pipeline §12). */
   readonly facing?: Facing;
+  /** The commander this player fights under; none unless given. Must be from the player's side (06-commanders §2). */
+  readonly commander?: CommanderId;
 }
 
 /** A unit starting aboard a transport, e.g. a Bomber on a Carrier (05-supply-transport §10). */
@@ -159,6 +163,14 @@ export function createGame(setup: GameSetup): GameState {
   const victory = setup.victory ?? DEFAULT_VICTORY;
   checkVictory(victory, properties, setup.players);
 
+  for (const p of setup.players) {
+    if (p.commander === undefined) continue;
+    const commander = commanderDef(p.commander);
+    if (NATIONS[commander.nation].side !== NATIONS[p.nation].side) {
+      throw new Error(`${commander.name} can't command ${p.name}: a commander serves only their own side`);
+    }
+  }
+
   const state: GameState = {
     map: { width: map.width, height: map.height, terrain: [...map.terrain] },
     players: setup.players.map((p, id) => ({
@@ -171,6 +183,7 @@ export function createGame(setup: GameSetup): GameState {
       hasFielded: units.some((u) => u.owner === id),
       buildable: p.buildable ?? DEFAULT_BUILDABLE,
       facing: p.facing ?? "right",
+      ...(p.commander === undefined ? {} : { commander: p.commander }),
     })),
     units,
     properties,
@@ -187,6 +200,15 @@ export function createGame(setup: GameSetup): GameState {
     holdStreaks: victory.map(() => 0),
     result: null,
   };
+  // A unit that starts full starts with what it can carry under its commander, which may be less
+  // than the data says, and a smaller amount a scenario sets never exceeds that either.
+  const fit = (amount: number, base: number, most: number) => (amount === base ? most : amount > base ? amount : Math.min(amount, most));
+  const fitted = (u: Unit): Unit => ({
+    ...u,
+    fuel: fit(u.fuel, UNITS[u.type].maxFuel, stats.maxFuel(state, u)),
+    ammo: fit(u.ammo, UNITS[u.type].primaryWeapon?.maxAmmo ?? 0, stats.maxAmmo(state, u)),
+    cargo: u.cargo.map(fitted),
+  });
   // Day 1 is a normal turn: the first player collects income too, as in the original (04-economy §2).
-  return startTurn(state).state;
+  return startTurn({ ...state, units: state.units.map(fitted) }).state;
 }
