@@ -3,6 +3,7 @@
 // combat event the engine already decided, so the scene can never change an outcome.
 
 import type { GameEvent } from "../../engine/commands";
+import { drawnAs } from "../artPack";
 import type { NationId } from "../../engine/data/nations";
 import type { TerrainId } from "../../engine/data/terrain";
 import { UNITS, type UnitTypeId } from "../../engine/data/units";
@@ -207,7 +208,7 @@ function half(state: GameState, id: HalfId, kind: FigureKind, owner: PlayerId | 
     half: id,
     kind,
     owner,
-    nation: owner === null ? null : (state.players[owner]?.nation ?? null),
+    nation: owner === null ? null : drawnAs(state.players[owner]?.nation ?? null),
     terrain: terrainAt(state.map, pos),
     hp,
     submerged: unit?.submerged === true,

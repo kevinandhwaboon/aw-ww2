@@ -7,15 +7,16 @@
 // `&zoom=0,150,192,72` enlarges one part of each and `&scale=1` sets the size. `&storm=all` (or
 // `capture`, `garrison`) shows the storming scenes instead, and `&t=end` holds each at its outcome.
 // `&drop=on` shows airborne drops. `&weather=winter` draws every scene on snowy ground, and
-// `&weather=snow` adds an overcast sky and falling snow (12-weather §5). `&axis=japan` puts Japan on the
-// Axis side in place of Germany, and `&allies=ussr` the Soviet Union (or `&allies=uk` the United
+// `&weather=snow` adds an overcast sky and falling snow (12-weather §5); `&weather=desert` draws sand,
+// scrub and a pale sky (08-art-pipeline §21). `&axis=japan` (or `&axis=italy`) puts Japan (or Italy, in
+// Germany's equipment) on the Axis side in place of Germany, and `&allies=ussr` the Soviet Union (or `&allies=uk` the United
 // Kingdom) on the Allied side in place of the US.
 
 import Phaser from "phaser";
 import type { NationId } from "../../engine/data/nations";
 import { TERRAIN_IDS, type TerrainId } from "../../engine/data/terrain";
 import { UNIT_TYPE_IDS, type UnitTypeId } from "../../engine/data/units";
-import { packColor } from "../artPack";
+import { drawnAs, packColor } from "../artPack";
 import { SCENE } from "./backdrops";
 import { BattleScene } from "./BattleScene";
 import { battleWeather, setBattleWeather } from "./colors";
@@ -72,14 +73,15 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "tankDestroyer", d: "heavyTank", counter: "primary" },
 ];
 
-/** The Axis nation in every preview scene: Germany, or Japan with `&axis=japan`. */
+/** The Axis nation in every preview scene: Germany, or Japan or Italy with `&axis=`. */
 let axis: NationId = "germany";
 /** The Allied nation in every preview scene: the US, or the Soviet Union with `&allies=ussr`. */
 let allies: NationId = "us";
 
 function planFor(m: Matchup, flip: boolean): BattlePlan {
-  const attackerNation: NationId = flip ? axis : allies;
-  const defenderNation: NationId = flip ? allies : axis;
+  // Battle halves carry the nation whose equipment is drawn, as in a real game (Italy borrows Germany's).
+  const attackerNation = drawnAs(flip ? axis : allies);
+  const defenderNation = drawnAs(flip ? allies : axis);
   const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier"].includes(k);
   const left = {
     half: "left" as const,
@@ -222,7 +224,7 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
   const suit = Number(params.get("para") ?? 1) % 4 || 0;
   const plans: DropPlan[] = [
     { unit: "infantry", owner: 0, nation: allies, hp: 10, paratrooper: allies !== "ussr", suit, terrain: "plains" },
-    { unit: "infantry", owner: 1, nation: axis, hp: 10, paratrooper: false, suit: 0, terrain: "bocage" },
+    { unit: "infantry", owner: 1, nation: drawnAs(axis), hp: 10, paratrooper: false, suit: 0, terrain: "bocage" },
     { unit: "mortar", owner: 0, nation: allies, hp: 6, paratrooper: false, suit: 0, terrain: "road" },
   ];
   const frozen = params.get("t");
@@ -255,11 +257,13 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
 }
 
 export function startBattlePreview(root: HTMLElement, params: URLSearchParams): void {
-  if (params.get("axis") === "japan") axis = "japan";
+  const axisNation = params.get("axis");
+  if (axisNation === "japan" || axisNation === "italy") axis = axisNation;
   const alliedNation = params.get("allies");
   if (alliedNation === "ussr" || alliedNation === "uk") allies = alliedNation;
   const weather = params.get("weather");
   if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow" });
+  if (weather === "desert") setBattleWeather({ season: "desert", snowing: false });
   if (params.get("angled") !== null) {
     showAngledSamples(root, params);
     return;

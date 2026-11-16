@@ -346,6 +346,75 @@ function obstacle() {
   return compose(toRows(grass(34)), obj, 3);
 }
 
+// A minefield (02-terrain §4b): a wire fence on pickets across the back with yellow warning signs,
+// and the low humps of buried mines scattered over churned ground.
+function minefield() {
+  const ground = grass(35);
+  for (let y = 4; y < 30; y++) for (let x = 1; x < 31; x++) if (hash(x, y, 36) % 9 === 0) ground[y][x] = "u";
+  const obj = layer();
+  for (let x = 0; x < SIZE; x++) { put(obj, x, 36, "K"); put(obj, x, 40, "K"); }
+  for (const x of [2, 12, 22]) {
+    rect(obj, x, 33, x + 1, 43, "n");
+    put(obj, x + 1, 43, "O");
+  }
+  // Warning signs: a yellow triangle on the first and last picket.
+  for (const x of [2, 22]) art(obj, ["...KK...", "..KmmK..", ".KmmmmK.", "KmmKmmmK", "KKKKKKKK"], x - 3, 28);
+  for (const [x, y] of [[5, 47], [16, 45], [25, 50], [9, 55], [20, 57], [28, 42], [3, 60]]) art(obj, [".KK.", "KjkK", "KkkK", ".KK."], x - 2, y - 2);
+  return compose(toRows(ground), obj, 3);
+}
+
+// A low ridge (02-terrain §4b): a long gentle rise, far lower than Hills, with stones on its crest.
+function ridge(mounds, salt) {
+  const obj = layer();
+  for (const [cx, base, rx, ry] of mounds) {
+    const shade = [];
+    for (let y = base - ry; y <= base; y++) for (let x = cx - rx; x <= cx + rx; x++) {
+      const nx = (x - cx) / rx, ny = (y - base) / ry;
+      if (nx * nx + ny * ny > 1) continue;
+      const light = -(nx * 0.75 + ny * 0.55);
+      shade.push([x, y, light > 0.5 ? "q" : light > 0.0 ? "w" : light > -0.35 ? "u" : "Q"]);
+    }
+    const inside = new Set(shade.map(([x, y]) => `${x},${y}`));
+    for (const [x, y, ch] of shade) {
+      const top = !inside.has(`${x},${y - 1}`);
+      put(obj, x, y, top ? "Q" : ch);
+    }
+    for (let i = 0; i < 5; i++) {
+      const sx = cx - rx + 3 + (hash(i, cx, salt) % Math.max(1, 2 * rx - 6)), sy = base - ry + 2 + (hash(cx, i, salt) % Math.max(1, ry - 2));
+      if (inside.has(`${sx},${sy}`) && inside.has(`${sx + 1},${sy}`)) { put(obj, sx, sy, "j"); put(obj, sx + 1, sy, "K"); }
+    }
+  }
+  return compose(toRows(grass(salt)), obj, 3);
+}
+
+// A salt marsh (02-terrain §4b): flat white salt crust broken by cracks, with dark wet patches.
+function saltMarsh(salt) {
+  const g = fill("N");
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    const v = hash(x, y, salt) % 23;
+    if (v === 0) g[y][x] = "o";
+  }
+  // Polygon cracks: short runs that turn at random.
+  for (let i = 0; i < 6; i++) {
+    let x = hash(i, salt, 1) % SIZE, y = hash(salt, i, 2) % SIZE;
+    for (let s = 0; s < 14; s++) {
+      g[y][x] = "o";
+      const turn = hash(i, s, salt) % 3;
+      x = (x + (turn === 0 ? 1 : 0) + SIZE) % SIZE;
+      y = (y + (turn === 1 ? 1 : turn === 2 ? -1 : 0) + SIZE) % SIZE;
+    }
+  }
+  for (const [cx, cy, r] of [[8 + (salt % 5), 20, 4], [23, 9 + (salt % 4), 3]]) {
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r * 2; x <= cx + r * 2; x++) {
+      if (!inTile(x, y)) continue;
+      const d = ((x - cx) / (r * 2)) ** 2 + ((y - cy) / r) ** 2;
+      if (d < 0.7) g[y][x] = "d";
+      else if (d < 1) g[y][x] = "o";
+    }
+  }
+  return toRows(g);
+}
+
 const still = (rows) => [rows, rows];
 const moving = (draw) => [draw(0), draw(1)];
 
@@ -374,6 +443,10 @@ export const layout = [
   // Added 2026-11-15: Major Bridges, standing and blown (02-terrain §4a), drawn over the river piece.
   ["majorBridge-horizontal", still(majorBridge(true))], ["majorBridge-vertical", still(majorBridge(false))],
   ["blownBridge-horizontal", still(blownBridge(true))], ["blownBridge-vertical", still(blownBridge(false))],
+  // Added 2026-11-15: desert terrain for El Alamein (02-terrain §4b).
+  ["minefield", still(minefield())],
+  ["ridge", still(ridge([[16, 60, 16, 9]], 37))], ["ridge", still(ridge([[9, 56, 10, 6], [22, 61, 10, 8]], 38))],
+  ["saltMarsh", still(saltMarsh(39))], ["saltMarsh", still(saltMarsh(40))],
 ];
 
 for (const entry of layout) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));

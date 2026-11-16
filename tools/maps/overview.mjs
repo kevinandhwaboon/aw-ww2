@@ -15,7 +15,10 @@ const TERRAIN = {
   ".": "#9ccc65", "=": "#d7c9a0", "#": "#8d6e63", F: "#2e7d32", H: "#a1887f", "~": "#4fc3f7", b: "#558b2f",
   S: "#1565c0", _: "#fff59d", r: "#5d4037", X: "#616161", x: "#9e9e9e", o: "#000000",
   "%": "#ff6f00", "!": "#263238", // Major Bridge (bright, so the ones that matter stand out), Blown Bridge
+  m: "#6d4c41", d: "#c8a26a", z: "#f5f5f0", // Minefield, Ridge, Salt Marsh (02-terrain §4b)
 };
+// A desert map draws its open ground as sand.
+if (scenario.weather?.season === "desert") TERRAIN["."] = "#e6cf98";
 const KIND = { f: "#ffeb3b", A: "#ffffff", P: "#00e5ff", Q: "#000000" };
 // Colored by side, not by player order, so a scenario where the Axis moves first (Midway) reads the same.
 const ALLIES = new Set(["us", "uk", "canada", "ussr"]);

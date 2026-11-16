@@ -6,6 +6,7 @@ import {
   activePack,
   assignPlayerArt,
   BUILT_IN_PACK,
+  drawnAs,
   findPropertyArt,
   findUnitArt,
   packColor,
@@ -19,6 +20,7 @@ import {
   unitName,
 } from "../src/game/artPack";
 import defaultPack from "../public/assets/packs/default/pack.json";
+import { FLAGS } from "../src/game/placeholderFlags";
 import nightOps from "../public/assets/packs/night-ops/pack.json";
 
 const sheet = (extra: object = {}) => ({
@@ -404,6 +406,33 @@ describe("art packs: winter sheets (08-art-pipeline §21)", () => {
   });
 });
 
+describe("art packs: desert sheets (08-art-pipeline §21)", () => {
+  it("terrain and building sheets can name a desert version with the same layout", () => {
+    const pack = parseArtPack({
+      name: "x",
+      terrain: { path: "t.png", desertPath: "t-desert.png", tiles: { plains: 0 } },
+      properties: { path: "b.png", desertPath: "b-desert.png", columns: ["neutral"], rows: ["city"] },
+    });
+    expect(pack.terrain?.desertPath).toBe("t-desert.png");
+    expect(pack.properties?.desertPath).toBe("b-desert.png");
+  });
+
+  it("rejects a desert sheet outside the pack", () => {
+    expect(() => parseArtPack({ name: "x", terrain: { path: "t.png", desertPath: "https://example.com/t.png", tiles: {} } })).toThrow(/desertPath/);
+  });
+
+  it("the default pack ships desert terrain and buildings", () => {
+    const pack = parseArtPack(defaultPack);
+    expect(pack.terrain?.desertPath).toMatch(/terrain-32-desert\.png$/);
+    expect(pack.properties?.desertPath).toMatch(/buildings-32-desert\.png$/);
+  });
+
+  it("the default pack has its own tiles for minefields, ridges and the salt marsh (02-terrain §4b)", () => {
+    const tiles = parseArtPack(defaultPack).terrain?.tiles;
+    for (const terrain of ["minefield", "ridge", "saltMarsh"] as const) expect(tiles?.[terrain]?.length, terrain).toBeGreaterThan(0);
+  });
+});
+
 describe("each nation's colors (08-art-pipeline §12)", () => {
   const teams = (nations: Parameters<typeof assignPlayerArt>[1], pack = BUILT_IN_PACK) => assignPlayerArt(pack, nations).map((p) => p.team);
 
@@ -449,6 +478,26 @@ describe("each nation's colors (08-art-pipeline §12)", () => {
     } finally {
       setGameNations([]);
     }
+  });
+
+  it("Italy borrows Germany's unit art but wears blue, its azzurro, so Germany keeps field grey (18-scenarios-north-africa §1)", () => {
+    expect(teams(["uk", "germany", "italy"])).toEqual(["brown", "grey", "blue"]);
+    const pack = parseArtPack(defaultPack);
+    try {
+      setGameNations(["uk", "germany", "italy"]);
+      const tank = findUnitArt(pack, "italy", 2, "mediumTank");
+      expect(tank && pack.unitSheets[tank.sheet]?.nation).toBe("germany");
+      expect(tank && pack.unitSheets[tank.sheet]?.team).toBe("blue");
+    } finally {
+      setGameNations([]);
+    }
+  });
+
+  it("battle scenes draw Italians with Germany's equipment, but flags stay each nation's own", () => {
+    expect(drawnAs("italy")).toBe("germany");
+    expect(drawnAs("canada")).toBe("uk");
+    expect(drawnAs("germany")).toBe("germany");
+    expect(FLAGS.italy).not.toEqual(FLAGS.germany);
   });
 
   it("a pack can give nations its own colors, or none so every player keeps their slot's color", () => {

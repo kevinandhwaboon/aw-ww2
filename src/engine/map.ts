@@ -34,6 +34,9 @@ export const DEFAULT_LEGEND: Readonly<Record<string, TerrainId>> = {
   o: "obstacle",
   "%": "majorBridge",
   "!": "blownBridge",
+  m: "minefield",
+  d: "ridge",
+  z: "saltMarsh",
 };
 
 /** Parses rows of equal length, e.g. ["..F", "=.."], into a map. Whitespace is ignored. */

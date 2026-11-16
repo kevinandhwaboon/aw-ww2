@@ -10,6 +10,7 @@ export const NATIONS = {
   ussr: { name: "Soviet Union", side: "allies" },
   germany: { name: "Germany", side: "axis" },
   japan: { name: "Japan", side: "axis" },
+  italy: { name: "Italy", side: "axis" },
 } as const satisfies Record<string, { name: string; side: Side }>;
 
 export type NationId = keyof typeof NATIONS;

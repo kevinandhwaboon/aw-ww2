@@ -16,6 +16,8 @@ export const palette = withShade({
   a: "#e8d7a0", A: "#cdb67e", i: "#f6ecc8", // sand
   R: "#c8bc98", r: "#9a8c66", p: "#ddd4b4", // road
   b: "#a0804e", B: "#6e5434", x: "#3a2c1c", // bridge
+  m: "#e8c020", // a minefield's warning signs (02-terrain §4b)
+  N: "#ece8de", o: "#c8c0ae", d: "#8e8674", // the salt crust of a salt marsh, its cracks and wet patches
 });
 
 // Small deterministic hash, so detail looks scattered but never changes between runs.

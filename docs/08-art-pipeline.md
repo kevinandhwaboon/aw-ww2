@@ -502,7 +502,7 @@ Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-un
 
 **Option.** "Battle scenes" on the map select screen, on by default. `?battle=off` turns them off. Off, attacks play on the map as before. The same option covers captures and bunkers (section 19).
 
-**Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each. `&axis=japan` puts Japan in Germany's place and `&allies=ussr` the Soviet Union in the US's place (11-tech-setup §7).
+**Preview.** `?battle=demo` plays a battle for every unit in turn; `&a=mortar&d=infantry` plays one matchup, and `&at=…&dt=…` sets each side's terrain. `&t=fire` holds every matchup at its first shot, side by side, and `&zoom=x,y,w,h` enlarges a part of each. `&axis=japan` puts Japan in Germany's place (`&axis=italy` Italy, in Germany's equipment) and `&allies=ussr` the Soviet Union in the US's place; `&weather=desert` draws desert scenes (11-tech-setup §7).
 
 **Polish (since 2026-11-09).** A finishing pass on every 3D machine model (tanks, other land machines, the bunker, ships), at the developer's request after comparing our tanks with detailed fan pixel art. `?polish=off` turns it off.
 
@@ -585,6 +585,13 @@ Capture flags fly from a tall flagpole on the square in front of the building, d
 - **Winter buildings** (`buildings-32-winter.png`) are the summer buildings standing on snow. Roofs keep the owner's color, so ownership still reads at a glance.
 - **Battle scenes on a winter map** swap the ground, dirt, road, hill and tree colors for winter ones (`battleSnow…` and `battleWinterTree…` in the pack's colors). While it **snows**, the sky is overcast grey and snow drifts down over the whole scene; under clear skies the sky is blue over the snow.
 - **Snowfall over the map** while it snows: light flakes drift down over the visible part of the map, under the cursor and menus. Color `snowfall`.
+
+**Desert (since 2026-11-15),** for El Alamein (18-scenarios-north-africa): a scenario whose weather says `"season": "desert"` is drawn as desert all game, by the same mechanism.
+
+- **Map tiles:** terrain and building sheets can each name a `desertPath`, with the same layout as the summer sheet. The default pack's desert terrain (`tools/art/terrain32-desert.mjs`, rendered by `npm run art` to `terrain-32-desert.png`) is every summer tile in a desert palette: sand and gravel for grass, camel thorn scrub for trees, tan rock for hills and ridges, pale gravel tracks for roads, warm brown shadows. **Desert buildings** (`buildings-32-desert.png`) are the summer buildings with whitewashed walls, on sand, keeping the owner's roof color.
+- **New terrain tiles** (02-terrain §4b), in all three sheets: the **Minefield** (a wire fence on pickets with yellow warning triangles, buried mines humped in churned ground), the **Ridge** (a long, low rise with stones on its crest, two variants) and the **Salt Marsh** (white salt crust with cracks and dark wet patches, two variants).
+- **Battle scenes on a desert map** swap the grass, dirt, road, hill and tree colors and the sky for desert ones (`battleDesert…` in the pack's colors). Treelines on the horizon become low dunes with the odd tuft of scrub. A Minefield backdrop shows the wire and warning signs, a Ridge one the ground rising into a crest, the Salt Marsh flat salt crust.
+- **Not yet:** capture scenes still show European town squares, factories and harbors behind the sand.
 
 ## 22. Moving on the map
 

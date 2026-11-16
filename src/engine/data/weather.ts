@@ -5,8 +5,8 @@ import type { MovementType, TerrainId } from "./terrain";
 export const WEATHER_IDS = ["clear", "snow"] as const;
 export type WeatherId = (typeof WEATHER_IDS)[number];
 
-/** Whether the map is drawn snowy. Art only: no rule reads it (12-weather §1). */
-export const SEASONS = ["summer", "winter"] as const;
+/** Whether the map is drawn snowy, or as desert (08-art-pipeline §21). Art only: no rule reads it (12-weather §1). */
+export const SEASONS = ["summer", "winter", "desert"] as const;
 export type Season = (typeof SEASONS)[number];
 
 /** Movement points to enter a tile in this weather, only where it differs from 02-terrain §3. */
@@ -28,6 +28,7 @@ export const WEATHER = {
     moveCost: {
       plains: { foot: 2, wheels: 3, tracks: 2 },
       forest: { foot: 2, wheels: 4, tracks: 3 },
+      ridge: { foot: 2, wheels: 4, tracks: 3 }, // Forest's, as its clear costs are (02-terrain §4b)
       hills: { foot: 4, heavyFoot: 2 },
       bocage: { foot: 2, tracks: 4 },
       rubble: { foot: 2, wheels: 3, tracks: 2 },

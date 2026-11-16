@@ -33,6 +33,7 @@ Movement points to enter a tile in Snow. Only the cells that change from 02-terr
 | Forest | **2** | 1 | **4** | **3** | **2** | | |
 | Hills | **4** | **2** | — | — | **2** | | |
 | Bocage | **2** | 1 | — | **4** | **2** | | |
+| Ridge | **2** | 1 | **4** | **3** | **2** | | |
 | Rubble | **2** | 1 | **3** | **2** | **2** | | |
 | Sea | | | | | **2** | **2** | **2** |
 | Port | 1 | 1 | 1 | 1 | **2** | **2** | **2** |
@@ -68,7 +69,7 @@ What it means in play:
 }
 ```
 
-- `season`: `"summer"` (default) or `"winter"`. Drawing only.
+- `season`: `"summer"` (default), `"winter"` or `"desert"` (since 2026-11-15, for El Alamein: 08-art-pipeline §21). Drawing only.
 - `forecast`: optional; the first entry must start on day 1, and start days must rise.
 
 ## 7. Open questions

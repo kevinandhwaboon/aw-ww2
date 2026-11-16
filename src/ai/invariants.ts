@@ -59,7 +59,7 @@ export function stateProblems(state: GameState): string[] {
   for (const fort of state.fortifications) {
     const where = `${fort.pos.x},${fort.pos.y}`;
     check(fort.hp > 0 && fort.hp <= MAX_HP, `the fortification at ${where} has ${fort.hp} HP`);
-    check(/bunker|obstacle/.test(terrainAt(state.map, fort.pos)), `a fortification at ${where} stands on ${terrainAt(state.map, fort.pos)}`);
+    check(/bunker|obstacle|minefield/.test(terrainAt(state.map, fort.pos)), `a fortification at ${where} stands on ${terrainAt(state.map, fort.pos)}`);
   }
 
   // Bridges being rebuilt (02-terrain §4a).
