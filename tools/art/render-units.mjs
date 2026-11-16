@@ -71,7 +71,7 @@ for (const { id, units, natural } of nations) {
 // ---- 32x32 units (08-art-pipeline §17). Each row runs side, front (moving down) and rear (moving
 // up) views, two frames each (§22): six 32-pixel frames across.
 const { fixedColors, teamRamps } = await import("./kit32.mjs");
-const { landViews, paratrooperViews } = await import("./facings32.mjs");
+const { landViews, paratrooperViews, ukParatrooperViews } = await import("./facings32.mjs");
 /** Every frame of a row, left to right: side, down, up. */
 const rowFrames = (u) => [...u.frames, ...u.views.down, ...u.views.up];
 const COLUMNS = 6;
@@ -93,18 +93,21 @@ const { units: us32, paratroopers } = await import("./us-units32.mjs");
 const { units: de32 } = await import("./de-units32.mjs");
 const { units: jp32 } = await import("./jp-units32.mjs");
 const { units: su32 } = await import("./su-units32.mjs");
+const { units: uk32, paratroopers: ukParatroopers } = await import("./uk-units32.mjs");
 // Each nation's natural color first (used for the docs preview), then the player colors.
 const big = [
-  { id: "us", units: us32, extra: paratroopers, teams: ["olive", "red", "blue"] },
+  { id: "us", units: us32, extra: paratroopers.map((u) => ({ ...u, views: paratrooperViews(u.code.slice(3)) })), teams: ["olive", "red", "blue"] },
   { id: "de", units: de32, extra: [], teams: ["grey", "olive", "red", "blue"] },
   { id: "jp", units: jp32, extra: [], teams: ["khaki", "olive", "red", "blue"] },
   { id: "su", units: su32, extra: [], teams: ["green4bo", "olive", "red", "blue"] },
+  { id: "uk", units: uk32, extra: ukParatroopers.map((u) => ({ ...u, views: ukParatrooperViews(u.head) })), teams: ["brown", "olive", "red", "blue"] },
 ];
 for (const { id, units, extra, teams: names } of big) {
-  // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits).
+  // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits, the
+  // UK's airborne helmet and red beret).
   const rows = [
     ...landRows.map((code) => units.find((u) => u.code === code)).map((u) => u && { ...u, views: landViews(id, u.code) }),
-    ...extra.map((u) => ({ ...u, views: paratrooperViews(u.code.slice(3)) })),
+    ...extra,
   ];
   for (const team of names) {
     const sheet = canvas(32 * COLUMNS, 32 * rows.length);
@@ -128,7 +131,7 @@ for (const { id, units, extra, teams: names } of big) {
 }
 
 // ---- 32x32 aircraft and ships. Rows: FT, BM, TA, DB, TR and BB, DD, SS, LC, TB, CV; empty where a nation has none.
-const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir } = await import("./air-naval32.mjs");
+const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir, ukAir, ukNaval } = await import("./air-naval32.mjs");
 const airRows = ["FT", "BM", "TA", "DB", "TR"];
 const navalRows = ["BB", "DD", "SS", "LC", "TB", "CV"];
 for (const { id, air, naval, teams: names } of [
@@ -136,6 +139,7 @@ for (const { id, air, naval, teams: names } of [
   { id: "de", air: deAir, naval: deNaval, teams: ["grey", "olive", "red", "blue"] },
   { id: "jp", air: jpAir, naval: jpNaval, teams: ["khaki", "olive", "red", "blue"] },
   { id: "su", air: suAir, naval: [], teams: ["green4bo", "olive", "red", "blue"] },
+  { id: "uk", air: ukAir, naval: ukNaval, teams: ["brown", "olive", "red", "blue"] },
 ]) {
   for (const [kind, list, order] of [["air", air, airRows], ["naval", naval, navalRows]]) {
     if (list.length === 0) continue;

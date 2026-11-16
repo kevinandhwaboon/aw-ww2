@@ -74,7 +74,7 @@ describe("figures on screen (08-art-pipeline §18)", () => {
 });
 
 describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
-  const squad = (nation: "us" | "germany" | "japan" | "ussr", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
+  const squad = (nation: "us" | "germany" | "japan" | "ussr" | "uk", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
   const count = (weapons: string[], weapon: string) => weapons.filter((w) => w === weapon).length;
 
   it("a German squad is six riflemen, a squad leader with an MP 40 and an MG 42", () => {
@@ -90,6 +90,11 @@ describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
   it("a Soviet squad is mostly riflemen with Mosins, with two PPSh-41s and a DP light machine gun", () => {
     const su = squad("ussr");
     expect([count(su, "rifle"), count(su, "smg"), count(su, "lmg")]).toEqual([5, 2, 1]);
+  });
+
+  it("a British section is six riflemen with Lee-Enfields, a section leader with a Sten and a Bren gunner", () => {
+    const uk = squad("uk");
+    expect([count(uk, "rifle"), count(uk, "smg"), count(uk, "lmg")]).toEqual([6, 1, 1]);
   });
 
   it("a US squad is mostly riflemen, with two Thompsons and a BAR", () => {
@@ -273,6 +278,11 @@ describe("tanks drawn turned 5° toward the viewer (08-art-pipeline §18)", () =
     }
   });
 
+  it("the UK has its own tank models: Stuart, Sherman Firefly, Churchill and Achilles", () => {
+    for (const kind of kinds) expect(TANK_MODELS[kind].uk(team).faces.length).toBeGreaterThan(20);
+    expect(TANK_MODELS.medium.uk(team).muzzle[0]).toBeGreaterThan(TANK_MODELS.medium.us(team).muzzle[0]);
+  });
+
   it("each gun points forward, ahead of the hull's middle, and slides back when it recoils", () => {
     for (const kind of kinds) {
       for (const make of [TANK_MODELS[kind].us, TANK_MODELS[kind].de]) {
@@ -301,7 +311,7 @@ describe("the other land machines drawn turned 5° too (08-art-pipeline §18)", 
       [m3(team), sdkfz251(team)],
       [quadAA(team, false, 1, -1), quadAA(team, true, 1, -1)],
       [flakGun(team, false, 1, 0), flakGun(team, true, 1, 0)],
-      [howitzer(team, false, 0.85, 0), howitzer(team, true, 0.85, 0)],
+      [howitzer(team, "us", 0.85, 0), howitzer(team, "de", 0.85, 0)],
       [calliope(team, 0.38), nebelwerfer(team, 0.75)],
     ] as const;
     for (const [us, de] of pairs) {
@@ -320,7 +330,7 @@ describe("the other land machines drawn turned 5° too (08-art-pipeline §18)", 
   });
 
   it("howitzers and rocket launchers are raised, so their rounds leave climbing", () => {
-    const gun = howitzer(team, false, 0.85, 0);
+    const gun = howitzer(team, "us", 0.85, 0);
     expect(gun.at.muzzle[2]).toBeGreaterThan(gun.at.breech[2] + 30);
     expect(nebelwerfer(team, 0.75).at.muzzle0[2]).toBeGreaterThan(30);
     expect(calliope(team, 0.38).at.muzzle4[2]).toBeGreaterThan(calliope(team, 0.38).at.muzzle0[2]);

@@ -1,15 +1,31 @@
 // Battle figures for aircraft (08-art-pipeline §18), seen side-on with the near wing below the
 // fuselage. US: P-51, B-26, C-47, SBD Dauntless, TBF Avenger. Germany: Bf 109, Ju 88, Ju 52.
 // Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Soviet Union: Yak-9, Il-2 Sturmovik (its
-// Bomber), Li-2. Germany and the Soviet Union have no carrier aircraft.
+// Bomber), Li-2. UK (and Canada): Spitfire, Lancaster, Dakota, Fairey Barracuda, Fairey Swordfish.
+// Germany and the Soviet Union have no carrier aircraft.
 // Ships are in ships.ts.
 
 import { C, mix, shade, type Painter } from "./paint";
 import { FIRE_TIMING } from "./timeline";
 import { redStar, star } from "./vehicles";
-import { justFired, type Look, type Pose, type Rig } from "./rig";
+import { justFired, kitOf, type Look, type Pose, type Rig } from "./rig";
 
 const de = (look: Look) => look.nation === "germany";
+const uk = (look: Look) => kitOf(look) === "uk";
+
+/** The RAF roundel: a red centre in a white ring in a blue ring, the UK's only marking. */
+function roundel(p: Painter, cx: number, cy: number, r: number): void {
+  p.disc(cx, cy, r, C("battleRoundel"));
+  p.disc(cx, cy, r * 0.64, C("battleStar"));
+  p.disc(cx, cy, r * 0.34, C("battleSun"));
+}
+
+/** The fin flash: red, white and blue upright stripes on the fin. */
+function finFlash(p: Painter, x: number, top: number, h: number): void {
+  p.rect(x, top, 2, h, C("battleSun"));
+  p.rect(x + 2, top, 1, h, C("battleStar"));
+  p.rect(x + 3, top, 2, h, C("battleRoundel"));
+}
 const jp = (look: Look) => look.nation === "japan";
 const su = (look: Look) => look.nation === "ussr";
 
@@ -51,7 +67,27 @@ export const fighterRig: Rig = {
     const shake = pose.fire === "planeGuns" && justFired(pose.ct, FIRE_TIMING.planeGuns.shots, 40) >= 0 ? 1 : 0;
     p.ctx.save();
     p.ctx.translate(-shake, y);
-    if (su(look)) {
+    if (uk(look)) {
+      // Spitfire: slim, a long pointed nose with its exhaust stacks, the teardrop canopy, the
+      // elliptical wing with the radiator under it, a pointed elliptical fin with the fin flash.
+      p.poly([[-26, 0], [-26, -9], [-23, -12], [-20, -10], [-17, -3]], T.mid);
+      finFlash(p, -24, -9, 6);
+      p.poly([[-27, -1], [-20, -3], [2, -5], [16, -4], [25, -2], [25, 2], [16, 3], [-20, 2], [-27, 1]], T.mid);
+      p.rect(-20, 1, 36, 2, T.lo);
+      p.rect(-18, -4, 34, 1, T.hi);
+      p.poly([[-1, -5], [2, -9], [8, -9], [11, -5]], C("battleSkyLow"));
+      p.line(5, -9, 5, -5, T.deep);
+      p.rect(-30, -1, 9, 2, T.lo);
+      roundel(p, -11, -1, 3);
+      p.poly([[-9, 2], [-4, 6], [2, 8], [9, 8], [13, 5], [14, 2]], T.mid);
+      p.line(-9, 2, 14, 2, T.hi);
+      roundel(p, 3, 5, 2.5);
+      p.rect(0, 8, 6, 2, T.lo);
+      invasionStripes(p, -18, -3, 3);
+      for (let x = 15; x < 23; x += 2) p.px(x, -2, C("battleSteelDark"));
+      p.poly([[25, -2], [29, 0], [25, 2]], C("battleSteelDark"));
+      prop(p, 29, 0, 11, pose.t);
+    } else if (su(look)) {
       // Yak-9: slim and rounded, a teardrop canopy over a raised spine, the radiator scoop under
       // the belly, a red spinner, and red stars on the tail and wing.
       p.poly([[-26, 0], [-25, -11], [-20, -11], [-16, -3]], T.mid);
@@ -178,6 +214,35 @@ export const bomberRig: Rig = {
       p.ctx.restore();
       return;
     }
+    if (uk(look)) {
+      // Lancaster: a long slab-sided fuselage, the glazed nose with its turret, a turret on the
+      // spine and one in the tail, the twin oval fins at the tailplane's tips, four engines on the
+      // great wing (the near two show) and the long bomb bay.
+      p.ellipse(-44, -11, 3, 9, shade(T.mid, 0.8));
+      p.rect(-50, -2, 14, 3, T.lo);
+      p.poly([[-48, -2], [-36, -7], [24, -8], [36, -6], [42, -2], [42, 4], [30, 7], [-30, 5], [-48, 1]], T.mid);
+      p.rect(-36, -7, 60, 1, T.hi);
+      p.rect(-30, 4, 60, 2, T.lo);
+      p.ellipse(40, 0, 5, 5, C("battleSkyLow"));
+      p.line(39, -4, 39, 4, T.deep);
+      p.poly([[-48, -3], [-54, 0], [-48, 3]], C("battleSkyLow"));
+      p.disc(-12, -9, 3, C("battleSkyLow"));
+      p.rect(-13, -10, 6, 1, C("battleSteelDark"));
+      p.poly([[16, -8], [20, -12], [28, -11], [31, -7]], C("battleSkyLow"));
+      roundel(p, -24, -1, 4);
+      p.ellipse(-41, -12, 3, 9, T.mid);
+      finFlash(p, -43, -17, 8);
+      p.rect(-20, 5, 34, doors ? 4 : 1, doors ? C("battleInk") : T.deep);
+      p.poly([[-14, 3], [26, 3], [22, 15], [-18, 13]], T.mid);
+      p.line(-14, 3, 26, 3, T.hi);
+      for (const [ex, ey] of [[10, 5], [20, 9]] as const) {
+        p.poly([[ex - 14, ey - 3], [ex + 6, ey - 3], [ex + 8, ey], [ex + 6, ey + 3], [ex - 14, ey + 3]], T.lo);
+        p.poly([[ex + 6, ey - 2], [ex + 10, ey], [ex + 6, ey + 2]], C("battleSteelDark"));
+        prop(p, ex + 10, ey, 9, pose.t + ex * 13);
+      }
+      p.ctx.restore();
+      return;
+    }
     // Tail.
     p.poly([[-44, -1], [-42, -20], [-35, -20], [-30, -4]], T.mid);
     p.rect(-48, -2, 14, 3, T.lo);
@@ -249,6 +314,13 @@ export const transportRig: Rig = {
       p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
       p.disc(6, 19, 3, C("battleRubber"));
       mottle(p, -30, -6, 50, look);
+    } else if (uk(look)) {
+      // Dakota: the C-47 in RAF colors, invasion stripes, the roundel and a fin flash.
+      for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
+      p.rect(-26, -5, 5, 9, T.lo);
+      invasionStripes(p, -40, -6, 5, 2);
+      roundel(p, -15, 0, 4);
+      finFlash(p, -43, -15, 9);
     } else if (su(look)) {
       // Li-2: the Soviet-built DC-3, cabin windows, a gun turret on the spine, a red star.
       for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
@@ -313,7 +385,22 @@ export const diveBomberRig: Rig = {
     p.rect(-24, 2, 42, 2, T.lo);
     p.rect(-22, -5, 40, 1, T.hi);
     p.rect(-37, -1, 10, 2, T.lo);
-    if (jp(look)) {
+    if (uk(look)) {
+      // Fairey Barracuda: a deep fuselage, the wing set high at the top of it, a long glazed canopy
+      // over the crew of three, the tailplane braced high up the fin, a bomb on the crutch.
+      p.rect(-34, -15, 9, 2, T.lo);
+      p.line(-30, -13, -28, -4, C("battleSteelDark"));
+      longCanopy(p, -10, 14, -12, T.deep);
+      roundel(p, -17, 0, 3);
+      finFlash(p, -31, -12, 7);
+      p.poly([[-8, -4], [16, -4], [12, 4], [-11, 3]], T.mid);
+      p.line(-8, -4, 16, -4, T.hi);
+      roundel(p, 2, 0, 2.5);
+      p.line(6, 4, 7, 11, T.lo, 2);
+      p.ellipse(7, 12, 2, 2, C("battleRubber"));
+      p.rect(20, 3, 5, 2, T.lo);
+      radialNose(p, 22, -5, 4, pose.t);
+    } else if (jp(look)) {
       // D3A (Val): elliptical wings, fixed legs in spats, a long canopy, the hinomaru.
       longCanopy(p, -8, 14, -11, T.deep);
       sun(p, -18, 0, 2);
@@ -355,7 +442,28 @@ export const torpedoBomberRig: Rig = {
     const y = bob(pose, 400, 2);
     p.ctx.save();
     p.ctx.translate(0, y);
-    if (jp(look)) {
+    if (uk(look)) {
+      // Fairey Swordfish: a fabric biplane, two open cockpits with the crew's heads showing, the
+      // upper wing high on its struts, big fixed wheels and the torpedo slung between them.
+      p.poly([[-32, -1], [-30, -13], [-25, -13], [-21, -3]], T.mid);
+      finFlash(p, -30, -11, 7);
+      p.poly([[-34, -1], [-24, -4], [12, -5], [22, -5], [26, -3], [26, 3], [18, 4], [-24, 3], [-34, 1]], T.mid);
+      p.rect(-24, 2, 42, 2, T.lo);
+      p.rect(-37, -1, 10, 2, T.lo);
+      roundel(p, -15, 0, 3);
+      for (const hx of [-4, 4]) {
+        p.rect(hx, -8, 4, 3, C("battleSkin"));
+        p.rect(hx, -9, 4, 2, C("battleLeather"));
+      }
+      for (const sx of [-10, 12]) p.line(sx, -14, sx + 1, 2, C("battleSteelDark"));
+      p.rect(-14, -16, 32, 3, T.mid);
+      p.line(-14, -16, 18, -16, T.hi);
+      roundel(p, 4, -15, 1.5);
+      p.line(8, 4, 6, 12, C("battleSteelDark"), 2);
+      p.line(14, 4, 16, 12, C("battleSteelDark"), 2);
+      p.disc(6, 14, 3, C("battleRubber"));
+      p.disc(16, 14, 3, C("battleRubber"));
+    } else if (jp(look)) {
       // B5N (Kate): slim, a long three-seat canopy, the torpedo slung under the fuselage.
       p.poly([[-34, -1], [-32, -14], [-25, -14], [-21, -4]], T.mid);
       p.poly([[-36, -1], [-24, -5], [12, -6], [22, -5], [26, -3], [26, 3], [18, 5], [-24, 3], [-36, 1]], T.mid);
@@ -380,6 +488,7 @@ export const torpedoBomberRig: Rig = {
     p.poly([[-10, 2], [14, 2], [11, 10], [-13, 9]], T.mid);
     p.line(-10, 2, 14, 2, T.hi);
     if (jp(look)) sun(p, 0, 6, 2);
+    if (uk(look)) roundel(p, 0, 6, 2.5);
     radialNose(p, 22, -5, 4, pose.t);
     if (stillAboard(pose, "aerialTorpedo")) {
       // The torpedo: a long dark body with its tail fins, under the fuselage.

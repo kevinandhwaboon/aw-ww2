@@ -107,12 +107,12 @@ function halftrack(frame) {
   return finish(s);
 }
 
-function stuart(frame) {
+export function stuart(frame, mark = star) {
   const s = sprite();
   const dip = frame;
   track(s, frame, { left: 4, right: 26, wheels: [8, 13, 18, 23] });
   s.rect(4, 18 + dip, 26, 23 + dip, "team", 3);
-  star(s, 12, 18 + dip);
+  mark(s, 12, 18 + dip);
   s.rect(4, 10 + dip, 26, 17 + dip, "team", 1, true);
   grille(s, 6, 9, 12 + dip, 16 + dip);
   // Small turret and a short 37mm gun.
@@ -122,12 +122,12 @@ function stuart(frame) {
   return finish(s);
 }
 
-function sherman(frame) {
+export function sherman(frame, mark = star) {
   const s = sprite();
   const dip = frame;
   track(s, frame);
   s.rect(1, 18 + dip, 30, 23 + dip, "team", 3);
-  star(s, 12, 18 + dip);
+  mark(s, 12, 18 + dip);
   s.rect(1, 8 + dip, 30, 17 + dip, "team", 1, true);
   grille(s, 3, 8, 10 + dip, 15 + dip);
   s.rect(25, 9 + dip, 30, 17 + dip, "team", 2);
@@ -141,13 +141,13 @@ function sherman(frame) {
   return finish(s);
 }
 
-function wolverine(frame) {
+export function wolverine(frame, mark = star) {
   const s = sprite();
   const dip = frame;
   track(s, frame);
   // Low hull with sloped sides.
   s.poly([[1, 18 + dip], [30, 18 + dip], [29, 23 + dip], [2, 23 + dip]], "team", 3);
-  star(s, 10, 18 + dip);
+  mark(s, 10, 18 + dip);
   s.rect(1, 10 + dip, 30, 17 + dip, "team", 1, true);
   grille(s, 3, 7, 12 + dip, 16 + dip);
   // Open-topped turret at the back: you see the crew space inside. Long 3-inch gun.

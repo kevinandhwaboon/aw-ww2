@@ -138,13 +138,14 @@ describe("the packs that ship with the game", () => {
     ]);
   });
 
-  it("the shipped packs use the 32-pixel unit sheets, with paratroopers on the US land ones (08-art-pipeline §17)", () => {
+  it("the shipped packs use the 32-pixel unit sheets, with paratroopers on the US and UK land ones (08-art-pipeline §17)", () => {
     for (const raw of [defaultPack, nightOps]) {
       for (const unitSheet of parseArtPack(raw).unitSheets) {
         expect(unitSheet.frameSize).toBe(32);
         expect(unitSheet.path).toContain("-32-");
         const usLand = unitSheet.nation === "us" && unitSheet.path.includes("-land-");
-        expect(unitSheet.paratroopers).toEqual(usLand ? [13, 14, 15, 16] : []);
+        const ukLand = unitSheet.nation === "uk" && unitSheet.path.includes("-land-");
+        expect(unitSheet.paratroopers).toEqual(usLand ? [13, 14, 15, 16] : ukLand ? [13, 14] : []);
       }
     }
   });
@@ -188,6 +189,12 @@ describe("the packs that ship with the game", () => {
     }
   });
 
+  it("the United Kingdom has art for every unit type, Heavy Tank, ships and carrier aircraft included (01-units §1)", () => {
+    const pack = parseArtPack(defaultPack);
+    const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "uk").flatMap((s) => s.rows));
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(true);
+  });
+
   it("the Soviet Union has no ships and no carrier aircraft, as it fielded no carriers (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
@@ -198,7 +205,7 @@ describe("the packs that ship with the game", () => {
 
   it("every nation's sheets come in each built-in player color, so any player can field any nation (08-art-pipeline §12)", () => {
     const pack = parseArtPack(defaultPack);
-    for (const nation of ["us", "germany", "japan", "ussr"] as const) {
+    for (const nation of ["us", "germany", "japan", "ussr", "uk"] as const) {
       for (const { team } of BUILT_IN_PACK.players.slice(0, 3)) {
         expect(findUnitArt(pack, nation, BUILT_IN_PACK.players.findIndex((p) => p.team === team), "infantry"), `${nation} ${team}`).not.toBeNull();
       }
@@ -423,8 +430,24 @@ describe("each nation's colors (08-art-pipeline §12)", () => {
   });
 
   it("a nation with no color of its own takes a player color nobody else is wearing", () => {
-    expect(teams(["uk", "us"])).toEqual(["red", "olive"]);
-    expect(teams(["germany", "uk"])).toEqual(["grey", "red"]);
+    const pack = parseArtPack({ name: "x", nationColors: { us: { team: "olive", fill: "#64783a", outline: "#2a3818" } } });
+    expect(teams(["uk", "us"], pack)).toEqual(["red", "olive"]);
+  });
+
+  it("the UK wears British brown, so a US and a UK player on the same map never match (08-art-pipeline §12)", () => {
+    expect(teams(["us", "uk", "germany"])).toEqual(["olive", "brown", "grey"]);
+  });
+
+  it("Canada borrows the UK's color and the UK's unit art (00-master-design §6)", () => {
+    expect(teams(["canada", "germany"])).toEqual(["brown", "grey"]);
+    const pack = parseArtPack(defaultPack);
+    try {
+      setGameNations(["canada", "germany"]);
+      const tank = findUnitArt(pack, "canada", 0, "heavyTank");
+      expect(tank && pack.unitSheets[tank.sheet]?.nation).toBe("uk");
+    } finally {
+      setGameNations([]);
+    }
   });
 
   it("a pack can give nations its own colors, or none so every player keeps their slot's color", () => {

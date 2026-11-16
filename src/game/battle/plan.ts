@@ -105,15 +105,17 @@ export type SquadWeapon = "rifle" | "smg" | "lmg";
 
 /**
  * A squad is mostly riflemen, as real WW2 squads were. The fifth man carries the squad's automatic
- * weapon (a BAR, an MG 42 or a Type 99), lying prone. The squad leader, second in line, has a
- * submachine gun (Thompson, MP 40 or Type 100); a US squad has a second Thompson, and paratroopers,
- * who carried more of them, a third. The rest carry rifles (Garand, Kar98k or Arisaka; paratroopers
- * the M1 carbine).
+ * weapon (a BAR, an MG 42, a Type 99, a DP or a Bren), lying prone. The squad leader, second in
+ * line, has a submachine gun (Thompson, MP 40, Type 100, PPSh-41 or Sten); a US or Soviet squad has a
+ * second one, and paratroopers, who carried more of them, another. The rest carry rifles (Garand,
+ * Kar98k, Arisaka, Mosin or Lee-Enfield; US paratroopers the M1 carbine). A British section, like
+ * a German or Japanese squad, has one submachine gun.
  */
 export function squadWeapon(figure: number, nation: NationId | null, paratrooper = false): SquadWeapon {
   if (figure === 4) return "lmg";
   if (figure === 1) return "smg";
-  if (nation !== "germany" && nation !== "japan" && figure === 5) return "smg";
+  const oneSmg = nation === "germany" || nation === "japan" || nation === "uk" || nation === "canada";
+  if (!oneSmg && figure === 5) return "smg";
   if (paratrooper && figure === 3) return "smg";
   return "rifle";
 }

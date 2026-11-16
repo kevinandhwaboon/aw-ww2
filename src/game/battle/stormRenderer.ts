@@ -11,7 +11,7 @@ import type { NationId } from "../../engine/data/nations";
 import { dockCargo, drawBackdrop, drawHarbor, SCENE } from "./backdrops";
 import type { Cutscene } from "./BattleScene";
 import { C, mix, Painter, shade, teamShades } from "./paint";
-import { along, clamp01, lerp, seg, type Look, type Pt } from "./rig";
+import { along, clamp01, kitOf, lerp, seg, type Look, type Pt } from "./rig";
 import { drawGun, drawSoldier, GUN, sandbags, soldierFrame, squadGun } from "./soldiers";
 import { stormCues, type SoundCue } from "../sound/sounds";
 import { capturePointsAt, coverFigures, coverShotTimes, flagHeight, isFollowUp, lastInside, stormLength, stormTimes, STORM_MS, type StormPlan } from "./storm";
@@ -476,6 +476,7 @@ export class StormRenderer implements Cutscene {
     const f = soldierFrame(0, bob, "run");
     const de = look.nation === "germany";
     const su = look.nation === "ussr";
+    const uk = kitOf(look) === "uk";
     const plan = this.plan;
     if (plan.unit === "infantry") {
       // Weapon held across the chest at port arms.
@@ -496,6 +497,13 @@ export class StormRenderer implements Cutscene {
         back: { x: f.frontShoulder.x + 4, y: y + 4 },
         front: { x: f.frontShoulder.x + 12, y: y + 4 },
         weapon: () => {
+          if (uk) {
+            // The PIAT on his shoulder: a short fat body, its padded butt, the trough in front.
+            p.rect(-12, y - 2, 20, 5, C("battleSteelDark"));
+            p.rect(-15, y - 3, 3, 7, C("battleLeather"));
+            p.rect(8, y + 1, 10, 2, C("battleSteelDark"));
+            return;
+          }
           if (su) {
             // The PTRD over his shoulder: a long thin barrel with its muzzle brake.
             p.rect(-14, y, 42, 1, C("battleSteelDark"));
@@ -523,7 +531,7 @@ export class StormRenderer implements Cutscene {
       return;
     }
     // The other man: a baseplate or a rocket bag on his back, a rifle or carbine in his hands.
-    const kind = de ? "kar98" : su ? "ppsh" : "carbine";
+    const kind = de ? "kar98" : su ? "ppsh" : uk ? "lee" : "carbine";
     const butt = { x: f.frontShoulder.x - 6, y: f.hip };
     drawSoldier(p, 0, bob, "run", look, {
       stride,
