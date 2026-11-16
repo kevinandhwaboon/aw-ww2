@@ -286,7 +286,7 @@ describe("carrier aircraft (05-supply-transport §10, 01-units §3)", () => {
 
   it("a Torpedo Bomber attacks only ships on the surface: never land units, aircraft, submarines or fortifications", () => {
     const hits = [...UNIT_TYPE_IDS, "fort" as const].filter((t) => baseDamage("torpedoBomber", t) !== null);
-    expect(hits.sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "torpedoBoat"]);
+    expect(hits.sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "supplyShip", "torpedoBoat"]);
     for (const ship of hits) expect(baseDamage("torpedoBomber", ship)?.base).toBe(60);
   });
 

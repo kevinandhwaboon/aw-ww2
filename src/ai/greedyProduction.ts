@@ -45,7 +45,12 @@ export abstract class ProductionBrain extends LandingBrain {
       reserve = Math.max(reserve, transport.cost);
     }
 
-    // Everything else is chosen among armed units; transports are only ever built by the rule above.
+    // A Supply Ship for the fleet (09-ai §4f), at the first port that can build one.
+    for (const property of this.state.properties) {
+      if (this.supplyShipWanted(property.pos)) return { type: "build", unitType: "supplyShip", pos: property.pos };
+    }
+
+    // Everything else is chosen among armed units; transports and Supply Ships only by the rules above.
     const sites = this.state.properties
       .map((p) => ({ pos: p.pos, options: buildOptions(this.state, p.pos).filter((o) => defOf(o.type).range !== null && buildProblem(this.state, o.type, p.pos) === null) }))
       .filter((s) => s.options.length > 0);
@@ -124,6 +129,19 @@ export abstract class ProductionBrain extends LandingBrain {
         : owned < this.w.maxAirTransports &&
           waiting.some((u) => defOf(u.type).canCapture && this.connected(u.type, u.pos, site) && this.canFly(this.phantom(type, site), site, u));
     return wanted ? { type, cost: option.cost } : null;
+  }
+
+  /**
+   * Whether this free port should build a Supply Ship now (09-ai §4f): one for every few warships we
+   * have, up to a few, when we can afford it here.
+   */
+  protected supplyShipWanted(site: Point): boolean {
+    if (propertyDefAt(this.state, site)?.builds !== "naval" || buildProblem(this.state, "supplyShip", site) !== null) return false;
+    if (this.w.keepSitesForService && this.neededForService(site)) return false;
+    const mine = this.state.units.filter((u) => u.owner === this.me);
+    const warships = mine.filter((u) => defOf(u.type).category === "naval" && defOf(u.type).range !== null).length;
+    const supplyShips = mine.filter((u) => u.type === "supplyShip").length;
+    return supplyShips < Math.min(this.w.maxSupplyShips, Math.floor(warships / this.w.warshipsPerSupplyShip));
   }
 
   /** Whether we have, or could build, Landing Craft to carry land units from this site's landmass overseas. */

@@ -154,7 +154,7 @@ export type GameEvent =
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
   | { readonly type: "unitDived"; readonly unitId: UnitId }
   | { readonly type: "unitSurfaced"; readonly unitId: UnitId }
-  /** An air unit crashed or a ship sank at turn start (05-supply-transport §5, §7). */
+  /** An air unit ran out of fuel at turn start and crashed (05-supply-transport §5). */
   | {
       readonly type: "unitOutOfFuel";
       readonly unitId: UnitId;
@@ -162,6 +162,11 @@ export type GameEvent =
       readonly owner: PlayerId;
       readonly pos: Point;
     }
+  /**
+   * A ship's tank ran dry at turn start. It stays where it is, unable to move until it's refuelled; a
+   * submerged submarine also surfaces, with its own unitSurfaced event first (05-supply-transport §7).
+   */
+  | { readonly type: "unitStranded"; readonly unitId: UnitId; readonly pos: Point }
   | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
   | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }

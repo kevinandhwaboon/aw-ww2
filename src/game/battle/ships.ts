@@ -4,7 +4,7 @@
 
 import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type V3 } from "./angled/mesh";
 import {
-  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, illustrious, iowa, kagero, lct, mtb, ptBoat, sBoot, shokaku, tClass, tribal, typeVII,
+  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, illustrious, iowa, kagero, lct, mtb, oiler, ptBoat, sBoot, shokaku, tClass, tribal, typeVII,
   warspite, waterline, yamato, zerstorer,
   type Launch, type Salvo, type ShipModel,
 } from "./angled/shipModels";
@@ -326,4 +326,19 @@ export const carrierRig: Rig = shipRig({
   model: (_pose, look) => carrier(look),
   rest: (look) => carrier(look),
   muzzle: () => [0, 0, 20],
+});
+
+// ---- Supply Ship: unarmed; a fleet oiler with its fuelling booms out ----
+
+function supplyShip(look: Look): ShipModel {
+  const kit = kitOf(look);
+  return memo(`sp|${team(look)}`, () => oiler(look.team, kit === "jp" ? "jp" : kit === "uk" ? "uk" : "us"));
+}
+
+export const supplyShipRig: Rig = shipRig({
+  hit: { x: 0, y: -16 },
+  style: { speed: 14, bowWave: 0.8 },
+  model: (_pose, look) => supplyShip(look),
+  rest: (look) => supplyShip(look),
+  muzzle: () => [0, 0, 16],
 });

@@ -36,7 +36,7 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       fuelText.textContent = unit ? `Fuel ${unit.fuel.left}/${unit.fuel.max}` : "";
       fuelText.classList.toggle("tile-low", unit?.fuel.low === true);
       ammoText.hidden = !unit?.ammo;
-      ammoText.textContent = unit?.ammo ? `Ammo ${unit.ammo.left}/${unit.ammo.max}` : "";
+      ammoText.textContent = unit?.ammo ? `${unit.ammo.label} ${unit.ammo.left}/${unit.ammo.max}` : "";
       ammoText.classList.toggle("tile-low", unit?.ammo?.low === true);
       captureLine.hidden = !info.capture;
       captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
@@ -66,7 +66,7 @@ function cargoRows(cargo: readonly Passenger[]): HTMLElement[] {
       const row = el("div", "tile-passenger");
       const fuel = el("span", p.fuel.low ? "tile-low" : undefined, `Fuel ${p.fuel.left}/${p.fuel.max}`);
       const parts: HTMLElement[] = [el("span", "tile-passenger-name", p.name), el("span", undefined, `HP ${p.hp}`), fuel];
-      if (p.ammo) parts.push(el("span", p.ammo.low ? "tile-low" : undefined, `Ammo ${p.ammo.left}/${p.ammo.max}`));
+      if (p.ammo) parts.push(el("span", p.ammo.low ? "tile-low" : undefined, `${p.ammo.label} ${p.ammo.left}/${p.ammo.max}`));
       row.append(...parts);
       return row;
     }),

@@ -7,7 +7,7 @@ import { terrainName, unitName } from "../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../pixelFont";
 import { playerColors } from "../placeholderUnits";
 import { bomberRig, diveBomberRig, fighterRig, torpedoBomberRig, transportRig } from "./airNaval";
-import { battleshipRig, carrierRig, destroyerRig, landingCraftRig, submarineRig, torpedoBoatRig } from "./ships";
+import { battleshipRig, carrierRig, destroyerRig, landingCraftRig, submarineRig, supplyShipRig, torpedoBoatRig } from "./ships";
 import { backdropView, drawBackdrop, SCENE, type BackdropView } from "./backdrops";
 import { polished } from "./angled/mesh";
 import { rimLight } from "./colors";
@@ -45,6 +45,7 @@ const RIGS: Record<FigureKind, Rig> = {
   landingCraft: landingCraftRig,
   torpedoBoat: torpedoBoatRig,
   carrier: carrierRig,
+  supplyShip: supplyShipRig,
   bunker: bunkerRig,
 };
 
@@ -83,6 +84,7 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   landingCraft: [pt(96, 206)],
   torpedoBoat: [pt(100, 204)],
   carrier: [pt(98, 204)],
+  supplyShip: [pt(98, 204)],
   bunker: [pt(96, 208)],
 };
 const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
@@ -91,7 +93,7 @@ const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
 const SHADOW: Record<FigureKind, number> = {
   infantry: 11, assaultInfantry: 26, mortar: 24, recon: 26, halftrack: 34, lightTank: 28, mediumTank: 34,
   heavyTank: 42, tankDestroyer: 34, artillery: 30, rocketArtillery: 32, mobileAA: 34, flakGun: 34,
-  fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0,
+  fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0, supplyShip: 0,
   bunker: 40,
 };
 

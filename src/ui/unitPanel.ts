@@ -38,6 +38,8 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       const costs = [...(burn > 0 ? [`−${burn} per turn`] : []), ...(perMove > 1 ? [`−${perMove} per tile moved`] : [])];
       row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${costs.length > 0 ? `  (${costs.join(", ")})` : ""}`);
       row("Ammo", def.primaryWeapon ? `${unit.ammo} / ${ammo}  (${def.primaryWeapon.name})` : "—");
+      // A Supply Ship's resupplies left before it has to go back to port (05-supply-transport §3b).
+      if (def.supplyLoads !== null) row("Supplies", `${unit.ammo} / ${ammo}`);
       if (def.secondaryWeapon) row("Secondary", def.secondaryWeapon.name);
       row("Move", stats.movePoints(state, unit), def.movePoints);
       row("Move type", def.movementType);

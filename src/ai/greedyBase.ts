@@ -35,6 +35,7 @@ export const defOf = (type: UnitTypeId): UnitDef => UNITS[type];
 export const isLandingCraft = (type: UnitTypeId) => defOf(type).specialActions.includes("unloadOnBeach");
 export const isAirTransport = (type: UnitTypeId) => defOf(type).specialActions.includes("airDrop");
 export const isCarrier = (type: UnitTypeId) => defOf(type).specialActions.includes("launch");
+export const isSupplyShip = (type: UnitTypeId) => defOf(type).specialActions.includes("repairShips");
 export const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 /** What a unit is trying to do this turn, which decides how its destination is scored. */
@@ -163,7 +164,32 @@ export abstract class BrainBase {
       .filter((u) => u.owner === this.me && isCarrier(u.type))
       .filter((u) => (defOf(u.type).transport?.carries.includes(unit.type) ?? false) && u.cargo.length < (defOf(u.type).transport?.capacity ?? 0))
       .map((u) => u.pos);
-    return [...properties, ...carriers];
+    return [...properties, ...carriers, ...this.besideSupplyShips(unit)];
+  }
+
+  /**
+   * For a ship: the free squares next to our Supply Ships with supplies left, where it's refuelled,
+   * rearmed and repaired at the start of our turn (05-supply-transport §3a, §3b, 09-ai §4f). None for
+   * other units, nor for a Supply Ship: only a port refills its supplies.
+   */
+  protected besideSupplyShips(unit: Unit): Point[] {
+    if (defOf(unit.type).category !== "naval" || isSupplyShip(unit.type)) return [];
+    const tiles: Point[] = [];
+    for (const supplier of this.state.units) {
+      if (supplier.owner !== this.me || supplier.id === unit.id || !isSupplyShip(supplier.type) || supplier.ammo <= 0) continue;
+      for (const p of this.neighbors(supplier.pos)) {
+        const occupant = unitAt(this.state, p);
+        if (occupant && occupant.id !== unit.id) continue;
+        if (stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) === null) continue;
+        tiles.push(p);
+      }
+    }
+    return tiles;
+  }
+
+  /** The squares orthogonally next to p, on the map. */
+  protected neighbors(p: Point): Point[] {
+    return [{ x: p.x, y: p.y - 1 }, { x: p.x + 1, y: p.y }, { x: p.x, y: p.y + 1 }, { x: p.x - 1, y: p.y }].filter((q) => inBounds(this.state.map, q));
   }
 
   /** Tiles this indirect-fire unit could stand on with one of these enemies in range. */

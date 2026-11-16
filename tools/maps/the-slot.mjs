@@ -143,7 +143,7 @@ const usOnLeft = meanX(0) < meanX(1);
 const buildable = [
   "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
-  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
+  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "supplyShip",
 ];
 
 const scenario = {

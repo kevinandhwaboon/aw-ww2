@@ -23,6 +23,7 @@ import {
   loadProblem,
   supplyTargets,
   unloadTiles,
+  usesSupplyLoads,
 } from "./transport";
 import { diveProblem, surfaceProblem } from "./submarine";
 import { isHiddenFrom } from "./visibility";
@@ -185,8 +186,11 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
 
   if (action.type === "supply") {
     const targets = supplyTargets(afterMove, moved);
-    if (targets.length === 0) return reject("cannotSupply", "no adjacent unit needs supplying");
-    const supplied = applySupply(afterMove, targets);
+    if (targets.length === 0) {
+      const dry = usesSupplyLoads(moved) && moved.ammo <= 0;
+      return reject("cannotSupply", dry ? "it has no supplies left: refill at a port (05-supply-transport §3b)" : "no adjacent unit needs supplying");
+    }
+    const supplied = applySupply(afterMove, moved, targets);
     return { ok: true, state: supplied.state, events: [...events, ...supplied.events] };
   }
 

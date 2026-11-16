@@ -61,6 +61,7 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "destroyer", d: "submarine", at: "sea", dt: "sea", submerged: true, counter: "primary" },
   { a: "submarine", d: "battleship", at: "sea", dt: "sea" },
   { a: "torpedoBoat", d: "landingCraft", at: "sea", dt: "beach" },
+  { a: "submarine", d: "supplyShip", at: "sea", dt: "sea" },
   { a: "torpedoBomber", d: "carrier", at: "sea", dt: "sea", counter: "secondary" },
   { a: "torpedoBomber", d: "battleship", at: "sea", dt: "sea", counter: "secondary" },
   { a: "diveBomber", d: "infantry", dt: "bunker" },
@@ -82,7 +83,7 @@ function planFor(m: Matchup, flip: boolean): BattlePlan {
   // Battle halves carry the nation whose equipment is drawn, as in a real game (Italy borrows Germany's).
   const attackerNation = drawnAs(flip ? axis : allies);
   const defenderNation = drawnAs(flip ? allies : axis);
-  const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier"].includes(k);
+  const naval = (k: FigureKind) => ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "supplyShip"].includes(k);
   const left = {
     half: "left" as const,
     kind: m.a,
