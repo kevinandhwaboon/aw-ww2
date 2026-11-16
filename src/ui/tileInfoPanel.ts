@@ -12,13 +12,14 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   const defense = el("div", "tile-defense");
   const objectiveLine = el("div", "tile-objective", "★ Objective");
   const captureLine = el("div", "tile-capture");
+  const bridgeLine = el("div", "tile-capture");
   const unitLine = el("div", "tile-unit");
   const supplyLine = el("div", "tile-supply");
   const fuelText = el("span");
   const ammoText = el("span");
   supplyLine.append(fuelText, ammoText);
   const cargoLine = el("div", "tile-cargo");
-  panel.append(name, defense, objectiveLine, captureLine, unitLine, supplyLine, cargoLine);
+  panel.append(name, defense, objectiveLine, captureLine, bridgeLine, unitLine, supplyLine, cargoLine);
   root.append(panel);
 
   return {
@@ -39,6 +40,14 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       ammoText.classList.toggle("tile-low", unit?.ammo?.low === true);
       captureLine.hidden = !info.capture;
       captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
+      // Major Bridges (02-terrain §4a).
+      const bridge = info.bridge;
+      bridgeLine.hidden = !bridge;
+      bridgeLine.textContent = !bridge
+        ? ""
+        : bridge.action === "blow"
+          ? `Can be blown by ${bridge.by}`
+          : `Can be rebuilt by ${bridge.by}: ${bridge.left}/${bridge.total}`;
       // A transport lists who is aboard, each with HP, fuel and ammo (05-supply-transport §4).
       const cargo = info.unit?.cargo;
       cargoLine.hidden = !cargo;

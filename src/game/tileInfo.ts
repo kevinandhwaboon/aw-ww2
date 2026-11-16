@@ -1,8 +1,9 @@
 // What the info box says about a tile. Stars come from the same stat the damage formula uses.
 
-import { TERRAIN } from "../engine/data/terrain";
+import { bridgeWorkAt } from "../engine/bridges";
+import { TERRAIN, type TerrainDef } from "../engine/data/terrain";
 import { terrainAt, type Point } from "../engine/map";
-import { UNITS, unitDef } from "../engine/data/units";
+import { UNIT_TYPE_IDS, UNITS, unitDef } from "../engine/data/units";
 import { servicesUnit } from "../engine/economy";
 import { CAPTURE_POINTS, displayHp, propertyAt, unitAt, type GameState, type PlayerId, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
@@ -131,6 +132,28 @@ export interface TileInfo {
   readonly capture: { readonly left: number; readonly total: number } | null;
   /** A property some scenario objective names (04-economy §8). */
   readonly objective: boolean;
+  /**
+   * A Major Bridge says who can blow it; a Blown Bridge who can rebuild it and how far that has got
+   * (02-terrain §4a). `by` is the unit name(s). null for other terrain.
+   */
+  readonly bridge:
+    | { readonly action: "blow"; readonly by: string }
+    | { readonly action: "rebuild"; readonly by: string; readonly left: number; readonly total: number }
+    | null;
+}
+
+/** The names of the unit types that can blow and rebuild bridges, e.g. "Assault Infantry". */
+function engineers(): string {
+  const types = UNIT_TYPE_IDS.filter((t) => unitDef(t).specialActions.includes("demolish"));
+  return types.map(unitName).join(" or ");
+}
+
+function bridgeInfo(state: GameState, tile: Point): TileInfo["bridge"] {
+  const def = TERRAIN[terrainAt(state.map, tile)] as TerrainDef;
+  if (def.demolition) return { action: "blow", by: engineers() };
+  if (!def.rebuild) return null;
+  const total = def.rebuild.points;
+  return { action: "rebuild", by: engineers(), left: bridgeWorkAt(state, tile)?.points ?? total, total };
 }
 
 export function tileInfo(state: GameState, tile: Point): TileInfo {
@@ -154,5 +177,6 @@ export function tileInfo(state: GameState, tile: Point): TileInfo {
       : null,
     capture: property ? { left: property.capturePoints, total: CAPTURE_POINTS } : null,
     objective: objectiveTiles(state).some((p) => p.x === tile.x && p.y === tile.y),
+    bridge: bridgeInfo(state, tile),
   };
 }

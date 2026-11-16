@@ -137,6 +137,7 @@ export function moveSound(type: UnitTypeId): SoundId {
 export function mapEventSound(event: GameEvent): SoundId | null {
   switch (event.type) {
     case "unitBuilt":
+    case "bridgeRebuilt":
       return "built";
     case "unitAmbushed":
       return "alert";

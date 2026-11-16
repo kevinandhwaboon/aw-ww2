@@ -198,7 +198,11 @@ export interface TerrainSheet {
   /** First of 16 joined pieces, in neighbor-mask order (N=1, E=2, S=4, W=8). */
   readonly connected: Readonly<Partial<Record<"road" | "river", number>>>;
   /** Bridge decks drawn over a river piece. */
-  readonly bridges: { readonly horizontal: number; readonly vertical: number } | null;
+  readonly bridges: BridgeTiles | null;
+  /** Major Bridge decks drawn over a river piece (02-terrain §4a). Without them, the Bridge deck is used. */
+  readonly majorBridges?: BridgeTiles;
+  /** Blown Bridge wrecks drawn over a river piece (02-terrain §4a). Without them, a Blown Bridge is drawn as river. */
+  readonly blownBridges?: BridgeTiles;
   /** First of 8 shore pieces drawn over sea next to land: edges N, E, S, W, then corners NE, SE, SW, NW. */
   readonly shore?: number;
   /**
@@ -209,6 +213,12 @@ export interface TerrainSheet {
   readonly beach?: number;
   /** The same layout drawn in snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
   readonly winterPath?: string;
+}
+
+/** A bridge's two pieces: running left to right, and top to bottom. */
+export interface BridgeTiles {
+  readonly horizontal: number;
+  readonly vertical: number;
 }
 
 /** A property sheet row: a property (or "bunker"), optionally with the side it opens to. */
@@ -370,7 +380,7 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, shore, beach, winterPath } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, winterPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -389,9 +399,16 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     if (terrain !== "road" && terrain !== "river") return fail(`terrain: only road and river can be connected, not "${terrain}"`);
     if (!isTileNumber(first)) return fail(`terrain: connected "${terrain}" must be a whole number`);
   }
-  if (bridges !== undefined && (!isObject(bridges) || !isTileNumber(bridges.horizontal) || !isTileNumber(bridges.vertical))) {
-    return fail(`terrain: "bridges" needs whole numbers for horizontal and vertical`);
-  }
+  const bridgeTiles = (name: string, value: unknown): BridgeTiles | undefined => {
+    if (value === undefined) return undefined;
+    if (!isObject(value) || !isTileNumber(value.horizontal) || !isTileNumber(value.vertical)) {
+      return fail(`terrain: "${name}" needs whole numbers for horizontal and vertical`);
+    }
+    return { horizontal: value.horizontal, vertical: value.vertical };
+  };
+  const plain = bridgeTiles("bridges", bridges);
+  const major = bridgeTiles("majorBridges", majorBridges);
+  const blown = bridgeTiles("blownBridges", blownBridges);
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
   if (beach !== undefined && !isTileNumber(beach)) return fail(`terrain: "beach" must be a whole number`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`terrain: "winterPath" must be a file in the pack`);
@@ -402,7 +419,9 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     tileHeight: tileHeight as number,
     tiles: parsedTiles,
     connected,
-    bridges: bridges === undefined ? null : { horizontal: bridges.horizontal as number, vertical: bridges.vertical as number },
+    bridges: plain ?? null,
+    ...(major === undefined ? {} : { majorBridges: major }),
+    ...(blown === undefined ? {} : { blownBridges: blown }),
     ...(shore === undefined ? {} : { shore }),
     ...(beach === undefined ? {} : { beach }),
     ...(winterPath === undefined ? {} : { winterPath }),
