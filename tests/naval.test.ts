@@ -70,12 +70,42 @@ describe("daily fuel for ships (05-supply-transport §7, 04-economy §2)", () =>
     expect(byId(after, 1)?.fuel).toBe(48);
   });
 
-  it("a ship that runs out of fuel sinks, and the sinking isn't anyone's kill", () => {
+  it("a ship that runs out of fuel doesn't sink: it stays where it is, stranded, and nobody scores a kill (05-supply-transport §7)", () => {
     const state = makeGame(["SS"], [u("destroyer", 0, 0, { fuel: 1 }), u("destroyer", 1, 1)]);
     const { state: after, events } = nextRound(state);
-    expect(byId(after, 0)).toBeUndefined();
-    expect(ofType(events, "unitOutOfFuel")).toEqual([{ type: "unitOutOfFuel", unitId: 0, unitType: "destroyer", owner: 0, pos: P(0, 0) }]);
+    expect(byId(after, 0)).toMatchObject({ fuel: 0, pos: P(0, 0) });
+    expect(ofType(events, "unitStranded")).toEqual([{ type: "unitStranded", unitId: 0, pos: P(0, 0) }]);
+    expect(ofType(events, "unitOutOfFuel")).toEqual([]);
     expect(byId(after, 1)?.kills).toBe(0);
+  });
+
+  it("a ship with no fuel can't move, but can still fight with the ammo it has, like a land unit (05-supply-transport §1, §7)", () => {
+    const state = nextRound(makeGame(["SS"], [u("destroyer", 0, 0, { fuel: 1 }), u("destroyer", 1, 1)])).state;
+    expect(moveDestinations(state, unit(state, 0))).toEqual([P(0, 0)]);
+    expect(ofType(must(state, attack(0, 1)).events, "combat")).toHaveLength(1);
+  });
+
+  it("a stranded ship is announced once, on the turn its tank runs dry, and then just waits for fuel", () => {
+    const stranded = nextRound(makeGame(["S"], [u("battleship", 0, 0, { fuel: 1 })])).state;
+    const { state: after, events } = nextRound(stranded);
+    expect(byId(after, 0)?.fuel).toBe(0);
+    expect(ofType(events, "unitStranded")).toEqual([]);
+  });
+
+  it("a Carrier out of fuel can still launch its aircraft, which fly on their own fuel (05-supply-transport §10)", () => {
+    const state = nextRound(makeGame(["SSS"], [u("carrier", 0, 0, { fuel: 1, cargo: [{ type: "fighter" }] })])).state;
+    const carrier = unit(state, 0);
+    expect(carrier.fuel).toBe(0);
+    const launched = must(state, { type: "launch", carrierId: 0, unitId: carrier.cargo[0]?.id ?? -1, path: [P(1, 0), P(2, 0)], action: { type: "wait" } });
+    expect(launched.state.units.find((x) => x.type === "fighter")?.pos).toEqual(P(2, 0));
+  });
+
+  it("aircraft still crash when their fuel runs out: only ships are spared (05-supply-transport §5)", () => {
+    const state = makeGame(["SS"], [u("fighter", 0, 0, { fuel: 5 }), u("destroyer", 0, 1, { fuel: 2 })]);
+    const { state: after, events } = nextRound(state);
+    expect(byId(after, 0)).toBeUndefined();
+    expect(ofType(events, "unitOutOfFuel").map((e) => (e as { unitId: number }).unitId)).toEqual([0]);
+    expect(byId(after, 1)?.fuel).toBe(0);
   });
 
   it("a ship in its own port burns nothing, so it can't sink there", () => {
@@ -176,9 +206,16 @@ describe("submarines (05-supply-transport §9)", () => {
     expect(byId(nextRound(run(state, dive(0))).state, 0)?.fuel).toBe(45);
   });
 
-  it("a submerged submarine with 5 fuel or less sinks at the start of its owner's turn", () => {
-    const state = makeGame(["SS"], [u("submarine", 0, 0, { fuel: 5 }), u("destroyer", 1, 1)]);
-    expect(byId(nextRound(run(state, dive(0))).state, 0)).toBeUndefined();
+  it("a submerged submarine that runs out of fuel surfaces instead of sinking, so it can't lurk unseen forever (05-supply-transport §7)", () => {
+    const state = makeGame(["SSS"], [u("submarine", 0, 0, { fuel: 5 }), u("destroyer", 1, 2)]);
+    const { state: after, events } = nextRound(run(state, dive(0)));
+    expect(byId(after, 0)).toMatchObject({ fuel: 0, submerged: false });
+    expect(events.filter((e) => e.type === "unitSurfaced" || e.type === "unitStranded").map((e) => e.type)).toEqual(["unitSurfaced", "unitStranded"]);
+  });
+
+  it("a submarine with no fuel can't dive until it's refuelled (05-supply-transport §7)", () => {
+    const state = makeGame(["S"], [u("submarine", 0, 0, { fuel: 0 })]);
+    expect(rejection(state, dive(0))).toBe("cannotDive");
   });
 
   it("submerged fuel burn goes through the modifier layer", () => {

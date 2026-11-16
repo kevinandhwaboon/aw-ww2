@@ -70,7 +70,7 @@ export interface Unit {
   /** Internal HP, 0–100. */
   readonly hp: number;
   readonly fuel: number;
-  /** Primary weapon ammo (0 for units without one). */
+  /** Primary weapon ammo, or a Supply Ship's supply loads (05-supply-transport §3b); 0 for other units. */
   readonly ammo: number;
   /** Enemy units destroyed; veterancy level is derived from it (03-combat §6). */
   readonly kills: number;

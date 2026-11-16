@@ -63,7 +63,7 @@ Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter a
 | Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
 | Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / (rare) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
-| Supply Ship | Fleet supply at sea | Refuels and rearms every friendly unit next to it except aircraft, like a Halftrack, and repairs its own player's ships next to it 1 HP a day (05-supply-transport §3a). Unarmed | Cimarron-class oiler, Dale-class RFA oiler / Kazahaya (Japan); Germany none yet |
+| Supply Ship | Fleet supply at sea | Refuels and rearms every friendly unit next to it except aircraft, like a Halftrack, and repairs its own player's ships next to it 1 HP a day (05-supply-transport §3a). 5 supplies, one spent per resupply, refilled at a port (§3b). Unarmed | Cimarron-class oiler, Dale-class RFA oiler / Kazahaya (Japan); Germany none yet |
 | Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Its threat range is its aircraft's. Its only gun is light AA that fires back at aircraft that attack it (03-combat §5d), so it still needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
 Supply Ship: added 2026-11-16 at the developer's request, to fill the gap in the naval roster: land units have the Halftrack and carrier aircraft their Carrier, but ships could only refuel at a port. It follows the original game's later naval supply boat, which repaired and resupplied the ships next to it; unlike that boat it carries no troops, since the Landing Craft already does. Only the US, UK and Japan get art (fleet oilers); Germany's supply ships (the Dithmarschen class, the U-boat tankers) may follow.
@@ -154,7 +154,7 @@ These are starting points for the first playable build, based on the original ga
 | Landing Craft | 12,000 | 6 | 1 | 35 | 1 | — | — | — | 2 land |
 | Torpedo Boat | 8,000 | 7 | 3 | 20 | 2 | Torpedoes (4) | MG | 1 | — |
 | Carrier | 40,000 | 5 | 2 | 85 | 1 | — | AA guns (return fire only) | its aircraft's | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
-| Supply Ship | 10,000 | 5 | 1 | 99 | 1 | — | — | — | — |
+| Supply Ship | 10,000 | 5 | 1 | 99 | 1 | — (5 supplies, 05-supply-transport §3b) | — | — | — |
 
 Fighter ground attack (strafing) uses the same guns, with very low damage values in the damage chart.
 
@@ -222,6 +222,7 @@ Every unit type in the data files defines:
 - `vision`
 - `maxFuel`, `fuelPerDay` (air and naval), `fuelPerMove` (fuel per movement point; 2 for aircraft, else 1)
 - `primaryWeapon` + `maxAmmo` (may be none)
+- `supplyLoads`: resupplies a supply unit can hand out before refilling at a port, kept in its ammo count (the Supply Ship's 5; none = unlimited, the Halftrack; 05-supply-transport §3b)
 - `secondaryWeapon` (unlimited ammo; may be none)
 - `attackRange` (min–max; direct = 1–1)
 - `canMoveAndFire` (false for all indirect units)

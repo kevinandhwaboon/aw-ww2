@@ -145,6 +145,8 @@ export class MapPlayback {
         const lost = { pos: event.pos, unitId: event.unitId };
         await Promise.all([this.explode(lost), this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"))]);
       }
+      // A ship that runs dry stays afloat, stuck until it's refuelled (05-supply-transport §7).
+      if (event.type === "unitStranded") await this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"));
       if (event.type === "unitJoined") {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
@@ -187,6 +189,7 @@ export class MapPlayback {
       case "bridgeRebuildProgress":
       case "bridgeRebuilt":
       case "unitOutOfFuel":
+      case "unitStranded":
       case "unitLaunched":
       case "unitAmbushed":
         return [event.pos];

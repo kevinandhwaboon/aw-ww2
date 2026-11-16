@@ -29,7 +29,7 @@ export function startTurn(state: GameState): { state: GameState; events: GameEve
   const afterFuel = burnFuel(state, events);
   const afterIncome = collectIncome(afterFuel, events);
   const afterRepairs = repairAndResupply(afterIncome, events);
-  const afterSupply = halftrackResupply(afterRepairs, events);
+  const afterSupply = supplyRound(afterRepairs, events);
   const player = state.currentPlayer;
   return {
     state: { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player ? readyUp(u) : u)) },
@@ -43,8 +43,9 @@ function isServiced(state: GameState, unit: Unit): boolean {
 }
 
 /**
- * Air and naval units burn fuel every turn, and are lost if it runs out (05-supply-transport §5, §7).
- * Not on day 1, and not on a property that services them, which refuels them anyway.
+ * Air and naval units burn fuel every turn (05-supply-transport §5, §7). Not on day 1, and not on a
+ * property that services them, which refuels them anyway. An aircraft whose tank runs dry crashes; a
+ * ship stays afloat but stranded, and a submerged submarine surfaces.
  */
 function burnFuel(state: GameState, events: GameEvent[]): GameState {
   if (state.day === 1) return state;
@@ -52,20 +53,32 @@ function burnFuel(state: GameState, events: GameEvent[]): GameState {
   for (const unit of state.units) {
     const burn = unit.owner === state.currentPlayer && !isServiced(state, unit) ? stats.fuelPerDay(state, unit) : 0;
     const fuel = Math.max(0, unit.fuel - burn);
-    if (burn > 0 && fuel === 0) {
+    if (burn === 0) {
+      units.push(unit);
+    } else if (fuel > 0) {
+      units.push({ ...unit, fuel });
+    } else if (unitDef(unit.type).category === "air") {
       events.push({ type: "unitOutOfFuel", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos });
     } else {
-      units.push(burn > 0 ? { ...unit, fuel } : unit);
+      const surfacing = unit.submerged === true;
+      if (surfacing) events.push({ type: "unitSurfaced", unitId: unit.id });
+      if (unit.fuel > 0) events.push({ type: "unitStranded", unitId: unit.id, pos: unit.pos });
+      units.push({ ...unit, fuel, ...(surfacing ? { submerged: false } : {}) });
     }
   }
   return clearAbandonedCaptures({ ...state, units });
 }
 
-/** Each of the player's supply units refills adjacent friendly units (05-supply-transport §3). */
-function halftrackResupply(state: GameState, events: GameEvent[]): GameState {
+/**
+ * Each of the player's supply units refills adjacent friendly units (05-supply-transport §3, §3a). A
+ * Supply Ship spends one of its loads if it tops anyone up, and with none left does nothing (§3b).
+ */
+function supplyRound(state: GameState, events: GameEvent[]): GameState {
   let current = state;
-  for (const supplier of state.units.filter((u) => u.owner === state.currentPlayer)) {
-    const supplied = applySupply(current, supplyTargets(current, supplier));
+  for (const { id } of state.units.filter((u) => u.owner === state.currentPlayer)) {
+    const supplier = current.units.find((u) => u.id === id);
+    if (!supplier) continue;
+    const supplied = applySupply(current, supplier, supplyTargets(current, supplier));
     current = supplied.state;
     events.push(...supplied.events);
   }
@@ -89,10 +102,11 @@ const carries = (unit: Unit) => unitDef(unit.type).specialActions.includes("laun
 
 /**
  * Units on owned properties of the right category heal and resupply, and so do aircraft aboard a
- * Carrier and ships next to their own Supply Ship, by less (05-supply-transport §3a, §10). Runs in
- * row-major order, a Carrier before its aircraft, so when funds run short they run out the same way
- * every time (04-economy §5). A ship in port that also lies next to a Supply Ship gets the port's
- * repair only.
+ * Carrier, by less (05-supply-transport §10). Ships next to their own Supply Ship are repaired here
+ * too; their fuel and ammo come from the Supply Ship's own round, which spends its loads (§3a, §3b).
+ * Runs in row-major order, a Carrier before its aircraft, so when funds run short they run out the
+ * same way every time (04-economy §5). A ship in port that also lies next to a Supply Ship gets the
+ * port's repair only.
  */
 function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
   const player = state.players[state.currentPlayer];
@@ -100,22 +114,24 @@ function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
   let funds = player.funds;
   const updated = new Map<number, Unit>();
 
-  /** Repairs up to `most` displayed HP, as far as funds allow, and refills fuel and ammo. */
-  const service = (unit: Unit, most: number): Unit => {
+  /** Repairs up to `most` displayed HP, as far as funds allow, and (unless told not to) refills fuel and ammo. */
+  const service = (unit: Unit, most: number, refill = true): Unit => {
     const costPerHp = Math.floor(stats.unitCost(state, player.id, unit.type) / 10);
     const wanted = Math.min(most, 10 - displayHp(unit.hp));
     const affordable = costPerHp === 0 ? wanted : Math.floor(funds / costPerHp);
     const healed = Math.min(wanted, affordable);
     const fuel = stats.maxFuel(state, unit);
     const ammo = stats.maxAmmo(state, unit);
-    const resupplied = unit.fuel < fuel || unit.ammo < ammo;
+    const resupplied = refill && (unit.fuel < fuel || unit.ammo < ammo);
     if (healed > 0) {
       const cost = healed * costPerHp;
       funds -= cost;
       events.push({ type: "unitRepaired", unitId: unit.id, hp: healed, cost });
     }
     if (resupplied) events.push({ type: "unitResupplied", unitId: unit.id });
-    return healed > 0 || resupplied ? { ...unit, hp: Math.min(MAX_HP, unit.hp + healed * 10), fuel, ammo } : unit;
+    if (healed === 0 && !resupplied) return unit;
+    const repaired = { ...unit, hp: Math.min(MAX_HP, unit.hp + healed * 10) };
+    return resupplied ? { ...repaired, fuel, ammo } : repaired;
   };
 
   const served = state.units
@@ -126,7 +142,7 @@ function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
     const self = isServiced(state, unit)
       ? service(unit, stats.repairHp(state, unit, REPAIR_HP))
       : besideSupplyShip(state, unit)
-        ? service(unit, SUPPLY_SHIP_REPAIR_HP)
+        ? service(unit, SUPPLY_SHIP_REPAIR_HP, false)
         : unit;
     const after = carries(self) ? { ...self, cargo: self.cargo.map((c) => service(c, CARRIER_REPAIR_HP)) } : self;
     if (after !== unit) updated.set(unit.id, after);

@@ -168,14 +168,15 @@ export abstract class BrainBase {
   }
 
   /**
-   * For a ship: the free squares next to our Supply Ships, where it's refuelled, rearmed and repaired
-   * at the start of our turn (05-supply-transport §3a, 09-ai §4f). None for other units.
+   * For a ship: the free squares next to our Supply Ships with supplies left, where it's refuelled,
+   * rearmed and repaired at the start of our turn (05-supply-transport §3a, §3b, 09-ai §4f). None for
+   * other units, nor for a Supply Ship: only a port refills its supplies.
    */
   protected besideSupplyShips(unit: Unit): Point[] {
-    if (defOf(unit.type).category !== "naval") return [];
+    if (defOf(unit.type).category !== "naval" || isSupplyShip(unit.type)) return [];
     const tiles: Point[] = [];
     for (const supplier of this.state.units) {
-      if (supplier.owner !== this.me || supplier.id === unit.id || !isSupplyShip(supplier.type)) continue;
+      if (supplier.owner !== this.me || supplier.id === unit.id || !isSupplyShip(supplier.type) || supplier.ammo <= 0) continue;
       for (const p of this.neighbors(supplier.pos)) {
         const occupant = unitAt(this.state, p);
         if (occupant && occupant.id !== unit.id) continue;

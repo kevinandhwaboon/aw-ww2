@@ -89,22 +89,33 @@ export function applyUnload(state: GameState, transport: Unit, passenger: Unit, 
 }
 
 /**
+ * Whether this unit hands out a limited number of resupplies, kept in its ammo count (the Supply
+ * Ship, 05-supply-transport §3b). The Halftrack's are unlimited.
+ */
+export function usesSupplyLoads(unit: Unit): boolean {
+  return unitDef(unit.type).supplyLoads !== null;
+}
+
+/**
  * Short of fuel or ammo, and something this supply unit can refill (05-supply-transport §3, §3a, §5):
  * a Halftrack refills land units only, a Supply Ship land units and ships. Aircraft never: they have
- * to fly home to an airfield or Carrier.
+ * to fly home to an airfield or Carrier. Another Supply Ship's loads only refill at a port (§3b), so
+ * for one of those only its fuel counts.
  */
 function needsSupply(state: GameState, supplier: Unit, unit: Unit): boolean {
   const category = unitDef(unit.type).category;
   if (category === "air" || (category === "naval" && unitDef(supplier.type).category !== "naval")) return false;
-  return unit.fuel < stats.maxFuel(state, unit) || unit.ammo < stats.maxAmmo(state, unit);
+  return unit.fuel < stats.maxFuel(state, unit) || (!usesSupplyLoads(unit) && unit.ammo < stats.maxAmmo(state, unit));
 }
 
 /**
  * Friendly units next to this supply unit that are short of fuel or ammo: land units for a Halftrack,
- * land units and ships for a Supply Ship, never aircraft (05-supply-transport §3, §3a).
+ * land units and ships for a Supply Ship, never aircraft (05-supply-transport §3, §3a). None from a
+ * Supply Ship with no loads left (§3b).
  */
 export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
   if (!unitDef(supplier.type).specialActions.includes("resupply")) return [];
+  if (usesSupplyLoads(supplier) && supplier.ammo <= 0) return [];
   const side = state.players[supplier.owner]?.side;
   return neighborsOf(state, supplier.pos)
     .map((p) => unitAt(state, p))
@@ -113,7 +124,8 @@ export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
 
 /**
  * Whether this ship lies next to one of its own player's Supply Ships, which repairs it at the start
- * of the turn (05-supply-transport §3a). Only ships, and only the Supply Ship's own player's.
+ * of the turn (05-supply-transport §3a). Only ships, and only the Supply Ship's own player's. Repairs
+ * are paid for in funds, so they don't need the Supply Ship to have loads left (§3b).
  */
 export function besideSupplyShip(state: GameState, unit: Unit): boolean {
   if (unitDef(unit.type).category !== "naval") return false;
@@ -123,14 +135,21 @@ export function besideSupplyShip(state: GameState, unit: Unit): boolean {
   });
 }
 
-/** Refills these units' fuel and ammo. Free; doesn't heal. */
-export function applySupply(state: GameState, targets: readonly Unit[]): { state: GameState; events: GameEvent[] } {
+/**
+ * The supplier refills these units' fuel and ammo (another Supply Ship's fuel only: its loads refill
+ * only at a port). Free; doesn't heal. A Supply Ship spends one load on it, however many units it
+ * tops up (05-supply-transport §3b).
+ */
+export function applySupply(state: GameState, supplier: Unit, targets: readonly Unit[]): { state: GameState; events: GameEvent[] } {
+  if (targets.length === 0) return { state, events: [] };
   const ids = new Set(targets.map((t) => t.id));
+  const spends = usesSupplyLoads(supplier);
+  const units = state.units.map((u) => {
+    if (ids.has(u.id)) return { ...u, fuel: stats.maxFuel(state, u), ammo: usesSupplyLoads(u) ? u.ammo : stats.maxAmmo(state, u) };
+    return spends && u.id === supplier.id ? { ...u, ammo: Math.max(0, u.ammo - 1) } : u;
+  });
   return {
-    state: {
-      ...state,
-      units: state.units.map((u) => (ids.has(u.id) ? { ...u, fuel: stats.maxFuel(state, u), ammo: stats.maxAmmo(state, u) } : u)),
-    },
+    state: { ...state, units },
     events: targets.map((t) => ({ type: "unitResupplied", unitId: t.id })),
   };
 }

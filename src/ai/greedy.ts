@@ -244,9 +244,14 @@ class Brain extends ProductionBrain {
   /**
    * A Supply Ship (09-ai §4f) sails to the nearest of our units it can reach that needs it: ships low
    * on fuel, short of ammo or damaged, and land units on the shore nearly out of fuel or ammo. With
-   * nobody in need it keeps company with our warships, so it's at hand when they are.
+   * nobody in need it keeps company with our warships, so it's at hand when they are. Out of supplies,
+   * it goes back to a port to refill them (05-supply-transport §3b).
    */
   private planSupplyShip(unit: Unit): Plan {
+    if (unit.ammo <= 0) {
+      const ports = this.repairTiles(unit);
+      return ports.length > 0 ? { kind: "retreat", dist: this.distances(unit, ports, "repair") } : IDLE;
+    }
     const mine = this.state.units.filter((u) => u.owner === this.me && u.id !== unit.id && !isSupplyShip(u.type));
     const needs = (u: Unit) => {
       const def = defOf(u.type);

@@ -48,8 +48,8 @@ describe("tile info box (00-master-design §12)", () => {
     // Drained after setup: the Carrier's turn-start service would otherwise top the Fighter up.
     const state = { ...fresh, units: fresh.units.map((u) => ({ ...u, cargo: u.cargo.map((c, i) => (i === 0 ? { ...c, fuel: 12, ammo: 1 } : c)) })) };
     expect(tileInfo(state, P(0, 0)).unit?.cargo).toEqual([
-      { name: "Fighter", hp: 7, fuel: { left: 12, max: 90, low: true }, ammo: { left: 1, max: 2, low: true } },
-      { name: "Torpedo Bomber", hp: 10, fuel: { left: 70, max: 70, low: false }, ammo: { left: 1, max: 1, low: false } },
+      { name: "Fighter", hp: 7, fuel: { label: "Fuel", left: 12, max: 90, low: true }, ammo: { label: "Ammo", left: 1, max: 2, low: true } },
+      { name: "Torpedo Bomber", hp: 10, fuel: { label: "Fuel", left: 70, max: 70, low: false }, ammo: { label: "Ammo", left: 1, max: 1, low: false } },
     ]);
   });
 
@@ -85,13 +85,22 @@ describe("tile info box (00-master-design §12)", () => {
     if (!tank) throw new Error("no tank");
     const used = { ...state, units: [{ ...tank, fuel: tank.fuel - 10, ammo: tank.ammo - 2 }] };
     const unit = tileInfo(used, P(0, 0)).unit;
-    expect(unit?.fuel).toEqual({ left: tank.fuel - 10, max: tank.fuel, low: false });
-    expect(unit?.ammo).toEqual({ left: tank.ammo - 2, max: tank.ammo, low: false });
+    expect(unit?.fuel).toEqual({ label: "Fuel", left: tank.fuel - 10, max: tank.fuel, low: false });
+    expect(unit?.ammo).toEqual({ label: "Ammo", left: tank.ammo - 2, max: tank.ammo, low: false });
   });
 
   it("a unit with no main weapon shows no ammo (05-supply-transport §2)", () => {
     const state = makeGame(["."], [{ type: "infantry", owner: 0, pos: P(0, 0) }]);
     expect(tileInfo(state, P(0, 0)).unit?.ammo).toBeNull();
+  });
+
+  it("shows a Supply Ship's supplies left, flagged low at a quarter or less, like ammo (05-supply-transport §3b, §11)", () => {
+    const state = makeGame(["S"], [{ type: "supplyShip", owner: 0, pos: P(0, 0) }]);
+    const withSupplies = (ammo: number) => tileInfo({ ...state, units: state.units.map((u) => ({ ...u, ammo })) }, P(0, 0)).unit?.ammo;
+    expect(withSupplies(5)).toEqual({ label: "Supplies", left: 5, max: 5, low: false });
+    expect(withSupplies(3)?.low).toBe(false);
+    expect(withSupplies(2)?.low).toBe(true);
+    expect(withSupplies(0)?.low).toBe(true);
   });
 
   it("flags ammo as low once it is used up (05-supply-transport §2)", () => {
@@ -153,6 +162,11 @@ describe("tile info box (00-master-design §12)", () => {
       expect(lowAt(state, 10, 26)).toBe(true);
       const alone = makeGame(["SSSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }]);
       expect(lowAt(alone, 10, 26)).toBe(false);
+    });
+
+    it("a Supply Ship with no supplies left isn't home: it can't refuel anyone (05-supply-transport §3b)", () => {
+      const dry = makeGame(["SSSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }, { type: "supplyShip", owner: 0, pos: P(0, 0), ammo: 0 }]);
+      expect(lowAt(dry, 10, 26)).toBe(false);
     });
 
     it("with no home anywhere (a full Carrier, no airfield), only the simple rules apply", () => {
