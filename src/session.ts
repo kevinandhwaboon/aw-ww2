@@ -19,6 +19,7 @@ import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
 import { createBuildMenu } from "./ui/buildMenu";
 import { createDebugPanel } from "./ui/debugPanel";
+import { createCommandersScreen } from "./ui/commanders";
 import { createHud, type SoundControl } from "./ui/hud";
 import { sounds } from "./game/sound/player";
 import { nextSoundLevel } from "./game/sound/settings";
@@ -100,7 +101,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       return stop;
     },
   };
-  const hud = createHud(uiRoot, soundControl);
+  const hud = createHud(uiRoot, soundControl, () => openCommanders());
   const tileInfoPanel = createTileInfo(uiRoot);
   const unitPanel = debug ? createUnitPanel(uiRoot) : null;
   const debugPanel = debug ? createDebugPanel(uiRoot) : null;
@@ -108,6 +109,15 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   const handoff = createHandoff(uiRoot);
   const buildMenu = createBuildMenu(uiRoot, () => seen(state));
   const results = createResultsScreen(uiRoot);
+  const commandersScreen = createCommandersScreen(uiRoot);
+  /**
+   * The Commanders screen, open on the commander of whoever is at the screen: the player whose turn
+   * it is, or the last human to play while the computer moves (06-commanders §5).
+   */
+  function openCommanders(onClose?: () => void): void {
+    if (ended || commandersScreen.isOpen) return;
+    commandersScreen.open(state, viewer ?? state.currentPlayer, onClose);
+  }
 
   const scene = new MapScene({
     state: seen(state),
@@ -130,6 +140,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     },
     view: scene,
     buildMenu,
+    showCommanders: openCommanders,
   });
   /** During the computer's turn the map can be looked at, but no orders given (09-ai §5). */
   const aiTurn = () => state.result === null && ais[state.currentPlayer] != null;
@@ -301,6 +312,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       if (!aiTurn()) undo();
     } else if (event.key === "e" || event.key === "E") {
       if (!aiTurn()) controller.endTurn();
+    } else if (event.key === "c" || event.key === "C") {
+      // Looking at the commanders is allowed on anyone's turn (06-commanders §5).
+      openCommanders();
     } else if (event.key === "m" || event.key === "M") {
       // Sound off, or back on (16-sound §8).
       sounds.toggleMute();

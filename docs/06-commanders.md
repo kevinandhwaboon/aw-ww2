@@ -96,13 +96,20 @@ The portraits are also a chance to show **an officer's uniform of each nation**,
 
 ## 5. Where commanders show in the game
 
+Built 2026-11-16. The words on these screens come from the commander data (`src/engine/data/commanders.ts`); the portraits and display names come from the art pack (`commanderPortraits`, `commanderNames`, 08-art-pipeline §13). The game's copies of the portraits are in `public/assets/commanders/`, written by `tools/art/commanders.mjs`.
+
 ### Picking a commander
 
-On the map select screen each player has a commander choice next to their "Computer plays …" box: **No commander** (the default), then the commanders of that player's side with their portraits. The computer's players get the same choice.
+On the map select screen each player has a commander choice under their "Computer plays …" box: **No commander** (the default), then the commanders of that player's side. The computer's players get the same choice.
+
+- The choice is one button showing the head and the name. Each click or Z steps to the next commander, and after the last comes back to No commander.
+- Under it, one line gives the chosen commander's bonuses and drawback.
+- Choices are kept when you come back to the map select after a game. Changing to a map where that player is on the other side drops the choice.
+- For testing, `?commanders=harlan,falk` in the address gives the players those commanders in player order (11-tech-setup §7). A commander of the other side is ignored.
 
 ### The turn bar
 
-The head of the current player's commander portrait (the 32 × 32 crop) sits **in the turn bar beside their flag** (the HUD with the flag, day and funds), and changes with the flag when the turn passes. A player with no commander shows the flag alone.
+The head of the current player's commander portrait sits **in the turn bar to the left of their flag** (the HUD with the flag, day and funds), and changes with the flag when the turn passes. It is drawn at twice its size, 64 × 64, **as tall as the flag row and the funds row together** (the developer's request, 2026-11-16). On a phone the status bar is a single row, so the head is as tall as that row, 32 × 32. A player with no commander shows the flag alone.
 
 ### The Commanders screen
 
@@ -117,9 +124,10 @@ The turn menu (11-tech-setup §3c) gains a third item, above the other two:
 **COMMANDERS** opens a screen that lists every commander, Allies then Axis, with **the current player's own commander already selected**. If they have none, the first in the list is selected and a line says they are playing without a commander.
 
 - The list shows each head and name. Commanders in this battle are marked with the flag of each player who has them.
-- The selected commander's details fill the rest of the screen: the full portrait from the waist up, name, nation and side, style, each bonus and the drawback, in the same words as §3.
-- Arrow keys or a click move through the list. X, Esc or a click outside closes it.
-- Opening it uses no action and doesn't end the turn. It is also offered while watching the computer's turn.
+- The selected commander's details fill the rest of the screen: the full portrait from the waist up, name, nation and side, who they command in this battle, style, each bonus and the drawback, in the same words as §3.
+- Arrow keys or a click move through the list. X, Esc, the Close button or a click outside closes it.
+- Opening it uses no action and doesn't end the turn. Closing it comes back to the turn menu with COMMANDERS highlighted, not END TURN, so a stray Z can't end the turn.
+- It can also be opened at any time, **including while watching the computer's turn**, with the medal button in the turn bar or the C key. Opened while the computer moves, it selects the commander of the person watching (the last human to play), not the computer's.
 
 ## 6. How the engine does it (built 2026-11-16, milestone 13)
 

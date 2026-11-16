@@ -399,6 +399,9 @@ function blit(target, grid, ox, oy, scale, crop = { x: 0, y: 0, w: W, h: H }) {
 }
 
 mkdirSync(OUT, { recursive: true });
+// The game's own copies: the full portrait and the head (06-commanders §4, art pack "commanderPortraits").
+const GAME = "public/assets/commanders";
+mkdirSync(GAME, { recursive: true });
 const SCALE = 3, GAP = 8;
 // The turn bar shows only the head: a 32x32 crop with its own frame.
 const HEAD = { x: 8, y: 0, w: 32, h: 32 };
@@ -409,6 +412,7 @@ COMMANDERS.forEach((spec, i) => {
   const one = canvas(W, H);
   blit(one, grid, 0, 0, 1);
   savePng(one, `${OUT}/${spec.id}.png`);
+  savePng(one, `${GAME}/${spec.id}.png`);
   const big = canvas(W * SCALE, H * SCALE);
   blit(big, grid, 0, 0, SCALE);
   savePng(big, `${OUT}/${spec.id}-x3.png`);
@@ -419,6 +423,7 @@ COMMANDERS.forEach((spec, i) => {
   const head = canvas(32, 32);
   blit(head, headGrid, 0, 0, 1, HEAD);
   savePng(head, `${OUT}/${spec.id}-head.png`);
+  savePng(head, `${GAME}/${spec.id}-head.png`);
   blit(sheet, grid, GAP + i * (W * SCALE + GAP), GAP, SCALE);
 });
 savePng(sheet, `${OUT}/sheet.png`);

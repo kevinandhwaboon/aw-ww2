@@ -1,5 +1,6 @@
 {
   "name": "Night Ops",
+  "commanderPortraits": "../../commanders/",
   "players": [
     { "team": "olive", "fill": "#73793f", "outline": "#2e331c" },
     { "team": "red", "fill": "#c4482f", "outline": "#5e1a14" }

@@ -272,6 +272,8 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `properties` | Buildings for properties: `path`, `columns` and `rows` (section 15) |
 | `terrainNames` | Display names by terrain id |
+| `commanderPortraits` | The folder of commander portraits, ending in `/`: `<id>.png` (48 × 64) and `<id>-head.png` (32 × 32) for each commander (06-commanders §4). Without it commanders show by name alone |
+| `commanderNames` | Display names by commander id |
 | `sounds` | Sound files by sound id, one file or a list to pick from (16-sound §7) |
 
 **Unit sheets** use 16×16 or 32×32 frames (`frameSize`); either way a unit fills one map square, with one row per unit and frames running across: the side view's frames, then the front and back views' if `facings` lists them (section 22). Draw units facing right: maps mirror them when a side faces left (section 12). `rows` lists the unit on each row from the top, using `null` for an empty row. A sheet covers one nation and one team. A unit with no art for its nation and team keeps its placeholder, so German units never borrow American sprites.

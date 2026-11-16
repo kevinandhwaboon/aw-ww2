@@ -99,6 +99,8 @@ type Mode =
   | { readonly kind: "turnMenu"; readonly at: Point }
   /** Resigning can't be undone, so it asks first. */
   | { readonly kind: "confirmResign"; readonly at: Point }
+  /** The Commanders screen is open over the map, from the turn menu (06-commanders §5). */
+  | { readonly kind: "commanders"; readonly at: Point }
   /** Hold X or right-click: showing a unit's range until released. */
   | { readonly kind: "peeking" }
   /** Animating or waiting for the engine: input is ignored. */
@@ -112,6 +114,8 @@ export interface ControllerDeps {
   dispatch(command: Command): Promise<boolean>;
   view: MapView;
   buildMenu: BuildMenu;
+  /** Opens the Commanders screen (06-commanders §5) and calls `onClose` when the player leaves it. */
+  showCommanders(onClose: () => void): void;
 }
 
 const FIRE: MenuItem = { id: "fire", label: "FIRE" };
@@ -127,6 +131,7 @@ const REBUILD_BRIDGE: MenuItem = { id: "rebuildBridge", label: "REBUILD" };
 const SURFACE: MenuItem = { id: "surface", label: "SURFACE" };
 const WAIT: MenuItem = { id: "wait", label: "WAIT" };
 const CANCEL: MenuItem = { id: "cancel", label: "CANCEL" };
+const COMMANDERS: MenuItem = { id: "commanders", label: "COMMANDERS" };
 const RESIGN: MenuItem = { id: "resign", label: "RESIGN" };
 const END_TURN: MenuItem = { id: "endTurn", label: "END TURN" };
 const KEEP_PLAYING: MenuItem = { id: "keepPlaying", label: "KEEP PLAYING" };
@@ -268,6 +273,7 @@ export class InputController {
       case "menu":
       case "turnMenu":
       case "confirmResign":
+      case "commanders":
       case "busy":
       case "over":
         return;
@@ -313,6 +319,7 @@ export class InputController {
         this.cursorToDestination(mode);
         return;
       case "idle":
+      case "commanders":
       case "busy":
       case "over":
         return;
@@ -346,6 +353,7 @@ export class InputController {
     if (mode.kind === "turnMenu") {
       if (id === "endTurn") this.endTurn();
       else if (id === "resign") this.openConfirmResign(mode.at);
+      else if (id === "commanders") this.openCommanders(mode.at);
       return;
     }
     if (mode.kind === "confirmResign") {
@@ -412,10 +420,22 @@ export class InputController {
   }
 
   /** End Turn comes last and is highlighted, so it's one press away. */
-  private openTurnMenu(at: Point): void {
-    const items = [RESIGN, END_TURN];
+  private openTurnMenu(at: Point, selected: MenuItem = END_TURN): void {
+    const items = [COMMANDERS, RESIGN, END_TURN];
     this.mode = { kind: "turnMenu", at };
-    this.deps.view.openMenu(at, items, items.length - 1);
+    this.deps.view.openMenu(at, items, items.indexOf(selected));
+  }
+
+  /**
+   * Looking at the commanders uses no action. Leaving the screen comes back to the turn menu on
+   * COMMANDERS, so a stray Z can't end the turn (06-commanders §5).
+   */
+  private openCommanders(at: Point): void {
+    this.mode = { kind: "commanders", at };
+    this.deps.view.closeMenu();
+    this.deps.showCommanders(() => {
+      if (this.mode.kind === "commanders") this.openTurnMenu(at, COMMANDERS);
+    });
   }
 
   private openConfirmResign(at: Point): void {

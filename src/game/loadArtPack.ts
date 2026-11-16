@@ -1,12 +1,22 @@
 // Loads an art pack at startup. Kept apart from artPack.ts because this part needs the browser.
 
-import { BUILT_IN_PACK, PAGE_COLORS, parseArtPack, setActivePack, type ArtPack } from "./artPack";
+import type { CommanderId } from "../engine/data/commanders";
+import { activePack, BUILT_IN_PACK, PAGE_COLORS, parseArtPack, setActivePack, type ArtPack } from "./artPack";
 
 const packUrl = (name: string, file: string) => new URL(`assets/packs/${name}/${file}`, document.baseURI).href;
 
 /** The full address of a file in the active pack's folder. */
 let packFolder = "";
 export const packFileUrl = (path: string): string => new URL(path, packFolder).href;
+
+/**
+ * A commander's portrait from the active pack: from the waist up, or the head alone for the turn
+ * bar (06-commanders §4). Null when the pack has no portraits.
+ */
+export function commanderPortraitUrl(id: CommanderId, crop: "full" | "head"): string | null {
+  const folder = activePack().commanderPortraits;
+  return folder === null ? null : packFileUrl(`${folder}${id}${crop === "head" ? "-head" : ""}.png`);
+}
 
 /** The page's CSS colors come from the pack too (see the variables in ui/style.css). */
 function applyPageColors({ colors }: ArtPack): void {
