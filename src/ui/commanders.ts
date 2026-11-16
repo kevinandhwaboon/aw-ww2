@@ -36,8 +36,9 @@ export interface CommanderPicker {
 }
 
 /**
- * The map select's commander choice for one player: a button that steps through No commander and
- * then each commander the player may have, with what the chosen one does written underneath.
+ * The players screen's commander choice for one player: Left and Right (or a click, or Z) step
+ * through No commander and each commander the player may have, with what the chosen one does
+ * written underneath.
  */
 export function commanderPicker(playerName: string, allowed: readonly CommanderId[], initial: CommanderId | null): CommanderPicker {
   const choices: (CommanderId | null)[] = [null, ...allowed];
@@ -51,12 +52,26 @@ export function commanderPicker(playerName: string, allowed: readonly CommanderI
     const portrait = id === null ? null : commanderPortrait(id, "head");
     const label = el("span", undefined, id === null ? "No commander" : `Commander: ${commanderName(id)}`);
     button.title = `Change ${playerName}'s commander`;
-    button.replaceChildren(...(portrait ? [portrait] : [el("span", "commander-head commander-none")]), label, el("span", "commander-pick-next", "▸"));
+    button.replaceChildren(
+      el("span", "commander-pick-arrow", "◂"),
+      ...(portrait ? [portrait] : [el("span", "commander-head commander-none")]),
+      label,
+      el("span", "commander-pick-arrow commander-pick-next", "▸"),
+    );
     summary.textContent = id === null ? "No bonuses and no drawback." : commanderSummary(id);
   };
-  button.addEventListener("click", () => {
-    index = (index + 1) % choices.length;
+  const step = (by: number) => {
+    index = (index + by + choices.length) % choices.length;
     show();
+  };
+  button.addEventListener("click", () => step(1));
+  // Left and Right change the commander; the screen's own keys never see them, so the focus stays here.
+  button.addEventListener("keydown", (event) => {
+    const by = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    if (by === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    step(by);
   });
   show();
   row.append(button, summary);

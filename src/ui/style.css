@@ -776,7 +776,21 @@ body.pad-layout {
 }
 
 .commander-pick {
-  margin: 0 0 6px 21px;
+  margin: 0 0 2px;
+}
+
+.player-name {
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.screen-hint {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.commander-pick-arrow {
+  opacity: 0.6;
 }
 
 .commander-pick-button {

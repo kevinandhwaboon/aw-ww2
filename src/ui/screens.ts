@@ -63,7 +63,11 @@ function checkbox(label: string, checked: boolean): { row: HTMLElement; input: H
   return { row, input };
 }
 
-export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
+/**
+ * Step one of a new game: the map. Arrows walk the list and Z picks, which moves on to the players
+ * screen. Nothing else on this screen takes the focus, so it works from the keyboard alone.
+ */
+export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, initial?: Scenario): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
   const list = el("div", "map-list");
@@ -71,84 +75,84 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
   const details = el("div", "map-details");
   const description = el("div", "map-description");
 
-  let chosen = scenarios[0];
   const rows = scenarios.map((scenario) => {
     const row = el("button", "list-row", scenario.name);
-    row.addEventListener("focus", () => choose(scenario));
+    row.addEventListener("focus", () => show(scenario));
     row.addEventListener("click", () => {
-      choose(scenario);
-      start.focus();
+      close();
+      showPlayerSelect(root, scenarios, scenario, defaults, onStart);
     });
     list.append(row);
     return { scenario, row };
   });
-  const chosenRow = () => rows.find(({ scenario }) => scenario === chosen)?.row;
 
-  /** Z picks a map and moves on to Start, so walking down to the options doesn't change it. */
-  function choose(scenario: Scenario): void {
-    chosen = scenario;
+  function show(scenario: Scenario): void {
     for (const { scenario: s, row } of rows) row.classList.toggle("selected", s === scenario);
     const { map, units } = scenario.setup;
     name.textContent = scenario.name;
     details.textContent = `${matchup(scenario)} · ${map.width}×${map.height} · ${units?.length ?? 0} units`;
     description.textContent = scenario.description;
-    showPlayers(scenario);
   }
 
+  panel.append(el("div", "panel-title", "Choose a map"), el("div", "screen-hint", "↑ ↓ pick a map · Z next: players and commanders · X back"), list, name, details, description);
+  node.append(panel);
+  const first = rows.find(({ scenario }) => scenario === initial) ?? rows[0];
+  if (first) show(first.scenario);
+  first?.row.focus();
+  menuKeys(
+    panel,
+    rows.map(({ row }) => row),
+    () => {
+      close();
+      showTitleScreen(root, scenarios, defaults, onStart);
+    },
+  );
+}
+
+/**
+ * Step two of a new game: who plays each side and under which commander (06-commanders §5), then
+ * the options and Start. Up and Down walk every control, Left and Right change the commander in
+ * focus, and X goes back to the maps with everything chosen here kept.
+ */
+export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario[], scenario: Scenario, defaults: GameOptions, onStart: OnStart): void {
+  const { node, close } = screen(root);
+  const panel = el("div", "panel screen-panel map-panel");
+
+  const chosenIds = defaults.computer ?? defaultComputerPlayers(scenario);
   const players = el("div", "player-options");
-  let computerBoxes: HTMLInputElement[] = [];
-  let commanderPickers: CommanderPicker[] = [];
-  let shownFor: Scenario | undefined;
-  /**
-   * One "Computer plays …" box and one commander choice per player of the chosen map
-   * (06-commanders §5). Coming back to the same map keeps what was picked.
-   */
-  function showPlayers(scenario: Scenario): void {
-    if (scenario === shownFor) return;
-    shownFor = scenario;
-    const chosenIds = defaults.computer ?? defaultComputerPlayers(scenario);
-    players.replaceChildren();
-    computerBoxes = [];
-    commanderPickers = [];
-    scenario.setup.players.forEach((player, id) => {
-      const box = checkbox(`Computer plays ${player.name} (${NATIONS[player.nation].name})`, chosenIds.includes(id));
-      const allowed = commandersFor(player.nation);
-      const wanted = defaults.commanders[id] ?? null;
-      const picker = commanderPicker(player.name, allowed, wanted !== null && allowed.includes(wanted) ? wanted : null);
-      players.append(box.row, picker.row);
-      computerBoxes.push(box.input);
-      commanderPickers.push(picker);
-    });
-  }
-  /** The players' boxes and commander buttons, in the order they show. */
-  const playerControls = (): HTMLElement[] => computerBoxes.flatMap((box, id) => [box, ...(commanderPickers[id] ? [commanderPickers[id].button] : [])]);
+  const computerBoxes: HTMLInputElement[] = [];
+  const commanderPickers: CommanderPicker[] = [];
+  scenario.setup.players.forEach((player, id) => {
+    const allowed = commandersFor(player.nation);
+    const wanted = defaults.commanders[id] ?? null;
+    const picker = commanderPicker(player.name, allowed, wanted !== null && allowed.includes(wanted) ? wanted : null);
+    const box = checkbox(`Computer plays ${player.name}`, chosenIds.includes(id));
+    players.append(el("div", "player-name", `${player.name} (${NATIONS[player.nation].name})`), picker.row, box.row);
+    computerBoxes.push(box.input);
+    commanderPickers.push(picker);
+  });
 
   const luck = checkbox("Luck in combat", defaults.luck);
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
   const battleScenes = checkbox("Battle scenes", defaults.battleScenes);
   const easy = checkbox("Easy computer opponent", defaults.level === "easy");
+  const options = (): GameOptions => ({
+    luck: luck.input.checked,
+    passDevice: passDevice.input.checked,
+    battleScenes: battleScenes.input.checked,
+    computer: computerBoxes.flatMap((box, id) => (box.checked ? [id] : [])),
+    level: easy.input.checked ? "easy" : "normal",
+    commanders: commanderPickers.map((picker) => picker.chosen),
+  });
   const start = el("button", "btn btn-big", "Start");
   start.addEventListener("click", () => {
-    if (!chosen) return;
     close();
-    const computer = computerBoxes.flatMap((box, id) => (box.checked ? [id] : []));
-    onStart(chosen, {
-      luck: luck.input.checked,
-      passDevice: passDevice.input.checked,
-      battleScenes: battleScenes.input.checked,
-      computer,
-      level: easy.input.checked ? "easy" : "normal",
-      commanders: commanderPickers.map((picker) => picker.chosen),
-    });
+    onStart(scenario, options());
   });
 
   panel.append(
-    el("div", "panel-title", "Choose a map"),
-    list,
-    name,
-    details,
-    description,
-    el("div", "panel-subtitle", "Players"),
+    el("div", "panel-title", scenario.name),
+    el("div", "screen-hint", "↑ ↓ move · ← → change commander · Z choose · X back to maps"),
     players,
     easy.row,
     el("div", "panel-subtitle", "Options"),
@@ -158,19 +162,21 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
     start,
   );
   node.append(panel);
-  if (chosen) choose(chosen);
-  chosenRow()?.focus();
-  // Arrows pick a map straight away; Z moves on to Start, and Up from there reaches the options.
+  // Starts on the first commander; Up from there wraps round to Start.
+  commanderPickers[0]?.button.focus();
   menuKeys(
     panel,
-    () => {
-      const mapRows = rows.map(({ row }) => row);
-      const onList = mapRows.some((row) => row === document.activeElement);
-      return onList ? mapRows : [chosenRow(), ...playerControls(), easy.input, luck.input, passDevice.input, battleScenes.input, start].flatMap((item) => item ?? []);
-    },
+    [
+      ...commanderPickers.flatMap((picker, id) => [picker.button, ...(computerBoxes[id] ? [computerBoxes[id]] : [])]),
+      easy.input,
+      luck.input,
+      passDevice.input,
+      battleScenes.input,
+      start,
+    ],
     () => {
       close();
-      showTitleScreen(root, scenarios, defaults, onStart);
+      showMapSelect(root, scenarios, options(), onStart, scenario);
     },
   );
 }

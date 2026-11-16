@@ -100,11 +100,17 @@ Built 2026-11-16. The words on these screens come from the commander data (`src/
 
 ### Picking a commander
 
-On the map select screen each player has a commander choice under their "Computer plays …" box: **No commander** (the default), then the commanders of that player's side. The computer's players get the same choice.
+A new game is two screens, and both work from the keyboard alone (the developer's request, 2026-11-16; the first build put everything on the map select, where the commander choice couldn't be reached sensibly without a mouse):
 
-- The choice is one button showing the head and the name. Each click or Z steps to the next commander, and after the last comes back to No commander.
-- Under it, one line gives the chosen commander's bonuses and drawback.
-- Choices are kept when you come back to the map select after a game. Changing to a map where that player is on the other side drops the choice.
+1. **Choose a map.** Up and Down walk the list, Z picks the map and moves on, X goes back to the title.
+2. **Players and commanders.** Each player has a commander choice and a "Computer plays …" box, followed by the game options and Start. The focus starts on the first player's commander.
+
+On the players screen:
+
+- **Left and Right change the commander in focus**: **No commander** (the default), then the commanders of that player's side. Z or a click steps forward too. The computer's players get the same choice.
+- Under each choice, one line gives the chosen commander's bonuses and drawback.
+- Up and Down walk every control. Up from the first commander wraps round to Start, so a game with no changes is Z, Up, Z.
+- X goes back to the maps and keeps what was chosen. Choices are also kept when you come back after a game. On a map where that player is on the other side, the choice is dropped.
 - For testing, `?commanders=harlan,falk` in the address gives the players those commanders in player order (11-tech-setup §7). A commander of the other side is ignored.
 
 ### The turn bar

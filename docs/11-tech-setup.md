@@ -88,7 +88,7 @@
 | End turn | END TURN in the turn menu | Z twice on any tile with no unit ready to move, or E |
 | Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |
 | See the commanders (06-commanders §5) | COMMANDERS in the turn menu, or the medal button in the HUD | The same with arrow keys and Z, or C at any time |
-| Menus and screens | Click | Arrow keys, Z to choose, X to go back. On map select, arrows pick a map, Z moves to Start, and Up from there reaches the options |
+| Menus and screens | Click | Arrow keys, Z to choose, X to go back. A new game is two screens (06-commanders §5): on the map select, arrows pick a map and Z moves on; on the players screen, Up and Down walk the controls, Left and Right change the commander in focus, Up from the first wraps to Start, and X goes back to the maps |
 | Sound level (16-sound §8) | The speaker button in the HUD: Off, Low, Medium, High | M turns sound off, and back on |
 
 ## 3d. Combat notes (milestone 3)
