@@ -68,14 +68,13 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 - MVP historical detail is limited to the units themselves. Briefings, real names, dates and so on come later.
 - Unit roster: see **01-units.md**. 13 land units (12 in MVP, Flak Gun in phase 2), 5 air (Dive and Torpedo Bombers added for Carriers), 6 naval (the Carrier added for the Pacific).
 
-## 7. Commanders (COs): deferred, hook built early
+## 7. Commanders (COs)
 
-- Not in the MVP.
-- **The rules engine includes a modifier layer from day one.** Movement, attack, defense, cost, vision and similar values pass through modifiers so COs, doctrines, weather or scenario rules can be added as data later.
-- Open design question: **real generals vs. doctrines vs. fictional archetypes.**
-  - Real generals map well to CO-style powers (examples: Patton for aggressive armor and mobility; Montgomery for methodical set-piece battle, artillery and defense; Rommel for bold mobile warfare with risk; Zhukov for massed artillery and cheap units; Rundstedt/Model for defense in depth and counterattacks).
-  - Conventions if real generals are used: military commanders only, no political leaders, no glorification, case-by-case care for commanders with war-crimes history.
-  - Alternative: doctrine-based powers ("Combined Arms Breakthrough", "Methodical Battle", "Deep Battle"), optionally attached to names later.
+- **Commanders are fictional** (decided 2026-11-15, see **06-commanders.md**). Every commander is an original character; no real person is named or portrayed. Real generals under rules, and real generals under thinly changed names, were both considered and rejected.
+- **Eight commanders: one from each nation, and a second American for the navy.** A player may fight under any commander of their own side, never the other side's, or under **no commander**, which is the default and plays as the game did before commanders. A commander has always-on bonuses and one always-on drawback, built on unit classes and terrain.
+- Each has a code-drawn portrait from the waist up in an officer's uniform of their nation; its head shows in the turn bar beside the flag. A **COMMANDERS** item in the turn menu lists every commander with the player's own selected (06-commanders §5).
+- **The rules engine includes a modifier layer from day one.** Movement, attack, defense, cost, vision and similar values pass through modifiers, so a commander is data. Milestone 13 (CO hooks) adds the scopes the roster needs (06-commanders §6).
+- Designed, not built. Commander powers, and whether scenarios can fix commanders, are open (06-commanders §7).
 - Commander AI personalities (section 15) can use the same modifier and behavior hooks.
 
 ## 8. Scenarios
@@ -221,7 +220,7 @@ UI falls into four categories:
 | 03-combat.md | **Rules decided; v0 damage chart and veterancy set.** Tune after playtesting |
 | 04-economy-production.md | **v0 decided** (original game's income, capture, build, repair, join) |
 | 05-supply-transport.md | **v0 decided**: land rules built; air, naval, landings and submarines for phase 2 |
-| 06-commanders.md | TBD |
+| 06-commanders.md | **Designed (v2), not built**: eight fictional commanders, one from each nation and a US admiral, usable by their whole side, or no commander; portraits drawn; powers still open |
 | 07-ui-ux.md | TBD: screen flows, controls, mobile |
 | 08-art-pipeline.md | **Asset list done**; how to make the art is undecided |
 | 09-ai.md | **v0 built**: AI interface, rules for AIs, the first Greedy AI |
@@ -240,7 +239,7 @@ UI falls into four categories:
 - Working title
 - Unit scale and theater map dimensions (first answer: the Normandy map is 92 × 78, see 10-scenarios-normandy)
 - Tuning provisional unit stats (01-units v0) after playtesting
-- Real generals vs. doctrines for COs
+- Commander powers, and whether scenarios can fix commanders (06-commanders §7)
 - National insignia policy (beyond "no Nazi or political symbols")
 - Day/night? (not yet discussed). Weather: v0 decided (12-weather); random weather and rain left open
 - Tuning v0 terrain values (Bocage, Bunker stars) after playtesting
@@ -391,3 +390,6 @@ UI falls into four categories:
 | 2026-11-15 | **Market Garden built** (17-scenarios-market-garden), with Major Bridges (02-terrain §4a), ally repair (04-economy §5), the computer playing the other side by default (09-ai §5) and Greedy blowing and rebuilding bridges (09-ai §4e). The map is 32 × 44 with eight Major Bridges; it comes second on the map select, after Normandy. In AI vs AI games Germany wins every time so far; balance for human players is untested |
 | 2026-11-15 | At the developer's request, **Second El Alamein is the first North Africa map** (18-scenarios-north-africa, designed, not built), chosen over Gazala, Crusader, Kasserine and Torch: October 1942, about 36 × 32 squares of about 3 km, El Daba to El Hammam, the coast to the Qattara Depression. The UK (the whole Eighth Army, with the Commonwealth divisions and the Free French folded in) moves first and attacks; Germany and **Italy, a new Axis nation**, are two Axis players, played by the computer by default. Italy borrows Germany's art for now and flies a plain tricolour, never the Savoy crest or the fasces. The Allies win by capturing El Daba (Germany's HQ), the Axis by holding out to day 15. Axis tanks start short of fuel; supply is shown through few, far-apart properties, with no new supply rule. **Three new terrains** (02-terrain §4b): **Minefield** (the Obstacle's rules, in two belts along the whole front), **Ridge** (Forest's numbers: low ridges tanks can cross) and **Salt Marsh** (the Qattara Depression, impassable to land units). A **desert season** draws the map and battle scenes in sand, as the winter season draws snow (08-art-pipeline §21) |
 | 2026-11-15 | **El Alamein built** (18-scenarios-north-africa), third on the map select. **Italy** is a nation on the Axis side; it borrows Germany's map sprites and battle figures and wears blue, its azzurro, so Germany keeps field grey on a map with both (a borrowed grey would have cost both their color). Its flag is the plain tricolour. **Minefield, Ridge and Salt Marsh** terrain (02-terrain §4b, map letters `m`, `d`, `z`) and the **desert season** (08-art-pipeline §21: `desertPath` sheets, desert battle colors, dunes for treelines). The map has two 4-connected minefield belts, 51 squares, from the sea to the Depression. AI vs AI, the Axis wins every game on day 15: the Allied AI clears a few mine squares but makes no corridor |
+| 2026-11-15 | **Commanders are fictional** (06-commanders), decided by the developer after weighing real generals. Real commanders on every side carry controversy, the character treatment risks glamorizing Axis officers, and thinly changed names would leave the person recognizable. Rules: unrelated names, no one-to-one stand-ins, style in place of biography, original portraits, military characters only, the same treatment for every nation. **Two commanders per nation**, each with one always-on bonus and one always-on drawback as modifier data. A v0 roster of 14 with placeholder names is designed, not built; it needs milestone 13 (CO hooks). Commander powers are not designed |
+| 2026-11-15 | At the developer's request the commander roster is cut from 14 to **seven, one from each nation**, with each pair's effects merged (06-commanders §3). **A commander serves a side, not a nation**: any Allied commander for any Allied nation, any Axis commander for any Axis nation, never across. **No commander** is always a choice and the default, for a plain game. **Portraits** are 32 × 32, drawn in code (`tools/art/commanders.mjs`, `docs/art/commanders/`). Designed for when it is built: the portrait sits in the turn bar beside the flag, and the turn menu gains **COMMANDERS** above RESIGN and END TURN, a screen listing every commander with the current player's own already selected. No game code yet |
+| 2026-11-16 | At the developer's request, an eighth commander: **Dale Calloway, a US admiral and the naval specialist** (Ships +1 move and +10% defense; Tanks −10% attack), so the Allies have five and the Axis three. **Portraits are redrawn at 48 × 64 from the waist up**, each in an officer's uniform of their nation in its real colors (06-commanders §4), still with no Nazi or political symbols; a 32 × 32 head crop is for the turn bar. **No commander is built on vision** until the game has fog of war: Falk's Recon bonus is +1 move |
