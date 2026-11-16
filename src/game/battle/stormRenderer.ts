@@ -3,7 +3,7 @@
 // count ticking down, and the flags changing. A pure function of time, like the battle renderer.
 
 import { FLAG_COLORS, FLAGS } from "../placeholderFlags";
-import { terrainName, unitName } from "../artPack";
+import { drawnAs, terrainName, unitName } from "../artPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "../pixelFont";
 import { playerColors } from "../placeholderUnits";
 import { CAPTURE_POINTS, type PlayerId } from "../../engine/state";
@@ -326,8 +326,8 @@ export class StormRenderer implements Cutscene {
     this.silCanvas = sc;
     this.sil = sctx;
     this.look = {
-      team: teamShades(plan.owner, plan.nation),
-      nation: plan.nation,
+      team: teamShades(plan.owner, drawnAs(plan.nation)),
+      nation: drawnAs(plan.nation),
       paratrooper: plan.paratrooper,
       suit: plan.suit,
       submerged: false,

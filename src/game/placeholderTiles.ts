@@ -24,6 +24,9 @@ const STYLE: Record<TerrainId, { base: string; detail: string; motif: Motif }> =
   obstacle: { base: "#8cc56a", detail: "#5a5a5a", motif: "teeth" },
   majorBridge: { base: "#8a8f96", detail: "#4f555c", motif: "planks" },
   blownBridge: { base: "#5ea8e0", detail: "#6e6656", motif: "rocks" },
+  minefield: { base: "#d8c48c", detail: "#5a5a5a", motif: "speckle" },
+  ridge: { base: "#c8b078", detail: "#8a7448", motif: "hill" },
+  saltMarsh: { base: "#e8e4d8", detail: "#a8a090", motif: "speckle" },
 };
 
 type Motif =

@@ -95,6 +95,21 @@ const BUILT_IN_COLORS = {
   battleWinterTreeDark: "#14302a",
   battleOvercastTop: "#7e8898",
   battleOvercastLow: "#c2c8d2",
+  // Battle scenes on desert maps (08-art-pipeline §21): sand and gravel for the grass, camel thorn for
+  // trees, a pale hot sky; and the desert terrain (02-terrain §4b): mine signs and the salt crust.
+  battleDesert: "#d6bc84",
+  battleDesertLight: "#ecdab0",
+  battleDesertDark: "#a88c58",
+  battleDesertDirt: "#9a7a4c",
+  battleDesertRoad: "#c8b48a",
+  battleDesertHill: "#b89a64",
+  battleDesertScrub: "#7a7a48",
+  battleDesertScrubDark: "#56562e",
+  battleDesertSkyTop: "#7aa4d0",
+  battleDesertSkyLow: "#e4dccc",
+  battleMineSign: "#e8c020",
+  battleSalt: "#ece8de",
+  battleSaltDark: "#b4ac9a",
   // Battle scenes: figures and materials
   battleOlive: "#5c6038",
   battleFieldGrey: "#5e665c",
@@ -218,6 +233,8 @@ export interface TerrainSheet {
   readonly beach?: number;
   /** The same layout drawn in snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
   readonly winterPath?: string;
+  /** The same layout drawn as desert, for desert maps (08-art-pipeline §21). Relative to the pack's folder. */
+  readonly desertPath?: string;
 }
 
 /** A bridge's two pieces: running left to right, and top to bottom. */
@@ -247,6 +264,8 @@ export interface PropertySheet {
   readonly tileHeight: number;
   /** The same layout standing on snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
   readonly winterPath?: string;
+  /** The same layout drawn as desert buildings on sand, for desert maps (08-art-pipeline §21). Relative to the pack's folder. */
+  readonly desertPath?: string;
 }
 
 export interface ArtPack {
@@ -277,13 +296,15 @@ export const BUILT_IN_PACK: ArtPack = {
   ],
   // What each army actually wore and painted its vehicles: US olive drab, German field grey, Japanese
   // khaki, Soviet 4BO protective green, British Service Colour No. 2 brown (08-art-pipeline §12).
-  // Canada borrows the UK's (ART_LOANS).
+  // Canada borrows the UK's (ART_LOANS). Italy, until it has art of its own, wears blue, its azzurro,
+  // so its borrowed German sheets come in a color Germany doesn't wear (18-scenarios-north-africa §1).
   nationColors: {
     us: { team: "olive", fill: "#64783a", outline: "#2a3818" },
     uk: { team: "brown", fill: "#765c3e", outline: "#33261a" },
     germany: { team: "grey", fill: "#747b72", outline: "#333834" },
     japan: { team: "khaki", fill: "#9a8648", outline: "#463a1e" },
     ussr: { team: "green4bo", fill: "#52643a", outline: "#222c18" },
+    italy: { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
   },
   colors: BUILT_IN_COLORS,
   unitSheets: [],
@@ -387,7 +408,7 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, winterPath } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, winterPath, desertPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -419,6 +440,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
   if (beach !== undefined && !isTileNumber(beach)) return fail(`terrain: "beach" must be a whole number`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`terrain: "winterPath" must be a file in the pack`);
+  if (desertPath !== undefined && !isRelativePath(desertPath)) return fail(`terrain: "desertPath" must be a file in the pack`);
   return {
     path,
     frames: frames as number,
@@ -432,12 +454,13 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     ...(shore === undefined ? {} : { shore }),
     ...(beach === undefined ? {} : { beach }),
     ...(winterPath === undefined ? {} : { winterPath }),
+    ...(desertPath === undefined ? {} : { desertPath }),
   };
 }
 
 function parsePropertySheet(raw: unknown): PropertySheet {
   if (!isObject(raw)) return fail(`"properties" must be an object`);
-  const { path, columns, rows, tileWidth = 16, winterPath } = raw;
+  const { path, columns, rows, tileWidth = 16, winterPath, desertPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`properties: "path" must be a file in the pack`);
   if (!Array.isArray(columns) || columns.length === 0 || !columns.every((c) => typeof c === "string" && c !== "")) {
@@ -456,6 +479,7 @@ function parsePropertySheet(raw: unknown): PropertySheet {
   const bad: unknown = rows.find((row: unknown) => !isRow(row));
   if (bad !== undefined) return fail(`properties: ${JSON.stringify(bad)} isn't a property or "bunker"`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`properties: "winterPath" must be a file in the pack`);
+  if (desertPath !== undefined && !isRelativePath(desertPath)) return fail(`properties: "desertPath" must be a file in the pack`);
   return {
     path,
     columns: columns as string[],
@@ -463,6 +487,7 @@ function parsePropertySheet(raw: unknown): PropertySheet {
     tileWidth: tileWidth as 16 | 32,
     tileHeight: tileHeight as number,
     ...(winterPath === undefined ? {} : { winterPath }),
+    ...(desertPath === undefined ? {} : { desertPath }),
   };
 }
 
@@ -528,9 +553,16 @@ export function unitFrame(art: UnitArt, view: UnitView, frame = 0): number {
 
 /**
  * Nations drawn with another nation's art when a pack has none of their own (00-master-design §6):
- * Canada fields the UK's sprites, battle figures and color.
+ * Canada fields the UK's sprites, battle figures and color, and Italy Germany's sprites and battle
+ * figures, in its own color (18-scenarios-north-africa §1).
  */
-export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk" };
+export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk", italy: "germany" };
+
+/**
+ * The nation whose equipment battle scenes draw for this one: the nation it borrows art from, if
+ * any. Flags still show the nation's own flag.
+ */
+export const drawnAs = (nation: NationId | null): NationId | null => (nation === null ? null : (ART_LOANS[nation] ?? nation));
 
 /** The nations whose art can draw this one: its own first, then the one it borrows from. */
 const artNations = (nation: NationId): NationId[] => {

@@ -18,6 +18,7 @@ export const TERRAIN_IDS = [
   "city", "factory", "airfield", "port", "hq",
   "bunker", "rubble", "obstacle",
   "majorBridge", "blownBridge",
+  "minefield", "ridge", "saltMarsh",
 ] as const;
 export type TerrainId = (typeof TERRAIN_IDS)[number];
 
@@ -98,6 +99,16 @@ export const TERRAIN = {
     moveCost: costs(2, 1, _, _, 1, _, _),
     rebuild: { points: 20, becomes: "majorBridge" },
   },
+  // 02-terrain §4b: desert terrain for El Alamein. A Minefield has the Obstacle's rules; a Ridge has
+  // Forest's numbers; the Salt Marsh (the Qattara Depression) is impassable to every land unit.
+  minefield: {
+    name: "Minefield",
+    defenseStars: 0,
+    moveCost: costs(_, _, _, _, 1, _, _),
+    breakable: { hp: 100, becomes: "plains" },
+  },
+  ridge: { name: "Ridge", defenseStars: 2, moveCost: costs(1, 1, 3, 2, 1, _, _) },
+  saltMarsh: { name: "Salt Marsh", defenseStars: 0, moveCost: costs(_, _, _, _, 1, _, _) },
 } as const satisfies Record<TerrainId, TerrainDef>;
 
 export function terrainDef(id: TerrainId): TerrainDef {

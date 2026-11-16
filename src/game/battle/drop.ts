@@ -4,6 +4,7 @@
 
 import type { GameEvent } from "../../engine/commands";
 import type { NationId } from "../../engine/data/nations";
+import { drawnAs } from "../artPack";
 import type { TerrainId } from "../../engine/data/terrain";
 import { FOOT_UNITS, type UnitTypeId } from "../../engine/data/units";
 import { terrainAt } from "../../engine/map";
@@ -34,7 +35,7 @@ export function planDrop(state: GameState, event: Extract<GameEvent, { type: "un
   if (!transport || transport.type !== "transportAircraft") return null;
   const passenger: Unit | undefined = transport.cargo.find((c) => c.id === event.unitId);
   if (!passenger || !isFoot(passenger.type)) return null;
-  const nation = state.players[passenger.owner]?.nation ?? null;
+  const nation = drawnAs(state.players[passenger.owner]?.nation ?? null);
   return {
     unit: passenger.type,
     owner: passenger.owner,

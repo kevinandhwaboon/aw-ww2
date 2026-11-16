@@ -70,3 +70,23 @@ const w32 = await import("./terrain32-winter.mjs");
   savePng(bSheet, join(dir, "buildings-32-winter.png"));
   console.log(`winter terrain and buildings rendered at 32x64`);
 }
+
+// ---- Desert versions of the 32-pixel terrain and buildings (08-art-pipeline §21): same layouts, so
+// the same tile numbers. Buildings keep their owner roofs, with whitewashed walls, standing on sand.
+const d32 = await import("./terrain32-desert.mjs");
+{
+  const rows32 = Math.ceil(d32.layout.length / d32.ACROSS);
+  const sheet = canvas(d32.ACROSS * 32, rows32 * 64 * d32.FRAMES);
+  d32.layout.forEach((entry, i) => {
+    const x = (i % d32.ACROSS) * 32, y = Math.floor(i / d32.ACROSS) * 64;
+    entry[1].forEach((grid, frame) => stamp(sheet, grid, d32.palette, x, y + frame * rows32 * 64));
+  });
+  savePng(sheet, join(dir, "terrain-32-desert.png"));
+  const desertBuildings = { ...b32.palette, ...d32.palette, W: "#f6f2e8", Y: "#dcd4c0", Z: "#a89e88", c: b32.palette.c };
+  const bSheet = canvas(b32.columns.length * 32, b32.rows.length * 64);
+  b32.rows.forEach(([, grid], row) => b32.columns.forEach((owner, col) => {
+    stamp(bSheet, grid, { ...desertBuildings, ...b32.ramps[owner] }, col * 32, row * 64);
+  }));
+  savePng(bSheet, join(dir, "buildings-32-desert.png"));
+  console.log(`desert terrain and buildings rendered at 32x64`);
+}

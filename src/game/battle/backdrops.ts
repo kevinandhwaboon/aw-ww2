@@ -3,6 +3,7 @@
 // a Landing Craft on a beach is drawn run aground, half on the sand.
 
 import type { TerrainId } from "../../engine/data/terrain";
+import { battleWeather } from "./colors";
 import { C, mix, shade, type Painter } from "./paint";
 import { hash } from "./timeline";
 
@@ -46,6 +47,15 @@ function grass(p: Painter, x0: number, top: number, color: string): void {
 }
 
 function treeline(p: Painter, x0: number, y: number, size: number, dark: boolean): void {
+  // The desert has no trees: low dunes and the odd tuft of camel thorn line the horizon instead.
+  if (battleWeather().season === "desert") {
+    for (let x = -8; x < SCENE.half + 8; x += size * 3) {
+      const r = size * (1.6 + hash(x, y) * 1.2);
+      p.ellipse(x0 + x, y, r, r * 0.22, dark ? C("battleGrassDark") : shade(C("battleGrass"), 0.92));
+      if (hash(x, y, 5) > 0.6) p.disc(x0 + x + r * 0.4, y - 2, 2, C("battleTree"));
+    }
+    return;
+  }
   for (let x = -8; x < SCENE.half + 8; x += size) {
     const r = size * (0.7 + hash(x, y) * 0.6);
     p.disc(x0 + x, y - r * 0.4, r, dark ? C("battleTreeDark") : C("battleTree"));
@@ -533,7 +543,14 @@ export function drawBackdrop(p: Painter, x0: number, terrain: TerrainId, view: B
     return;
   }
   sky(p, x0, horizon, t, 3);
-  const base = terrain === "beach" ? C("battleSand") : terrain === "bunker" || terrain === "rubble" || terrain === "obstacle" ? mix(C("battleDirt"), C("battleGrass"), 0.4) : C("battleGrass");
+  const base =
+    terrain === "beach"
+      ? C("battleSand")
+      : terrain === "saltMarsh"
+        ? C("battleSalt")
+        : terrain === "bunker" || terrain === "rubble" || terrain === "obstacle" || terrain === "minefield"
+          ? mix(C("battleDirt"), C("battleGrass"), 0.4)
+          : C("battleGrass");
   switch (terrain) {
     case "forest":
       treeline(p, x0, horizon, 14, true);
@@ -583,6 +600,14 @@ export function drawBackdrop(p: Painter, x0: number, terrain: TerrainId, view: B
     case "bunker":
       treeline(p, x0, horizon, 9, true);
       break;
+    case "ridge":
+      // Standing on a low ridge: the ground rises into a gentle crest across the half (02-terrain §4b).
+      treeline(p, x0, horizon - 14, 9, false);
+      break;
+    case "saltMarsh":
+      // The Qattara Depression: flat salt crust to the horizon.
+      p.rect(x0, horizon - 3, SCENE.half, 3, C("battleSaltDark"));
+      break;
     default:
       treeline(p, x0, horizon, 9, true);
       treeline(p, x0 + 5, horizon + 2, 6, false);
@@ -615,6 +640,25 @@ export function drawBackdrop(p: Painter, x0: number, terrain: TerrainId, view: B
   }
   if (terrain === "forest") {
     for (let i = 0; i < 4; i++) p.disc(x0 + 20 + i * 52, SCENE.bottom - 2, 9, C("battleTreeDark"));
+  }
+  if (terrain === "ridge") {
+    p.ellipse(x0 + SCENE.half / 2, horizon + 16, SCENE.half * 0.75, 22, C("battleHill"));
+    p.ellipse(x0 + SCENE.half / 2 - 12, horizon + 10, SCENE.half * 0.5, 10, shade(C("battleHill"), 1.12));
+    for (let i = 0; i < 5; i++) p.ellipse(x0 + 20 + i * 38 + hash(i, 83) * 10, horizon + 20 + hash(i, 89) * 30, 4, 2.5, C("battleConcrete"));
+  }
+  if (terrain === "minefield") {
+    // A wire fence on pickets with a yellow warning sign on every other one, and churned ground.
+    p.line(x0, horizon - 2, x0 + SCENE.half, horizon - 2, C("battleSteelDark"), 1);
+    p.line(x0, horizon + 2, x0 + SCENE.half, horizon + 2, C("battleSteelDark"), 1);
+    for (let i = 0; i < 8; i++) {
+      const x = x0 + 8 + i * 24;
+      p.rect(x, horizon - 8, 2, 14, C("battleWood"));
+      if (i % 2 === 0) p.poly([[x - 4, horizon - 6], [x + 1, horizon - 14], [x + 6, horizon - 6]], C("battleMineSign"));
+    }
+    for (let i = 0; i < 10; i++) p.ellipse(x0 + 10 + hash(i, 61) * (SCENE.half - 20), horizon + 14 + hash(i, 67) * 60, 4, 1.5, C("battleGrassDark"));
+  }
+  if (terrain === "saltMarsh") {
+    for (let i = 0; i < 14; i++) p.ellipse(x0 + hash(i, 71) * SCENE.half, horizon + 8 + hash(i, 73) * 80, 10 + hash(i, 79) * 12, 2, C("battleSaltDark"));
   }
   if (terrain === "rubble" || terrain === "obstacle") {
     for (let i = 0; i < 6; i++) {

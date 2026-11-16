@@ -75,8 +75,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
   });
 
   it("have unique ids", () => {
@@ -940,3 +940,158 @@ describe("Market Garden (17-scenarios-market-garden)", () => {
     expect(besideBridge.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("El Alamein (18-scenarios-north-africa)", () => {
+  const scenario = SCENARIOS.find((s) => s.id === "el-alamein");
+  if (!scenario) throw new Error("missing scenario");
+  const { map } = scenario.setup;
+  const UK = 0;
+  const GERMANY = 1;
+  const ITALY = 2;
+  const start = () => createGame({ ...scenario.setup, seed: 1 });
+  const run = (state: GameState, ...commands: Command[]) =>
+    commands.reduce((s, c) => {
+      const result = apply(s, c);
+      if (!result.ok) throw new Error(result.message);
+      return result.state;
+    }, state);
+  const endTurns = (n: number): Command[] => Array.from({ length: n }, () => ({ type: "endTurn" }));
+  const units = scenario.setup.units ?? [];
+  const [elDaba] = properties(scenario, "hq", GERMANY);
+  const [ukHq] = properties(scenario, "hq", UK);
+  if (!elDaba || !ukHq) throw new Error("missing places");
+  const need = <T,>(value: T | undefined, what: string): T => {
+    if (value === undefined) throw new Error(`missing ${what}`);
+    return value;
+  };
+  const at = (x: number, y: number) => (x >= 0 && y >= 0 && x < map.width && y < map.height ? terrainAt(map, P(x, y)) : undefined);
+
+  /** The squares a land unit moving like `type` can reach from `from`, ignoring units; minefields and bunkers optionally blocked. */
+  function reachable(from: Point, type: MovementType, blockBunkers: boolean): Set<string> {
+    const seen = new Set([`${from.x},${from.y}`]);
+    const queue = [from];
+    while (queue.length > 0) {
+      const p = queue.shift() ?? from;
+      for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+        const t = at(p.x + dx, p.y + dy);
+        if (t === undefined || TERRAIN[t].moveCost[type] === null || (blockBunkers && t === "bunker") || seen.has(`${p.x + dx},${p.y + dy}`)) continue;
+        seen.add(`${p.x + dx},${p.y + dy}`);
+        queue.push(P(p.x + dx, p.y + dy));
+      }
+    }
+    return seen;
+  }
+
+  it("the UK moves first, then Germany, then Italy", () => {
+    expect(scenario.setup.players.map((p) => p.nation)).toEqual(["uk", "germany", "italy"]);
+  });
+
+  it("the computer plays Germany and Italy by default (09-ai §5)", () => {
+    expect(defaultComputerPlayers(scenario)).toEqual([GERMANY, ITALY]);
+  });
+
+  it("the map is drawn as desert, under clear skies all game", () => {
+    expect(scenario.setup.weather?.season).toBe("desert");
+    expect(scenario.setup.weather?.forecast.every((f) => f.weather === "clear")).toBe(true);
+  });
+
+  it("the Allies win at once by capturing El Daba, and Italy is out with Germany", () => {
+    const state = start();
+    const taken: GameState = { ...state, properties: state.properties.map((p) => (p.pos.x === elDaba.pos.x && p.pos.y === elDaba.pos.y ? { ...p, owner: UK, capturePoints: 1 } : p)) };
+    // An Allied infantry finishes the capture of El Daba.
+    const infantry = { ...need(state.units[0], "a unit"), id: 999, type: "infantry" as const, owner: UK, pos: elDaba.pos, hp: 100, moved: false, acted: false };
+    const ready: GameState = { ...taken, properties: state.properties.map((p) => (p.pos.x === elDaba.pos.x && p.pos.y === elDaba.pos.y ? { ...p, capturePoints: 1 } : p)), units: [...state.units.filter((u) => u.pos.x !== elDaba.pos.x || u.pos.y !== elDaba.pos.y), infantry] };
+    const after = run(ready, { type: "move", unitId: 999, path: [], action: { type: "capture" } });
+    expect(after.result?.winningSide).toBe("allies");
+    expect(after.players[ITALY]?.defeated).toBe(true);
+  });
+
+  it("the Axis wins at the start of day 15", () => {
+    const after = run(start(), ...endTurns(14 * 3));
+    expect(after.day).toBe(15);
+    expect(after.result?.winningSide).toBe("axis");
+    expect(after.result?.reason).toBe("surviveDays");
+  });
+
+  it("Italy has no HQ, so it plays on if Germany resigns", () => {
+    expect(properties(scenario, "hq", ITALY)).toEqual([]);
+    const after = run(start(), { type: "endTurn" }, { type: "resign" });
+    expect(after.result).toBeNull();
+    expect(after.players[GERMANY]?.defeated).toBe(true);
+    expect(after.players[ITALY]?.defeated).toBe(false);
+  });
+
+  it("two belts of mines run from the sea to the Depression: no land route from the Allied HQ to El Daba avoids every mine and strongpoint", () => {
+    expect(reachable(ukHq.pos, "tracks", true).has(`${elDaba.pos.x},${elDaba.pos.y}`)).toBe(false);
+    expect(reachable(ukHq.pos, "foot", true).has(`${elDaba.pos.x},${elDaba.pos.y}`)).toBe(false);
+  });
+
+  it("the minefields are deep: at least 40 squares of mines", () => {
+    expect(map.terrain.filter((t) => t === "minefield").length).toBeGreaterThanOrEqual(40);
+  });
+
+  it("no minefield lies on a road: the coast road crosses each belt at a strongpoint instead", () => {
+    const roadNext = (x: number, y: number) => [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx = 0, dy = 0]) => at(x + dx, y + dy) === "road").length;
+    const roadBunkers = map.terrain.flatMap((t, i) => (t === "bunker" && roadNext(i % map.width, Math.floor(i / map.width)) >= 2 ? [i] : []));
+    expect(roadBunkers.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("the Qattara Depression closes the south: no land unit can get round the end of the line", () => {
+    const bottom = map.terrain.slice((map.height - 1) * map.width);
+    expect(bottom.every((t) => t === "saltMarsh")).toBe(true);
+  });
+
+  it("the ridges fought over are on the map, and tanks can cross them", () => {
+    expect(map.terrain.filter((t) => t === "ridge").length).toBeGreaterThanOrEqual(10);
+    expect(TERRAIN.ridge.moveCost.tracks).not.toBeNull();
+  });
+
+  it("every Axis tank starts short of fuel", () => {
+    const tanks = units.filter((u) => u.owner !== UK && (u.type === "mediumTank" || u.type === "lightTank"));
+    expect(tanks.length).toBeGreaterThanOrEqual(8);
+    for (const tank of tanks) expect(tank.fuel ?? UNITS[tank.type].maxFuel, `${tank.type} at ${tank.pos.x},${tank.pos.y}`).toBeLessThanOrEqual(UNITS[tank.type].maxFuel / 2);
+  });
+
+  it("Allied tanks start with full tanks", () => {
+    expect(units.filter((u) => u.owner === UK).every((u) => u.fuel === undefined)).toBe(true);
+  });
+
+  it("the Allies start with about as many properties as both Axis players together, and more units", () => {
+    const owned = (owner: number) => (scenario.setup.propertyOwners ?? []).filter((p) => p.owner === owner).length;
+    expect(owned(UK)).toBeGreaterThanOrEqual(owned(GERMANY) + owned(ITALY) - 1);
+    expect(units.filter((u) => u.owner === UK).length).toBeGreaterThan(units.filter((u) => u.owner !== UK).length * 0.5);
+  });
+
+  it("Axis soldiers garrison strongpoints between the belts", () => {
+    const garrisoned = units.filter((u) => u.owner !== UK && u.type === "infantry" && at(u.pos.x, u.pos.y) === "bunker");
+    expect(garrisoned.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(garrisoned.map((u) => u.owner))).toEqual(new Set([GERMANY, ITALY]));
+  });
+
+  it("nobody can build a Heavy Tank, Rocket Artillery or a ship (01-units §7a)", () => {
+    for (const player of scenario.setup.players) {
+      for (const type of ["heavyTank", "rocketArtillery", "destroyer", "landingCraft", "transportAircraft"] as const) {
+        expect(player.buildable ?? [], `${player.name} ${type}`).not.toContain(type);
+      }
+    }
+  });
+
+  it("an Italian tank in a German-held town is repaired at Italy's cost (04-economy §5)", () => {
+    const state = start();
+    const [town] = properties(scenario, "city", GERMANY);
+    if (!town) throw new Error("no German town");
+    const tank = { ...need(state.units[0], "a unit"), id: 999, type: "mediumTank" as const, owner: ITALY, pos: town.pos, hp: 50, fuel: 5 };
+    const placedState: GameState = { ...state, units: [...state.units.filter((u) => u.pos.x !== town.pos.x || u.pos.y !== town.pos.y), tank] };
+    const italyFunds = need(placedState.players[ITALY], "Italy").funds;
+    const germanyFunds = need(placedState.players[GERMANY], "Germany").funds;
+    const after = run(placedState, { type: "endTurn" }, { type: "endTurn" }); // UK, then Germany: Italy's turn starts
+    const repaired = after.units.find((u) => u.id === 999);
+    expect(repaired?.hp).toBe(70);
+    expect(repaired?.fuel).toBe(UNITS.mediumTank.maxFuel);
+    // Italy earns 1,000 for each of its 4 properties and pays 20% of the tank's 8,000 for 2 HP.
+    expect(need(after.players[ITALY], "Italy").funds).toBe(italyFunds + 4 * 1000 - 1600);
+    // Germany earned its income on its own turn and paid nothing for the Italian tank.
+    expect(need(after.players[GERMANY], "Germany").funds).toBe(germanyFunds + 5 * 1000);
+  });
+});
+

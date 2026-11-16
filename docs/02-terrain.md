@@ -84,7 +84,7 @@ Decided at the developer's request for Market Garden (17-scenarios-market-garden
 - **Modifier layer:** both terrains' movement costs and stars go through the modifier layer like every other terrain (§1).
 - **As built:** in scenario map text a Major Bridge is `%` and a Blown Bridge `!`. Rebuild progress is kept in the game state (`bridgeWorks`) and saved with the game. The action menu says BLOW BRIDGE and REBUILD. Art packs can give `majorBridges` and `blownBridges` tiles (08-art-pipeline §13); a pack without them draws a Major Bridge with the plain Bridge deck and a Blown Bridge as bare river.
 
-## 4b. Desert terrain: Minefield, Ridge and Salt Marsh **(new)** (decided 2026-11-15, not built)
+## 4b. Desert terrain: Minefield, Ridge and Salt Marsh **(new)** (decided and built 2026-11-15)
 
 Decided at the developer's request for El Alamein (18-scenarios-north-africa). The original game has no desert terrain. Open desert is ordinary **Plains** drawn with the desert season's art (08-art-pipeline §21), since most of the Western Desert was firm "good going". Three new terrains cover what Plains and Hills can't. No existing map uses them, so no existing map changes.
 
@@ -98,6 +98,7 @@ Decided at the developer's request for El Alamein (18-scenarios-north-africa). T
 - **Ridge** has **Forest's** numbers: a low desert ridge (Miteiriya, Ruweisat) that tanks could cross and use for hull-down cover, unlike Hills, which block vehicles. In snow it costs what Forest costs (12-weather §3).
 - **Salt Marsh** is impassable to every land unit, like Sea, but isn't water, so ships can't enter it either. It's the Qattara Depression, which closed the south end of the El Alamein line.
 - **Modifier layer:** all three go through the modifier layer like every other terrain (§1).
+- **As built (2026-11-15):** in scenario map text a Minefield is `m`, a Ridge `d` and Salt Marsh `z`. Art packs give them tiles under `minefield`, `ridge` and `saltMarsh` (08-art-pipeline §21); the AI already plans its routes as if a breakable obstacle were gone, so it attacks minefields with no new rule.
 
 ## 5. Movement rules
 

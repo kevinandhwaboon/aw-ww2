@@ -10,3 +10,9 @@ describe("HUD flags", () => {
     }
   });
 });
+
+describe("Italy's flag (00-master-design §6)", () => {
+  it("is the plain green, white and red tricolour: three equal-ish bands and nothing else, no crest", () => {
+    for (const row of FLAGS.italy) expect(row).toBe("VVVVVWWWWWWRRRRR");
+  });
+});

@@ -4,6 +4,7 @@ import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
 import { displayHp, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
 import { weatherOn } from "../engine/weather";
+import type { Season } from "../engine/data/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
 import type { UnitTypeId } from "../engine/data/units";
 import {
@@ -72,8 +73,8 @@ interface UnitLook {
 }
 const TERRAIN_SHEET_KEY = "pack-terrain";
 const PROPERTY_SHEET_KEY = "pack-properties";
-/** Winter versions of the two sheets, same layouts (08-art-pipeline §21). */
-const winterKey = (key: string) => `${key}-winter`;
+/** Winter and desert versions of the two sheets, same layouts (08-art-pipeline §21). */
+const seasonKey = (key: string, season: Season) => `${key}-${season}`;
 /** How long each frame of moving water shows. */
 const TERRAIN_FRAME_MS = 600;
 const terrainFrameKey = (frame: number) => `terrain-frame-${frame}`;
@@ -258,11 +259,13 @@ export class MapScene extends Phaser.Scene implements MapView {
     });
     if (pack.terrain) {
       this.load.image(TERRAIN_SHEET_KEY, packFileUrl(pack.terrain.path));
-      if (pack.terrain.winterPath) this.load.image(winterKey(TERRAIN_SHEET_KEY), packFileUrl(pack.terrain.winterPath));
+      if (pack.terrain.winterPath) this.load.image(seasonKey(TERRAIN_SHEET_KEY, "winter"), packFileUrl(pack.terrain.winterPath));
+      if (pack.terrain.desertPath) this.load.image(seasonKey(TERRAIN_SHEET_KEY, "desert"), packFileUrl(pack.terrain.desertPath));
     }
     if (pack.properties) {
       this.load.image(PROPERTY_SHEET_KEY, packFileUrl(pack.properties.path));
-      if (pack.properties.winterPath) this.load.image(winterKey(PROPERTY_SHEET_KEY), packFileUrl(pack.properties.winterPath));
+      if (pack.properties.winterPath) this.load.image(seasonKey(PROPERTY_SHEET_KEY, "winter"), packFileUrl(pack.properties.winterPath));
+      if (pack.properties.desertPath) this.load.image(seasonKey(PROPERTY_SHEET_KEY, "desert"), packFileUrl(pack.properties.desertPath));
     }
     // Sounds download with the art, before the map shows (16-sound §6).
     for (const id of SOUND_IDS) pack.sounds[id]?.forEach((path, i) => this.load.audio(soundKey(id, i), packFileUrl(path)));
@@ -280,10 +283,11 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.events.once(Phaser.Scenes.Events.DESTROY, () => sounds.detach());
   }
 
-  /** The sheet to draw from: its winter version on a winter map, if the pack has one (12-weather §5). */
+  /** The sheet to draw from: its winter or desert version on such a map, if the pack has one (08-art-pipeline §21). */
   private seasonal(key: string): string {
-    const winter = winterKey(key);
-    return this.state.weather.season === "winter" && this.textures.exists(winter) ? winter : key;
+    const { season } = this.state.weather;
+    const version = seasonKey(key, season);
+    return season !== "summer" && this.textures.exists(version) ? version : key;
   }
 
   private sheetImage(key: string): (CanvasImageSource & { width: number; height: number }) | null {

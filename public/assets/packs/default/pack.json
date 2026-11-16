@@ -1193,6 +1193,7 @@
   "terrain": {
     "path": "../../terrain/terrain-32.png",
     "winterPath": "../../terrain/terrain-32-winter.png",
+    "desertPath": "../../terrain/terrain-32-desert.png",
     "frames": 2,
     "tileWidth": 32,
     "tileHeight": 64,
@@ -1232,6 +1233,17 @@
       ],
       "obstacle": [
         15
+      ],
+      "minefield": [
+        82
+      ],
+      "ridge": [
+        83,
+        84
+      ],
+      "saltMarsh": [
+        85,
+        86
       ]
     },
     "connected": {
@@ -1256,6 +1268,7 @@
   "properties": {
     "path": "../../terrain/buildings-32.png",
     "winterPath": "../../terrain/buildings-32-winter.png",
+    "desertPath": "../../terrain/buildings-32-desert.png",
     "tileWidth": 32,
     "tileHeight": 64,
     "columns": [

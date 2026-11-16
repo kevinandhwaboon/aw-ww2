@@ -142,7 +142,7 @@ function parseSettings(raw: unknown): Partial<Settings> {
 function parseWeather(raw: unknown): WeatherPlan {
   if (!isObject(raw)) return fail(`"weather" must be an object`);
   const season = raw.season ?? "summer";
-  if (!SEASONS.includes(season as Season)) return fail(`weather: "season" must be summer or winter`);
+  if (!SEASONS.includes(season as Season)) return fail(`weather: "season" must be summer, winter or desert`);
   const forecast = (raw.forecast === undefined ? [{ fromDay: 1, weather: "clear" }] : list(raw, "forecast", "weather")).map((entry, i) => {
     const where = `weather forecast ${i}`;
     if (!isObject(entry)) return fail(`${where}: must be an object`);

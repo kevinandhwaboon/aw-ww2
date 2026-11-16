@@ -83,6 +83,19 @@ const WINTER: Partial<Record<ColorKey, ColorKey>> = {
   battleTree: "battleWinterTree",
   battleTreeDark: "battleWinterTreeDark",
 };
+/** On a desert map, sand stands in for the grass, camel thorn for trees, and the sky is pale and hot. */
+const DESERT: Partial<Record<ColorKey, ColorKey>> = {
+  battleGrass: "battleDesert",
+  battleGrassLight: "battleDesertLight",
+  battleGrassDark: "battleDesertDark",
+  battleDirt: "battleDesertDirt",
+  battleRoad: "battleDesertRoad",
+  battleHill: "battleDesertHill",
+  battleTree: "battleDesertScrub",
+  battleTreeDark: "battleDesertScrubDark",
+  battleSkyTop: "battleDesertSkyTop",
+  battleSkyLow: "battleDesertSkyLow",
+};
 /** While it snows, the sky is overcast. */
 const SNOWING: Partial<Record<ColorKey, ColorKey>> = {
   battleSkyTop: "battleOvercastTop",
@@ -103,9 +116,9 @@ export function battleWeather(): BattleWeather {
 
 /** Shorthand for battle colors from the art pack, in the current battle weather. */
 export const C = (key: ColorKey): string => {
-  const winter = weather.season === "winter" ? WINTER[key] : undefined;
+  const season = weather.season === "winter" ? WINTER[key] : weather.season === "desert" ? DESERT[key] : undefined;
   const sky = weather.snowing ? SNOWING[key] : undefined;
-  return packColor(sky ?? winter ?? key);
+  return packColor(sky ?? season ?? key);
 };
 
 /**
