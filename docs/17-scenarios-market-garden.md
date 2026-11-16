@@ -14,6 +14,7 @@ At the developer's request, this is the next map after Kursk, and smaller than i
 - No map so far is built around **airborne drops**. Transport Aircraft exist but no map depends on them.
 - No map so far is led by **British** forces.
 - No map so far makes **rivers and bridges** the thing being fought over. That needs the new Major Bridge rule (02-terrain §4a).
+- No map so far has **two players on one side**. Here the US and the UK are separate Allied players (§1 "Players"). The UK gets its own sprites and battle scenes for this map (§1 "How it's made").
 
 ### The history it follows
 
@@ -28,18 +29,32 @@ The Germans blew the Son bridge as the 101st reached it, and the advance waited 
 - It's generated from real longitude and latitude, like Bastogne.
 - From Neerpelt to Arnhem is about 36 squares along the road: six to seven days for a Medium Tank (move 6) with nobody in the way.
 
+### Players
+
+Three players, in this turn order:
+
+1. **US** (Allies): the 101st and 82nd Airborne. They move first, as the drops came in about an hour before XXX Corps attacked. That also keeps the US first and army green, as on every other built-in map.
+2. **UK** (Allies): XXX Corps, the 1st Airborne and the Polish brigade.
+3. **Germany** (Axis).
+
+- **Each Allied player has its own funds, properties and build list.** The US earns from the towns its paratroopers take. The UK earns from Belgium and from what XXX Corps and the 1st Airborne take. An ally's property can't be captured (04-economy §3, by side).
+- **The US has no HQ.** It's out only if every US unit is destroyed. If the UK loses its HQ, the UK is out and the US plays on alone (04-economy §8).
+- **Victory is by side** (04-economy §8): an objective held by either Allied player counts for the Allies.
+- **Repair on an ally's property (proposed, not yet decided):** today a property repairs and resupplies only its owner's units (04-economy §5). On this map that would mean XXX Corps tanks couldn't refuel in Eindhoven if US paratroopers had taken it, which makes the link-up worth less. The proposal: a property also repairs and resupplies an ally's units, paid from the unit owner's funds. No current map has two players on one side, so no current map would change.
+- **Who the computer plays (proposed, not yet decided):** by default the computer plays every player except the first (09-ai §5). Here that would hand the US paratroopers' ally, the UK, to the computer. The proposal: by default the computer plays every player who isn't on the first player's side, so one person plays both the US and the UK against a computer Germany. The map select's "Computer plays …" boxes still allow any mix, such as two people playing co-op as the US and the UK. Every current map has one player per side, so none changes.
+
 ### Places
 
-| | Allies (UK) | Germany | Neutral |
-|---|---|---|---|
-| HQ | Leopoldsburg (XXX Corps' assembly area) | Doetinchem (II SS Panzer Corps) | |
-| Factories | Lommel | Kleve, Ede, 's-Hertogenbosch | **Eindhoven** (the Philips works) |
-| Airfield | Allied airfield, south-west corner (stands for the bases in England and Belgium, like Iwo Jima's Marianas airfield) | Deelen | |
-| Cities | Neerpelt ("Joe's bridge" bridgehead) | **Arnhem**, **Nijmegen**, Valkenswaard, Best, Elst, Venlo, Apeldoorn | Son, Veghel, Uden, Grave, Oss, Groesbeek, Oosterbeek, Wageningen, Helmond |
+| | US | UK | Germany | Neutral |
+|---|---|---|---|---|
+| HQ | none | Leopoldsburg (XXX Corps' assembly area) | Doetinchem (II SS Panzer Corps) | |
+| Factories | | Lommel | Kleve, Ede, 's-Hertogenbosch | **Eindhoven** (the Philips works) |
+| Airfield | US airfield, south-west corner | UK airfield, south-west corner | Deelen | |
+| Cities | | Neerpelt ("Joe's bridge" bridgehead) | **Arnhem**, **Nijmegen**, Valkenswaard, Best, Elst, Venlo, Apeldoorn | Son, Veghel, Uden, Grave, Oss, Groesbeek, Oosterbeek, Wageningen, Helmond |
 
-Objectives are in **bold**.
+Objectives are in **bold**. The two Allied airfields stand for the bases in England, like Iwo Jima's Marianas airfield.
 
-- **Income:** the Allies start with 4 properties and Germany with 12, so the Allies start far poorer. The neutral Dutch towns lie under the drop zones, though. Paratroopers who capture them swing the income within a few days. Eindhoven is a neutral Factory, so whoever takes it can build halfway up the road.
+- **Income:** the US starts with 1 property and the UK with 4, against Germany's 12, so the Allies start far poorer. The neutral Dutch towns lie under the drop zones, though. Paratroopers who capture them swing the income within a few days, mostly to the US. Eindhoven is a neutral Factory, so whoever takes it can build halfway up the road. If the US takes it, US paratroopers get a place to build on the ground.
 - Germany starts owning Arnhem and Nijmegen, as it did, with small garrisons and flak.
 
 ### Rivers and bridges
@@ -76,14 +91,18 @@ From south to north, every waterway crosses the road, so every few squares the a
 
 All units are first guesses, scaled to the map as on the other maps.
 
-- **Allies** (8,000 funds):
+The first-lift Transport Aircraft start loaded, short of the drop zones and out of flak range. Each player makes its drops on turn 1, and so chooses how close to the bridges to drop.
+
+- **US** (2,000 funds):
+  - **101st Airborne:** two Transport Aircraft south-west of Son, carrying three Infantry and a Mortar Team.
+  - **82nd Airborne:** two Transport Aircraft south-west of Grave, carrying three Infantry and an Assault Infantry.
+  - **Second lift:** a Transport Aircraft on the US airfield carrying two Infantry (the glider infantry).
+- **UK** (6,000 funds):
   - **XXX Corps** in the Neerpelt bridgehead: four Medium Tanks (Guards Armoured Shermans), a Light Tank, a Recon (Household Cavalry), two Artillery, two Halftracks each carrying Infantry, two Infantry, two Assault Infantry (Royal Engineers with bridging gear) and a Mobile AA.
-  - **The first lift**, six loaded Transport Aircraft placed short of the drop zones and out of flak range. The player makes the drops on turn 1 and so chooses how close to the bridges to drop:
-    - 101st: two aircraft south-west of Son, carrying three Infantry and a Mortar Team.
-    - 82nd: two aircraft south-west of Grave, carrying three Infantry and an Assault Infantry.
-    - 1st Airborne: two aircraft over the heath west of Oosterbeek, carrying two Infantry, an Assault Infantry (1st Parachute Squadron RE) and a Mortar Team. They start about 8 squares from the Arnhem bridge. That's in reach, but dropping next to it leaves the aircraft inside the Arnhem flak's range for Germany's turn: the planners' real dilemma.
-  - **The second lift**: two Transport Aircraft on the Allied airfield, loaded with four Infantry (the glider reinforcements and the Polish brigade). At move 8 they reach Nijmegen around day 3 and Arnhem around day 4. Historically the second lift came on day 2 and the Poles on day 5.
-  - Two Fighters on the Allied airfield (Spitfires and Typhoons).
+  - **1st Airborne:** two Transport Aircraft over the heath west of Oosterbeek, carrying two Infantry, an Assault Infantry (1st Parachute Squadron RE) and a Mortar Team. They start about 8 squares from the Arnhem bridge. That's in reach, but dropping next to it leaves the aircraft inside the Arnhem flak's range for Germany's turn: the planners' real dilemma.
+  - **Second lift:** a Transport Aircraft on the UK airfield carrying two Infantry (the Polish brigade).
+  - Two Fighters on the UK airfield (Spitfires and Typhoons).
+- At move 8 the second-lift aircraft reach Nijmegen around day 3 and Arnhem around day 4. Historically the second lift came on day 2 and the Poles on day 5.
 - **Germany** (3,000 funds):
   - **Kampfgruppe Walther** across the road at Valkenswaard: two Infantry, an Assault Infantry, a Tank Destroyer and an Artillery.
   - **59th Division** at Best: two Infantry and an Artillery.
@@ -102,7 +121,9 @@ All units are first guesses, scaled to the map as on the other maps.
 
 ### Build lists
 
-- **Allies** (nation `uk`): every land unit except the Heavy Tank and Rocket Artillery (01-units §7a), plus Fighter, Bomber and Transport Aircraft. No ships: there's no sea on the map.
+- **US** (airborne): Infantry, Assault Infantry, Mortar Team and Recon (airborne jeeps), plus Fighter (the P-47s that flew support) and Transport Aircraft. No tanks or artillery: the airborne divisions had none.
+- **UK:** every land unit except the Heavy Tank and Rocket Artillery (01-units §7a), plus Fighter, Bomber and Transport Aircraft.
+- No ships for anyone: there's no sea on the map.
 - **Germany:** every land unit, including the Heavy Tank (the Tigers of Heavy Panzer Battalion 506 arrived during the battle) and the Flak Gun, plus the Fighter. No Bombers.
 
 ### Victory
@@ -124,10 +145,14 @@ All units are first guesses, scaled to the map as on the other maps.
 ### How it's made
 
 - `tools/maps/market-garden.mjs` will generate the scenario file from real longitude and latitude for towns, rivers, canals and forests, the same way as `bastogne.mjs`. `tools/maps/overview.mjs market-garden` will draw `docs/maps/market-garden.png`.
-- **Art needed:** a Major Bridge (a steel truss bridge, visibly different from the ordinary Bridge, in the same road and river pieces) and a Blown Bridge (fallen spans in the river), each in summer and winter sheets (08-art-pipeline §14, §21). UK units use the US art until British art exists (00-master-design §6).
+- **Art needed:**
+  - A Major Bridge (a steel truss bridge, visibly different from the ordinary Bridge, in the same road and river pieces) and a Blown Bridge (fallen spans in the river), each in summer and winter sheets (08-art-pipeline §14, §21).
+  - **UK art**, for every unit type the UK can field (the availability rule, 01-units §1), as the US, Germany, Japan and the Soviet Union have: map sprites with front, back and side views (08-art-pipeline §17, §22) and battle-scene figures and models (§18). Examples: Tommy with a Brodie helmet and Lee-Enfield, red-beret paratroopers (the UK's version of the US paratrooper look), PIAT team, 3-inch mortar, Daimler armoured car, Universal Carrier, Stuart, Sherman Firefly, Achilles tank destroyer, 25-pounder, Crusader AA, Spitfire, Lancaster, Dakota, and the Churchill for maps that offer the Heavy Tank. The UK also needs its own color, so a US player and a UK player don't wear the same one (08-art-pipeline §12). Canada can keep borrowing the UK art.
+  - Until the UK art exists, the UK player uses the US art in a slot color (08-art-pipeline §12).
 
 ### Build order
 
+0. **Two players on a side:** repair on an ally's property and the computer playing the other side by default, once both are decided (§1 "Players").
 1. **Engine:** Major Bridge and Blown Bridge terrain data, Blow Bridge and Rebuild Bridge commands, rebuild progress in `GameState`, legal commands for both. The self-play state checker learns that rebuild progress exists only under an Assault Infantry.
 2. **Presentation:** bridge art, the two action menu items, tile info lines, the explosion and the rebuild cue.
 3. **Map:** the generator, the scenario file and its overview picture.
@@ -151,7 +176,9 @@ Rule tests (02-terrain §4a):
 - "Blowing a bridge isn't a kill"
 
 Scenario tests ("Market Garden"):
-- "The Allies win by holding Eindhoven, Nijmegen and Arnhem for 2 days"
+- "The Allies win by holding Eindhoven, Nijmegen and Arnhem for 2 days, whichever Allied player holds each"
+- "The US plays on after the UK loses its HQ"
+- "The US moves first, then the UK, then Germany"
 - "Germany wins at the start of day 12"
 - "Every crossing on the road from Neerpelt to Arnhem is a Major Bridge"
 - "Germany's reinforcement crossings at Venlo, Doesburg and Zutphen can't be blown"
@@ -165,6 +192,6 @@ Scenario tests ("Market Garden"):
 - **No gliders** (deferred, 01-units §7), so the airborne divisions' jeeps and anti-tank guns aren't on the map.
 - **No dyke terrain:** the Island's raised roads, where tanks were easy targets, play as ordinary road and plain.
 - **No weather that grounds aircraft:** the fog that delayed the later lifts isn't modeled.
-- **The Polish brigade** is folded into the British player. There is no Polish nation.
-- **British paratroopers** use the US paratrooper art (card-suit helmets) until UK art exists.
+- **The Polish brigade** is folded into the UK player. There is no Polish nation.
+- **One person playing two Allied players** takes two turns a day. With the pass-the-device screen on, it shows between the US and UK turns too. It can be turned off on the map select.
 - **No ferries:** the Driel ferry and the evacuation across the Rhine aren't possible except by wading the Blown Bridge or a river as foot soldiers.
