@@ -410,11 +410,17 @@ describe("each nation's colors (08-art-pipeline §12)", () => {
     expect(teams(["germany", "us"])).toEqual(["grey", "olive"]);
   });
 
-  it("on every built-in map, each side wears its own nation's color and no one wears red", () => {
+  it("on every built-in map, each nation with a color of its own wears it, and none of them wears red", () => {
+    // A nation with no color of its own yet (the UK, until its art exists) takes a free player color instead.
     for (const scenario of SCENARIOS) {
       const nations = scenario.setup.players.map((p) => p.nation);
-      expect(teams(nations), scenario.name).toEqual(nations.map((n) => BUILT_IN_PACK.nationColors[n]?.team));
-      expect(teams(nations), scenario.name).not.toContain("red");
+      const worn = teams(nations);
+      nations.forEach((n, i) => {
+        const own = BUILT_IN_PACK.nationColors[n]?.team;
+        if (own === undefined) return;
+        expect(worn[i], `${scenario.name}: ${n}`).toBe(own);
+        expect(worn[i], `${scenario.name}: ${n}`).not.toBe("red");
+      });
     }
   });
 

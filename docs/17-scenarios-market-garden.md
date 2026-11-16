@@ -1,12 +1,16 @@
 # Topic Doc 17: Market Garden Scenarios
 
-**Status:** designed (v0), not built yet. Balance untested.
+**Status:** built (v0) on 2026-11-15. Balance untested.
 **Last updated:** 2026-11-15
 **Depends on:** 00-master-design.md §8, 01-units.md (availability rule), 02-terrain.md §4a (Major Bridges), 04-economy-production.md §8 (victory conditions), 05-supply-transport.md §6 (Transport Aircraft drops).
 
 ---
 
 ## 1. Market Garden (`market-garden`)
+
+![Overview](maps/market-garden.png)
+
+Army green properties are Allied (US or UK), red German, grey neutral. The inner mark shows the kind: yellow factory, white airfield, black HQ. Dark squares are starting units. Orange squares are Major Bridges, brown ordinary bridges.
 
 ### Why this map
 
@@ -72,12 +76,16 @@ From south to north, every waterway crosses the road, so every few squares the a
 | Waal | Nijmegen road bridge | **Major Bridge** | Taken intact on 20 September |
 | Nederrijn | Arnhem road bridge | **Major Bridge** | Held by the British at its north end for four days |
 | Nederrijn | Oosterbeek railway bridge | **Major Bridge** | Blown in front of the British |
+| Zuid-Willemsvaart canal | Helmond (side road to Venlo) | Bridge | |
 | Maas | Venlo | Bridge | Germany's route from the south-east |
-| IJssel | Doesburg, Zutphen | Bridge | Germany's routes from the east |
+| Rhine | Emmerich (Kleve to Doetinchem) | Bridge | Germany's route from the Reich |
+| Nederrijn | East of Arnhem, near Pannerden (Arnhem to Doetinchem) | Bridge | Where the 10th SS crossed by ferry |
+| IJssel | Zutphen (Apeldoorn to Doetinchem) | Bridge | Germany's route from the north-east |
 
 - The Major Bridges are the bridges whose fate decided the battle. The other crossings, which are mostly Germany's own reinforcement roads, are ordinary Bridges that can't be blown.
 - Rivers are one square wide. Blowing a one-square bridge cuts it.
-- The main road ("Hell's Highway") runs Neerpelt, Valkenswaard, Eindhoven, Son, Veghel, Uden, Grave, Nijmegen, Elst, Arnhem. There are a few side roads, but no other way north across the rivers without a bridge.
+- The main road ("Hell's Highway") runs Neerpelt, Valkenswaard, Eindhoven, Son, Veghel, Uden, Grave, Nijmegen, Elst, Arnhem. Over the Waal, the Maas, the Maas–Waal canal and the Nederrijn there's no other crossing nearby: blowing one of those makes the drive longer. The canals in the south have alternatives (Best for Son, Helmond for Veghel). With every Major Bridge blown, the long way round through Venlo, Kleve and Emmerich costs a tank at least two more days.
+- As built, a few towns sit a square or so off their real spot so the rivers fall between them as they really do at this scale: Nijmegen south of the Waal, Oosterbeek apart from Arnhem. The Oosterbeek railway bridge is drawn as a road from Oosterbeek to Driel.
 - Germany can reach Nijmegen from Kleve along the south bank of the Waal. So even with the Arnhem bridge blown, Germany can reinforce Nijmegen, as the 10th SS did by ferry at Pannerden.
 
 ### Terrain
@@ -144,11 +152,12 @@ The first-lift Transport Aircraft start loaded, short of the drop zones and out 
 
 ### How it's made
 
-- `tools/maps/market-garden.mjs` will generate the scenario file from real longitude and latitude for towns, rivers, canals and forests, the same way as `bastogne.mjs`. `tools/maps/overview.mjs market-garden` will draw `docs/maps/market-garden.png`.
+- `tools/maps/market-garden.mjs` generates the scenario file from real longitude and latitude for towns, rivers, canals and forests, the same way as `bastogne.mjs`. It checks that no first-lift aircraft starts in flak range. `tools/maps/overview.mjs market-garden` draws `docs/maps/market-garden.png`.
+- Tests (`tests/scenario.test.ts`, "Market Garden") check the turn order, who the computer plays, both victory conditions, the US playing on without an HQ, the Major Bridges on the road north, Germany's route to Nijmegen, the first lift out of flak range and the German sappers by the bridges.
 - **Art needed:**
   - A Major Bridge (a steel truss bridge, visibly different from the ordinary Bridge, in the same road and river pieces) and a Blown Bridge (fallen spans in the river), each in summer and winter sheets (08-art-pipeline §14, §21).
   - **UK art**, for every unit type the UK can field (the availability rule, 01-units §1), as the US, Germany, Japan and the Soviet Union have: map sprites with front, back and side views (08-art-pipeline §17, §22) and battle-scene figures and models (§18). Examples: Tommy with a Brodie helmet and Lee-Enfield, red-beret paratroopers (the UK's version of the US paratrooper look), PIAT team, 3-inch mortar, Daimler armoured car, Universal Carrier, Stuart, Sherman Firefly, Achilles tank destroyer, 25-pounder, Crusader AA, Spitfire, Lancaster, Dakota, and the Churchill for maps that offer the Heavy Tank. The UK also needs its own color, so a US player and a UK player don't wear the same one (08-art-pipeline §12). Canada can keep borrowing the UK art.
-  - Until the UK art exists, the UK player uses the US art in a slot color (08-art-pipeline §12).
+  - Until the UK art exists, the UK player uses the US art in a slot color (08-art-pipeline §12). That art is being made on its own branch.
 
 ### Build order
 
@@ -190,6 +199,7 @@ Scenario tests ("Market Garden"):
 
 ## 2. Known gaps
 
+- **AI vs AI, Germany always wins** (seeds 1 to 4, all on day 12, 09-ai §4e): the Allied AI doesn't coordinate the drops with XXX Corps yet.
 - Balance is a first guess: starting funds, the 2-day hold, the day 12 limit, Germany's 12 starting properties and the size of the first lift all need playtesting.
 - **No gliders** (deferred, 01-units §7), so the airborne divisions' jeeps and anti-tank guns aren't on the map.
 - **No dyke terrain:** the Island's raised roads, where tanks were easy targets, play as ordinary road and plain.

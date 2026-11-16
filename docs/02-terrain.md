@@ -65,7 +65,7 @@ Fortifications and obstacles are terrain objects with HP, similar to the origina
 - **Damage to fortifications** comes from the `Fort` column of the damage chart (03-combat section 5b). Assault Infantry is the best ground unit against them.
 - Phase 1 includes Bunker, Rubble and Obstacle on land. Beach obstacles arrive with naval units in phase 2.
 
-## 4a. Major bridges: blowing and rebuilding **(new)** (decided 2026-11-15, not built yet)
+## 4a. Major bridges: blowing and rebuilding **(new)** (decided and built 2026-11-15)
 
 Decided at the developer's request for Market Garden (17-scenarios-market-garden). The original game has no bridges that can be destroyed. This is a **new, separate terrain type**. Ordinary **Bridge** tiles are not changed and can never be blown: every existing map keeps its bridges exactly as they are. A map maker uses Major Bridge only where blowing a bridge is part of the battle.
 
@@ -82,6 +82,7 @@ Decided at the developer's request for Market Garden (17-scenarios-market-garden
 - **Tile info** on a Major Bridge says "Can be blown by Assault Infantry". On a Blown Bridge it says "Can be rebuilt by Assault Infantry" and shows the rebuild progress, as capture progress is shown.
 - **Events:** blowing plays an explosion on the tile with a sound, and a finished rebuild plays a short build cue (16-sound). Neither counts as a kill.
 - **Modifier layer:** both terrains' movement costs and stars go through the modifier layer like every other terrain (§1).
+- **As built:** in scenario map text a Major Bridge is `%` and a Blown Bridge `!`. Rebuild progress is kept in the game state (`bridgeWorks`) and saved with the game. The action menu says BLOW BRIDGE and REBUILD. Art packs can give `majorBridges` and `blownBridges` tiles (08-art-pipeline §13); a pack without them draws a Major Bridge with the plain Bridge deck and a Blown Bridge as bare river.
 
 ## 5. Movement rules
 

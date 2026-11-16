@@ -476,8 +476,9 @@ export abstract class LandingBrain extends BrainBase {
       case "surface":
         return position + this.w.reachRepairBonus;
       case "blowBridge":
+        return position + this.blowBridgeScore(moved);
       case "rebuildBridge":
-        return -Infinity;
+        return position + this.rebuildBridgeScore(moved);
     }
   }
 
@@ -611,6 +612,36 @@ export abstract class LandingBrain extends BrainBase {
     const withoutForts = this.distances(unit, plan.goals, `${plan.goals.length}:${plan.goals.map((g) => this.index(g)).join(",")}`, true);
     const blocked = (withoutForts[here] ?? Infinity) + 2 < (plan.dist[here] ?? Infinity);
     return blocked ? (this.w.blockingFortValue * Math.min(100, (f.attack.min + f.attack.max) / 2)) / 100 : -Infinity;
+  }
+
+  /** Land vehicles: the units a Blown Bridge stops, since soldiers can wade it (02-terrain §4a). */
+  private vehicles(enemy: boolean): Unit[] {
+    return this.state.units.filter((u) => {
+      const def = defOf(u.type);
+      return this.isEnemy(u.owner) === enemy && def.category === "land" && (def.movementType === "tracks" || def.movementType === "wheels");
+    });
+  }
+
+  /**
+   * Blow a Major Bridge when an enemy vehicle could reach it next turn and none of our vehicles is
+   * within two turns of it (09-ai §4e). Distances are straight-line squares, a cheap first guess.
+   */
+  protected blowBridgeScore(moved: Unit): number {
+    const near = (u: Unit, turns: number) => distance(u.pos, moved.pos) <= turns * stats.movePoints(this.state, u) + 1;
+    if (!this.vehicles(true).some((u) => near(u, 1))) return -Infinity;
+    if (this.vehicles(false).some((u) => near(u, 2))) return -Infinity;
+    return this.w.blowBridge;
+  }
+
+  /**
+   * Rebuild a Blown Bridge when one of our vehicles is within two turns of it and no enemy vehicle
+   * is nearer to it than our nearest (09-ai §4e).
+   */
+  protected rebuildBridgeScore(moved: Unit): number {
+    const turns = (u: Unit) => distance(u.pos, moved.pos) / Math.max(1, stats.movePoints(this.state, u));
+    const ours = Math.min(...this.vehicles(false).map(turns));
+    const theirs = Math.min(...this.vehicles(true).map(turns));
+    return ours <= 2 && ours <= theirs ? this.w.rebuildBridge : -Infinity;
   }
 
   protected captureScore(moved: Unit): number {
