@@ -4,7 +4,8 @@
 
 import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type V3 } from "./angled/mesh";
 import {
-  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, iowa, kagero, lct, ptBoat, sBoot, shokaku, typeVII, waterline, yamato, zerstorer,
+  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, illustrious, iowa, kagero, lct, mtb, ptBoat, sBoot, shokaku, tClass, tribal, typeVII,
+  warspite, waterline, yamato, zerstorer,
   type Launch, type Salvo, type ShipModel,
 } from "./angled/shipModels";
 import { C, mix, type Painter } from "./paint";
@@ -182,7 +183,10 @@ const team = (look: Look) => `${look.nation ?? ""}|${look.team.mid}`;
 const NO_SALVO: Salvo = { firing: -1, recoil: 0 };
 
 function battleship(look: Look, salvo: Salvo): ShipModel {
-  return memo(`bb|${team(look)}|${salvo.firing}|${salvo.recoil}`, () => (kitOf(look) === "jp" ? yamato(look.team, salvo) : iowa(look.team, salvo)));
+  const kit = kitOf(look);
+  return memo(`bb|${team(look)}|${salvo.firing}|${salvo.recoil}`, () =>
+    kit === "jp" ? yamato(look.team, salvo) : kit === "uk" ? warspite(look.team, salvo) : iowa(look.team, salvo),
+  );
 }
 
 function salvoOf(pose: Pose): Salvo {
@@ -213,7 +217,9 @@ export const battleshipRig: Rig = shipRig({
 
 function destroyer(look: Look, gun: Salvo): ShipModel {
   const kit = kitOf(look);
-  return memo(`dd|${team(look)}|${gun.firing}|${gun.recoil}`, () => (kit === "jp" ? kagero(look.team, gun) : kit === "de" ? zerstorer(look.team, gun) : fletcher(look.team, gun)));
+  return memo(`dd|${team(look)}|${gun.firing}|${gun.recoil}`, () =>
+    kit === "jp" ? kagero(look.team, gun) : kit === "de" ? zerstorer(look.team, gun) : kit === "uk" ? tribal(look.team, gun) : fletcher(look.team, gun),
+  );
 }
 
 function deckGunOf(pose: Pose): Salvo {
@@ -240,7 +246,7 @@ export const destroyerRig: Rig = shipRig({
 
 function submarine(look: Look): ShipModel {
   const kit = kitOf(look);
-  return memo(`ss|${team(look)}`, () => (kit === "jp" ? iBoat(look.team) : kit === "de" ? typeVII(look.team) : gato(look.team)));
+  return memo(`ss|${team(look)}`, () => (kit === "jp" ? iBoat(look.team) : kit === "de" ? typeVII(look.team) : kit === "uk" ? tClass(look.team) : gato(look.team)));
 }
 
 export const submarineRig: Rig = shipRig({
@@ -255,7 +261,7 @@ export const submarineRig: Rig = shipRig({
 
 function landingCraft(look: Look): ShipModel {
   const kit = kitOf(look);
-  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : lct(look.team, kit === "de" ? "de" : "us", look.beached)));
+  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : lct(look.team, kit === "de" || kit === "uk" ? kit : "us", look.beached)));
 }
 
 export const landingCraftRig: Rig = shipRig({
@@ -278,7 +284,13 @@ function launchOf(pose: Pose): Launch {
 function torpedoBoat(look: Look, launch: Launch, shake: number): ShipModel {
   const kit = kitOf(look);
   return memo(`tb|${team(look)}|${launch.slide}|${launch.launched}|${shake}`, () =>
-    kit === "jp" ? gyoraitei(look.team, launch, shake) : kit === "de" ? sBoot(look.team, launch, shake) : ptBoat(look.team, launch, shake),
+    kit === "jp"
+      ? gyoraitei(look.team, launch, shake)
+      : kit === "de"
+        ? sBoot(look.team, launch, shake)
+        : kit === "uk"
+          ? mtb(look.team, launch, shake)
+          : ptBoat(look.team, launch, shake),
   );
 }
 
@@ -304,7 +316,8 @@ export const torpedoBoatRig: Rig = shipRig({
 // ---- Carrier: unarmed; aircraft parked aft on the flight deck ----
 
 function carrier(look: Look): ShipModel {
-  return memo(`cv|${team(look)}`, () => (kitOf(look) === "jp" ? shokaku(look.team) : essex(look.team)));
+  const kit = kitOf(look);
+  return memo(`cv|${team(look)}`, () => (kit === "jp" ? shokaku(look.team) : kit === "uk" ? illustrious(look.team) : essex(look.team)));
 }
 
 export const carrierRig: Rig = shipRig({

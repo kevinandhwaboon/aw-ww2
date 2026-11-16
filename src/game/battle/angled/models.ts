@@ -2,7 +2,8 @@
 // mesh.ts, 08-art-pipeline §18). Each is built from the shapes that make the real vehicle
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
 // StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. Soviet Union: T-70,
-// T-34/76 (1943), KV-1, SU-152. `recoil` slides the gun back along its barrel when it fires.
+// T-34/76 (1943), KV-1, SU-152. UK (and Canada): Stuart, Sherman Firefly, Churchill, Achilles, with
+// the RAF roundel where the US carries its star. `recoil` slides the gun back along its barrel.
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, shift, wheel, type Face, type V3 } from "./mesh";
@@ -37,6 +38,22 @@ export function starDecal(y: number, x: number, z: number, r: number, color = C(
 export function redStarDecal(y: number, x: number, z: number, r: number): Face[] {
   return [starDecal(y, x, z, r + 0.8), starDecal(y - 0.03, x, z, r, C("battleSun"))];
 }
+
+/** A national marking on a vehicle's near side (y), centred at (x, z), `r` across. */
+export type Marking = (y: number, x: number, z: number, r: number) => Face[];
+
+/** The US white star. */
+export const usStar: Marking = (y, x, z, r) => [starDecal(y, x, z, r)];
+
+/**
+ * The RAF roundel, the UK's only marking (08-art-pipeline §12): a red centre in a white ring in a
+ * blue ring, on the vehicle's right side. Each ring sits a little proud of the one under it.
+ */
+export const roundelDecal: Marking = (y, x, z, r) => [
+  decalY(y, circle(x, z, r, 14), C("battleRoundel")),
+  decalY(y - 0.03, circle(x, z, r * 0.66, 12), C("battleStar")),
+  decalY(y - 0.06, circle(x, z, r * 0.36, 10), C("battleSun")),
+];
 
 /** German vehicles carry no insignia (08-art-pipeline §12): camouflage blotches on the side instead. */
 export function camoDecals(y: number, x0: number, x1: number, z0: number, z1: number, t: TeamShades, seed: number): Face[] {
@@ -77,7 +94,7 @@ export const roadWheel = (x: number, y: number, z: number, r: number, tone = 1) 
 // ---- US ----
 
 /** M5 Stuart: tall and narrow, a sloped glacis, two bogies and a trailing idler, the 37mm in its sleeve. */
-export function stuart(t: TeamShades, recoil = 0): Model {
+export function stuart(t: TeamShades, recoil = 0, mark: Marking = usStar): Model {
   const f: Face[] = [];
   f.push(...running(-27, 27, 10, 9, 14, t.lo));
   f.push(...wheel(25, -14.6, 6, 4, 1.2, steelDark(), steel()));
@@ -88,7 +105,7 @@ export function stuart(t: TeamShades, recoil = 0): Model {
     f.push(...roadWheel(b + 4.5, -14.8, 4, 3.8));
   }
   f.push(...extrudeY(-14, 14, [[-27, 10], [27, 10], [28, 13], [14, 21], [-25, 21], [-27, 19]], t.mid));
-  f.push(starDecal(-14.05, -8, 15, 3.8));
+  f.push(...mark(-14.05, -8, 15, 3.8));
   f.push(...barrel(24, 29, 6, 15, 0.7, steelDark()));
   f.push(...loftZ(21, [[-9, -8], [6, -8], [8, -6], [8, 6], [6, 8], [-9, 8]], 31, [[-8, -7], [4, -7], [6, -5], [6, 5], [4, 7], [-8, 7]], t.mid));
   f.push(...box(6, 10, -5, 5, 23, 29, t.lo));
@@ -99,8 +116,8 @@ export function stuart(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: [-3, -2, 31], muzzle: [30 - recoil, 0, 26], mg: [29, 6, 15] };
 }
 
-/** M4 Sherman: high hull, steep sloped glacis, VVSS bogies, rounded cast turret, short 75. */
-export function sherman(t: TeamShades, recoil = 0): Model {
+/** The Sherman's hull and running gear: high hull, steep sloped glacis, VVSS bogies. */
+function shermanHull(t: TeamShades, mark: Marking, bowMg = true): Face[] {
   const f: Face[] = [];
   f.push(...running(-35, 35, 12, 11, 18, t.lo));
   // Drive sprocket at the front, idler at the back, three bogies of two wheels with return rollers.
@@ -115,14 +132,20 @@ export function sherman(t: TeamShades, recoil = 0): Model {
   }
   // Upper hull: sloped glacis, sponsons over the tracks, tools on the side.
   f.push(...extrudeY(-18, 18, [[-34, 12], [35, 12], [35, 14], [15, 25], [-31, 25], [-34, 22]], t.mid));
-  f.push(starDecal(-18.05, -10, 18.5, 4.6));
+  f.push(...mark(-18.05, -10, 18.5, 4.6));
   f.push(decalY(-18.05, [[-28, 22], [-16, 22], [-16, 23], [-28, 23]], C("battleWood")));
   f.push(decalY(-18.05, [[4, 15], [12, 15], [12, 22], [4, 22]], mix(t.mid, t.hi, 0.35)));
   // Spare track links on the glacis, the bow machine gun, towing shackles, headlights.
   for (let k = 0; k < 3; k++) f.push(...box(19 + k * 4.5, 22 + k * 4.5, -12, -2, 21.5 - k * 2.4, 23 - k * 2.4, rubber()));
-  f.push(...barrel(30, 36, 7, 17, 0.8, steelDark()));
+  if (bowMg) f.push(...barrel(30, 36, 7, 17, 0.8, steelDark()));
   f.push(...box(34, 36, -14, -12, 12, 14, steelDark()));
   f.push(...box(34, 36, 12, 14, 12, 14, steelDark()));
+  return f;
+}
+
+/** M4 Sherman: high hull, steep sloped glacis, VVSS bogies, rounded cast turret, short 75. */
+export function sherman(t: TeamShades, recoil = 0): Model {
+  const f = shermanHull(t, usStar);
   // Cast turret: rounded and tapering, a wide mantlet, the 75mm, a hatch and a .50 cal on the roof.
   f.push(...loftZ(25, circle(-1, 0, 13, 14, 0.9), 37, circle(-2, 0, 10.5, 14, 0.85), t.mid));
   f.push(...box(9, 14, -7, 7, 27, 34, t.lo));
@@ -134,8 +157,25 @@ export function sherman(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: [-5, 3, 39], muzzle: [42 - recoil, 0, 30.5], mg: [36, 7, 17] };
 }
 
+/**
+ * Sherman Firefly: the Sherman with the long 17-pounder and its muzzle brake reaching far past the
+ * nose, the radio moved into an armored box on the turret's back, and no bow gunner (his hatch
+ * plated over). The roundel on the hull side.
+ */
+export function firefly(t: TeamShades, recoil = 0): Model {
+  const f = shermanHull(t, roundelDecal, false);
+  f.push(...box(28, 33, 4, 10, 16.5, 18.5, t.lo));
+  f.push(...loftZ(25, circle(-1, 0, 13, 14, 0.9), 37, circle(-2, 0, 10.5, 14, 0.85), t.mid));
+  f.push(...box(-20, -11, -7, 7, 27, 35, t.mid));
+  f.push(...box(9, 14, -7, 7, 27, 34, t.lo));
+  f.push(...barrel(13 - recoil, 62 - recoil, 0, 30.5, 1.4, steelDark()));
+  f.push(...barrel(57 - recoil, 62 - recoil, 0, 30.5, 2.2, steelDark()));
+  f.push(...loftZ(37, circle(-5, 3, 4, 10), 39, circle(-5, 3, 3.6, 10), t.lo));
+  return { faces: f, commander: [-5, 3, 39], muzzle: [62 - recoil, 0, 30.5], mg: [14, 4, 30.5] };
+}
+
 /** Churchill: long, its tracks running up over the hull sides, square escape doors, a box turret. */
-export function churchill(t: TeamShades, recoil = 0): Model {
+export function churchill(t: TeamShades, recoil = 0, mark: Marking = usStar): Model {
   const f: Face[] = [];
   // The tracks wrap high round the whole hull side, horns at the front.
   const tall: Poly = [[-38, 2], [-34, 0], [34, 0], [40, 6], [41, 16], [38, 22], [-36, 22], [-40, 14]];
@@ -149,7 +189,7 @@ export function churchill(t: TeamShades, recoil = 0): Model {
   f.push(...box(-2, 7, -20.6, -20, 9, 17, t.lo));
   f.push(decalY(-20.65, [[-1, 15], [6, 15], [6, 16], [-1, 16]], t.hi));
   for (let x = -27; x < -12; x += 3) f.push(decalY(-20.05, [[x, 10], [x + 1, 10], [x + 1, 17], [x, 17]], t.lo));
-  f.push(starDecal(-20.05, 16, 13, 3.6));
+  f.push(...mark(-20.05, 16, 13, 3.6));
   f.push(...box(-34, 36, -14, 14, 22, 24, t.mid));
   f.push(...barrel(36, 41, 6, 17, 0.8, steelDark()));
   // Box turret, the 6-pounder, a hatch.
@@ -160,8 +200,11 @@ export function churchill(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: [2, 4, 38], muzzle: [42 - recoil, 0, 29.5], mg: [41, 6, 17] };
 }
 
-/** M10: a Sherman chassis with sloped hull sides, an open pentagonal turret, counterweights, the 3-inch. */
-export function m10(t: TeamShades, recoil = 0): Model {
+/**
+ * The M10's hull and open turret: a Sherman chassis with sloped hull sides, an open pentagonal
+ * turret and counterweights hanging off its back.
+ */
+function m10Body(t: TeamShades, mark: Marking): Face[] {
   const f: Face[] = [];
   f.push(...running(-35, 35, 12, 11, 18, t.lo));
   f.push(...wheel(32, -18.6, 7, 4.6, 1.2, steelDark(), steel()));
@@ -173,7 +216,7 @@ export function m10(t: TeamShades, recoil = 0): Model {
   }
   // Sloped hull sides and glacis, with bolted-on armour bosses.
   f.push(...loftZ(12, [[-34, -18], [30, -18], [36, -12], [36, 12], [30, 18], [-34, 18]], 24, [[-31, -13], [14, -13], [17, -9], [17, 9], [14, 13], [-31, 13]], t.mid));
-  f.push(starDecal(-15.5, -12, 18, 3.8));
+  f.push(...mark(-15.5, -12, 18, 3.8));
   // Open-topped pentagonal turret: the crew show over the rim; counterweights hang off the back.
   const pent: Poly = [[-12, -12], [8, -12], [15, -5], [15, 5], [8, 12], [-12, 12]];
   const pentTop: Poly = [[-11, -10], [7, -10], [12, -4], [12, 4], [7, 10], [-11, 10]];
@@ -181,10 +224,26 @@ export function m10(t: TeamShades, recoil = 0): Model {
   f.push({ points: pentTop.map(([x, y]) => [x * 0.86, y * 0.82, 33.1] as V3), color: C("battleInk"), decal: true, facing: [0, 0, 1] });
   f.push(...box(-18, -12, -9, 9, 25, 31, t.lo));
   f.push(...box(13, 17, -4, 4, 26, 31, t.lo));
+  return f;
+}
+
+/** M10: a Sherman chassis with sloped hull sides, an open pentagonal turret, counterweights, the 3-inch. */
+export function m10(t: TeamShades, recoil = 0): Model {
+  const f = m10Body(t, usStar);
   f.push(...barrel(15 - recoil, 56 - recoil, 0, 28.5, 1.4, steelDark()));
   f.push(...box(-10, -8, 6, 8, 33, 37, steelDark()));
   f.push(...barrel(-10, 4, 7, 37.5, 0.6, steelDark()));
   return { faces: f, commander: null, crew: [[-3, -3, 34], [4, 3, 34]], muzzle: [56 - recoil, 0, 28.5], mg: [8, 7, 37.5] };
+}
+
+/** Achilles: the M10 re-armed with the long British 17-pounder and its muzzle brake. */
+export function achilles(t: TeamShades, recoil = 0): Model {
+  const f = m10Body(t, roundelDecal);
+  f.push(...barrel(15 - recoil, 64 - recoil, 0, 28.5, 1.3, steelDark()));
+  f.push(...barrel(59 - recoil, 64 - recoil, 0, 28.5, 2.2, steelDark()));
+  f.push(...box(-10, -8, 6, 8, 33, 37, steelDark()));
+  f.push(...barrel(-10, 4, 7, 37.5, 0.6, steelDark()));
+  return { faces: f, commander: null, crew: [[-3, -3, 34], [4, 3, 34]], muzzle: [64 - recoil, 0, 28.5], mg: [8, 7, 37.5] };
 }
 
 // ---- Germany ----
@@ -534,16 +593,19 @@ export type TankKind = "light" | "medium" | "heavy" | "td";
 type MakeModel = (t: TeamShades, recoil?: number) => Model;
 
 /**
- * Each nation's model for each tank kind. The UK and Canada use the US models (08-art-pipeline
- * §18). Japan fielded no heavy tank, so its scenarios never offer one; the Chi-Ha stands in if one
- * is ever drawn.
+ * Each nation's model for each tank kind (08-art-pipeline §18); Canada uses the UK's. Japan fielded
+ * no heavy tank, so its scenarios never offer one; the Chi-Ha stands in if one is ever drawn. The
+ * US has no Heavy Tank on the map either; the Churchill stands in for it here.
  */
 /** Whose models: the same keys as the battle scenes' `Kit` (rig.ts), kept here so this file needs no DOM types. */
-type ModelKit = "us" | "de" | "jp" | "su";
+type ModelKit = "us" | "de" | "jp" | "su" | "uk";
+
+const ukStuart: MakeModel = (t, recoil) => stuart(t, recoil, roundelDecal);
+const ukChurchill: MakeModel = (t, recoil) => churchill(t, recoil, roundelDecal);
 
 export const TANK_MODELS: Record<TankKind, Record<ModelKit, MakeModel>> = {
-  light: { us: stuart, de: panzerII, jp: haGo, su: t70 },
-  medium: { us: sherman, de: panzerIV, jp: chiHa, su: t34 },
-  heavy: { us: churchill, de: tiger, jp: chiHa, su: kv1 },
-  td: { us: m10, de: stug, jp: hoNi, su: su152 },
+  light: { us: stuart, de: panzerII, jp: haGo, su: t70, uk: ukStuart },
+  medium: { us: sherman, de: panzerIV, jp: chiHa, su: t34, uk: firefly },
+  heavy: { us: churchill, de: tiger, jp: chiHa, su: kv1, uk: ukChurchill },
+  td: { us: m10, de: stug, jp: hoNi, su: su152, uk: achilles },
 };

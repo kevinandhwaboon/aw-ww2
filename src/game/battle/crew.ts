@@ -3,7 +3,8 @@
 // nation's tanker headgear with goggles pushed up: US: the M1938 tanker helmet, its padded ribs and
 // ear flaps. Germany: the side cap under headphones, goggles on the cap and a throat microphone.
 // Japan: the cork tanker's helmet with its ribs and short peak. Soviet Union: the black padded
-// shlemofon with its three thick ribs, over dark overalls. Faces right; the hatch rim's
+// shlemofon with its three thick ribs, over dark overalls. UK: the Royal Armoured Corps' black beret
+// under a headset, over khaki denim overalls. Faces right; the hatch rim's
 // centre is at (x, y). The same crewman in a steel helmet mans guns (`headgear: "helmet"`).
 
 import { C, mix, shade, type Painter } from "./paint";
@@ -17,13 +18,17 @@ export interface CommanderOptions {
   readonly headgear?: "tanker" | "helmet";
 }
 
-/** The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki, Soviet dark overalls. Gun crews wear the uniform. */
+/**
+ * The tanker's jacket: US tan zip jacket, German black wrap jacket, Japanese khaki, Soviet dark
+ * overalls, British khaki denims. Gun crews wear the uniform.
+ */
 function jacketOf(look: Look, headgear: "tanker" | "helmet"): string {
   if (headgear === "helmet") return look.team.cloth;
   const kit = kitOf(look);
   if (kit === "de") return mix(C("battleInk"), C("battleFieldGrey"), 0.3);
   if (kit === "jp") return C("battleKhaki");
   if (kit === "su") return mix(C("battleInk"), C("battleOlive"), 0.45);
+  if (kit === "uk") return mix(C("battleSand"), C("battleBrown"), 0.55);
   return mix(C("battleSand"), C("battleOlive"), 0.45);
 }
 
@@ -86,6 +91,18 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     // A soldier's steel helmet, as the infantry wear it (soldiers.ts), over a face 6 wide.
     p.px(x + 3, y - 13, skin);
     helmet(p, x - 2, y - 13, look);
+  } else if (kit === "uk") {
+    // The RAC black beret, pulled down to the far side, its badge over the near eye; a headset band
+    // over it and an earpiece over the ear.
+    const beret = mix(C("battleInk"), C("battleRubber"), 0.5);
+    p.rect(x - 3, y - 15, 7, 2, beret);
+    p.rect(x - 2, y - 16, 5, 1, beret);
+    p.rect(x - 4, y - 14, 2, 2, beret);
+    p.px(x - 1, y - 16, shade(beret, 1.8));
+    p.px(x + 2, y - 15, C("battleBrass"));
+    p.rect(x - 3, y - 17, 3, 1, C("battleRubber"));
+    p.rect(x - 4, y - 13, 3, 3, C("battleRubber"));
+    p.px(x - 3, y - 13, shade(C("battleRubber"), 1.6));
   } else if (kit === "de") {
     // Side cap, then the headphone band over it and an earpiece over the ear.
     const cap = mix(C("battleInk"), C("battleFieldGrey"), 0.25);

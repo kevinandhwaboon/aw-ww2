@@ -68,12 +68,20 @@ export interface Rig {
 }
 
 /**
- * Whose equipment a figure carries: Japan's, Germany's, the Soviet Union's, or the US look the UK
- * and Canada share.
+ * Whose equipment a figure carries: the US's, Germany's, Japan's, the Soviet Union's, or the UK's,
+ * which Canada shares (00-master-design §6).
  */
-export type Kit = "us" | "de" | "jp" | "su";
+export type Kit = "us" | "de" | "jp" | "su" | "uk";
 export const kitOf = (look: Pick<Look, "nation">): Kit =>
-  look.nation === "germany" ? "de" : look.nation === "japan" ? "jp" : look.nation === "ussr" ? "su" : "us";
+  look.nation === "germany"
+    ? "de"
+    : look.nation === "japan"
+      ? "jp"
+      : look.nation === "ussr"
+        ? "su"
+        : look.nation === "uk" || look.nation === "canada"
+          ? "uk"
+          : "us";
 
 export const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 /** 0 before a, 1 after b, a straight ramp between. */

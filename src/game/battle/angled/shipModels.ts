@@ -2,9 +2,10 @@
 // 08-art-pipeline §18). Each naval unit is one ship. US: an Iowa-class battleship, a Fletcher, a Gato,
 // an LCT carrying two Shermans and an Elco PT boat. Germany: a 1936A Zerstörer, a Type VII U-boat, an
 // S-boot, and the LCT hull carrying two Panzer IVs. Japan: the Yamato, a Kagero, a B1-type I-boat
-// with its aircraft hangar, a Daihatsu carrying a Ha-Go, and a small torpedo boat. Carriers: the
-// Essex class for the US and UK, the Shōkaku for Japan; Germany has none. Ships carry no
-// insignia (08-art-pipeline §12).
+// with its aircraft hangar, a Daihatsu carrying a Ha-Go, and a small torpedo boat. UK: HMS
+// Warspite, a Tribal, a T-class submarine, the LCT carrying two Sherman Fireflies, and a Vosper MTB.
+// Carriers: the Essex class for the US, HMS Illustrious for the UK, the Shōkaku for Japan; Germany
+// has none. Ships carry no insignia (08-art-pipeline §12).
 //
 // Model axes as for the tanks: x toward the bow, y to port (the near side is y negative), z up, with
 // the waterline at z = 0. Parts are grouped in layers drawn one after the other, so that whatever
@@ -793,10 +794,10 @@ function ramp(x: number, z: number, half: number, length: number, down: boolean,
 
 /**
  * LCT: a flat box of a hull with high side walls round an open well deck, the bow ramp, the
- * wheelhouse and twin 20mm aft. It carries two of its side's medium tanks (Shermans, or Panzer IVs
- * on the German craft) and their crews.
+ * wheelhouse and twin 20mm aft. It carries two of its side's medium tanks (Shermans, Panzer IVs on
+ * the German craft, Fireflies on the British) and their crews.
  */
-export function lct(T: TeamShades, kit: "us" | "de", beached: boolean): ShipModel {
+export function lct(T: TeamShades, kit: "us" | "de" | "uk", beached: boolean): ShipModel {
   const U = sup(T);
   const S = [st(56, 12, 2.4, -3), st(-52, 12, 2.4, -3), st(-56, 11, 2.4, 0)];
   const back: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: shade(T.lo, 0.9), boot: 0.5 })];
@@ -1056,6 +1057,194 @@ export function shokaku(T: TeamShades): ShipModel {
     layers: [base, houses, flight, over],
     water: S,
     deck: [st(92, 7.7, top, 0), st(80, 14, top, 0), st(-95, 14, top, 0)],
+    at: {},
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+// ---- United Kingdom (Canada borrows these) ----
+
+/**
+ * HMS Warspite as rebuilt in 1937: four twin 15-inch turrets (A and B forward, B superfiring; X
+ * superfiring over Y aft), the tall "Queen Anne's castle" tower bridge with its director, one broad
+ * funnel, a tripod mainmast, 6-inch guns in casemates along the hull, and twin 4-inch mounts and
+ * pom-poms amidships. X and Y fire the third salvo together.
+ */
+export function warspite(T: TeamShades, salvo: Salvo): ShipModel {
+  const U = sup(T);
+  const S = [
+    st(80, 0.5, 16, 13), st(75, 3, 15, -4), st(62, 7, 13, -4), st(44, 10, 11.6, -4), st(20, 11.5, 10.8, -4),
+    st(-36, 11.5, 10.4, -4), st(-58, 10, 10, -4), st(-72, 7, 10, -4), st(-79, 4, 10, 0), st(-81, 2, 10, 4),
+  ];
+  const d = (x: number) => deckAt(S, x);
+  const r = (i: number) => (salvo.firing === i ? salvo.recoil : 0);
+  const spec = { back: 8, front: 7, half: 6.2, height: 6, slope: 2.6, guns: 2, spacing: 3.6, bore: 0.6, length: 22, gunZ: 3, color: U, hoods: true, elevation: MAIN_ELEVATION };
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: mix(C("battleWood"), C("battleSand"), 0.45), boot: 6 })];
+  base.push(...portholes(S, -30, 30, 7.6, 5, T.deep), ...anchor(S, 68, 12));
+  // The 6-inch casemates: gun ports along the near side, a barrel poking out of each.
+  for (const x of [26, 18, 10, 2]) base.push(decalY(-beamAt(S, x) - 0.05, [[x - 1.6, 5.4], [x + 1.6, 5.4], [x + 1.6, 7.6], [x - 1.6, 7.6]], T.deep), ...barrel(x, x + 5, -beamAt(S, x) - 0.4, 6.5, 0.4, steelDark()));
+  const houses: Face[] = [...house(S, -30, 24, 9.5, 0, 4, U), ...house(S, 2, 22, 5, 4, 4, U)];
+  const top: Face[] = [];
+  const tA = turret(54, d(54), { ...spec, recoil: r(0) });
+  const zB = d(38) + 4.5;
+  top.push(...barbette(38, 6, d(38) - 0.5, zB, U));
+  const tB = turret(38, zB, { ...spec, recoil: r(1) });
+  const tY = turret(-62, d(-62), { ...spec, recoil: r(2), train: -0.6, elevation: AFT_ELEVATION });
+  const zX = d(-46) + 4.5;
+  top.push(...barbette(-46, 6, d(-46) - 0.5, zX, U));
+  const tX = turret(-46, zX, { ...spec, recoil: r(2), train: -0.6, elevation: AFT_ELEVATION });
+  top.push(...tA.faces, ...tB.faces, ...tY.faces, ...tX.faces);
+  // The tower bridge, its director and rangefinder, the tripod foremast.
+  const b = d(16) + 8;
+  top.push(...box(9, 23, -5.5, 5.5, b, b + 11, U), ...windows(-5.5, 10, 22, b + 8.4));
+  top.push(...box(11, 21, -4.4, 4.4, b + 11, b + 17, U), ...windows(-4.4, 12, 20, b + 14.6));
+  top.push(...box(12.5, 19, -2.6, 2.6, b + 17, b + 20, U), ...box(14.5, 16.5, -6.5, 6.5, b + 18, b + 19.2, T.lo));
+  top.push(...beam([13, 0, b + 20], [12, 0, b + 32], 0.8, 0.8, steelDark()), ...beam([12.4, -5, b + 28], [12.4, 5, b + 28], 0.5, 0.5, steelDark()));
+  // One broad funnel, the tripod mainmast, twin 4-inch mounts and the pom-poms.
+  top.push(...funnel(-4, d(-4) + 4, 5.6, 15, 1.6, U, steelDark()));
+  top.push(...beam([-22, 0, d(-22) + 4], [-22, 0, d(-22) + 30], 0.8, 0.8, steelDark()), ...beam([-26, 0, d(-26) + 4], [-22.4, 0, d(-22) + 22], 0.6, 0.6, steelDark()));
+  for (const x of [-14, -24]) for (const y of [-7.6, 7.6]) top.push(...twinMount(x, y, d(x) + 4, U, false, 0.8));
+  const aa = aaTub(-30, -7.6, d(-30) + 4, T.lo, 4, 2.6);
+  top.push(...aa.faces, ...aaTub(-30, 7.6, d(-30) + 4, T.lo, 4, 2.6).faces, ...aaTub(28, 0, b, T.lo, 4, 2.4).faces);
+  top.push(...beam([79, 0, 16], [79, 0, 21], 0.4, 0.4, steelDark()));
+  return {
+    layers: [base, houses, top],
+    water: S,
+    deck: S,
+    at: { gun0: tA.muzzle, gun1: tB.muzzle, gun2: tX.muzzle, aim0: tA.aim, aim1: tB.aim, aim2: tX.aim, aa: aa.muzzle },
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+/**
+ * Tribal class: a raised forecastle, four twin 4.7-inch gunhouses (A and B forward, X and Y aft), a
+ * tall bridge with its director, a tripod foremast, two raked funnels, a quadruple torpedo mount and
+ * the pom-pom between them, and depth-charge racks at the stern.
+ */
+export function tribal(T: TeamShades, gun: GunState): ShipModel {
+  const U = sup(T);
+  const S = [st(72, 0.5, 13.4, 10), st(67, 2.6, 12.4, -3), st(54, 5.4, 11, -3), st(36, 7.2, 10, -3), st(30, 7.2, 8.4, -3), st(-48, 7, 8, -3), st(-64, 5.6, 8, -3), st(-70, 4, 8, 0), st(-72, 2.6, 8, 3)];
+  const d = (x: number) => deckAt(S, x);
+  const r = (i: number) => (gun.firing === i ? gun.recoil : 0);
+  const spec = { back: 4, front: 4, half: 3.4, height: 3.6, slope: 1.2, guns: 2, spacing: 2.2, bore: 0.35, length: 10, gunZ: 1.9, color: U, recoil: 0 };
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: shade(T.lo, 0.92), boot: 5 })];
+  base.push(...portholes(S, 34, 60, 7.4, 4, T.deep), ...anchor(S, 62, 9.8));
+  const houses: Face[] = [...house(S, 14, 32, 5, 0, 4, U), ...house(S, 18, 30, 4.6, 4, 5, U), ...house(S, -30, 8, 4.4, 0, 3.4, U), ...house(S, -40, -32, 4.4, 0, 4, U)];
+  houses.push(...windows(-4.6, 19, 29, d(24) + 7.4, 1.2));
+  const top: Face[] = [];
+  const gA = turret(48, d(48), { ...spec, recoil: r(0) });
+  const zB = d(38) + 3;
+  top.push(...barbette(38, 3, d(38) - 0.3, zB, U));
+  const gB = turret(38, zB, { ...spec, recoil: r(1) });
+  const gX = turret(-36, d(-36) + 4, { ...spec, train: Math.PI });
+  const gY = turret(-52, d(-52), { ...spec, train: Math.PI });
+  top.push(...gA.faces, ...gB.faces, ...gX.faces, ...gY.faces);
+  const zd = d(24) + 9;
+  top.push(...box(21, 27, -3, 3, zd, zd + 3, U), ...box(23, 25, -5.6, 5.6, zd + 1, zd + 2, T.lo));
+  top.push(...beam([18, 0, zd], [17, 0, zd + 18], 0.8, 0.8, steelDark()), ...beam([14, 0, d(14) + 4], [17.4, 0, zd + 12], 0.5, 0.5, steelDark()));
+  top.push(...funnel(6, d(6) + 3.4, 3.4, 12, 2.2, U, ink(), 0.8), ...funnel(-8, d(-8) + 3.4, 3.4, 11, 2.2, U, ink(), 0.8));
+  top.push(...torpedoMount(-22, d(-22) + 3.4, 4, 8, U));
+  const aa = aaTub(-1, 0, d(-1) + 3.4, T.lo, 4, 2);
+  top.push(...aa.faces);
+  for (const y of [-3.4, 3.4]) top.push(...box(-72, -64, y - 0.8, y + 0.8, d(-68), d(-68) + 1.8, steelDark()));
+  return {
+    layers: [base, houses, top],
+    water: S,
+    deck: S,
+    at: { gun0: gA.muzzle, gun1: gB.muzzle, aa: aa.muzzle, charges: [-70, 0, d(-70) + 2] },
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+/**
+ * T class: a patrol submarine with the big bulge of its external torpedo tubes at the bow, a flat
+ * casing, the conning tower with its periscope standards, and a 4-inch gun in front of the tower.
+ */
+export function tClass(T: TeamShades): ShipModel {
+  const U = sup(T);
+  const R: Ring[] = [
+    { x: 58, ry: 0.8, rz: 1.6, zc: 1.4 }, { x: 54, ry: 3.6, rz: 4, zc: 0 }, { x: 44, ry: 5.8, rz: 5.4, zc: -1.4 }, { x: 30, ry: 5.8, rz: 5.4, zc: -2 },
+    { x: -26, ry: 5.8, rz: 5.4, zc: -2 }, { x: -46, ry: 4.4, rz: 4.4, zc: -1.8 }, { x: -56, ry: 2.2, rz: 2.4, zc: -1.4 }, { x: -60, ry: 0.8, rz: 1.2, zc: -1.2 },
+  ];
+  const casing = [st(57, 0.6, 5.6, 1), st(50, 3.4, 4.8, 0), st(38, 4.2, 4.2, 0), st(-40, 4.2, 4.2, 0), st(-54, 2.4, 3.8, 0), st(-58, 0.6, 3.6, 1)];
+  const pressure = [...tube(R, T.mid, T.lo)];
+  pressure.push(...box(46, 49, -7, 7, 1.6, 2.1, T.lo), ...box(-58, -54, -5.4, 5.4, -1.6, -1.1, T.lo), ...box(-61, -57, -0.3, 0.3, -5, -0.5, T.lo));
+  for (const y of [-4.6, 4.6]) pressure.push(...box(48, 54, y - 0.8, y + 0.8, -1.2, 1.2, mix(T.mid, T.lo, 0.5)));
+  const deck: Face[] = [...hull(casing, { lower: T.mid, upper: T.mid, deck: mix(T.lo, C("battleWood"), 0.3), boot: -9 })];
+  const top: Face[] = [];
+  top.push(...loftZ(4.2, [[-4, -3], [10, -3], [14, -1], [14, 1], [10, 3], [-4, 3]], 12, [[-3, -2.6], [9.5, -2.6], [12.5, -0.8], [12.5, 0.8], [9.5, 2.6], [-3, 2.6]], U));
+  top.push(...windows(-2.6, 7, 12, 10.8, 0.6, 1.6));
+  top.push(...box(2, 5.5, -1.4, 1.4, 12, 17, U), ...beam([3, 0, 17], [3, 0, 24], 0.6, 0.6, steelDark()), ...beam([4.6, 0, 17], [4.6, 0, 21.5], 0.6, 0.6, steelDark()));
+  top.push(...box(14, 18, -2, 2, 4.2, 7, U), ...box(14.6, 17.4, -1.2, 1.2, 7, 8.6, steelDark()), ...barrel(16, 27, 0, 7.8, 0.6, steelDark()));
+  top.push(...oerlikon(-8, 0, 4.2, T.lo).faces);
+  const water = ringWater(R);
+  return { layers: [pressure, deck, top], water, deck: null, at: { torpedo: [58, 0, -1] }, troops: [], lift: liftFor(water) };
+}
+
+/**
+ * Vosper MTB: a hard-chined planing hull riding bow-high, the small enclosed bridge forward, a twin
+ * .5 turret behind it, two torpedo tubes on the deck edges angled out, and a 20mm on the stern.
+ */
+export function mtb(T: TeamShades, launch: Launch, shake: number): ShipModel {
+  const U = sup(T);
+  const S = [st(48, 0.5, 13.6, 9), st(42, 2.8, 12.6, -2), st(30, 5.4, 11, -2), st(10, 6.6, 9.8, -2), st(-44, 6.4, 8.8, -2), st(-48, 5.6, 8.8, 0)];
+  const d = (x: number) => deckAt(S, x);
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: mix(T.lo, C("battleWood"), 0.35), boot: 3.4 })];
+  const houses: Face[] = [...house(S, 12, 24, 3.6, 0, 4.4, U)];
+  houses.push(...windows(-3.6, 15, 23, d(18) + 3, 1.1, 2.4), decalX(24.05, [[-3, d(24) + 2.6], [3, d(24) + 2.6], [3, d(24) + 3.8], [-3, d(24) + 3.8]], C("battleSkyLow")));
+  const top: Face[] = [];
+  top.push(...beam([16, 0, d(16) + 4.4], [15, 0, d(15) + 13], 0.6, 0.6, steelDark()));
+  top.push(...loftZ(d(4), circle(4, 0, 2.2, 10), d(4) + 3.4, circle(4, 0, 2.2, 10), T.lo));
+  for (const gy of [-0.7, 0.7]) top.push(...beam([3.4, gy, d(4) + 4], [11 - shake, gy, d(4) + 5.4], 0.55, 0.55, steelDark()));
+  const mg: V3 = [11 - shake, 0, d(4) + 5.4];
+  for (const y of [-5, 5]) top.push(...barrel(-26, -4, y, d(-15) + 1.5, 1.4, mix(C("battleSteel"), U, 0.4)));
+  if (!launch.launched && launch.slide > 0) top.push(...barrel(-5, -4 + launch.slide, -5, d(-15) + 1.5, 1, steel()));
+  top.push(...oerlikon(-38, 0, d(-38), T.lo).faces);
+  return {
+    layers: [base, houses, top],
+    water: S,
+    deck: S,
+    at: { torpedo: [-4 + launch.slide, -5, d(-15) + 1.5], mg },
+    troops: [],
+    lift: liftFor(S),
+  };
+}
+
+/**
+ * HMS Illustrious: an armored box of a hangar closed in under an armored flight deck that overhangs
+ * very little, a small island on the starboard side with one funnel and a tripod mast, twin 4.5-inch
+ * turrets at the four corners of the deck, pom-poms, and aircraft parked aft.
+ */
+export function illustrious(T: TeamShades): ShipModel {
+  const U = sup(T);
+  const S = [
+    st(86, 0.5, 15, 12), st(80, 3.5, 13.5, -4), st(66, 8, 12, -4), st(44, 11, 11.4, -4), st(16, 11.6, 11, -4),
+    st(-46, 11.6, 11, -4), st(-68, 10.6, 11, -4), st(-80, 8, 11, -1), st(-84, 5.6, 11, 3),
+  ];
+  const top = 21;
+  const deck = mix(C("battleSteel"), T.lo, 0.35);
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: T.lo, boot: 6 }), ...anchor(S, 74, 9.5), ...portholes(S, -60, 50, 8.4, 6, T.deep)];
+  // The closed armored hangar, the hull's color, and the forecastle under the short overhang.
+  const houses: Face[] = [...house(S, -72, 66, 11.4, 0, 8.8, T.mid), ...house(S, 66, 78, 7, 0, 8.8, T.mid)];
+  const flight: Face[] = [...flightDeck(-84, 82, 12.4, top, deck)];
+  const over: Face[] = [...deckMarks(-80, 72, 11.6, top + 0.02, [44, -36], deck)];
+  // The island, its bridge, one funnel and the tripod mast.
+  over.push(...box(-2, 22, -12.4, -9, top, top + 9, U), ...box(6, 18, -12, -9.4, top + 9, top + 14, U));
+  over.push(...windows(-12.05, 7, 17, top + 11.6, 1.1), ...box(8, 15, -11.6, -9.8, top + 14, top + 16, T.lo));
+  over.push(...shift(funnel(0, top + 9, 4, 9, 1.4, U, steelDark(), 0.55), 0, -10.6, 0));
+  over.push(...beam([12, -10.6, top + 16], [12, -10.6, top + 30], 0.8, 0.8, steelDark()), ...beam([9, -10.6, top + 14], [11.6, -10.6, top + 24], 0.5, 0.5, steelDark()));
+  // Twin 4.5-inch turrets in sponsons at the four corners, pom-poms along the side.
+  for (const x of [60, -62]) over.push(...twinMount(x, -13.6, top - 3.6, U, x < 0));
+  for (const x of [30, -20, -44]) over.push(...aaTub(x, -13.6, top - 3, T.lo, 4, 2.2).faces);
+  const plane = mix(T.mid, C("battleSteel"), 0.45);
+  for (const [x, y] of [[-52, -4.5], [-52, 4.5], [-64, -4.5], [-64, 4.5], [-76, 0]] as const) over.push(...parkedPlane(x, y, top, plane));
+  return {
+    layers: [base, houses, flight, over],
+    water: S,
+    deck: [st(82, 6.8, top, 0), st(70, 12.4, top, 0), st(-84, 12.4, top, 0)],
     at: {},
     troops: [],
     lift: liftFor(S),

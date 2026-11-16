@@ -344,6 +344,99 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "olive",
+      "path": "../../units/uk-land-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ],
+      "paratroopers": [
+        13,
+        14
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "red",
+      "path": "../../units/uk-land-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ],
+      "paratroopers": [
+        13,
+        14
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "blue",
+      "path": "../../units/uk-land-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ],
+      "paratroopers": [
+        13,
+        14
+      ]
+    },
+    {
       "nation": "us",
       "team": "olive",
       "path": "../../units/us-air-32-olive.png",
@@ -560,6 +653,63 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "olive",
+      "path": "../../units/uk-air-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "red",
+      "path": "../../units/uk-air-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "blue",
+      "path": "../../units/uk-air-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber"
+      ]
+    },
+    {
       "nation": "us",
       "team": "olive",
       "path": "../../units/us-naval-32-olive.png",
@@ -737,6 +887,66 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "olive",
+      "path": "../../units/uk-naval-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "red",
+      "path": "../../units/uk-naval-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "blue",
+      "path": "../../units/uk-naval-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
+    },
+    {
       "nation": "germany",
       "team": "grey",
       "path": "../../units/de-land-32-grey.png",
@@ -818,6 +1028,37 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "brown",
+      "path": "../../units/uk-land-32-brown.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "heavyTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun"
+      ],
+      "paratroopers": [
+        13,
+        14
+      ]
+    },
+    {
       "nation": "germany",
       "team": "grey",
       "path": "../../units/de-air-32-grey.png",
@@ -871,6 +1112,25 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "brown",
+      "path": "../../units/uk-air-32-brown.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber"
+      ]
+    },
+    {
       "nation": "germany",
       "team": "grey",
       "path": "../../units/de-naval-32-grey.png",
@@ -893,6 +1153,26 @@
       "nation": "japan",
       "team": "khaki",
       "path": "../../units/jp-naval-32-khaki.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "brown",
+      "path": "../../units/uk-naval-32-brown.png",
       "frameSize": 32,
       "facings": [
         "side",
@@ -987,7 +1267,8 @@
       "gold",
       "grey",
       "khaki",
-      "green4bo"
+      "green4bo",
+      "brown"
     ],
     "rows": [
       "city",

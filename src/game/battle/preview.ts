@@ -8,7 +8,8 @@
 // `capture`, `garrison`) shows the storming scenes instead, and `&t=end` holds each at its outcome.
 // `&drop=on` shows airborne drops. `&weather=winter` draws every scene on snowy ground, and
 // `&weather=snow` adds an overcast sky and falling snow (12-weather §5). `&axis=japan` puts Japan on the
-// Axis side in place of Germany, and `&allies=ussr` the Soviet Union on the Allied side in place of the US.
+// Axis side in place of Germany, and `&allies=ussr` the Soviet Union (or `&allies=uk` the United
+// Kingdom) on the Allied side in place of the US.
 
 import Phaser from "phaser";
 import type { NationId } from "../../engine/data/nations";
@@ -35,7 +36,7 @@ interface Matchup {
   readonly weapon?: "primary" | "secondary";
   readonly counter?: "primary" | "secondary";
   readonly submerged?: boolean;
-  /** The attacker is a US paratrooper squad, with this card suit. */
+  /** The attacker is a paratrooper squad: US with this card suit, or UK in a helmet (even) or red beret (odd). */
   readonly para?: number;
 }
 
@@ -155,7 +156,7 @@ function stormPlans(params: URLSearchParams): StormPlan[] {
     owner,
     nation,
     hp: 10,
-    paratrooper: para && unit === "infantry" && nation === "us",
+    paratrooper: para && unit === "infantry" && (nation === "us" || nation === "uk"),
     suit: Number(params.get("para") ?? 0) % 4 || 0,
     terrain,
     before: kind === "capture" ? before : 0,
@@ -213,11 +214,14 @@ function startStormPreview(root: HTMLElement, params: URLSearchParams): void {
   void run();
 }
 
-/** Airborne drops for the preview: US paratroopers from a C-47, Germans from a Ju 52. */
+/**
+ * Airborne drops for the preview: US paratroopers from a C-47 (or, with `&allies=uk`, the 1st
+ * Airborne from a Dakota), Germans from a Ju 52.
+ */
 function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
   const suit = Number(params.get("para") ?? 1) % 4 || 0;
   const plans: DropPlan[] = [
-    { unit: "infantry", owner: 0, nation: "us", hp: 10, paratrooper: true, suit, terrain: "plains" },
+    { unit: "infantry", owner: 0, nation: allies, hp: 10, paratrooper: allies !== "ussr", suit, terrain: "plains" },
     { unit: "infantry", owner: 1, nation: axis, hp: 10, paratrooper: false, suit: 0, terrain: "bocage" },
     { unit: "mortar", owner: 0, nation: allies, hp: 6, paratrooper: false, suit: 0, terrain: "road" },
   ];
@@ -252,7 +256,8 @@ function startDropPreview(root: HTMLElement, params: URLSearchParams): void {
 
 export function startBattlePreview(root: HTMLElement, params: URLSearchParams): void {
   if (params.get("axis") === "japan") axis = "japan";
-  if (params.get("allies") === "ussr") allies = "ussr";
+  const alliedNation = params.get("allies");
+  if (alliedNation === "ussr" || alliedNation === "uk") allies = alliedNation;
   const weather = params.get("weather");
   if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow" });
   if (params.get("angled") !== null) {

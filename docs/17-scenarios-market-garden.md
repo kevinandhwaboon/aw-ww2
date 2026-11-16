@@ -157,7 +157,7 @@ The first-lift Transport Aircraft start loaded, short of the drop zones and out 
 - **Art needed:**
   - A Major Bridge (a steel truss bridge, visibly different from the ordinary Bridge, in the same road and river pieces) and a Blown Bridge (fallen spans in the river), each in summer and winter sheets (08-art-pipeline §14, §21).
   - **UK art**, for every unit type the UK can field (the availability rule, 01-units §1), as the US, Germany, Japan and the Soviet Union have: map sprites with front, back and side views (08-art-pipeline §17, §22) and battle-scene figures and models (§18). Examples: Tommy with a Brodie helmet and Lee-Enfield, red-beret paratroopers (the UK's version of the US paratrooper look), PIAT team, 3-inch mortar, Daimler armoured car, Universal Carrier, Stuart, Sherman Firefly, Achilles tank destroyer, 25-pounder, Crusader AA, Spitfire, Lancaster, Dakota, and the Churchill for maps that offer the Heavy Tank. The UK also needs its own color, so a US player and a UK player don't wear the same one (08-art-pipeline §12). Canada can keep borrowing the UK art.
-  - Until the UK art exists, the UK player uses the US art in a slot color (08-art-pipeline §12). That art is being made on its own branch.
+  - Built on 2026-11-15: the UK has its own art and nation color, so the US and UK players look different (08-art-pipeline §12).
 
 ### Build order
 

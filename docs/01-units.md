@@ -11,7 +11,7 @@
 1. **Every unit has a distinct job.** Each unit is either a counter to something or a tool (capture, transport, supply). No unit is just "a slightly better version" of another.
 2. **Stats are identical across sides.** A Medium Tank is the same unit whether the art is a Sherman or a Panzer IV.
 3. **Historical asymmetry comes from availability, not stats.** Each scenario defines which unit types each side can build and which it starts with.
-4. **Availability rule:** a nation has art for a unit type only if it historically fielded an equivalent, and a scenario only offers a nation the unit types it has art for. Example: the US has no Heavy Tank in Normandy; the UK has one (Churchill); Germany has one (Tiger). Japan has art for every unit type except the Heavy Tank: it fielded none. The Soviet Union has art for every land unit, Heavy Tank included (KV-1), and for the Fighter, Bomber and Transport Aircraft; no ships yet, and no Dive or Torpedo Bomber, since it had no carriers (since 2026-11-14).
+4. **Availability rule:** a nation has art for a unit type only if it historically fielded an equivalent, and a scenario only offers a nation the unit types it has art for. Example: the US has no Heavy Tank in Normandy; the UK has one (Churchill); Germany has one (Tiger). Japan has art for every unit type except the Heavy Tank: it fielded none. The Soviet Union has art for every land unit, Heavy Tank included (KV-1), and for the Fighter, Bomber and Transport Aircraft; no ships yet, and no Dive or Torpedo Bomber, since it had no carriers (since 2026-11-14). The UK has art for every unit type (since 2026-11-15), Rocket Artillery included (the Land Mattress, used from late 1944, still offered per scenario); Canada uses the UK's.
 5. **Generic military names only.** No names from the original game (no "Mech", "Md Tank", "Neotank", "Lander", "B-Copter", etc.).
 
 ## 2. Land units (12 in phase 1 MVP, plus Flak Gun in phase 2)
@@ -65,7 +65,7 @@ Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter a
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
 | Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Its threat range is its aircraft's. Its only gun is light AA that fires back at aircraft that attack it (03-combat §5d), so it still needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
-Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US and UK, the Shōkaku for Japan (08-art-pipeline §17, §18).
+Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US, HMS Illustrious for the UK (since 2026-11-15; it was the Essex), the Shōkaku for Japan (08-art-pipeline §17, §18).
 
 ## 5. Transport rules (summary; details in 05-supply-transport)
 

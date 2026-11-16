@@ -15,8 +15,12 @@
 //   ?level=easy          the computer plays on Easy (09-ai §4c); Normal without it
 //   ?pad=on / ?pad=off   forces the phone game-pad layout on or off (on by default on small touch screens)
 //   ?sound=off           starts with sound off, without changing the saved sound level (16-sound §8)
+//   ?nations=uk,germany  each player fields that nation instead of the scenario's, in player order, to
+//                        see a nation's art on any map (art only; what a player can build stays the
+//                        scenario's). Blanks and unknown names keep the scenario's nation.
 
 import type { AiLevel } from "./ai/weights";
+import { NATIONS, type NationId } from "./engine/data/nations";
 
 /** Anything that looks up a URL parameter by name, like URLSearchParams. */
 export interface UrlParams {
@@ -43,6 +47,8 @@ export interface UrlOptions {
   readonly pad: boolean | null;
   /** False: start this visit with sound off. */
   readonly sound: boolean;
+  /** Nations to field instead of the scenario's, in player order; null keeps that player's. */
+  readonly nations: readonly (NationId | null)[];
 }
 
 export function parseUrlOptions(params: UrlParams): UrlOptions {
@@ -63,7 +69,21 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
     level: params.get("level") === "easy" ? "easy" : "normal",
     pad: pad === "on" ? true : pad === "off" ? false : null,
     sound: params.get("sound") !== "off",
+    nations: (params.get("nations") || null)
+      ?.split(",")
+      .map((name) => {
+        const n = name.trim();
+        return Object.hasOwn(NATIONS, n) ? (n as NationId) : null;
+      }) ?? [],
   };
+}
+
+/** The scenario's players, each fielding the nation `?nations=` gives it, if any. */
+export function withNations<P extends { readonly nation: NationId }>(players: readonly P[], nations: readonly (NationId | null)[]): P[] {
+  return players.map((player, i) => {
+    const nation = nations[i];
+    return nation ? { ...player, nation } : player;
+  });
 }
 
 /** "0,1" → [0, 1]. Blanks and anything that isn't a whole number are skipped. */

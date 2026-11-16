@@ -6,7 +6,7 @@ import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOption
 import { greedyAi } from "./ai/greedy";
 import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
-import { parseUrlOptions } from "./urlOptions";
+import { parseUrlOptions, withNations } from "./urlOptions";
 import { sounds } from "./game/sound/player";
 import "./ui/style.css";
 
@@ -35,6 +35,7 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     uiRoot: ui,
     setup: {
       ...scenario.setup,
+      players: withNations(scenario.setup.players, url.nations),
       seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
       settings: { ...scenario.setup.settings, luck: options.luck },
     },
