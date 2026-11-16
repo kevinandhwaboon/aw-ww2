@@ -1,9 +1,9 @@
 // The start-of-turn sequence (04-economy §2), in the doc's order.
 
 import type { GameEvent } from "./commands";
-import { UNITS, unitDef } from "./data/units";
-import { clearAbandonedCaptures, propertyDefAt } from "./economy";
-import { displayHp, MAX_HP, propertyAt, type GameState, type Unit } from "./state";
+import { unitDef } from "./data/units";
+import { clearAbandonedCaptures, servicesUnit } from "./economy";
+import { displayHp, MAX_HP, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
 import { applySupply, supplyTargets } from "./transport";
 
@@ -34,9 +34,9 @@ export function startTurn(state: GameState): { state: GameState; events: GameEve
   };
 }
 
-/** Whether a unit stands on an owned property that repairs and resupplies its category. */
+/** Whether a unit stands on its own or an ally's property that repairs and resupplies its category (04-economy §5). */
 function isServiced(state: GameState, unit: Unit): boolean {
-  return propertyAt(state, unit.pos)?.owner === unit.owner && propertyDefAt(state, unit.pos)?.repairs === UNITS[unit.type].category;
+  return servicesUnit(state, unit.pos, unit);
 }
 
 /**

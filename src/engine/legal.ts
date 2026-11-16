@@ -5,6 +5,7 @@
 // its own, not every pairing of two passengers in one action (05-supply-transport §6, D3).
 // Carrier launches are listed since 2026-11-13 (05-supply-transport §10).
 
+import { blowProblem, rebuildProblem } from "./bridges";
 import { attackTargets, fortTargets } from "./combat";
 import type { Command } from "./commands";
 import { buildOptions, buildProblem, captureProblem } from "./economy";
@@ -56,6 +57,8 @@ export function unitCommands(state: GameState, unit: Unit): Command[] {
     }
     for (const target of fortTargets(afterMove, moved, moving)) move(path, { type: "attackFort", target });
     if (captureProblem(afterMove, moved) === null) move(path, { type: "capture" });
+    if (blowProblem(afterMove, moved) === null) move(path, { type: "blowBridge" });
+    if (rebuildProblem(afterMove, moved) === null) move(path, { type: "rebuildBridge" });
     if (supplyTargets(afterMove, moved).length > 0) move(path, { type: "supply" });
     for (const passenger of moved.cargo) {
       for (const to of unloadTiles(afterMove, moved, passenger)) move(path, { type: "unload", passenger: passenger.id, to });

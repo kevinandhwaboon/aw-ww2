@@ -64,6 +64,12 @@ describe("the state checker (09-ai §7)", () => {
     expect(stateProblems(half)).toEqual(["the property at 2,0 is partly captured with nobody capturing it"]);
   });
 
+  it("reports a bridge being rebuilt by a unit that isn't standing on it (02-terrain §4a)", () => {
+    const state = makeGame([".!."], [{ type: "assaultInfantry", owner: 0, pos: P(0, 0) }, { type: "infantry", owner: 1, pos: P(2, 0) }]);
+    const lost = { ...state, bridgeWorks: [{ pos: P(1, 0), points: 10, unit: 0 }] };
+    expect(stateProblems(lost)).toEqual(["the bridge at 1,0 is being rebuilt by unit #0, which isn't standing on it"]);
+  });
+
   it("reports a game that should be over: only one side left and no result", () => {
     const state = sound();
     const alone = { ...state, players: state.players.map((p) => (p.id === 1 ? { ...p, defeated: true } : p)) };

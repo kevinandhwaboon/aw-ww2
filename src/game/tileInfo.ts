@@ -3,7 +3,7 @@
 import { TERRAIN } from "../engine/data/terrain";
 import { terrainAt, type Point } from "../engine/map";
 import { UNITS, unitDef } from "../engine/data/units";
-import { propertyDefAt } from "../engine/economy";
+import { servicesUnit } from "../engine/economy";
 import { CAPTURE_POINTS, displayHp, propertyAt, unitAt, type GameState, type PlayerId, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
 import { terrainName, unitName } from "./artPack";
@@ -67,10 +67,9 @@ function tooFarFromHome(state: GameState, unit: Unit): boolean {
 
 /** Tile indexes where this aircraft or ship would be refuelled (05-supply-transport §3, §10). */
 function homeTiles(state: GameState, unit: Unit): Set<number> {
-  const category = UNITS[unit.type].category;
   const home = new Set<number>();
   for (const p of state.properties) {
-    if (p.owner === unit.owner && propertyDefAt(state, p.pos)?.repairs === category) home.add(p.pos.y * state.map.width + p.pos.x);
+    if (servicesUnit(state, p.pos, unit)) home.add(p.pos.y * state.map.width + p.pos.x);
   }
   for (const carrier of state.units) {
     const room = unitDef(carrier.type).transport;

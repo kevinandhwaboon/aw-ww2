@@ -475,6 +475,9 @@ export abstract class LandingBrain extends BrainBase {
         return -Infinity;
       case "surface":
         return position + this.w.reachRepairBonus;
+      case "blowBridge":
+      case "rebuildBridge":
+        return -Infinity;
     }
   }
 

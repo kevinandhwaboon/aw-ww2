@@ -17,6 +17,7 @@ export const TERRAIN_IDS = [
   "plains", "road", "bridge", "forest", "hills", "river", "bocage", "sea", "beach", "reef",
   "city", "factory", "airfield", "port", "hq",
   "bunker", "rubble", "obstacle",
+  "majorBridge", "blownBridge",
 ] as const;
 export type TerrainId = (typeof TERRAIN_IDS)[number];
 
@@ -38,6 +39,13 @@ export interface TerrainDef {
   readonly property?: PropertyDef;
   /** Fortifications/obstacles: internal HP (0–100) and the terrain left at 0 HP. */
   readonly breakable?: { readonly hp: number; readonly becomes: TerrainId };
+  /** Can be blown by a unit with the "demolish" action standing on it, leaving `becomes` (02-terrain §4a). */
+  readonly demolition?: { readonly becomes: TerrainId };
+  /**
+   * Can be rebuilt by a unit with the "demolish" action standing on it: like a capture, it adds its
+   * displayed HP each time until it reaches `points`, then the tile becomes `becomes` (02-terrain §4a).
+   */
+  readonly rebuild?: { readonly points: number; readonly becomes: TerrainId };
 }
 
 const _ = null;
@@ -81,6 +89,14 @@ export const TERRAIN = {
     defenseStars: 0,
     moveCost: costs(_, _, _, _, 1, _, _),
     breakable: { hp: 100, becomes: "plains" },
+  },
+  // 02-terrain §4a: a bridge that can be blown and rebuilt. Moves like Bridge; blown, it moves like River.
+  majorBridge: { name: "Major Bridge", defenseStars: 0, moveCost: costs(1, 1, 1, 1, 1, _, _), demolition: { becomes: "blownBridge" } },
+  blownBridge: {
+    name: "Blown Bridge",
+    defenseStars: 0,
+    moveCost: costs(2, 1, _, _, 1, _, _),
+    rebuild: { points: 20, becomes: "majorBridge" },
   },
 } as const satisfies Record<TerrainId, TerrainDef>;
 

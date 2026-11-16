@@ -2,6 +2,7 @@
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
 import { weatherOn } from "./weather";
+import { applyBlow, applyRebuild, blowProblem, rebuildProblem } from "./bridges";
 import { fortTargetProblem, resolveCombat, resolveFortAttack, targetProblem } from "./combat";
 import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
 import { UNIT_TYPE_IDS } from "./data/units";
@@ -68,6 +69,8 @@ function isAction(action: unknown): action is UnitAction {
     case "supply":
     case "dive":
     case "surface":
+    case "blowBridge":
+    case "rebuildBridge":
       return true;
     case "attack":
       return Number.isInteger(a.target);
@@ -136,6 +139,20 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     if (problem) return reject(diving ? "cannotDive" : "cannotSurface", `Can't ${action.type}: ${problem}`);
     const changed = { ...afterMove, units: afterMove.units.map((u) => (u.id === unitId ? { ...moved, submerged: diving } : u)) };
     return { ok: true, state: changed, events: [...events, { type: diving ? "unitDived" : "unitSurfaced", unitId }] };
+  }
+
+  if (action.type === "blowBridge") {
+    const problem = blowProblem(afterMove, moved);
+    if (problem) return reject("cannotBlowBridge", `Can't blow the bridge: ${problem}`);
+    const blown = applyBlow(afterMove, moved);
+    return { ok: true, state: blown.state, events: [...events, blown.event] };
+  }
+
+  if (action.type === "rebuildBridge") {
+    const problem = rebuildProblem(afterMove, moved);
+    if (problem) return reject("cannotRebuildBridge", `Can't rebuild the bridge: ${problem}`);
+    const rebuilt = applyRebuild(afterMove, moved);
+    return { ok: true, state: rebuilt.state, events: [...events, rebuilt.event] };
   }
 
   if (action.type === "capture") {

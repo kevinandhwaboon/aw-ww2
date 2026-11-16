@@ -175,6 +175,7 @@ export function createGame(setup: GameSetup): GameState {
     units,
     properties,
     fortifications,
+    bridgeWorks: [],
     day: 1,
     currentPlayer: 0,
     rng: seedRng(setup.seed),

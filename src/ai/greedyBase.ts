@@ -8,6 +8,7 @@ import {
   inBounds,
   propertyAt,
   propertyDefAt,
+  servicesUnit,
   stats,
   terrainAt,
   unitAt,
@@ -146,11 +147,11 @@ export abstract class BrainBase {
     );
   }
 
-  /** Our properties that repair this unit's category and are free (or under it), and our Carriers with room for it. */
+  /** Our or our allies' properties that repair this unit's category and are free (or under it), and our Carriers with room for it. */
   protected repairTiles(unit: Unit): Point[] {
     const category = defOf(unit.type).category;
     const properties = this.state.properties
-      .filter((p) => p.owner === this.me && propertyDefAt(this.state, p.pos)?.repairs === category)
+      .filter((p) => servicesUnit(this.state, p.pos, unit))
       .filter((p) => {
         // A port or airfield one of our own units stands on still counts as home: units move off
         // production sites, so it's usually free on arrival. A city under a friend may stay taken.
