@@ -4,11 +4,11 @@ import { UNITS, UNIT_TYPE_IDS } from "../src/engine/data/units";
 const phase1 = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 describe("unit roster (01-units)", () => {
-  it("has 13 land, 5 air and 6 naval unit types (01-units §2–4)", () => {
+  it("has 13 land, 5 air and 7 naval unit types (01-units §2–4)", () => {
     const count = (category: string) => UNIT_TYPE_IDS.filter((id) => UNITS[id].category === category).length;
     expect(count("land")).toBe(13);
     expect(count("air")).toBe(5);
-    expect(count("naval")).toBe(6);
+    expect(count("naval")).toBe(7);
   });
 
   it("the phase 1 MVP has the 12 land units, everything else is phase 2 (01-units §2)", () => {
@@ -83,8 +83,34 @@ describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
     expect(UNITS.bomber.fuelPerDay).toBeLessThan(Math.min(...airBurn));
   });
 
-  it("Destroyers and Torpedo Boats are thirstier than the big ships, which can stay out longest", () => {
+  it("Destroyers and Torpedo Boats are thirstier than the big ships: they burn 2 a day, the rest 1", () => {
     for (const id of ["destroyer", "torpedoBoat"] as const) expect(UNITS[id].fuelPerDay, id).toBe(2);
-    for (const id of ["battleship", "carrier"] as const) expect(UNITS[id]).toMatchObject({ maxFuel: 99, fuelPerDay: 1 });
+    for (const id of ["battleship", "carrier", "submarine", "landingCraft", "supplyShip"] as const) expect(UNITS[id].fuelPerDay, id).toBe(1);
+  });
+
+  /** Days a ship can sail at full speed on a full tank: its move and its daily burn each day. */
+  const daysAtSea = (id: "battleship" | "destroyer" | "submarine" | "landingCraft" | "torpedoBoat" | "carrier" | "supplyShip") =>
+    UNITS[id].maxFuel / (UNITS[id].movePoints + UNITS[id].fuelPerDay);
+
+  it("ships stay out at full speed in the order of their real endurance: Supply Ship, Submarine, Carrier, Battleship, Destroyer, Landing Craft, Torpedo Boat", () => {
+    const order = ["supplyShip", "submarine", "carrier", "battleship", "destroyer", "landingCraft", "torpedoBoat"] as const;
+    for (let i = 0; i + 1 < order.length; i++) {
+      const [longer, shorter] = [order[i], order[i + 1]];
+      if (!longer || !shorter) continue;
+      expect(daysAtSea(longer), `${longer} vs ${shorter}`).toBeGreaterThan(daysAtSea(shorter));
+    }
+  });
+
+  it("days at sea follow the square root of the real ship's endurance at cruising speed, within a day (01-units §8a)", () => {
+    // Real endurance in days at cruising speed, averaged over the ships the art shows.
+    const real = { supplyShip: 50, submarine: 40, carrier: 37, battleship: 32, destroyer: 13, landingCraft: 4, torpedoBoat: 1 } as const;
+    for (const [id, days] of Object.entries(real) as [keyof typeof real, number][]) {
+      expect(Math.abs(daysAtSea(id) - 2.33 * Math.sqrt(days)), id).toBeLessThan(1);
+    }
+  });
+
+  it("a Torpedo Boat lasts about two days at full speed, a Landing Craft five: coastal craft that had to stay near a base", () => {
+    expect(Math.round(daysAtSea("torpedoBoat"))).toBe(2);
+    expect(Math.round(daysAtSea("landingCraft"))).toBe(5);
   });
 });

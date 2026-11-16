@@ -756,7 +756,7 @@ describe("Greedy v4: a mixed army and guarded objectives (09-ai §4d)", () => {
   it("an empty Landing Craft under half a tank refuels before it goes to collect anyone", () => {
     const state = makeGame(["._SP" + "S".repeat(8) + "_.Q", "..SS" + "S".repeat(8) + "S.."], [
       { type: "infantry", owner: 0, pos: P(0, 0) },
-      { type: "landingCraft", owner: 0, pos: P(2, 1), fuel: 20 },
+      { type: "landingCraft", owner: 0, pos: P(2, 1), fuel: 12 },
     ], { propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(14, 0), owner: 1 }] });
     const craft = find(state, "landingCraft", 0);
     const best = scoreUnitCommands(state, craft)[0]?.command;
@@ -786,6 +786,69 @@ describe("Greedy v4: a mixed army and guarded objectives (09-ai §4d)", () => {
   });
 });
 
+describe("Greedy: Supply Ships (09-ai §4f, 05-supply-transport §3a)", () => {
+  const sea = (width: number) => ["S".repeat(width), "S".repeat(width), "S".repeat(width)];
+  const best = (state: GameState, unit: Unit) => scoreUnitCommands(state, unit)[0]?.command;
+
+  it("a Supply Ship sails toward one of our ships that is low on fuel", () => {
+    const state = makeGame(sea(40), [
+      { type: "supplyShip", owner: 0, pos: P(2, 1) },
+      { type: "destroyer", owner: 0, pos: P(14, 1), fuel: 30 },
+      { type: "battleship", owner: 1, pos: P(39, 1) },
+    ]);
+    const command = best(state, find(state, "supplyShip", 0));
+    expect(command && destination(state, command)?.x).toBe(7);
+  });
+
+  it("with nobody in need, it keeps company with our warships", () => {
+    const state = makeGame(sea(40), [
+      { type: "supplyShip", owner: 0, pos: P(2, 1) },
+      { type: "destroyer", owner: 0, pos: P(14, 1) },
+      { type: "battleship", owner: 1, pos: P(39, 1) },
+    ]);
+    const command = best(state, find(state, "supplyShip", 0));
+    expect(command && destination(state, command)?.x).toBeGreaterThan(2);
+  });
+
+  it("a ship low on fuel heads for a nearby Supply Ship rather than its distant port", () => {
+    const units = (withSupply: boolean) => [
+      { type: "torpedoBoat" as const, owner: 0, pos: P(20, 1), fuel: 25 },
+      ...(withSupply ? [{ type: "supplyShip" as const, owner: 0, pos: P(26, 1) }] : []),
+      { type: "destroyer" as const, owner: 1, pos: P(39, 1) },
+    ];
+    const port = { propertyOwners: [{ pos: P(0, 1), owner: 0 }] };
+    const alone = makeGame(["S".repeat(40), "P" + "S".repeat(39), "S".repeat(40)], units(false), port);
+    expect(destination(alone, best(alone, find(alone, "torpedoBoat", 0)) as Command)?.x).toBeLessThan(20);
+    const helped = makeGame(["S".repeat(40), "P" + "S".repeat(39), "S".repeat(40)], units(true), port);
+    const dest = destination(helped, best(helped, find(helped, "torpedoBoat", 0)) as Command);
+    expect(dest && Math.abs(dest.x - 26) + Math.abs(dest.y - 1)).toBe(1); // right beside it
+  });
+
+  it("builds a Supply Ship at its port once it has four warships, and not with three", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 12000 }, { name: "Axis", nation: "japan" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
+    const fleet = (n: number) => [
+      ...Array.from({ length: n }, (_, i) => ({ type: "destroyer" as const, owner: 0, pos: P(3 + i, 1) })),
+      { type: "battleship" as const, owner: 1, pos: P(39, 2) },
+    ];
+    const map = ["P" + "S".repeat(39), "S".repeat(40), "S".repeat(40)];
+    expect(nextBuild(makeGame(map, fleet(4), setup))).toBe("supplyShip");
+    expect(nextBuild(makeGame(map, fleet(3), setup))).not.toBe("supplyShip");
+  });
+
+  it("builds a second only at eight warships, and never more than two", () => {
+    const setup = { players: [{ name: "Allies", nation: "us" as const, funds: 12000 }, { name: "Axis", nation: "japan" as const }], propertyOwners: [{ pos: P(0, 0), owner: 0 }] };
+    const fleet = (n: number, supply: number) => [
+      ...Array.from({ length: n }, (_, i) => ({ type: "destroyer" as const, owner: 0, pos: P(3 + i, 1) })),
+      ...Array.from({ length: supply }, (_, i) => ({ type: "supplyShip" as const, owner: 0, pos: P(3 + i, 2) })),
+      { type: "battleship" as const, owner: 1, pos: P(39, 2) },
+    ];
+    const map = ["P" + "S".repeat(39), "S".repeat(40), "S".repeat(40)];
+    expect(nextBuild(makeGame(map, fleet(7, 1), setup))).not.toBe("supplyShip");
+    expect(nextBuild(makeGame(map, fleet(8, 1), setup))).toBe("supplyShip");
+    expect(nextBuild(makeGame(map, fleet(12, 2), setup))).not.toBe("supplyShip");
+  });
+});
+
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   const start = (id: string, seed = 7) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
@@ -794,10 +857,10 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   };
   const everyone = (state: GameState) => state.players.map(() => greedy);
 
-  // Maps whose day limit ends every game: Iwo Jima by day 18, Midway by day 12. On the others the
+  // Maps whose day limit ends every game: Iwo Jima by day 18, Midway by day 12, Guadalcanal by day 15. On the others the
   // AIs must defeat each other outright, landing troops where needed (09-ai §4b), and those games
   // often run past 40 days (Bastogne 59 to over 80).
-  const LAND_MAPS = ["iwo-jima", "midway"];
+  const LAND_MAPS = ["iwo-jima", "midway", "guadalcanal"];
 
   for (const id of LAND_MAPS) {
     it(`${id}: a game between AIs ends with a winner within 40 days, with no AI bugs`, async () => {

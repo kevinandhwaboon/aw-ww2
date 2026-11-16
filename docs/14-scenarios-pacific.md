@@ -1,7 +1,7 @@
 # Topic Doc 14: Pacific Scenarios
 
-**Status:** three Pacific maps built (v0): Iwo Jima, The Slot and Midway. Balance untested.
-**Last updated:** 2026-11-14
+**Status:** four Pacific maps built (v0): Iwo Jima, The Slot, Midway and Guadalcanal. Balance untested.
+**Last updated:** 2026-11-16
 **Depends on:** 00-master-design.md §6 and §8, 01-units.md, 04-economy-production.md §8 (victory conditions), 05-supply-transport.md (landings), 08-art-pipeline.md (Japanese art).
 
 ---
@@ -119,7 +119,7 @@ An island campaign in the style of the Solomons, **not a historical map**. The U
 
 ### Build lists
 
-- The same for both: every unit except the Heavy Tank, which Japan never fielded (01-units §1).
+- The same for both: every unit except the Heavy Tank, which Japan never fielded (01-units §1). The Supply Ship is on the list since 2026-11-16 (05-supply-transport §3a); AI vs AI results didn't change.
 
 ### Victory
 
@@ -181,7 +181,7 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 
 ### Build lists
 
-- Both sides: every unit except the Heavy Tank, which neither fielded (01-units §1). Japan has no airfield, so in practice it builds land units and ships until it takes Midway's airstrip.
+- Both sides: every unit except the Heavy Tank, which neither fielded (01-units §1). Japan has no airfield, so in practice it builds land units and ships until it takes Midway's airstrip. The Supply Ship is on both lists since 2026-11-16 (05-supply-transport §3a): it lets Japan's fleet, whose base is in the far corner, refuel at sea. AI vs AI results didn't change.
 
 ### Victory
 
@@ -205,7 +205,84 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 - **The Greedy AI doesn't hold objectives it must defend.** It garrisons only its HQ island (09-ai §4c), so as the US it ships Midway's Marines away in a Landing Craft and Japan walks in. Playing Japan against the computer is easy for now; playing the US against the computer, or hot-seat, is the better test.
 - Carriers carry 2 aircraft, so each stands for a whole air group, and there's no combat air patrol: Fighters only shoot down aircraft that end their move nearby.
 
-## 4. Known gaps (Iwo Jima)
+## 4. Guadalcanal (`guadalcanal`)
+
+![Overview](maps/guadalcanal.png)
+
+Same key as above: army green properties are US, red Japanese, grey neutral. Built 2026-11-16 at the developer's request, as the map for the new Supply Ship (05-supply-transport §3a).
+
+### The history it follows
+
+On 7 August 1942 the 1st Marine Division landed on Guadalcanal and took the airfield Japan was building at Lunga Point, which became Henderson Field. Two nights later, at Savo Island, Japanese cruisers sank four Allied cruisers, and the US transports sailed away half unloaded. For six months both sides fed the island from the sea: the US by day, under the cover of Henderson's aircraft (the "Cactus Air Force"), Japan by night, with destroyers running troops and supplies down the Slot from the Shortlands (the "Tokyo Express"). So many ships went down off Lunga Point that the water became Ironbottom Sound. In mid-October the battleships Kongō and Haruna shelled Henderson Field for an hour and a half, and on 24 and 25 October the Sendai Division, after cutting a trail through the jungle (the Maruyama Road), attacked the perimeter from the south at Edson's Ridge while another force attacked across the Matanikau. Both attacks failed. Japan evacuated the island in February 1943.
+
+### Area and scale
+
+- **42 × 24 squares**, about 5 km each, north up.
+- **Guadalcanal**'s north coast is drawn about to scale, from Cape Esperance at the west tip to Koli Point: Tassafaronga's beaches, Kokumbona, Point Cruz, the Matanikau River, Lunga Point with Henderson Field, the Lunga River, Edson's Ridge south of the airfield (Ridge terrain, 02-terrain §4b), and the Tenaru. The coast track is a road, bridged over the Matanikau and the Lunga. Jungle (Forest) and mountains (Hills) fill the interior down to the south coast. **There is no port on Guadalcanal**, as there wasn't: ships unloaded off the beaches.
+- **Ironbottom Sound** lies between Guadalcanal and the **Florida Islands**, with **Tulagi**'s anchorage and PT-boat base on their south shore. **Savo Island** sits at the sound's western mouth.
+- **The Slot** is pulled in: it really runs north-west for about 500 km, and here it comes in from the west, between **Santa Isabel** (with Rekata Bay) along the top and the **New Georgia** islands at the bottom left, past the **Russell Islands**. **Malaita** is in the north-east corner.
+- **The two bases** are far closer than the real ones, as on Midway: Japan's, at the far end of the Slot on the west edge, stands for the Shortlands, Buin and Rabaul; the US base in the south-east corner for Espiritu Santo and Nouméa. Lunga Point is more than three days' Destroyer sailing from Japan's port and more than two from the US base's.
+
+### Places
+
+| | US | Japan | Neutral |
+|---|---|---|---|
+| Base | HQ, Factory, Port, Airfield, City (south-east corner) | HQ, Factory, Port, Airfield, City (west edge) | |
+| Guadalcanal | **Henderson Field** (Airfield, the objective), Lunga (City, the perimeter) | Kokumbona (City) | Koli Point (City) |
+| Elsewhere | Tulagi (Port) | | Rekata Bay on Santa Isabel (Port), half way down the Slot |
+
+- **Income:** 500 per property (`incomePerProperty`, half the usual), as on Midway, so the starting forces do most of the fighting and a Supply Ship (10,000) is a real choice. The US starts with 8 properties (4,000 a day), Japan with 6 (3,000).
+
+### Why it's about supply
+
+- **The US has no port on the island.** Its ships refuel at Tulagi, one at a time, two days from its base, or at its Supply Ship off Lunga Point.
+- **Japan's ships are four or five days from home.** Its convoy's destroyers have already come down the Slot and start short of fuel (36 of 65), with their Supply Ship a day's sailing away. Rekata Bay is a neutral port half way down the Slot for whoever puts infantry ashore to take it.
+- **Land units need it too.** A Supply Ship next to the shore refuels and rearms the troops on the beach. One US Marine battery starts on the beach at Lunga Point with 2 shells left, next to the US Supply Ship, which refills it at the start of day 1.
+
+### Starting forces (mid-October 1942)
+
+- **US** (3,000 funds), moving first:
+  - **Henderson Field:** a Fighter on the airfield and a Dive Bomber beside it (Marine Wildcats and Dauntlesses).
+  - **The perimeter:** four Infantry (two in bunkers on the Matanikau line, one at Lunga, one on Edson's Ridge), Assault Infantry, a Mortar, two Artillery short of shells (3 and 2), a Light Tank and a Flak Gun (the 90mm guns by the airfield).
+  - **Off Lunga Point:** the Supply Ship (the cargo ships unloading), a Landing Craft with two Infantry (the Army's 164th Infantry, which landed on 13 October), and two Destroyers.
+  - **Coming up the channel:** a Battleship (Washington) and a Destroyer.
+  - **Tulagi:** two Torpedo Boats (PT boats) and an Infantry.
+  - **The base:** a Bomber (B-17s) and an Infantry.
+- **Japan** (3,000 funds):
+  - **West of the Matanikau** (Kokumbona and Point Cruz): four Infantry, Assault Infantry, a Light Tank, a Mortar and two Artillery (the 150mm howitzers called "Pistol Pete"), the guns within range of the Matanikau bunkers.
+  - **In the jungle south of the perimeter** (the Maruyama Road): three Infantry, Assault Infantry and a Mortar, two to four squares from Henderson Field.
+  - **East, towards Koli Point:** two Infantry.
+  - **The Tokyo Express**, off the Russells: two Destroyers short of fuel, two Landing Craft (Infantry and Artillery; Infantry and Assault Infantry) and a Supply Ship.
+  - **The bombardment force**, north of Savo: two Battleships (Kongō and Haruna) and a Destroyer, out of gun range of Henderson Field but one day's sailing from it, so they close in on Japan's first turn and can fire on its second.
+  - **A Submarine** on the US supply route between the base and Guadalcanal, as I-19 and I-26 were.
+  - **The base:** a Fighter and a Bomber (Zeros and Bettys, a long flight from the island) and an Infantry.
+
+### Build lists
+
+- Both sides: every unit except the Heavy Tank, which neither fielded here (01-units §1). Supply Ships included.
+
+### Victory
+
+- **Japan** wins by capturing **Henderson Field** (`captureProperties`), or the US HQ.
+- **The US** wins by still being in the game when **day 15** starts (`surviveDays`), or by capturing Japan's HQ.
+- Rout is on. Resign is always available.
+
+### Weather
+
+- Clear all game. The night actions are not shown: the game has no night or fog of war (12-weather).
+
+### How it's made
+
+- `tools/maps/guadalcanal.mjs` builds the scenario file; `tools/maps/overview.mjs guadalcanal` redraws the picture above.
+- Tests (`tests/scenario.test.ts`, "Guadalcanal"): the nations and order; the objective and its owner; the day-15 rule; no port anywhere on Guadalcanal; Tulagi a day's sailing from Lunga Point; both home ports days away; a Supply Ship each, and both can build them; the US Supply Ship refills the Marine battery on day 1; Japan's convoy destroyers short of fuel within a day of their Supply Ship; the Battleships one day from gun range of the airfield; Japan's attacks from the west and the south; Kokumbona Japanese, Rekata Bay and Koli Point neutral; half income; no Heavy Tanks. The AI tests play it AI vs AI to a finish.
+
+### Known gaps
+
+- **Balance is a first guess.** AI vs AI (seeds 1 to 10, 2026-11-16) the US holds Henderson Field to day 15 every time. Japan takes Lunga or Rekata Bay in some games and the US retakes Kokumbona in others, but the Greedy AI never presses the final capture of the airfield. Playing Japan against the computer, or hot-seat, is the better test.
+- **No night.** The real campaign was day for the US and night for Japan; here both sides move in daylight.
+- Cruisers: the game has none, so the cruiser actions in Ironbottom Sound are fought by Destroyers and Battleships (as on The Slot, above).
+
+## 5. Known gaps (Iwo Jima)
 
 - Carrier numbers are a first guess, to tune after playtests. Japan has no way to reach Carriers out of artillery range, as historically.
 - Balance is a first guess: whether 17 days is enough for the US to bombard, land and take the objectives, and whether Japan's income is too high for a garrison that was cut off. AI vs AI (seeds 1 to 5 and 7, 2026-11-14, with the Marianas airfield): the US shells and bombs from day 1, lands 13 to 17 craft-loads and cuts Japan from 40 units to as few as 20 to 25, but Japan holds out to day 18 every time.

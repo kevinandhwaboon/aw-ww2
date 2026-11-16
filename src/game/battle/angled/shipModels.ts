@@ -1250,3 +1250,82 @@ export function illustrious(T: TeamShades): ShipModel {
     lift: liftFor(S),
   };
 }
+
+// ---- Supply ships (05-supply-transport §3a) ----
+
+export type OilerKit = "us" | "uk" | "jp";
+
+/**
+ * A fleet oiler: a long, low tanker hull with a raised forecastle and poop, the bridge house
+ * amidships, the engines and funnel aft, a catwalk running fore and aft over the tank deck with the
+ * cargo pipes under it, and kingposts with fuelling booms swung out over the near side, a hose
+ * hanging from each. US: a Cimarron class, a 5-inch gun at bow and stern and 40mm tubs on the bridge
+ * wings. UK: a Dale class RFA oiler, a lighter gun aft and a black-topped funnel. Japan: the
+ * Kazahaya, a tall funnel and a tripod mast. Unarmed in the game: its guns never fire.
+ */
+export function oiler(T: TeamShades, kit: OilerKit): ShipModel {
+  const U = sup(T);
+  const S = [
+    st(90, 0.5, 15, 12), st(84, 3.5, 14, -4), st(70, 8, 12.4, -4), st(60, 10, 12, -4), st(57, 10.4, 8.6, -4),
+    st(20, 11, 8.4, -4), st(-48, 11, 8.4, -4), st(-51, 11, 11.2, -4), st(-72, 10, 11.2, -4), st(-84, 7.5, 11.2, -1), st(-89, 5, 11.2, 3),
+  ];
+  const d = (x: number) => deckAt(S, x);
+  const base: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: shade(T.lo, 0.9), boot: 5 })];
+  base.push(...anchor(S, 78, 10.5), ...portholes(S, -84, -54, 9, 4, T.deep), ...portholes(S, 62, 80, 10.4, 4, T.deep));
+  // Tank hatches and the cargo pipes along the tank deck.
+  const deckLevel = d(0);
+  for (let x = -44; x <= 50; x += 12) for (const y of [-5.5, 5.5]) base.push(...box(x, x + 3, y - 1, y + 1, deckLevel - 0.2, deckLevel + 0.6, T.lo));
+  for (const y of [-2.6, 2.6]) base.push(...barrel(-48, 56, y, deckLevel + 0.6, 0.35, steelDark()));
+
+  // The bridge house amidships, and the engine house on the poop with the funnel.
+  const bx = kit === "jp" ? 10 : 22;
+  const houses: Face[] = [
+    ...house(S, bx - 6, bx + 12, 8, 0, 5, U), ...house(S, bx - 4, bx + 10, 7, 5, 4, U), ...house(S, bx - 1, bx + 8, 5.5, 9, 3.2, U),
+    ...house(S, -86, -50, 9, 0, 5, U), ...house(S, -80, -58, 7, 5, 3.6, U),
+  ];
+  houses.push(...windows(-5.5, bx, bx + 7.5, d(bx) + 10.4, 1.1), ...windows(-8, bx - 4, bx + 11, d(bx) + 2.4, 0.9, 3.4));
+  houses.push(...windows(-9, -84, -52, d(-70) + 2.4, 0.9, 3.4));
+
+  const top: Face[] = [];
+  // The catwalk on its posts, from the forecastle to the poop, past the bridge house.
+  const walk = deckLevel + 3.2;
+  top.push(...box(-50, 58, -0.8, 0.8, walk, walk + 0.5, T.lo));
+  for (let x = -46; x <= 54; x += 10) top.push(...beam([x, 0, deckLevel], [x, 0, walk], 0.5, 0.5, steelDark()));
+  // Kingposts with their fuelling booms over the near side, a hose drooping from each to the sea.
+  const hose = ink();
+  for (const x of kit === "jp" ? [40, -26] : [46, 2, -32]) {
+    const z0 = d(x);
+    top.push(...beam([x, 1.5, z0], [x, 1.5, z0 + 19], 0.9, 0.9, steelDark()), ...beam([x, -1.5, z0], [x, -1.5, z0 + 19], 0.9, 0.9, steelDark()));
+    top.push(...beam([x, -2.5, z0 + 17], [x, 2.5, z0 + 17], 0.6, 0.6, steelDark()));
+    const tip: V3 = [x + 4, -19, z0 + 11];
+    top.push(...beam([x, -1.5, z0 + 3], tip, 0.6, 0.6, steelDark()), ...beam([x, -1.5, z0 + 18], tip, 0.3, 0.3, steelDark()));
+    top.push(...beam(tip, [x + 5, -20, z0 + 5], 0.7, 0.7, hose), ...beam([x + 5, -20, z0 + 5], [x + 7, -19.5, 1], 0.7, 0.7, hose));
+  }
+  // The bridge's mast, and the funnel aft.
+  const bt = d(bx) + 12.2;
+  top.push(...box(bx, bx + 4, -1.6, 1.6, bt, bt + 1.6, T.lo));
+  if (kit === "jp") {
+    // A tripod foremast over the bridge.
+    top.push(...beam([bx + 2, 0, bt], [bx + 2, 0, bt + 18], 0.8, 0.8, steelDark()));
+    for (const y of [-3, 3]) top.push(...beam([bx - 2, y, bt - 3], [bx + 2, 0, bt + 12], 0.5, 0.5, steelDark()));
+  } else {
+    top.push(...beam([bx + 2, 0, bt], [bx + 2, 0, bt + 16], 0.8, 0.8, steelDark()), ...beam([bx + 2, -4, bt + 12], [bx + 2, 4, bt + 12], 0.5, 0.5, steelDark()));
+  }
+  const fz = d(-70) + 8.6;
+  const tall = kit === "jp" ? 14 : kit === "uk" ? 9 : 10;
+  top.push(...funnel(-68, fz, 4.6, tall, 1.6, U, kit === "us" ? steelDark() : ink(), 0.8));
+  top.push(...beam([-80, 0, fz], [-80, 0, fz + 13], 0.7, 0.7, steelDark()));
+  // Guns: a 5-inch at bow and stern on the US ship, one aft on the others; AA on the bridge wings.
+  if (kit === "us") top.push(...singleMount(80, d(80), U, 0, false, 9).faces);
+  top.push(...singleMount(-84, d(-84), U, 0, true, kit === "us" ? 9 : 7).faces);
+  for (const y of [-8.6, 8.6]) top.push(...aaTub(bx + 4, y, d(bx) + 5, T.lo, kit === "us" ? 2 : 1, 1.8).faces);
+  top.push(...beam([89, 0, 15], [89, 0, 20], 0.4, 0.4, steelDark()));
+  return {
+    layers: [base, houses, top],
+    water: S,
+    deck: S,
+    at: {},
+    troops: [],
+    lift: liftFor(S),
+  };
+}

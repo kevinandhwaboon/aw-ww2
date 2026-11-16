@@ -80,7 +80,7 @@ describe("daily fuel for ships (05-supply-transport §7, 04-economy §2)", () =>
 
   it("a ship in its own port burns nothing, so it can't sink there", () => {
     const state = makeGame(["P"], [u("destroyer", 0, 0, { fuel: 1 })], { propertyOwners: [{ pos: P(0, 0), owner: 0 }] });
-    expect(byId(nextRound(state).state, 0)?.fuel).toBe(80); // and the port refuels it
+    expect(byId(nextRound(state).state, 0)?.fuel).toBe(65); // and the port refuels it
   });
 
   it("an enemy port doesn't service ships, so one parked there still burns fuel", () => {
@@ -100,8 +100,8 @@ describe("ports (04-economy §1, §5)", () => {
     expect(apply(built.state, wait(ship?.id ?? -1)).ok).toBe(false);
   });
 
-  it("by default a port offers every ship, the Landing Craft and Carrier included", () => {
-    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "submarine", "torpedoBoat"]);
+  it("by default a port offers every ship, the Landing Craft, Carrier and Supply Ship included", () => {
+    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "submarine", "supplyShip", "torpedoBoat"]);
   });
 
   it("ports build only ships, and factories never build ships", () => {
@@ -113,7 +113,7 @@ describe("ports (04-economy §1, §5)", () => {
   it("ports repair and resupply ships", () => {
     const state = port([u("destroyer", 0, 0, { hp: 50, fuel: 10, ammo: 2 })]);
     // +2 HP on day 1, when the game starts with player 0's turn, and +2 again on their next turn.
-    expect(byId(nextRound(state).state, 0)).toMatchObject({ hp: 90, fuel: 80, ammo: 9 });
+    expect(byId(nextRound(state).state, 0)).toMatchObject({ hp: 90, fuel: 65, ammo: 9 });
   });
 
   it("repair costs 10% of the ship's cost per HP, as for land units", () => {
@@ -130,9 +130,11 @@ describe("ports (04-economy §1, §5)", () => {
     expect(result.ok ? null : result.code).toBe("cannotCapture");
   });
 
-  it("a Halftrack on the shore resupplies an adjacent ship (05-supply-transport §7)", () => {
+  it("a Halftrack on the shore never resupplies a ship: only a port or a Supply Ship can (05-supply-transport §3, §7)", () => {
     const state = makeGame(["._S"], [u("halftrack", 0, 0), u("destroyer", 0, 2, { fuel: 10, ammo: 1 })]);
-    expect(byId(run(state, order(0, [P(1, 0)], { type: "supply" })), 1)).toMatchObject({ fuel: 80, ammo: 9 });
+    expect(apply(state, order(0, [P(1, 0)], { type: "supply" }))).toMatchObject({ ok: false, code: "cannotSupply" });
+    const parked = makeGame(["_S"], [u("halftrack", 0, 0), u("destroyer", 0, 1, { fuel: 10, ammo: 1 })]);
+    expect(byId(nextRound(parked).state, 1)).toMatchObject({ ammo: 1 });
   });
 });
 

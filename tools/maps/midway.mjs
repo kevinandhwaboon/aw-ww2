@@ -175,7 +175,7 @@ const report = (target) => {
 const buildable = (extra) => [
   "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
-  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
+  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "supplyShip",
 ].filter((t) => !extra.includes(t));
 
 const scenario = {

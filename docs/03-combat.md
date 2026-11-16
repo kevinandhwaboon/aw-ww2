@@ -1,7 +1,7 @@
 # Topic Doc 03: Combat
 
 **Status:** Rules decided. Provisional v0 damage chart and veterancy values set; expect tuning after playtesting.
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-16
 **Depends on:** 00-master-design.md, 01-units.md. **Feeds:** 02-terrain (defense stars, fortification HP), 06-commanders (modifiers).
 
 **Guiding rule:** when a design choice is open, follow the original game's mechanism unless there's a clear reason not to.
@@ -82,7 +82,7 @@ Values come from the original game where a unit maps cleanly (Infantry, Assault 
 
 Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows. The Carrier's return-fire AA is in §5d, not the main chart, since it never attacks.
 
-**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Fort = fortification/obstacle.
+**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Sup = Supply Ship, Fort = fortification/obstacle.
 
 ### 5a. Vs. land units
 
@@ -111,31 +111,32 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 
 ### 5b. Vs. air, naval and fortifications
 
-| Attacker ↓ / Defender → | Ftr | Bmr | Trn | Dive | TBmr | BB | DD | Sub | LC | TB | CV | Fort |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Inf | — | — | — | — | — | — | — | — | — | — | — | 5* |
-| AInf | — | — | — | — | — | — | — | — | — | — | — | 65 |
-| Mor | — | — | — | — | — | — | — | — | 25 | 25 | — | 20 |
-| Rec | — | — | — | — | — | — | — | — | — | — | — | — |
-| LT | — | — | — | — | — | 1 | 3 | 1 | 8 | 15 | 1 | 10 |
-| MT | — | — | — | — | — | 1 | 5 | 1 | 10 | 20 | 1 | 15 |
-| HvT | — | — | — | — | — | 10 | 30 | 10 | 35 | 40 | 10 | 40 |
-| TD | — | — | — | — | — | 5 | 10 | 5 | 15 | 25 | 5 | 30 |
-| Art | — | — | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 50 |
-| Rkt | — | — | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 55 |
-| AA | 65 | 75 | 90 | 75 | 75 | — | — | — | — | — | — | — |
-| Flak | 100 | 100 | 110 | 100 | 100 | — | — | — | — | — | — | — |
-| Ftr | 55 | 100 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | — |
-| Bmr | — | — | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 55 |
-| Dive | — | — | — | — | — | 40 | 45 | 50 | 50 | 50 | 45 | 30 |
-| TBmr | — | — | — | — | — | 60 | 60 | — | 60 | 60 | 60 | — |
-| BB | — | — | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 55 |
-| DD | 55* | 65* | 105* | 65* | 65* | 10 | 40 | 90 | 50 | 85 | 10 | 20 |
-| Sub | — | — | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | — |
-| TB | — | — | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | — |
+| Attacker ↓ / Defender → | Ftr | Bmr | Trn | Dive | TBmr | BB | DD | Sub | LC | TB | CV | Sup | Fort |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Inf | — | — | — | — | — | — | — | — | — | — | — | — | 5* |
+| AInf | — | — | — | — | — | — | — | — | — | — | — | — | 65 |
+| Mor | — | — | — | — | — | — | — | — | 25 | 25 | — | 25 | 20 |
+| Rec | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| LT | — | — | — | — | — | 1 | 3 | 1 | 8 | 15 | 1 | 8 | 10 |
+| MT | — | — | — | — | — | 1 | 5 | 1 | 10 | 20 | 1 | 10 | 15 |
+| HvT | — | — | — | — | — | 10 | 30 | 10 | 35 | 40 | 10 | 35 | 40 |
+| TD | — | — | — | — | — | 5 | 10 | 5 | 15 | 25 | 5 | 15 | 30 |
+| Art | — | — | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 55 | 50 |
+| Rkt | — | — | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 60 | 55 |
+| AA | 65 | 75 | 90 | 75 | 75 | — | — | — | — | — | — | — | — |
+| Flak | 100 | 100 | 110 | 100 | 100 | — | — | — | — | — | — | — | — |
+| Ftr | 55 | 100 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | 5 | — |
+| Bmr | — | — | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 95 | 55 |
+| Dive | — | — | — | — | — | 40 | 45 | 50 | 50 | 50 | 45 | 50 | 30 |
+| TBmr | — | — | — | — | — | 60 | 60 | — | 60 | 60 | 60 | 60 | — |
+| BB | — | — | — | — | — | 50 | 85 | 95 | 95 | 95 | 60 | 95 | 55 |
+| DD | 55* | 65* | 105* | 65* | 65* | 10 | 40 | 90 | 50 | 85 | 10 | 50 | 20 |
+| Sub | — | — | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | 95 | — |
+| TB | — | — | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | 75 | — |
 
 ### 5c. Notes on the chart
 
+- **Supply Ship** (added 2026-11-16) takes exactly the Landing Craft's damage from everything: an unarmored hull, easy to sink. It's unarmed, so it has no row.
 - **Tank Destroyer** beats tanks when it strikes first (vs. Heavy Tank 65 vs. Heavy Tank's 90 return fire) but has no weapon vs. infantry, so Assault Infantry (60) and artillery are its counters.
 - **Heavy Tank** wins most fights but is slow and expensive; its answers are Tank Destroyers, Bombers, Battleships and massed indirect fire.
 - **Fighter** strafing is deliberately weak (≤15) and uses the same ammo as its air-to-air guns.

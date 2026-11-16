@@ -14,13 +14,16 @@ export const UNIT_TYPE_IDS = [
   // Air (phase 2)
   "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
   // Naval (phase 2)
-  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
+  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "supplyShip",
 ] as const;
 export type UnitTypeId = (typeof UNIT_TYPE_IDS)[number];
 
 export type UnitCategory = "land" | "air" | "naval";
-/** "demolish": blow and rebuild Major Bridges (02-terrain §4a). */
-export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch" | "demolish";
+/**
+ * "demolish": blow and rebuild Major Bridges (02-terrain §4a). "repairShips": repairs its own
+ * player's ships next to it at turn start (05-supply-transport §3a).
+ */
+export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch" | "demolish" | "repairShips";
 
 export interface UnitDef {
   readonly name: string;
@@ -188,33 +191,39 @@ export const UNITS = {
   // ---- Naval, phase 2 ----
   battleship: {
     ...BASE, phase: 2, name: "Battleship", category: "naval", cost: 28000, movePoints: 5, movementType: "sea",
-    vision: 2, maxFuel: 99, fuelPerDay: 1, primaryWeapon: { name: "Main guns", maxAmmo: 9 },
+    vision: 2, maxFuel: 80, fuelPerDay: 1, primaryWeapon: { name: "Main guns", maxAmmo: 9 },
     returnFireAA: { name: "AA guns" }, range: { min: 2, max: 6 }, canMoveAndFire: false,
   },
   destroyer: {
     ...BASE, phase: 2, name: "Destroyer", category: "naval", cost: 16000, movePoints: 6, movementType: "sea",
-    vision: 3, maxFuel: 80, fuelPerDay: 2, primaryWeapon: { name: "Guns/depth charges", maxAmmo: 9 },
+    vision: 3, maxFuel: 65, fuelPerDay: 2, primaryWeapon: { name: "Guns/depth charges", maxAmmo: 9 },
     secondaryWeapon: { name: "AA guns" }, attacksSubmerged: true,
   },
   submarine: {
     ...BASE, phase: 2, name: "Submarine", category: "naval", cost: 20000, movePoints: 5, movementType: "sea",
-    vision: 5, maxFuel: 80, fuelPerDay: 1, fuelPerDaySubmerged: 5, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
+    vision: 5, maxFuel: 90, fuelPerDay: 1, fuelPerDaySubmerged: 5, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
     attacksSubmerged: true, specialActions: ["dive"],
   },
   landingCraft: {
     ...BASE, phase: 2, name: "Landing Craft", category: "naval", cost: 12000, movePoints: 6,
-    movementType: "landingCraft", vision: 1, maxFuel: 70, fuelPerDay: 1, range: null,
+    movementType: "landingCraft", vision: 1, maxFuel: 35, fuelPerDay: 1, range: null,
     transport: { capacity: 2, carries: LAND_UNITS }, specialActions: ["unloadOnBeach"],
   },
   torpedoBoat: {
     ...BASE, phase: 2, name: "Torpedo Boat", category: "naval", cost: 8000, movePoints: 7, movementType: "sea",
-    vision: 3, maxFuel: 50, fuelPerDay: 2, primaryWeapon: { name: "Torpedoes", maxAmmo: 4 },
+    vision: 3, maxFuel: 20, fuelPerDay: 2, primaryWeapon: { name: "Torpedoes", maxAmmo: 4 },
     secondaryWeapon: { name: "MG" },
   },
   carrier: {
     ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 40000, movePoints: 5, movementType: "sea",
-    vision: 2, maxFuel: 99, fuelPerDay: 1, range: null, returnFireAA: { name: "AA guns" },
+    vision: 2, maxFuel: 85, fuelPerDay: 1, range: null, returnFireAA: { name: "AA guns" },
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
+  },
+  // Fleet supply at sea (05-supply-transport §3a): refuels and rearms neighbors like a Halftrack,
+  // and repairs its own player's ships next to it 1 HP a day. Unarmed.
+  supplyShip: {
+    ...BASE, phase: 2, name: "Supply Ship", category: "naval", cost: 10000, movePoints: 5, movementType: "sea",
+    vision: 1, maxFuel: 99, fuelPerDay: 1, range: null, specialActions: ["resupply", "repairShips"],
   },
 } as const satisfies Record<UnitTypeId, UnitDef>;
 

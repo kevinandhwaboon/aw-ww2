@@ -48,7 +48,7 @@ export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: b
  * For aircraft and ships, which are lost when their fuel runs out (05-supply-transport §11): whether
  * one more full turn's move away from home, and that night's burn, would leave too little fuel to get
  * back to the nearest place that refuels it (never while it's there). Home is an owned airfield or port, or (for carrier
- * aircraft) one of the player's Carriers with room. Units aboard a transport are refuelled there, and
+ * aircraft) one of the player's Carriers with room, or (for ships) a square next to a friendly Supply Ship. Units aboard a transport are refuelled there, and
  * with no home it could reach anywhere on the map there's nothing to measure against: neither warns this way.
  */
 function tooFarFromHome(state: GameState, unit: Unit): boolean {
@@ -66,9 +66,20 @@ function tooFarFromHome(state: GameState, unit: Unit): boolean {
   return unit.fuel < needed;
 }
 
-/** Tile indexes where this aircraft or ship would be refuelled (05-supply-transport §3, §10). */
+/** Tile indexes where this aircraft or ship would be refuelled (05-supply-transport §3, §3a, §10). */
 function homeTiles(state: GameState, unit: Unit): Set<number> {
   const home = new Set<number>();
+  if (unitDef(unit.type).category === "naval") {
+    const side = state.players[unit.owner]?.side;
+    for (const supplier of state.units) {
+      if (supplier.id === unit.id || state.players[supplier.owner]?.side !== side || !unitDef(supplier.type).specialActions.includes("repairShips")) continue;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        const x = supplier.pos.x + dx;
+        const y = supplier.pos.y + dy;
+        if (x >= 0 && y >= 0 && x < state.map.width && y < state.map.height) home.add(y * state.map.width + x);
+      }
+    }
+  }
   for (const p of state.properties) {
     if (servicesUnit(state, p.pos, unit)) home.add(p.pos.y * state.map.width + p.pos.x);
   }
