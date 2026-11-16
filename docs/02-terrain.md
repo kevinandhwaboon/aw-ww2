@@ -1,7 +1,7 @@
 # Topic Doc 02: Terrain
 
 **Status:** v0 decided. Values follow the original game (default rule) except where marked **(new)**. Expect tuning after playtesting.
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-15 (§4a Major Bridge)
 **Depends on:** 00-master-design.md, 01-units.md, 03-combat.md. **Feeds:** 04-economy-production (properties), 05-supply-transport (unloading, beaches), map making.
 
 ---
@@ -64,6 +64,24 @@ Fortifications and obstacles are terrain objects with HP, similar to the origina
 - **Obstacle:** anti-tank obstacles, dragon's teeth, beach obstacles. Impassable to all land units, like a pipe seam. It doesn't block attacks or line of fire (there is no line of fire in this game). Air units fly over it.
 - **Damage to fortifications** comes from the `Fort` column of the damage chart (03-combat section 5b). Assault Infantry is the best ground unit against them.
 - Phase 1 includes Bunker, Rubble and Obstacle on land. Beach obstacles arrive with naval units in phase 2.
+
+## 4a. Major bridges: blowing and rebuilding **(new)** (decided 2026-11-15, not built yet)
+
+Decided at the developer's request for Market Garden (17-scenarios-market-garden). The original game has no bridges that can be destroyed. This is a **new, separate terrain type**. Ordinary **Bridge** tiles are not changed and can never be blown: every existing map keeps its bridges exactly as they are. A map maker uses Major Bridge only where blowing a bridge is part of the battle.
+
+| Terrain | Stars | foot | heavyFoot | wheels | tracks | air | sea | landingCraft | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| Major Bridge | 0 | 1 | 1 | 1 | 1 | 1 | — | — | Moves like Bridge. Can be blown |
+| Blown Bridge | 0 | 2 | 1 | — | — | 1 | — | — | Moves like River. Can be rebuilt |
+
+- **Blow Bridge** is an action for **Assault Infantry** (sappers, Pioniere) that ends its move on a Major Bridge. The tile becomes a Blown Bridge at once. The unit stays where it is (heavy foot can stand on a Blown Bridge) and its action ends. It uses no ammo. Either side can blow any Major Bridge: a defender can blow one to stop an attack, and an attacker can blow one to cover a flank.
+- **Only Assault Infantry can do it.** Plain Infantry has no demolition charges. This is the one exception to 01-units §6 ("no special engineering action"). There, engineering is otherwise expressed through the damage chart.
+- **A Major Bridge can't be damaged by fire.** It has no HP and isn't in the damage chart, so artillery, bombers and battleships can't knock it down. It is only ever blown from the spot. Historically big road bridges very rarely fell to shelling or bombing, and a bridge that could be shot down from across the river would leave no crossing standing.
+- **Rebuild Bridge** is an action for Assault Infantry standing on a Blown Bridge, and it works like capture (04-economy §3). Each time, the unit adds its displayed HP to the tile's rebuild progress. At **20** the tile becomes a Major Bridge again, so a full-strength unit needs two turns. That stands for a Bailey bridge, which took Royal Engineers about 12 hours at Son. Progress is lost if the unit moves off, is loaded or is destroyed, as with capture. Either side can rebuild. A rebuilt bridge can be blown again.
+- **Blown Bridge** is its own terrain, not River, so the map remembers there was a bridge there. It gets its own wreck art (fallen spans in the river), and tile info says it can be rebuilt. For movement, defense and weather (12-weather §3) it counts as River.
+- **Tile info** on a Major Bridge says "Can be blown by Assault Infantry". On a Blown Bridge it says "Can be rebuilt by Assault Infantry" and shows the rebuild progress, as capture progress is shown.
+- **Events:** blowing plays an explosion on the tile with a sound, and a finished rebuild plays a short build cue (16-sound). Neither counts as a kill.
+- **Modifier layer:** both terrains' movement costs and stars go through the modifier layer like every other terrain (§1).
 
 ## 5. Movement rules
 
