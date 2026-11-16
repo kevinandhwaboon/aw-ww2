@@ -585,6 +585,7 @@ Capture flags fly from a tall flagpole on the square in front of the building, d
 - **Winter buildings** (`buildings-32-winter.png`) are the summer buildings standing on snow. Roofs keep the owner's color, so ownership still reads at a glance.
 - **Battle scenes on a winter map** swap the ground, dirt, road, hill and tree colors for winter ones (`battleSnow…` and `battleWinterTree…` in the pack's colors). While it **snows**, the sky is overcast grey and snow drifts down over the whole scene; under clear skies the sky is blue over the snow.
 - **Snowfall over the map** while it snows: light flakes drift down over the visible part of the map, under the cursor and menus. Color `snowfall`.
+- **Desert season** (designed 2026-11-15, not built): the same mechanism for `"season": "desert"`, with sand terrain and building sheets of the same layout and sand battle scenes, for El Alamein (18-scenarios-north-africa §1 "Art").
 
 ## 22. Moving on the map
 

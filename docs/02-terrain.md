@@ -1,7 +1,7 @@
 # Topic Doc 02: Terrain
 
 **Status:** v0 decided. Values follow the original game (default rule) except where marked **(new)**. Expect tuning after playtesting.
-**Last updated:** 2026-11-15 (§4a Major Bridge)
+**Last updated:** 2026-11-15 (§4a Major Bridge, §4b desert terrain)
 **Depends on:** 00-master-design.md, 01-units.md, 03-combat.md. **Feeds:** 04-economy-production (properties), 05-supply-transport (unloading, beaches), map making.
 
 ---
@@ -83,6 +83,21 @@ Decided at the developer's request for Market Garden (17-scenarios-market-garden
 - **Events:** blowing plays an explosion on the tile with a sound, and a finished rebuild plays a short build cue (16-sound). Neither counts as a kill.
 - **Modifier layer:** both terrains' movement costs and stars go through the modifier layer like every other terrain (§1).
 - **As built:** in scenario map text a Major Bridge is `%` and a Blown Bridge `!`. Rebuild progress is kept in the game state (`bridgeWorks`) and saved with the game. The action menu says BLOW BRIDGE and REBUILD. Art packs can give `majorBridges` and `blownBridges` tiles (08-art-pipeline §13); a pack without them draws a Major Bridge with the plain Bridge deck and a Blown Bridge as bare river.
+
+## 4b. Desert terrain: Minefield, Ridge and Salt Marsh **(new)** (decided 2026-11-15, not built)
+
+Decided at the developer's request for El Alamein (18-scenarios-north-africa). The original game has no desert terrain. Open desert is ordinary **Plains** drawn with the desert season's art (08-art-pipeline §21), since most of the Western Desert was firm "good going". Three new terrains cover what Plains and Hills can't. No existing map uses them, so no existing map changes.
+
+| Terrain | Stars | foot | heavyFoot | wheels | tracks | air | sea | landingCraft | HP (internal) | Becomes at 0 HP |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Minefield | 0 | — | — | — | — | 1 | — | — | 100 | Plains |
+| Ridge | 2 | 1 | 1 | 3 | 2 | 1 | — | — | | |
+| Salt Marsh | 0 | — | — | — | — | 1 | — | — | | |
+
+- **Minefield** has exactly the **Obstacle's** rules (§4), following the original's breakable pipe seams: impassable to land units, attacked like any fortification through the damage chart's `Fort` column (03-combat §4), and cleared to Plains at 0 HP. Clearing one isn't a kill. Assault Infantry (65 vs. `Fort`) clears a square in two attacks, Artillery (50) in two. It's a separate terrain from Obstacle only so it has its own name and art. A minefield you can enter and take damage from was considered and left out: the original has nothing like it.
+- **Ridge** has **Forest's** numbers: a low desert ridge (Miteiriya, Ruweisat) that tanks could cross and use for hull-down cover, unlike Hills, which block vehicles. In snow it costs what Forest costs (12-weather §3).
+- **Salt Marsh** is impassable to every land unit, like Sea, but isn't water, so ships can't enter it either. It's the Qattara Depression, which closed the south end of the El Alamein line.
+- **Modifier layer:** all three go through the modifier layer like every other terrain (§1).
 
 ## 5. Movement rules
 
