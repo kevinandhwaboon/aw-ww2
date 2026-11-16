@@ -7,8 +7,9 @@ import type { CombatStrike, GameEvent } from "./commands";
 import { baseDamage, returnFireDamage, type DamageEntry, type DamageTarget } from "./data/damage";
 import { terrainDef, type TerrainId } from "./data/terrain";
 import { FOOT_UNITS, unitDef, UNITS, type UnitTypeId } from "./data/units";
-import { veterancyFor } from "./data/veterancy";
+import type { VeterancyLevel } from "./data/veterancy";
 import { inBounds, terrainAt, type Point } from "./map";
+import type { FightRole } from "./modifiers";
 import { moveDestinations, tileIndex, tilePoint } from "./movement";
 import { nextInt, type RngState } from "./rng";
 import { displayHp, fortAt, unitAt, type FortificationState, type GameState, type Unit } from "./state";
@@ -73,13 +74,17 @@ export function damageFormula(i: DamageInputs): number {
   return Math.max(0, Math.floor((attack * i.attackerHp * defense) / 100_000));
 }
 
-function damageWith(state: GameState, attacker: Unit, defender: Unit, entry: DamageEntry, luck: number): number {
+/**
+ * Damage from one shot. `role` is the shooter's part in the fight: "started" for the attack,
+ * "answered" for the counterattack, so modifiers that depend on it apply (06-commanders §6).
+ */
+function damageWith(state: GameState, attacker: Unit, defender: Unit, entry: DamageEntry, luck: number, role: FightRole): number {
   return damageFormula({
     base: entry.base,
-    attackMod: stats.attackMod(state, attacker),
+    attackMod: stats.attackMod(state, attacker, { role, opponent: defender }),
     luck,
     attackerHp: displayHp(attacker.hp),
-    defenseMod: stats.defenseMod(state, defender),
+    defenseMod: stats.defenseMod(state, defender, { role: role === "started" ? "answered" : "started", opponent: attacker }),
     terrainStars: stats.terrainStars(state, defender),
     defenderHp: displayHp(defender.hp),
   });
@@ -214,16 +219,16 @@ export function forecast(state: GameState, attacker: Unit, defender: Unit): Comb
   const entry = chooseWeapon(attacker, defender.type);
   if (!entry) return null;
   const luckCap = state.settings.luck ? MAX_LUCK : 0;
-  const min = damageWith(state, attacker, defender, entry, 0);
-  const max = damageWith(state, attacker, defender, entry, luckCap);
+  const min = damageWith(state, attacker, defender, entry, 0, "started");
+  const max = damageWith(state, attacker, defender, entry, luckCap, "started");
   const canKill = max >= defender.hp;
   const certainKill = min >= defender.hp;
 
   let counter: CombatForecast["counter"] = null;
   const counterEntry = counterWeapon(state, attacker, defender);
   if (!certainKill && counterEntry) {
-    const strongest = damageWith(state, { ...defender, hp: defender.hp - min }, attacker, counterEntry, luckCap);
-    const weakest = canKill ? 0 : damageWith(state, { ...defender, hp: defender.hp - max }, attacker, counterEntry, 0);
+    const strongest = damageWith(state, { ...defender, hp: defender.hp - min }, attacker, counterEntry, luckCap, "answered");
+    const weakest = canKill ? 0 : damageWith(state, { ...defender, hp: defender.hp - max }, attacker, counterEntry, 0, "answered");
     counter = { min: weakest, max: strongest };
   }
   return {
@@ -245,13 +250,13 @@ function garrisonForecast(state: GameState, attacker: Unit, defender: Unit, bunk
   const entry = chooseWeapon(attacker, "fort");
   if (!entry) return null;
   const luckCap = state.settings.luck ? MAX_LUCK : 0;
-  const min = fortDamage(state, attacker, bunker, entry, 0);
-  const max = fortDamage(state, attacker, bunker, entry, luckCap);
+  const min = fortDamage(state, attacker, bunker, entry, 0, defender);
+  const max = fortDamage(state, attacker, bunker, entry, luckCap, defender);
   const canKill = max >= bunker.hp;
   const certainKill = min >= bunker.hp;
   const counterEntry = certainKill ? null : counterWeapon(state, attacker, defender);
   const counter = counterEntry
-    ? { min: canKill ? 0 : damageWith(state, defender, attacker, counterEntry, 0), max: damageWith(state, defender, attacker, counterEntry, luckCap) }
+    ? { min: canKill ? 0 : damageWith(state, defender, attacker, counterEntry, 0, "answered"), max: damageWith(state, defender, attacker, counterEntry, luckCap, "answered") }
     : null;
   return {
     weapon: entry.weapon,
@@ -264,15 +269,16 @@ function garrisonForecast(state: GameState, attacker: Unit, defender: Unit, bunk
   };
 }
 
-function fortDamage(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry, luck: number): number {
+/** Damage to a fortification. `garrison` is the unit inside a bunker, if any: the bunker defends as its owner would. */
+function fortDamage(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry, luck: number, garrison?: Unit): number {
   const terrain = state.map.terrain[tileIndex(state, fort.pos)];
   if (terrain === undefined) throw new Error(`(${fort.pos.x}, ${fort.pos.y}) is outside the map`);
   return damageFormula({
     base: entry.base,
-    attackMod: stats.attackMod(state, attacker),
+    attackMod: stats.attackMod(state, attacker, { role: "started", opponent: "fort" }),
     luck,
     attackerHp: displayHp(attacker.hp),
-    defenseMod: stats.fortDefenseMod(state, terrain),
+    defenseMod: stats.fortDefenseMod(state, terrain, garrison ? { unit: garrison, attacker } : undefined),
     terrainStars: 0,
     defenderHp: displayHp(fort.hp),
   });
@@ -353,25 +359,26 @@ function strike(
   attacker: Unit,
   defender: Unit,
   entry: DamageEntry,
+  role: FightRole,
 ): { strike: CombatStrike; rng: RngState } {
   const roll = state.settings.luck ? nextInt(rng, 0, MAX_LUCK) : { value: 0, rng };
-  const damage = Math.min(defender.hp, damageWith(state, attacker, defender, entry, roll.value));
+  const damage = Math.min(defender.hp, damageWith(state, attacker, defender, entry, roll.value, role));
   return { strike: { weapon: entry.weapon, luck: roll.value, damage }, rng: roll.rng };
 }
 
 /** A shot at a garrison's bunker, using the bunker's HP and defense (03-combat §4). */
-function strikeFort(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry): { strike: CombatStrike; rng: RngState } {
+function strikeFort(state: GameState, attacker: Unit, fort: FortificationState, entry: DamageEntry, garrison: Unit): { strike: CombatStrike; rng: RngState } {
   const roll = state.settings.luck ? nextInt(state.rng, 0, MAX_LUCK) : { value: 0, rng: state.rng };
-  const damage = Math.min(fort.hp, fortDamage(state, attacker, fort, entry, roll.value));
+  const damage = Math.min(fort.hp, fortDamage(state, attacker, fort, entry, roll.value, garrison));
   return { strike: { weapon: entry.weapon, luck: roll.value, damage }, rng: roll.rng };
 }
 
 const fire = (unit: Unit, entry: DamageEntry): Unit =>
   entry.weapon === "primary" ? { ...unit, ammo: unit.ammo - 1 } : unit;
 
-function creditKill(unit: Unit): { unit: Unit; promotedTo: ReturnType<typeof veterancyFor>["level"] | null } {
-  const before = veterancyFor(unit.kills).level;
-  const after = veterancyFor(unit.kills + 1).level;
+function creditKill(state: GameState, unit: Unit): { unit: Unit; promotedTo: VeterancyLevel | null } {
+  const before = stats.veterancy(state, unit).level;
+  const after = stats.veterancyAt(state, unit, unit.kills + 1).level;
   return { unit: { ...unit, kills: unit.kills + 1 }, promotedTo: after === before ? null : after };
 }
 
@@ -389,7 +396,7 @@ export function resolveCombat(
 
   // A garrison's bunker takes the hit; the soldiers inside are lost only if it breaks (03-combat §4).
   const bunker = garrisonBunker(state, defender);
-  const attack = bunker ? strikeFort(state, attacker, bunker, entry) : strike(state, state.rng, attacker, defender, entry);
+  const attack = bunker ? strikeFort(state, attacker, bunker, entry, defender) : strike(state, state.rng, attacker, defender, entry, "started");
   let rng = attack.rng;
   let a = fire(attacker, entry);
   const bunkerHp = bunker ? bunker.hp - attack.strike.damage : null;
@@ -398,7 +405,7 @@ export function resolveCombat(
   let counter: CombatStrike | null = null;
   const counterEntry = counterWeapon(state, a, d);
   if (d.hp > 0 && counterEntry) {
-    const hit = strike(state, rng, d, a, counterEntry);
+    const hit = strike(state, rng, d, a, counterEntry, "answered");
     rng = hit.rng;
     counter = hit.strike;
     a = { ...a, hp: a.hp - hit.strike.damage };
@@ -408,11 +415,11 @@ export function resolveCombat(
   let attackerPromotion = null;
   let defenderPromotion = null;
   if (d.hp === 0) {
-    const credited = creditKill(a);
+    const credited = creditKill(state, a);
     a = credited.unit;
     attackerPromotion = credited.promotedTo;
   } else if (a.hp === 0) {
-    const credited = creditKill(d);
+    const credited = creditKill(state, d);
     d = credited.unit;
     defenderPromotion = credited.promotedTo;
   }

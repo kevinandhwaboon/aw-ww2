@@ -1,6 +1,7 @@
 // GameState: the complete game, as plain serializable data (00-master-design §11).
 // Never mutated in place: apply() returns a new state.
 
+import type { CommanderId } from "./data/commanders";
 import type { NationId, Side } from "./data/nations";
 import type { TerrainId } from "./data/terrain";
 import type { UnitTypeId } from "./data/units";
@@ -57,6 +58,8 @@ export interface Player {
   readonly buildable: readonly UnitTypeId[];
   /** Set per scenario (08-art-pipeline §12). Only drawing reads this; no rule does. */
   readonly facing: Facing;
+  /** The commander this player fights under, from their own side; missing = none (06-commanders §2). */
+  readonly commander?: CommanderId;
 }
 
 export interface Unit {
@@ -163,7 +166,7 @@ export interface GameState {
   readonly currentPlayer: PlayerId;
   readonly rng: RngState;
   readonly nextUnitId: UnitId;
-  /** Scenario, commander and weather modifiers. Veterancy is derived from units, not stored here. */
+  /** Scenario modifiers. Commanders, weather and veterancy are derived (engine/stats.ts), not stored here. */
   readonly modifiers: readonly Modifier[];
   readonly settings: Settings;
   /** The day's weather comes from this plan and the day number (engine/weather.ts). */

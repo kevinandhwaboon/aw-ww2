@@ -1,5 +1,4 @@
 import { UNITS } from "../engine/data/units";
-import { veterancyFor } from "../engine/data/veterancy";
 import type { Modifier } from "../engine/modifiers";
 import { displayHp, type GameState, type Unit } from "../engine/state";
 import * as stats from "../engine/stats";
@@ -24,7 +23,7 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       if (!unit) return;
       const def = UNITS[unit.type];
       const owner = state.players[unit.owner];
-      const vet = veterancyFor(unit.kills);
+      const vet = stats.veterancy(state, unit);
       const range = stats.attackRange(state, unit);
       const ammo = stats.maxAmmo(state, unit);
 

@@ -78,7 +78,8 @@ export {
 export { weatherOn } from "./weather";
 export { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./visibility";
 export * as stats from "./stats";
-export type { Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
+export type { FightRole, Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
+export { COMMANDERS, COMMANDER_IDS, commanderDef, type CommanderDef, type CommanderId } from "./data/commanders";
 export { parseAsciiMap, terrainAt, inBounds, type GameMap, type Point } from "./map";
 export { TERRAIN, TERRAIN_IDS, type TerrainId, type TerrainDef, type MovementType } from "./data/terrain";
 export { UNITS, UNIT_TYPE_IDS, type UnitTypeId, type UnitDef, type UnitCategory } from "./data/units";

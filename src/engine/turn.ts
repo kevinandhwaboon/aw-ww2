@@ -118,7 +118,7 @@ function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
     .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
 
   for (const unit of served) {
-    const self = isServiced(state, unit) ? service(unit, REPAIR_HP) : unit;
+    const self = isServiced(state, unit) ? service(unit, stats.repairHp(state, unit, REPAIR_HP)) : unit;
     const after = carries(self) ? { ...self, cargo: self.cargo.map((c) => service(c, CARRIER_REPAIR_HP)) } : self;
     if (after !== unit) updated.set(unit.id, after);
   }

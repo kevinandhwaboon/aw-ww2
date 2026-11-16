@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import type { GameEvent } from "../engine/commands";
-import { veterancyFor } from "../engine/data/veterancy";
 import { terrainAt, type Point } from "../engine/map";
 import { displayHp, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine/state";
+import * as stats from "../engine/stats";
 import { weatherOn } from "../engine/weather";
 import type { Season } from "../engine/data/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
@@ -929,7 +929,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (unit.cargo.length > 0) sprite.add(this.add.image(0, 0, this.textTexture("+", packColor("labelText"), packColor("labelOutline"))).setOrigin(0));
     // So does a submerged submarine, in the same corner, which a submarine never otherwise uses.
     if (unit.submerged === true) sprite.add(this.add.image(0, 0, this.texture("submerged", drawSubmergedBadge)).setOrigin(0));
-    const { level } = veterancyFor(unit.kills);
+    const { level } = stats.veterancy(this.state, unit);
     if (level !== "rookie") {
       sprite.add(this.add.image(TILE_SIZE, 0, this.texture(`vet-${level}`, () => drawVeterancyBadge(level))).setOrigin(1, 0));
     }
