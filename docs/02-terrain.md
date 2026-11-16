@@ -22,7 +22,7 @@
 | `wheels` | Tires | Recon, Rocket Artillery |
 | `tracks` | Treads | Halftrack, all tanks, Tank Destroyer, Artillery, Mobile AA, Flak Gun |
 | `air` | Air | All air units (phase 2) |
-| `sea` | Ship | Battleship, Destroyer, Submarine, Torpedo Boat (phase 2) |
+| `sea` | Ship | Battleship, Destroyer, Submarine, Torpedo Boat, Carrier, Supply Ship (phase 2) |
 | `landingCraft` | Transport (Lander) | Landing Craft (phase 2) |
 
 ## 3. Terrain table (v0)

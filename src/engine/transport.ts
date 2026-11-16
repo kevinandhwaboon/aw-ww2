@@ -106,6 +106,18 @@ export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
     .filter((u): u is Unit => u !== undefined && state.players[u.owner]?.side === side && needsSupply(state, u));
 }
 
+/**
+ * Whether this ship lies next to one of its own player's Supply Ships, which repairs it at the start
+ * of the turn (05-supply-transport §3a). Only ships, and only the Supply Ship's own player's.
+ */
+export function besideSupplyShip(state: GameState, unit: Unit): boolean {
+  if (unitDef(unit.type).category !== "naval") return false;
+  return neighborsOf(state, unit.pos).some((p) => {
+    const other = unitAt(state, p);
+    return other !== undefined && other.owner === unit.owner && unitDef(other.type).specialActions.includes("repairShips");
+  });
+}
+
 /** Refills these units' fuel and ammo. Free; doesn't heal. */
 export function applySupply(state: GameState, targets: readonly Unit[]): { state: GameState; events: GameEvent[] } {
   const ids = new Set(targets.map((t) => t.id));

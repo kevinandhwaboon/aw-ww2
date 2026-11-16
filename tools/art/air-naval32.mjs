@@ -217,6 +217,22 @@ const ptBoat = def("ship", {
 
 const essex = def("carrier", { deck: "metal", elevators: [12, 25], island: [16, 22], funnel: 21, mast: 3 });
 
+// ---- Supply Ships (05-supply-transport §3a): fleet oilers, the bridge amidships, the funnel aft, ----
+// ---- and kingposts for the fuelling booms along the tank deck. ----
+// US: a Cimarron class. UK: a Dale class RFA oiler. Japan: the Kazahaya, its bridge further forward.
+const cimarron = def("ship", {
+  stern: 1, bow: 31, deck: 13, beam: 6, side: 3,
+  blocks: [[18, 10, 22, 18], [2, 11, 8, 18]], funnels: [[5, 12]], masts: [[13, 13, 6], [26, 13, 6], [20, 10, 6]],
+});
+const dale = def("ship", {
+  stern: 1, bow: 31, deck: 13, beam: 6, side: 3,
+  blocks: [[17, 11, 21, 18], [2, 11, 8, 18]], funnels: [[5, 12]], masts: [[12, 13, 5], [25, 13, 5]],
+});
+const kazahaya = def("ship", {
+  stern: 1, bow: 31, deck: 13, beam: 6, side: 3,
+  blocks: [[14, 10, 18, 18], [2, 11, 8, 18]], funnels: [[5, 11], [5, 13]], masts: [[16, 10, 8], [24, 13, 6]],
+});
+
 // ---- German ships ----
 const zClass = def("ship", {
   stern: 1, bow: 31, deck: 14, beam: 5, side: 3,
@@ -377,6 +393,7 @@ export const usNaval = [
   { code: "LC", name: "Landing Craft", real: "LCT", frames: frames(lct), views: views(lct) },
   { code: "TB", name: "Torpedo Boat", real: "PT boat", frames: frames(ptBoat), views: views(ptBoat) },
   { code: "CV", name: "Carrier", real: "Essex class", frames: frames(essex), views: views(essex) },
+  { code: "SP", name: "Supply Ship", real: "Cimarron-class fleet oiler", frames: frames(cimarron), views: views(cimarron) },
 ];
 export const deAir = [
   { code: "FT", name: "Fighter", real: "Bf 109", frames: frames(bf109), views: views(bf109) },
@@ -410,6 +427,7 @@ export const ukNaval = [
   { code: "LC", name: "Landing Craft", real: "LCT", frames: frames(ukLct), views: views(ukLct) },
   { code: "TB", name: "Torpedo Boat", real: "Vosper MTB", frames: frames(mtb), views: views(mtb) },
   { code: "CV", name: "Carrier", real: "HMS Illustrious", frames: frames(illustrious), views: views(illustrious) },
+  { code: "SP", name: "Supply Ship", real: "Dale-class RFA oiler", frames: frames(dale), views: views(dale) },
 ];
 
 export const jpAir = [
@@ -426,6 +444,7 @@ export const jpNaval = [
   { code: "LC", name: "Landing Craft", real: "Daihatsu", frames: frames(daihatsu), views: views(daihatsu) },
   { code: "TB", name: "Torpedo Boat", real: "Gyoraitei", frames: frames(gyoraitei), views: views(gyoraitei) },
   { code: "CV", name: "Carrier", real: "Shōkaku class", frames: frames(shokaku), views: views(shokaku) },
+  { code: "SP", name: "Supply Ship", real: "Kazahaya (fleet oiler)", frames: frames(kazahaya), views: views(kazahaya) },
 ];
 
 for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...suAir, ...ukAir, ...ukNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {

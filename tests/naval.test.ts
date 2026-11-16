@@ -100,8 +100,8 @@ describe("ports (04-economy §1, §5)", () => {
     expect(apply(built.state, wait(ship?.id ?? -1)).ok).toBe(false);
   });
 
-  it("by default a port offers every ship, the Landing Craft and Carrier included", () => {
-    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "submarine", "torpedoBoat"]);
+  it("by default a port offers every ship, the Landing Craft, Carrier and Supply Ship included", () => {
+    expect(buildOptions(port(), P(0, 0)).map((o) => o.type).sort()).toEqual(["battleship", "carrier", "destroyer", "landingCraft", "submarine", "supplyShip", "torpedoBoat"]);
   });
 
   it("ports build only ships, and factories never build ships", () => {

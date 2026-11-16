@@ -5,13 +5,16 @@ import { unitDef } from "./data/units";
 import { clearAbandonedCaptures, servicesUnit } from "./economy";
 import { displayHp, MAX_HP, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
-import { applySupply, supplyTargets } from "./transport";
+import { applySupply, besideSupplyShip, supplyTargets } from "./transport";
 
 /** Displayed HP repaired per turn on a property (04-economy §5). */
 export const REPAIR_HP = 2;
 
 /** Displayed HP repaired per turn for an aircraft aboard a Carrier (05-supply-transport §10). */
 export const CARRIER_REPAIR_HP = 1;
+
+/** Displayed HP repaired per turn for a ship next to its own Supply Ship (05-supply-transport §3a). */
+export const SUPPLY_SHIP_REPAIR_HP = 1;
 
 /** The player's units and their passengers are ready again; Carriers may move or launch again. */
 function readyUp(unit: Unit): Unit {
@@ -86,8 +89,10 @@ const carries = (unit: Unit) => unitDef(unit.type).specialActions.includes("laun
 
 /**
  * Units on owned properties of the right category heal and resupply, and so do aircraft aboard a
- * Carrier, by less (05-supply-transport §10). Runs in row-major order, a Carrier before its
- * aircraft, so when funds run short they run out the same way every time (04-economy §5).
+ * Carrier and ships next to their own Supply Ship, by less (05-supply-transport §3a, §10). Runs in
+ * row-major order, a Carrier before its aircraft, so when funds run short they run out the same way
+ * every time (04-economy §5). A ship in port that also lies next to a Supply Ship gets the port's
+ * repair only.
  */
 function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
   const player = state.players[state.currentPlayer];
@@ -114,11 +119,15 @@ function repairAndResupply(state: GameState, events: GameEvent[]): GameState {
   };
 
   const served = state.units
-    .filter((u) => u.owner === player.id && (isServiced(state, u) || carries(u)))
+    .filter((u) => u.owner === player.id && (isServiced(state, u) || carries(u) || besideSupplyShip(state, u)))
     .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
 
   for (const unit of served) {
-    const self = isServiced(state, unit) ? service(unit, stats.repairHp(state, unit, REPAIR_HP)) : unit;
+    const self = isServiced(state, unit)
+      ? service(unit, stats.repairHp(state, unit, REPAIR_HP))
+      : besideSupplyShip(state, unit)
+        ? service(unit, SUPPLY_SHIP_REPAIR_HP)
+        : unit;
     const after = carries(self) ? { ...self, cargo: self.cargo.map((c) => service(c, CARRIER_REPAIR_HP)) } : self;
     if (after !== unit) updated.set(unit.id, after);
   }

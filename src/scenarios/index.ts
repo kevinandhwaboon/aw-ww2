@@ -4,6 +4,7 @@
 import { parseScenario, type Scenario } from "../engine/scenario";
 import bastogne from "./bastogne.json";
 import elAlamein from "./el-alamein.json";
+import guadalcanal from "./guadalcanal.json";
 import iwoJima from "./iwo-jima.json";
 import kursk from "./kursk.json";
 import marketGarden from "./market-garden.json";
@@ -11,4 +12,4 @@ import midway from "./midway.json";
 import normandy from "./normandy.json";
 import theSlot from "./the-slot.json";
 
-export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, bastogne, kursk, iwoJima, theSlot, midway].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, bastogne, kursk, iwoJima, theSlot, midway, guadalcanal].map(parseScenario);

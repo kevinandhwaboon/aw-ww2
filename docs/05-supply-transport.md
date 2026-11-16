@@ -1,7 +1,7 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09).
-**Last updated:** 2026-11-10
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09). The Supply Ship (section 3a) is decided and implemented (2026-11-16).
+**Last updated:** 2026-11-16
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
 ---
@@ -29,12 +29,28 @@ A resupply restores fuel and ammo to maximum. It's free and doesn't heal.
 | Owned property of the right category | Owner's turn start (with repair; 04-economy section 5) | The unit on the tile |
 | Halftrack, automatic | Owner's turn start, after property repair | All friendly units orthogonally adjacent to the Halftrack, except aircraft |
 | Halftrack, `Supply` action | After the Halftrack moves (or without moving) | All friendly units orthogonally adjacent, except aircraft; ends the Halftrack's action |
+| Supply Ship, automatic and `Supply` action | As for the Halftrack | As for the Halftrack: ships and land units on the shore next to it. It also repairs ships (§3a) |
 
 A carried passenger isn't resupplied by its transport.
 
 **Halftracks never resupply aircraft** (since 2026-11-14, at the developer's request): an aircraft has to fly back to an owned airfield, or a Carrier for carrier aircraft (§10), to refuel and rearm. Ships and land units are still resupplied by an adjacent Halftrack.
 
 The `Supply` action is only available when at least one adjacent friendly unit is short of fuel or ammo. Automatic supply also reaches units of an allied player on the same side.
+
+## 3a. Supply Ship (decided and built 2026-11-16)
+
+Added at the developer's request: ships could only refuel at a port, while land units have the Halftrack and carrier aircraft their Carrier. It follows the original game's later naval supply boat, minus the troops it carried (the Landing Craft does that here). Stats in 01-units §8.
+
+- **Resupply:** exactly the Halftrack's (§3). At the start of its owner's turn, after property repair, it refuels and rearms every friendly unit orthogonally next to it, an ally's included, except aircraft. That means ships, and land units on the shore or on a port. It has the same `Supply` action after moving, which ends its action. Free.
+- **Repair:** at the start of its owner's turn, each of **its own player's ships** orthogonally next to it is repaired **1 displayed HP**, for 10% of the ship's cost, with the same affordability and order rules as property repair (04-economy §5). This is the Carrier's repair of its aircraft (§10), for ships. It repairs only in that start-of-turn step, never with the `Supply` action.
+  - **Only ships**, never land units: the Halftrack and cities look after those.
+  - **Only its own player's**: an ally's ship is refuelled and rearmed but not repaired, since each player pays for their own repairs (04-economy §5).
+  - **1 HP a day at most**, however many Supply Ships it lies next to. A ship in a port that services it gets the port's 2 HP instead, not both.
+  - **Not itself.** Two Supply Ships side by side repair and refuel each other.
+- **Fuel:** it burns fuel and sinks at 0 like any ship (§7). It doesn't refuel itself.
+- **Unarmed,** and as easy to sink as a Landing Craft (03-combat §5b). It carries nothing.
+- **Building:** at Ports, like other ships.
+- **Low fuel warning:** for a ship, the squares next to a friendly Supply Ship count as home (§11).
 
 ## 4. Transport (land, phase 1)
 
@@ -67,7 +83,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 - **Movement:** type `sea` covers Sea, Reef and Port. Landing Craft use `landingCraft`, which also allows Beach (02-terrain §3).
 - **Daily fuel:** `fuelPerDay` at the start of the owner's turn. At 0 fuel the ship sinks. A sinking isn't a kill. No burn on day 1 **(D1)**, and none for a ship in an owned port.
-- **Service:** owned ports repair and resupply naval units. Halftracks resupply adjacent ships as well.
+- **Service:** owned ports repair and resupply naval units. Halftracks resupply adjacent ships as well, and Supply Ships resupply and repair them at sea (§3a).
 - **Capture:** ships can't capture. Ports are captured by infantry like any property.
 
 ## 8. Landing Craft (phase 2)
@@ -105,7 +121,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 Presentation only: no rule reads these. At the developer's request, a unit short of supplies shows a **flashing can** on the map, stacked up the left edge of its tile (above the capture C, if any):
 
-- **Gas can** (a red jerrycan): fuel is empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (they're lost at 0). Since 2026-11-14, at the developer's request (the warning came too late to get home), aircraft and ships also warn **as soon as one more full turn's move away from home would leave too little fuel to get back**: the fuel for a full move out plus the route back from that far (by the cheapest route over terrain, ignoring units), plus the daily burn for each night on the way. Home is the nearest owned property that refuels it (airfield, port) or, for carrier aircraft, one of the player's Carriers with room. A unit at home doesn't warn this way, and nor does one with no home it could reach anywhere on the map (Japan's port on Midway is cut off from the sea): for those only the simpler rules apply. So a Fighter that has flown a full 9 squares out from its airfield doesn't show the can yet, but after a second full day out it does: it has just enough to fly home, and no more (01-units §8a range rule).
+- **Gas can** (a red jerrycan): fuel is empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (they're lost at 0). Since 2026-11-14, at the developer's request (the warning came too late to get home), aircraft and ships also warn **as soon as one more full turn's move away from home would leave too little fuel to get back**: the fuel for a full move out plus the route back from that far (by the cheapest route over terrain, ignoring units), plus the daily burn for each night on the way. Home is the nearest owned property that refuels it (airfield, port) or, for carrier aircraft, one of the player's Carriers with room, or, for ships, a square next to a friendly Supply Ship (§3a). A unit at home doesn't warn this way, and nor does one with no home it could reach anywhere on the map (Japan's port on Midway is cut off from the sea): for those only the simpler rules apply. So a Fighter that has flown a full 9 squares out from its airfield doesn't show the can yet, but after a second full day out it does: it has just enough to fly home, and no more (01-units §8a range rule).
 - **Ammo can** (an olive can with brass rounds): a unit with a main weapon has used it up, or has a quarter or less left (rounded up). A unit that only ever holds 1 shot (the Torpedo Bomber) warns only once it's spent.
 
 Both cans blink together, and the same numbers turn the fuel and ammo lines in the tile info box to the warning color, where they blink too. The rule is one function, `supplyWarnings` in `src/game/tileInfo.ts`.

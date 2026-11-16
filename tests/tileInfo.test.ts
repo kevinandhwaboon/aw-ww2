@@ -146,6 +146,15 @@ describe("tile info box (00-master-design §12)", () => {
       expect(lowAt(state, 9, 49)).toBe(true);
     });
 
+    it("for a ship, the squares next to a friendly Supply Ship count as home (05-supply-transport §3a)", () => {
+      // 9 squares from the Supply Ship's side: out 6 and back 15 at 1 fuel a square, plus three nights at 2.
+      const state = makeGame(["SSSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }, { type: "supplyShip", owner: 0, pos: P(0, 0) }]);
+      expect(lowAt(state, 10, 27)).toBe(false);
+      expect(lowAt(state, 10, 26)).toBe(true);
+      const alone = makeGame(["SSSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }]);
+      expect(lowAt(alone, 10, 26)).toBe(false);
+    });
+
     it("with no home anywhere (a full Carrier, no airfield), only the simple rules apply", () => {
       const full = makeGame(["SSSSSSSSSS"], [
         { type: "fighter", owner: 0, pos: P(9, 0) },

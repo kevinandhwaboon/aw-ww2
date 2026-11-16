@@ -13,6 +13,8 @@ import {
   launchState,
   movementBudget,
   stats,
+  terrainAt,
+  unitAt,
   unitCommands,
   unloadTiles,
   type Command,
@@ -31,6 +33,7 @@ import {
   isAirTransport,
   isCarrier,
   isLandingCraft,
+  isSupplyShip,
   samePoint,
 } from "./greedyBase";
 import { ProductionBrain } from "./greedyProduction";
@@ -191,6 +194,7 @@ class Brain extends ProductionBrain {
       return this.planFerry(unit);
     }
     if (isCarrier(unit.type)) return this.planCarrier(unit);
+    if (isSupplyShip(unit.type)) return this.planSupplyShip(unit);
 
     // The guard of an objective we have to keep goes to stand on it, and stays (09-ai §4d).
     const post = this.guardPosts().get(unit.id);
@@ -235,6 +239,31 @@ class Brain extends ProductionBrain {
     // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait.
     if (def.category === "land") return this.advance(unit, this.enemyProperties(), "enemyProperties");
     return IDLE;
+  }
+
+  /**
+   * A Supply Ship (09-ai §4f) sails to the nearest of our units it can reach that needs it: ships low
+   * on fuel, short of ammo or damaged, and land units on the shore nearly out of fuel or ammo. With
+   * nobody in need it keeps company with our warships, so it's at hand when they are.
+   */
+  private planSupplyShip(unit: Unit): Plan {
+    const mine = this.state.units.filter((u) => u.owner === this.me && u.id !== unit.id && !isSupplyShip(u.type));
+    const needs = (u: Unit) => {
+      const def = defOf(u.type);
+      if (def.category === "air") return false;
+      // Land units only when they're nearly dry: they mostly have Halftracks and cities.
+      if (def.category === "land") return u.fuel <= stats.maxFuel(this.state, u) / 4 || (def.primaryWeapon !== null && u.ammo === 0);
+      const short = u.fuel <= stats.maxFuel(this.state, u) * this.w.supplyFuelShare || u.ammo < stats.maxAmmo(this.state, u);
+      return short || displayHp(u.hp) < 10;
+    };
+    const reachable = (u: Unit) => this.neighbors(u.pos).filter((p) => {
+      const occupant = unitAt(this.state, p);
+      return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
+    });
+    const wanting = mine.filter(needs).flatMap(reachable);
+    if (wanting.length > 0) return this.advance(unit, wanting, `supply${unit.id}`);
+    const fleet = mine.filter((u) => defOf(u.type).category === "naval" && defOf(u.type).range !== null).flatMap(reachable);
+    return fleet.length > 0 ? this.advance(unit, fleet, `fleet${unit.id}`) : IDLE;
   }
 
   /**

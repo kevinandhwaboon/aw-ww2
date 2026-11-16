@@ -34,6 +34,12 @@ export interface GreedyWeights {
   readonly blockingFortValue: number;
   /** Value of each neighbour resupplied. */
   readonly supplyPerUnit: number;
+  /** We want one Supply Ship for every this many of our warships at sea (09-ai §4f). */
+  readonly warshipsPerSupplyShip: number;
+  /** Most Supply Ships we build. */
+  readonly maxSupplyShips: number;
+  /** A Supply Ship sails to one of our ships once its fuel is at or below this share of a full tank. */
+  readonly supplyFuelShare: number;
   /** Value of boarding a Halftrack when the goal is far away. */
   readonly boardValue: number;
   /** A goal is "far" when it's more than this many turns' movement away. */
@@ -142,6 +148,9 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   stayBonus: 10,
   blockingFortValue: 1500,
   supplyPerUnit: 400,
+  warshipsPerSupplyShip: 4,
+  maxSupplyShips: 2,
+  supplyFuelShare: 0.6,
   boardValue: 800,
   boardTurns: 2,
   unloadValue: 1800,

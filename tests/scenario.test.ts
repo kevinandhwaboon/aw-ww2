@@ -75,8 +75,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Kursk, Iwo Jima, The Slot and Midway", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "kursk", "iwo-jima", "the-slot", "midway"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
   });
 
   it("have unique ids", () => {
@@ -698,6 +698,144 @@ describe("built-in scenarios (00-master-design §8)", () => {
 
     it("Japan has no airfield of its own: it can't replace lost aircraft until it takes Midway's", () => {
       expect(properties(midway, "airfield", JAPAN)).toHaveLength(0);
+    });
+
+    it("neither side builds Heavy Tanks (01-units §1)", () => {
+      for (const p of players) expect(p.buildable).not.toContain("heavyTank");
+    });
+  });
+
+  describe("Guadalcanal (14-scenarios-pacific §4)", () => {
+    const guadalcanal = SCENARIOS.find((s) => s.id === "guadalcanal");
+    if (!guadalcanal) throw new Error("missing scenario");
+    const { map, units, victory, players, propertyOwners, settings } = guadalcanal.setup;
+    const US = 0;
+    const JAPAN = 1;
+    const henderson = victory?.find((v) => v.type === "captureProperties")?.properties[0];
+    if (!henderson) throw new Error("missing objective");
+    const at = (x: number, y: number) => terrainAt(map, P(x, y));
+    const all = units ?? [];
+    const ofSide = (owner: number, type: UnitTypeId) => all.filter((u) => u.owner === owner && u.type === type);
+    const ownerOf = (p: Point) => propertyOwners?.find((o) => o.pos.x === p.x && o.pos.y === p.y)?.owner ?? null;
+    /** The cheapest a ship could sail from one square to each other square, ignoring other units. */
+    const sailingCost = (from: Point): Map<string, number> => {
+      const cost = new Map([[`${from.x},${from.y}`, 0]]);
+      const queue = [from];
+      for (let p = queue.shift(); p; p = queue.shift()) {
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+          const q = P(p.x + dx, p.y + dy);
+          if (q.x < 0 || q.y < 0 || q.x >= map.width || q.y >= map.height) continue;
+          const step = TERRAIN[terrainAt(map, q)].moveCost.sea;
+          if (step === null) continue;
+          const total = (cost.get(`${p.x},${p.y}`) ?? 0) + step;
+          if (total >= (cost.get(`${q.x},${q.y}`) ?? Infinity)) continue;
+          cost.set(`${q.x},${q.y}`, total);
+          queue.push(q);
+        }
+      }
+      return cost;
+    };
+    /** Lunga Point's roadstead: the sea square off the beach where the US unloaded. */
+    const roadstead = P(25, 13);
+    const homePort = (owner: number) => (propertyOwners ?? []).find((p) => p.owner === owner && terrainAt(map, p.pos) === "port" && sideIsHome(p.pos, owner));
+    const sideIsHome = (p: Point, owner: number) => (owner === JAPAN ? p.x < 10 : p.x > 34);
+
+    it("the US fights Japan and moves first, so the US is the army green player (08-art-pipeline §12)", () => {
+      expect(players.map((p) => p.nation)).toEqual(["us", "japan"]);
+    });
+
+    it("Japan wins by capturing Henderson Field, held by the US at the start", () => {
+      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [henderson] });
+      expect(terrainAt(map, henderson)).toBe("airfield");
+      expect(ownerOf(henderson)).toBe(US);
+    });
+
+    it("the US wins by holding Henderson Field to the start of day 15", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 15 });
+    });
+
+    it("there's no port on Guadalcanal: no ship can be refuelled anywhere on the island", () => {
+      const island = reachable(map, ["foot"], henderson);
+      const ports = map.terrain.flatMap((t, i) => (t === "port" ? [P(i % map.width, Math.floor(i / map.width))] : []));
+      expect(ports.length).toBeGreaterThan(0);
+      for (const p of ports) expect(island.has(`${p.x},${p.y}`), `port at ${p.x},${p.y}`).toBe(false);
+    });
+
+    it("the US's nearest port is Tulagi, across Ironbottom Sound, which services one ship at a time", () => {
+      const tulagi = P(26, 9);
+      expect(at(26, 9)).toBe("port");
+      expect(ownerOf(tulagi)).toBe(US);
+      expect(sailingCost(roadstead).get("26,9")).toBeLessThanOrEqual(UNITS.destroyer.movePoints);
+    });
+
+    it("both home ports are days of sailing from Lunga Point: more than two days' Destroyer move for the US, three for Japan", () => {
+      const fromLunga = sailingCost(roadstead);
+      const us = homePort(US);
+      const jp = homePort(JAPAN);
+      if (!us || !jp) throw new Error("missing home ports");
+      expect(fromLunga.get(`${us.pos.x},${us.pos.y}`)).toBeGreaterThan(2 * UNITS.destroyer.movePoints);
+      expect(fromLunga.get(`${jp.pos.x},${jp.pos.y}`)).toBeGreaterThan(3 * UNITS.destroyer.movePoints);
+    });
+
+    it("each side starts with a Supply Ship, and both can build more (05-supply-transport §3a)", () => {
+      expect(ofSide(US, "supplyShip")).toHaveLength(1);
+      expect(ofSide(JAPAN, "supplyShip")).toHaveLength(1);
+      for (const p of players) expect(p.buildable).toContain("supplyShip");
+    });
+
+    it("the US Supply Ship lies off Lunga Point next to a Marine battery short of shells, so it refills them on day 1", () => {
+      const [ship] = ofSide(US, "supplyShip");
+      const guns = ofSide(US, "artillery").filter((a) => ship && Math.abs(a.pos.x - ship.pos.x) + Math.abs(a.pos.y - ship.pos.y) === 1);
+      expect(guns).toHaveLength(1);
+      const state = createGame({ ...guadalcanal.setup, seed: 1 });
+      const gun = guns[0];
+      if (!gun) throw new Error("no battery by the Supply Ship");
+      const refilled = state.units.find((u) => u.type === "artillery" && u.pos.x === gun.pos.x && u.pos.y === gun.pos.y);
+      expect(refilled?.ammo).toBe(9); // a full load of shells (01-units §8)
+    });
+
+    it("Japan's convoy destroyers have come down the Slot and are short of fuel, with their Supply Ship a day's sailing away", () => {
+      const [ship] = ofSide(JAPAN, "supplyShip");
+      if (!ship) throw new Error("no Japanese Supply Ship");
+      const reach = sailingCost(ship.pos);
+      // The convoy: the destroyers escorting the Landing Craft.
+      const craft = ofSide(JAPAN, "landingCraft");
+      const convoy = ofSide(JAPAN, "destroyer").filter((d) => craft.some((c) => Math.abs(c.pos.x - d.pos.x) + Math.abs(c.pos.y - d.pos.y) <= 2));
+      expect(convoy.length).toBeGreaterThanOrEqual(2);
+      for (const d of convoy) expect(d.fuel ?? UNITS.destroyer.maxFuel).toBeLessThan(UNITS.destroyer.maxFuel);
+      for (const d of convoy) expect(reach.get(`${d.pos.x},${d.pos.y}`), `destroyer at ${d.pos.x},${d.pos.y}`).toBeLessThanOrEqual(UNITS.supplyShip.movePoints + 1);
+    });
+
+    it("Japan's two Battleships start out of gun range of Henderson Field, but can be in range after one day's sailing", () => {
+      const battleships = ofSide(JAPAN, "battleship");
+      expect(battleships).toHaveLength(2);
+      const range = 6; // Battleship guns reach 2-6 (01-units §8)
+      for (const b of battleships) {
+        const d = Math.abs(b.pos.x - henderson.x) + Math.abs(b.pos.y - henderson.y);
+        expect(d, `battleship at ${b.pos.x},${b.pos.y}`).toBeGreaterThan(range);
+        expect(d).toBeLessThanOrEqual(range + UNITS.battleship.movePoints);
+      }
+    });
+
+    it("Japan attacks the perimeter from the west, from Kokumbona, and from the south, through the jungle onto Edson's Ridge", () => {
+      const onIsland = reachable(map, ["foot"], henderson);
+      const troops = all.filter((u) => u.owner === JAPAN && UNITS[u.type].category === "land" && onIsland.has(`${u.pos.x},${u.pos.y}`));
+      expect(troops.filter((u) => u.pos.x < 21).length).toBeGreaterThanOrEqual(6);
+      expect(troops.filter((u) => u.pos.y > henderson.y + 2).length).toBeGreaterThanOrEqual(4);
+      expect(at(26, 17)).toBe("ridge");
+    });
+
+    it("Kokumbona is Japan's on the island; Rekata Bay on Santa Isabel and Koli Point are neutral", () => {
+      expect(at(17, 14)).toBe("city");
+      expect(ownerOf(P(17, 14))).toBe(JAPAN);
+      expect(at(15, 3)).toBe("port");
+      expect(ownerOf(P(15, 3))).toBeNull();
+      expect(at(31, 16)).toBe("city");
+      expect(ownerOf(P(31, 16))).toBeNull();
+    });
+
+    it("income is 500 per property, so the starting forces do most of the fighting", () => {
+      expect(settings?.incomePerProperty).toBe(500);
     });
 
     it("neither side builds Heavy Tanks (01-units §1)", () => {

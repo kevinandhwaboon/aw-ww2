@@ -7,7 +7,6 @@ import {
   forecast,
   fortForecast,
   garrisonBunker,
-  inBounds,
   movementBudget,
   threatTiles,
   propertyAt,
@@ -379,10 +378,6 @@ export abstract class LandingBrain extends BrainBase {
     if (!Number.isFinite(steps)) return -Infinity;
     if (isAirTransport(transport.type) && steps > this.w.dropWithinTurns * stats.movePoints(this.state, passenger)) return -Infinity;
     return this.w.unloadValue - this.w.unloadPerStep * steps;
-  }
-
-  protected neighbors(p: Point): Point[] {
-    return [{ x: p.x, y: p.y - 1 }, { x: p.x + 1, y: p.y }, { x: p.x, y: p.y + 1 }, { x: p.x - 1, y: p.y }].filter((q) => inBounds(this.state.map, q));
   }
 
   protected score(unit: Unit, plan: Plan, command: MoveCommand): number {

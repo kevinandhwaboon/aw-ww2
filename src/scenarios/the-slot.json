@@ -69,7 +69,8 @@
         "submarine",
         "landingCraft",
         "torpedoBoat",
-        "carrier"
+        "carrier",
+        "supplyShip"
       ]
     },
     {
@@ -99,7 +100,8 @@
         "submarine",
         "landingCraft",
         "torpedoBoat",
-        "carrier"
+        "carrier",
+        "supplyShip"
       ],
       "facing": "left"
     }

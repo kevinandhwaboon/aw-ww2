@@ -14,13 +14,16 @@ export const UNIT_TYPE_IDS = [
   // Air (phase 2)
   "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
   // Naval (phase 2)
-  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
+  "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "supplyShip",
 ] as const;
 export type UnitTypeId = (typeof UNIT_TYPE_IDS)[number];
 
 export type UnitCategory = "land" | "air" | "naval";
-/** "demolish": blow and rebuild Major Bridges (02-terrain §4a). */
-export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch" | "demolish";
+/**
+ * "demolish": blow and rebuild Major Bridges (02-terrain §4a). "repairShips": repairs its own
+ * player's ships next to it at turn start (05-supply-transport §3a).
+ */
+export type SpecialAction = "resupply" | "airDrop" | "dive" | "unloadOnBeach" | "launch" | "demolish" | "repairShips";
 
 export interface UnitDef {
   readonly name: string;
@@ -215,6 +218,12 @@ export const UNITS = {
     ...BASE, phase: 2, name: "Carrier", category: "naval", cost: 40000, movePoints: 5, movementType: "sea",
     vision: 2, maxFuel: 99, fuelPerDay: 1, range: null, returnFireAA: { name: "AA guns" },
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
+  },
+  // Fleet supply at sea (05-supply-transport §3a): refuels and rearms neighbors like a Halftrack,
+  // and repairs its own player's ships next to it 1 HP a day. Unarmed.
+  supplyShip: {
+    ...BASE, phase: 2, name: "Supply Ship", category: "naval", cost: 10000, movePoints: 5, movementType: "sea",
+    vision: 1, maxFuel: 99, fuelPerDay: 1, range: null, specialActions: ["resupply", "repairShips"],
   },
 } as const satisfies Record<UnitTypeId, UnitDef>;
 
