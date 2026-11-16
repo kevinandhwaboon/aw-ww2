@@ -16,7 +16,10 @@ export interface DropPlan {
   readonly nation: NationId | null;
   /** Displayed HP (1–10). */
   readonly hp: number;
-  /** US Infantry jumping is drawn as 101st Airborne paratroopers, as it is on the map once landed. */
+  /**
+   * US Infantry jumping is drawn as 101st Airborne paratroopers, and British or Canadian Infantry as
+   * the 1st Airborne, as the map draws them once landed.
+   */
   readonly paratrooper: boolean;
   readonly suit: number;
   /** Where they land. */
@@ -37,8 +40,8 @@ export function planDrop(state: GameState, event: Extract<GameEvent, { type: "un
     owner: passenger.owner,
     nation,
     hp: displayHp(passenger.hp),
-    // The engine marks the unit air-dropped as it lands; the map then draws US Infantry as paratroopers.
-    paratrooper: passenger.type === "infantry" && nation === "us",
+    // The engine marks the unit air-dropped as it lands; the map then draws US and UK Infantry as paratroopers.
+    paratrooper: passenger.type === "infantry" && (nation === "us" || nation === "uk" || nation === "canada"),
     suit: passenger.id % 4,
     terrain: terrainAt(state.map, event.pos),
   };

@@ -6,14 +6,19 @@
 // other machines (recon, halftrack, AA, guns, rockets) take the German shapes, which their real
 // counterparts resembled, with Japanese crews. The Soviet Union's take the US shapes, which the Red
 // Army received under Lend-Lease, with the red star and Soviet crews, except its rockets: the
-// Katyusha.
+// Katyusha. The UK's (and Canada's) are their own: a Daimler armoured car, a Universal Carrier, a
+// Crusader AA, a Bofors, a 25-pounder and a Land Mattress, with the RAF roundel and crews in Brodie
+// helmets or the tank arm's black beret.
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
 import { BATTLE_VIEW, drawMesh, polished, screenAngle, screenPoint, type Face, type V3 } from "./angled/mesh";
 import { tankCommander } from "./crew";
 import { TANK_MODELS, type Model, type TankKind } from "./angled/models";
-import { bunker, calliope, flakGun, howitzer, katyusha, m3, nebelwerfer, quadAA, r75, sdkfz251, willys, type Built } from "./angled/vehicleModels";
+import {
+  bofors, bunker, calliope, crusaderAA, daimler, flakGun, howitzer, katyusha, landMattress, m3, nebelwerfer, quadAA, r75, sdkfz251, universalCarrier, willys,
+  type Built, type HowitzerStyle,
+} from "./angled/vehicleModels";
 import { C, mix, shade, type Painter } from "./paint";
 import { drawSoldier, earsCovered, sandbags, soldierFrame } from "./soldiers";
 import { FIRE_TIMING } from "./timeline";
@@ -21,6 +26,8 @@ import { justFired, kick, kitOf, lerp, seg, type Look, type Muzzle, type Pose, t
 
 /** The Axis shapes: Germany's machines, which Japan's other machines also use (see the top). */
 const de = (look: Look) => kitOf(look) === "de" || kitOf(look) === "jp";
+/** The UK's own machines, which Canada shares. */
+const uk = (look: Look) => kitOf(look) === "uk";
 /** The star on the US shapes: white, or red when the Soviet Union drives them. */
 const markOf = (look: Look) => (kitOf(look) === "su" ? C("battleSun") : C("battleStar"));
 
@@ -49,7 +56,13 @@ export function redStar(p: Painter, cx: number, cy: number): void {
 export function commander(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x, y - 6, 5, 6, C("battleSkin"));
   p.px(x + 3, y - 4, C("battleInk"));
-  if (kitOf(look) === "su") {
+  if (uk(look)) {
+    // The tank arm's black beret, pulled down to the far side.
+    const beret = mix(C("battleInk"), C("battleRubber"), 0.5);
+    p.rect(x - 1, y - 8, 7, 2, beret);
+    p.rect(x - 2, y - 7, 3, 2, beret);
+    p.px(x + 3, y - 8, C("battleBrass"));
+  } else if (kitOf(look) === "su") {
     const pad = mix(C("battleInk"), C("battleLeather"), 0.4);
     p.rect(x - 1, y - 9, 7, 3, pad);
     p.rect(x - 1, y - 6, 2, 4, pad);
@@ -156,6 +169,10 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
   } else if (de(look)) {
     p.rect(x - 1, y - 11, 8, 4, look.team.lo);
     p.rect(x - 2, y - 8, 2, 3, look.team.lo);
+  } else if (uk(look)) {
+    // Brodie: a shallow dome on a wide flat brim.
+    p.rect(x, y - 10, 6, 2, look.team.lo);
+    p.rect(x - 3, y - 8, 12, 1, look.team.deep);
   } else if (kitOf(look) === "su") {
     // SSh-40: a taller dome with a short flared rim.
     p.rect(x + 1, y - 12, 4, 1, look.team.lo);
@@ -170,8 +187,13 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
 // ---- Recon: a Willys jeep with a .30 cal, or a motorcycle and sidecar with an MG 34 ----
 
 const reconBounce = (pose: Pose, look: Look) => Math.floor(pose.t / (de(look) ? 150 : 160) + pose.index) % 2;
-const reconModel = (look: Look, shake: number) =>
-  de(look) ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake)) : memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
+const reconModel = (look: Look, shake: number): Built<"muzzle"> =>
+  uk(look)
+    ? daimlerModel(look)
+    : de(look)
+      ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake))
+      : memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
+const daimlerModel = (look: Look) => memo(`daimler|${look.team.mid}`, () => daimler(look.team));
 
 export const reconRig: Rig = {
   body: "machine",
@@ -179,6 +201,15 @@ export const reconRig: Rig = {
   draw(p, pose, look) {
     const shake = pose.fire === "mg" && justFired(pose.ct, FIRE_TIMING.mg.shots, 40) >= 0 ? 1 : 0;
     const oy = -MODEL_LIFT - reconBounce(pose, look);
+    if (uk(look)) {
+      // The Daimler: its commander up in the turret hatch, the Besa firing beside the 2-pounder.
+      const m = daimlerModel(look);
+      mesh(p, m.far, oy - shake);
+      const c = at(m.at.commander, oy - shake);
+      if (polished()) tankCommander(p, Math.round(c.x), Math.round(c.y), look, { hatch: true });
+      else commander(p, Math.round(c.x) - 2, Math.round(c.y), look);
+      return;
+    }
     if (de(look)) {
       const m = memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake));
       mesh(p, m.far, oy);
@@ -223,10 +254,14 @@ export const reconRig: Rig = {
   },
 };
 
-// ---- Halftracks: an M3 with a .50, or a Sd.Kfz. 251 with an MG 34, the squad aboard ----
+// ---- Halftracks: an M3 with a .50, a Sd.Kfz. 251 with an MG 34, or a Universal Carrier with a Bren, the squad aboard ----
 
 const halftrackModel = (look: Look) =>
-  de(look) ? memo(`251|${look.team.mid}`, () => sdkfz251(look.team)) : memo(`m3|${look.nation ?? ""}|${look.team.mid}`, () => m3(look.team, 0, markOf(look)));
+  uk(look)
+    ? memo(`carrier|${look.team.mid}`, () => universalCarrier(look.team))
+    : de(look)
+      ? memo(`251|${look.team.mid}`, () => sdkfz251(look.team))
+      : memo(`m3|${look.nation ?? ""}|${look.team.mid}`, () => m3(look.team, 0, markOf(look)));
 const halftrackBob = (pose: Pose) => Math.floor(pose.t / 170 + pose.index) % 2;
 
 export const halftrackRig: Rig = {
@@ -249,6 +284,11 @@ export const halftrackRig: Rig = {
 // ---- Mobile AA: four guns on a halftrack, raised high at aircraft ----
 
 const aaElevation = (atAir: boolean) => (atAir ? 1.05 : 0.13);
+/** The quad mounts on halftracks, or the UK's Crusader AA with its twin Oerlikons. */
+const aaModel = (look: Look, elevation: number, kicked: number) =>
+  memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () =>
+    uk(look) ? crusaderAA(look.team, elevation, kicked) : quadAA(look.team, de(look), elevation, kicked, markOf(look)),
+  );
 
 export const mobileAARig: Rig = {
   body: "machine",
@@ -257,7 +297,7 @@ export const mobileAARig: Rig = {
     const elevation = aaElevation(pose.atAir);
     const shot = pose.fire === "aaGuns" ? justFired(pose.ct, FIRE_TIMING.aaGuns.shots, 45) : -1;
     const kicked = shot >= 0 ? shot % 4 : -1;
-    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () => quadAA(look.team, de(look), elevation, kicked, markOf(look)));
+    const m = aaModel(look, elevation, kicked);
     mesh(p, m.far, -MODEL_LIFT);
     const g = at(m.at.gunner, -MODEL_LIFT);
     // Polish: the gunner as a full crewman in his steel helmet (crew.ts).
@@ -266,14 +306,19 @@ export const mobileAARig: Rig = {
   },
   muzzle(pose, shot, look): Muzzle {
     const elevation = aaElevation(pose.atAir);
-    const m = memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|-1`, () => quadAA(look.team, de(look), elevation, -1, markOf(look)));
+    const m = aaModel(look, elevation, -1);
     return { ...at(point(m, `muzzle${shot % 4}`), -MODEL_LIFT), angle: elevationAngle(elevation) };
   },
 };
 
-// ---- Flak gun: an 88 or a 90mm on its cross-shaped platform ----
+// ---- Flak gun: an 88 or a 90mm on its cross-shaped platform, or a Bofors ----
 
 const flakElevation = (atAir: boolean) => (atAir ? 1.0 : 0.07);
+/** An 88 or a 90mm on its cross-shaped platform, or the UK's Bofors 40mm. */
+const flakModel = (look: Look, elevation: number, recoil: number) =>
+  memo(`flak|${look.nation ?? ""}|${look.team.mid}|${elevation}|${recoil}`, () =>
+    uk(look) ? bofors(look.team, elevation, recoil) : flakGun(look.team, de(look), elevation, recoil),
+  );
 
 export const flakRig: Rig = {
   body: "machine",
@@ -283,7 +328,7 @@ export const flakRig: Rig = {
     const shots = FIRE_TIMING.flak.shots;
     const recoil = Math.round(Math.max(...shots.map((s) => kick(ct, s, 40, 260))) * 8);
     const elevation = flakElevation(pose.atAir);
-    const m = memo(`flak|${look.nation ?? ""}|${look.team.mid}|${elevation}|${recoil}`, () => flakGun(look.team, de(look), elevation, recoil));
+    const m = flakModel(look, elevation, recoil);
     mesh(p, m.far, -MODEL_LIFT);
     // The loader brings up the next round; the layer turns the handwheels.
     const breech = at(m.at.breech, -MODEL_LIFT);
@@ -312,7 +357,7 @@ export const flakRig: Rig = {
   },
   muzzle(pose, _shot, look): Muzzle {
     const elevation = flakElevation(pose.atAir);
-    const m = memo(`flak|${look.nation ?? ""}|${look.team.mid}|${elevation}|0`, () => flakGun(look.team, de(look), elevation, 0));
+    const m = flakModel(look, elevation, 0);
     return { ...at(m.at.muzzle, -MODEL_LIFT), angle: elevationAngle(elevation) };
   },
 };
@@ -320,6 +365,7 @@ export const flakRig: Rig = {
 // ---- Artillery: a howitzer with a loader, a gunner on the lanyard and an ammunition handler ----
 
 const HOWITZER_ELEVATION = 0.85;
+const howitzerStyle = (look: Look): HowitzerStyle => (uk(look) ? "uk" : de(look) ? "de" : "us");
 const GUN_LIFT = 7;
 
 export const artilleryRig: Rig = {
@@ -330,7 +376,7 @@ export const artilleryRig: Rig = {
     const shotAt = FIRE_TIMING.howitzer.shots[0] ?? 760;
     const recoil = Math.round(kick(ct, shotAt, 50, 420) * 7);
     const hop = Math.round(kick(ct, shotAt, 40, 120));
-    const m = memo(`howitzer|${look.nation ?? ""}|${look.team.mid}|${recoil}`, () => howitzer(look.team, de(look), HOWITZER_ELEVATION, recoil));
+    const m = memo(`howitzer|${look.nation ?? ""}|${look.team.mid}|${recoil}`, () => howitzer(look.team, howitzerStyle(look), HOWITZER_ELEVATION, recoil));
     const oy = -GUN_LIFT - hop;
     mesh(p, m.far, oy);
     mesh(p, m.near, oy);
@@ -366,12 +412,12 @@ export const artilleryRig: Rig = {
     if (ct !== null && ct > 560) p.line(hand.x, hand.y, breech.x, breech.y + 2, C("battleLeather"));
   },
   muzzle(_pose, _shot, look): Muzzle {
-    const m = memo(`howitzer|${look.nation ?? ""}|${look.team.mid}|0`, () => howitzer(look.team, de(look), HOWITZER_ELEVATION, 0));
+    const m = memo(`howitzer|${look.nation ?? ""}|${look.team.mid}|0`, () => howitzer(look.team, howitzerStyle(look), HOWITZER_ELEVATION, 0));
     return { ...at(m.at.muzzle, -GUN_LIFT), angle: elevationAngle(HOWITZER_ELEVATION) };
   },
 };
 
-// ---- Rocket Artillery: a Calliope rack on a Sherman, a Nebelwerfer, or a Katyusha ----
+// ---- Rocket Artillery: a Calliope rack on a Sherman, a Nebelwerfer, a Katyusha, or a Land Mattress ----
 
 /**
  * The rocket unit's forward observer: one soldier, kneeling out in front of the lead launcher,
@@ -400,15 +446,24 @@ function spotter(p: Painter, x: number, look: Look): void {
 const NEBEL_ELEVATION = 0.75;
 const CALLIOPE_ELEVATION = 0.38;
 const KATYUSHA_ELEVATION = 0.2;
+const MATTRESS_ELEVATION = 0.6;
 const rocketModel = (look: Look): Built<string> =>
-  de(look)
-    ? memo(`nebel|${look.team.mid}`, () => nebelwerfer(look.team, NEBEL_ELEVATION))
-    : kitOf(look) === "su"
-      ? memo(`katyusha|${look.team.mid}`, () => katyusha(look.team, KATYUSHA_ELEVATION))
-      : memo(`calliope|${look.team.mid}`, () => calliope(look.team, CALLIOPE_ELEVATION));
-/** Which tube a rocket leaves from: six barrels on the Nebelwerfer, five rows on the Calliope rack, eight rails on the Katyusha. */
-const tubeOf = (look: Look, shot: number) => `muzzle${shot % (de(look) ? 6 : kitOf(look) === "su" ? 8 : 5)}`;
-const rocketElevation = (look: Look) => (de(look) ? NEBEL_ELEVATION : kitOf(look) === "su" ? KATYUSHA_ELEVATION : CALLIOPE_ELEVATION);
+  uk(look)
+    ? memo(`mattress|${look.team.mid}`, () => landMattress(look.team, MATTRESS_ELEVATION))
+    : de(look)
+      ? memo(`nebel|${look.team.mid}`, () => nebelwerfer(look.team, NEBEL_ELEVATION))
+      : kitOf(look) === "su"
+        ? memo(`katyusha|${look.team.mid}`, () => katyusha(look.team, KATYUSHA_ELEVATION))
+        : memo(`calliope|${look.team.mid}`, () => calliope(look.team, CALLIOPE_ELEVATION));
+/**
+ * Which tube a rocket leaves from: six barrels on the Nebelwerfer, five rows on the Calliope rack,
+ * eight rails on the Katyusha, eight of the Land Mattress's thirty-two tubes.
+ */
+const tubeOf = (look: Look, shot: number) => `muzzle${shot % (de(look) ? 6 : kitOf(look) === "su" || uk(look) ? 8 : 5)}`;
+const rocketElevation = (look: Look) =>
+  uk(look) ? MATTRESS_ELEVATION : de(look) ? NEBEL_ELEVATION : kitOf(look) === "su" ? KATYUSHA_ELEVATION : CALLIOPE_ELEVATION;
+/** Towed launchers, fired by cable from a foxhole: the Nebelwerfer and the Land Mattress. */
+const towed = (look: Look) => de(look) || uk(look);
 
 export const rocketRig: Rig = {
   body: "machine",
@@ -418,8 +473,8 @@ export const rocketRig: Rig = {
     const shot = justFired(ct, FIRE_TIMING.rockets.shots, 60);
     const firing = ct !== null && ct < 1200;
     const m = rocketModel(look);
-    if (de(look)) {
-      // The Nebelwerfer's crew shelter in a foxhole with the firing cable.
+    if (towed(look)) {
+      // The Nebelwerfer's or Land Mattress's crew shelter in a foxhole with the firing cable.
       mesh(p, m.far, -GUN_LIFT);
       mesh(p, m.near, -GUN_LIFT);
       const f = soldierFrame(-54, 2, "crouch");
@@ -433,13 +488,13 @@ export const rocketRig: Rig = {
       if (pose.index === 0) spotter(p, 62, look);
     }
     if (shot >= 0) {
-      const flash = at(point(m, tubeOf(look, shot)), de(look) ? -GUN_LIFT : -MODEL_LIFT);
+      const flash = at(point(m, tubeOf(look, shot)), towed(look) ? -GUN_LIFT : -MODEL_LIFT);
       p.rect(flash.x - 2, flash.y - 2, 4, 4, C("battleFlash"));
     }
   },
   muzzle(_pose, shot, look): Muzzle {
     const tube = point(rocketModel(look), tubeOf(look, shot));
-    return { ...at(tube, de(look) ? -GUN_LIFT : -MODEL_LIFT), angle: elevationAngle(rocketElevation(look)) };
+    return { ...at(tube, towed(look) ? -GUN_LIFT : -MODEL_LIFT), angle: elevationAngle(rocketElevation(look)) };
   },
 };
 

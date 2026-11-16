@@ -3,7 +3,7 @@
 // views in the nation files face right and are mirrored for left. Same 3/4 view from above, same
 // light from the top left, same two frames, which step, roll or spin, since these views are shown
 // while a unit moves.
-import { finish, hinomaru, overlay, redStar, sprite, star, SUITS } from "./kit32.mjs";
+import { finish, hinomaru, overlay, redStar, roundel, sprite, star, SUITS } from "./kit32.mjs";
 
 const CX = 15.5;
 const VIEWS = ["down", "up"];
@@ -84,6 +84,31 @@ const HELMETS = {
     dome(s, cx, top + 1, rim - 1, 6.6 * k);
     span(s, cx, rim, -7, 7, "team", 3, k);
   },
+  /** The British Brodie: a shallow dome on a wide flat brim, the brim showing as a broad ellipse. */
+  brodie(s, view, cx, top, rim, k = 1) {
+    s.shape();
+    span(s, cx, rim, -8.5, 8.5, "team", 2, k);
+    span(s, cx, rim + 1, -7.5, 7.5, "team", 3, k);
+    span(s, cx, rim - 1, -7.5, 7.5, "team", 2, k);
+    dome(s, cx, top + 2, rim - 2, 5 * k);
+    if (view !== "back") s.line(cx - 4 * k, rim + 2, cx - 3.5 * k, rim + 4, "team", 4);
+  },
+  /** The airborne helmet: a rimless dome worn low, a scrim net with burlap tufts. */
+  para(s, view, cx, top, rim, k = 1) {
+    s.shape();
+    dome(s, cx, top, rim + (view === "back" ? 2 : 0), 6.6 * k);
+    for (const [dx, dy] of [[-3, 2], [2, 1], [4, 4], [-1, 5]]) s.dot(cx + dx * k, top + dy, "canvas", 1);
+    if (view !== "back") s.line(cx - 5 * k, rim + 1, cx - 3 * k, rim + 4, "leather", 1).line(cx + 5 * k, rim + 1, cx + 3 * k, rim + 4, "leather", 1);
+  },
+  /** The Airborne's maroon beret, pulled down over the right ear, the badge over the left eye. */
+  beret(s, view, cx, top, rim, k = 1) {
+    s.shape();
+    for (let y = top + 3; y <= rim; y++) {
+      const w = y === top + 3 ? 4 : 6.5;
+      span(s, cx, y, -w, w + (view === "back" ? -1.5 : 1.5), "beret", y === rim ? 3 : 1, k);
+    }
+    if (view !== "back") s.dot(cx - 3 * k, rim - 1, "metal", 0);
+  },
   /** The Soviet SSh-40: a tall dome with a short rim flaring out all round. */
   ssh40(s, view, cx, top, rim, k = 1) {
     s.shape();
@@ -112,19 +137,26 @@ function soldierBody(view, frame, o, { arms = true } = {}) {
     s.rect(lx, 22, lx + 4, foot - 2, "team", forward ? 2 : 3);
     if (o.legs === "puttees") for (let y = 24; y <= foot - 3; y += 2) s.line(lx, y, lx + 4, y, "team", 3);
     const bootTop = o.legs === "boots" ? Math.min(25, foot - 3) : foot - 2;
+    // Short web anklets over the boots.
+    if (o.legs === "anklets") s.rect(lx, foot - 4, lx + 4, foot - 3, "canvas", 1);
     s.rect(lx - (lx < 15 ? 1 : 0), bootTop, lx + 4 + (lx > 15 ? 1 : 0), foot, "leather", forward ? 2 : 3);
   }
   s.rect(9, 14, 22, 23, "team", 1, true);
+  if (o.smock) for (const [x, y] of [[10, 16], [15, 19], [19, 15], [12, 21], [18, 21]]) s.fill(x, y, x + 1, y, "canvas", 3).dot(x + 2, y + 1, "team", 3);
   if (!back) {
-    if (o.roll) {
+    if (o.pouches) {
+      // The '37 pattern webbing: braces and the two big basic pouches high on the chest.
+      s.line(12, 14, 12, 20, "canvas", 1).line(19, 14, 19, 20, "canvas", 1);
+      s.rect(10, 16, 13, 19, "canvas", 1).rect(18, 16, 21, 19, "canvas", 1);
+    } else if (o.roll) {
       // The skatka: the greatcoat rolled into a ring over one shoulder and across the chest.
       s.shape();
       for (let i = 0; i <= 10; i++) s.dot(10 + i * 1.1, 14 + i * 0.75, "canvas", 2).dot(10 + i * 1.1, 15 + i * 0.75, "canvas", 3).dot(11 + i * 1.1, 14 + i * 0.75, "canvas", 1);
     } else if (o.straps !== false) {
       s.line(12, 14, 12, 20, "leather", 1).line(19, 14, 19, 20, "leather", 1);
     }
-    s.fill(10, 21, 21, 22, "leather", 2);
-    for (let x = 11; x <= 20; x += 3) s.fill(x, 21, x + 1, 21, "leather", 0);
+    s.fill(10, 21, 21, 22, o.pouches ? "canvas" : "leather", 2);
+    for (let x = 11; x <= 20; x += 3) s.fill(x, 21, x + 1, 21, o.pouches ? "canvas" : "leather", 0);
   }
   if (arms) {
     // Arms swing against the legs.
@@ -137,6 +169,8 @@ function soldierBody(view, frame, o, { arms = true } = {}) {
     // Kit on the back covers most of the jacket.
     if (o.kit === "pack") s.rect(10, 14, 21, 22, "team", 3, true).fill(12, 16, 19, 16, "leather", 1);
     if (o.kit === "sack") s.rect(11, 16, 20, 22, "canvas", 2, true);
+    // The British small pack, high between the shoulders, with the webbing braces showing below.
+    if (o.kit === "smallPack") s.rect(11, 14, 20, 19, "canvas", 2, true).line(12, 20, 12, 22, "canvas", 1).line(19, 20, 19, 22, "canvas", 1);
     if (o.bedroll) s.rect(9, 12, 22, 14, "canvas", 1);
     if (o.roll) {
       s.shape();
@@ -297,6 +331,7 @@ function tracked(o) {
       // Engine deck grilles, and the US air-recognition star on it.
       for (let y = plateTop - 5; y <= plateTop - 1; y += 2) s.line(hl + 2, y, hr - 2, y, "team", 3);
       if (o.marking === "star") star(s, CX - 3.5, plateTop - 5);
+      if (o.marking === "roundel") roundel(s, CX - 0.5, plateTop - 3);
     }
     s.rect(hl, plateTop, hr, 29 + dip, "team", 2);
     if (down) {
@@ -327,7 +362,13 @@ function turretAndGun(s, down, dip, o) {
   const top = ty - t.h, bottom = ty + t.h;
   const gx0 = Math.round(tx - g.w / 2), gx1 = gx0 + g.w - 1;
   // Going away, the gun points up the screen and is drawn first, behind the turret.
-  if (!down && !o.rack) {
+  if (g.twin) {
+    // Twin 20mm barrels, side by side, toward you or away.
+    for (const bx of [tx - 2, tx + 1]) {
+      if (down) s.rect(bx, bottom - 1, bx, bottom + g.len, "metal", 2);
+      else s.rect(bx, top - g.len, bx, top + 1, "metal", 2);
+    }
+  } else if (!down && !o.rack) {
     s.rect(gx0, top - g.len, gx1, top + 1, "team", 1).shadow();
     if (g.brake) s.rect(gx0 - 1, top - g.len, gx1 + 1, top - g.len + 1, "team", 2);
   }
@@ -346,7 +387,7 @@ function turretAndGun(s, down, dip, o) {
     s.shape();
     for (let a = Math.PI * 1.05; a <= Math.PI * 1.95; a += 0.12) s.dot(tx + Math.cos(a) * (t.w + 2), ty + Math.sin(a) * (t.h + 2), "metal", 2);
   }
-  if (down && !o.rack) {
+  if (down && !o.rack && !g.twin) {
     if (g.mantlet !== false) s.rect(gx0 - 2, bottom - 2, gx1 + 2, bottom + 1, "team", 2);
     s.rect(gx0, bottom, gx1, bottom + g.len, "team", 1).shadow();
     if (g.brake) s.rect(gx0 - 1, bottom + g.len - 1, gx1 + 1, bottom + g.len + 1, "team", 2);
@@ -612,6 +653,7 @@ function fieldGun(o) {
         for (let y = 19 + frame; y <= 27; y += 2) s.dot(cx, y, "wood", 3);
       } else tyre(s, cx, 23, 5.5, frame, 2.2);
     };
+    if (o.platform) s.oval(CX, 27, 13, 3, "metal", 2);
     if (down) {
       // Trail legs beyond the shield, then wheels, shield and the barrel toward you.
       // The trail legs closed together for towing, running away from you.
@@ -622,9 +664,11 @@ function fieldGun(o) {
       if (o.shield !== false) s.rect(7, 10, 24, 20, "team", 1, true).shadow();
       s.rect(bx0 - 1, 18, bx1 + 1, 21, "team", 2);
       s.rect(bx0, 20, bx1, 26 + (o.long ? 2 : 0), "team", 1).shadow();
+      if (o.brake) s.rect(bx0 - 1, 24, bx1 + 1, 26, "team", 2);
       s.dot(Math.round(CX), 26 + (o.long ? 2 : 0), "metal", 4);
     } else {
       s.rect(bx0, 0, bx1, 14, "team", 1).shadow();
+      if (o.brake) s.rect(bx0 - 1, 0, bx1 + 1, 2, "team", 2);
       wheel(6); wheel(25);
       if (o.shield !== false) s.rect(7, 10, 24, 19, "team", 2, true).shadow();
       s.rect(12, 12, 19, 20, "team", 3).dot(CX, 16, "metal", 4);
@@ -704,6 +748,57 @@ function type4Launcher(view, frame) {
   return finish(s);
 }
 
+/** The Daimler armoured car: four big wheels, a low hull sloping at both ends, a small turret and its 2-pounder. */
+function daimler(view, frame) {
+  const s = sprite();
+  const down = view === "down", d = frame;
+  for (const y of [10, 25]) for (const x of [6, 25]) tyre(s, x, y, 3.8, frame, 2.4);
+  s.poly([[9, 5 + d], [22, 5 + d], [24, 9 + d], [24, 27 + d], [22, 29 + d], [9, 29 + d], [7, 27 + d], [7, 9 + d]], "team", 1);
+  s.rect(9, (down ? 23 : 24) + d, 22, 29 + d, "team", 2);
+  if (down) s.fill(11, 25 + d, 20, 25 + d, "ink", 0);
+  else {
+    s.fill(11, 25 + d, 20, 26 + d, "team", 3);
+    roundel(s, CX - 0.5, 18 + d);
+  }
+  s.oval(CX, 14 + d, 5, 4, "team", 1, true).shadow();
+  s.oval(CX + (down ? 2 : -2), 13 + d, 1.4, 1, "metal", 1);
+  s.rect(15, (down ? 17 : 2) + d, 16, (down ? 24 : 10) + d, "metal", 2);
+  return finish(s);
+}
+
+/** The Universal Carrier: a small, very low open box on tracks, two heads in Brodies, the Bren. */
+function universalCarrier(view, frame) {
+  const s = sprite();
+  const down = view === "down", d = frame;
+  for (const x0 of [4, 24]) {
+    s.rect(x0, 8, x0 + 3, 29, "rubber", 3);
+    for (let y = 9 + frame; y < 28; y += 2) s.line(x0 + 1, y, x0 + 2, y, "rubber", 1);
+  }
+  s.rect(7, 9 + d, 24, 28 + d, "team", 1, true);
+  s.fill(9, 11 + d, 22, 21 + d, "team", 4);
+  s.rect(7, 22 + d, 24, 28 + d, "team", 2);
+  if (!down) roundel(s, CX - 0.5, 24.5 + d);
+  for (const hx of [12, 19]) {
+    if (down) s.oval(hx, 15 + d, 2.2, 1.8, "skin", 1);
+    HELMETS.brodie(s, down ? "front" : "back", hx, 9 + d, 13 + d, 0.45);
+  }
+  if (down) s.rect(18, 20 + d, 19, 26 + d, "metal", 2).rect(17, 18 + d, 20, 19 + d, "metal", 3);
+  return finish(s);
+}
+
+/** The Land Mattress: thirty-two tubes in a box frame on two wheels, mouths toward you or away. */
+function landMattress(view, frame) {
+  const s = sprite();
+  const down = view === "down";
+  if (!down) s.poly([[14, 20], [17, 20], [17, 31], [14, 31]], "team", 2);
+  tyre(s, 5, 24, 4.5, frame, 2.2); tyre(s, 26, 24, 4.5, frame, 2.2);
+  s.rect(8, 21, 23, 24, "team", 3);
+  s.rect(7, 6, 24, 19, "metal", 2, true);
+  for (let y = 7; y <= 17; y += 3) for (let x = 8; x <= 22; x += 2) s.dot(x, y + (down ? 0 : 1), "metal", down ? 4 : 3);
+  s.shadow();
+  return finish(s);
+}
+
 // ---- Aircraft ----
 
 /**
@@ -736,7 +831,10 @@ export function planeView(view, frame, o) {
   for (const sx of [-1, 1]) {
     if (o.sun) hinomaru(s, CX + sx * (span - 4), Y(wingY + chord / 2), 1.5);
     if (o.redStar) redStar(s, CX + sx * (span - 4.5) - 3, Math.min(Y(wingY + 2), Y(wingY + 6)), true);
+    if (o.roundel) roundel(s, CX + sx * (span - 4.5), Y(wingY + chord / 2), 2.4);
   }
+  // A biplane's upper wing, a little forward of the lower one.
+  if (o.biplane) poly([[CX - span, wingY - 1], [CX + span, wingY - 1], [CX + span, wingY + chord - 4], [CX - span, wingY + chord - 4]], "team", 0);
   // Engines on the wings, reaching forward of the leading edge.
   const props = [];
   if (big) for (const sx of [-1, 1]) {
@@ -756,7 +854,8 @@ export function planeView(view, frame, o) {
   s.shape();
   const tail = Y(tailY);
   const finH = Math.round(o.fin * 0.7);
-  s.rect(14, tail - finH, 17, down ? tail + 2 : tail, "team", 0, true);
+  if (o.twinFin) for (const fx of [CX - 7, CX + 6]) s.rect(fx, tail - finH, fx + 1, down ? tail + 2 : tail, "team", 0, true);
+  else s.rect(14, tail - finH, 17, down ? tail + 2 : tail, "team", 0, true);
   if (o.bodyStar) redStar(s, 12.5, down ? tail - finH + 1 : tail - finH + 1, true);
   for (const [px, py, r] of props) {
     const reach = frame ? r * 0.55 : r;
@@ -942,6 +1041,21 @@ const LAND = {
     AA: truck({ load: "cannon" }),
     FK: flakGun({}),
   },
+  uk: {
+    IN: soldierUnit({ helmet: "brodie", kit: "smallPack", pouches: true, legs: "anklets", weapon: "rifle", bayonet: true }),
+    AI: soldierUnit({ helmet: "brodie", kit: "smallPack", pouches: true, legs: "anklets", weapon: "tube" }),
+    MO: soldierUnit({ helmet: "brodie", kit: "smallPack", pouches: true, legs: "anklets", weapon: "mortar" }),
+    RC: daimler,
+    HT: universalCarrier,
+    LT: tank({ w: 10, turret: { shape: "box", w: 5, h: 4, y: 13 }, gun: { w: 2, len: 9 }, marking: "roundel" }),
+    MT: tank({ w: 12, turret: { shape: "round", w: 6.5, h: 5, y: 13, bustle: true }, gun: { w: 2, len: 14, brake: true }, marking: "roundel" }),
+    HV: tank({ w: 13, trackW: 5, trackTop: 6, turret: { shape: "box", w: 6, h: 4.5, y: 14 }, gun: { w: 2, len: 9 }, marking: "roundel" }),
+    TD: tank({ w: 12, turret: { shape: "open", w: 7, h: 5, y: 13 }, gun: { w: 2, len: 15, brake: true, mantlet: false }, marking: "roundel", counterweight: true }),
+    AR: fieldGun({ brake: true, platform: true }),
+    RK: landMattress,
+    AA: tank({ w: 12, turret: { shape: "open", w: 6, h: 4.5, y: 13 }, gun: { w: 1, len: 9, twin: true }, marking: "roundel" }),
+    FK: flakGun({ brake: true }),
+  },
   su: {
     IN: soldierUnit({ helmet: "ssh40", kit: "sack", roll: true, legs: "boots", weapon: "rifle", bayonet: true }),
     AI: soldierUnit({ helmet: "ssh40", kit: "sack", roll: true, legs: "boots", weapon: "ptrd" }),
@@ -970,6 +1084,10 @@ export function landViews(nation, code) {
 
 /** The US paratrooper: the M1 carbine and his card suit, on the front and back of the helmet. */
 export const paratrooperViews = (suit) => draw(soldierUnit({ helmet: "m1", kit: "pack", weapon: "carbine", suit }));
+
+/** The 1st Airborne: the Denison smock and a Sten, under the airborne helmet or the red beret. */
+export const ukParatrooperViews = (head) =>
+  draw(soldierUnit({ helmet: head === "beret" ? "beret" : "para", kit: "smallPack", pouches: true, smock: true, weapon: "carbine" }));
 
 /** Front and rear views for an aircraft or ship, from its side-view spec. */
 export function specViews(kind, spec) {

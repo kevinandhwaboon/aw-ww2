@@ -101,6 +101,11 @@ const BUILT_IN_COLORS = {
   // The IJA uniform's khaki drab, and the red of Japan's hinomaru marking
   battleKhaki: "#8a7c4c",
   battleSun: "#c8202c",
+  // British battledress and Service Colour No. 2 brown, the RAF roundel's blue (its red is battleSun),
+  // and the Airborne's maroon beret
+  battleBrown: "#6e5a3c",
+  battleRoundel: "#2c3c8c",
+  battleBeret: "#7e2030",
   battleSteel: "#5a5e60",
   battleSteelDark: "#33363a",
   battleRubber: "#26262a",
@@ -261,9 +266,11 @@ export const BUILT_IN_PACK: ArtPack = {
     { team: "gold", fill: "#d8a030", outline: "#6a4a10" },
   ],
   // What each army actually wore and painted its vehicles: US olive drab, German field grey, Japanese
-  // khaki, Soviet 4BO protective green (08-art-pipeline §12).
+  // khaki, Soviet 4BO protective green, British Service Colour No. 2 brown (08-art-pipeline §12).
+  // Canada borrows the UK's (ART_LOANS).
   nationColors: {
     us: { team: "olive", fill: "#64783a", outline: "#2a3818" },
+    uk: { team: "brown", fill: "#765c3e", outline: "#33261a" },
     germany: { team: "grey", fill: "#747b72", outline: "#333834" },
     japan: { team: "khaki", fill: "#9a8648", outline: "#463a1e" },
     ussr: { team: "green4bo", fill: "#52643a", outline: "#222c18" },
@@ -501,13 +508,29 @@ export function unitFrame(art: UnitArt, view: UnitView, frame = 0): number {
 }
 
 /**
+ * Nations drawn with another nation's art when a pack has none of their own (00-master-design §6):
+ * Canada fields the UK's sprites, battle figures and color.
+ */
+export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk" };
+
+/** The nations whose art can draw this one: its own first, then the one it borrows from. */
+const artNations = (nation: NationId): NationId[] => {
+  const loan = ART_LOANS[nation];
+  return loan ? [nation, loan] : [nation];
+};
+
+/** A nation's natural color in a pack: its own, or the one of the nation it borrows art from. */
+const naturalColor = (pack: ArtPack, nation: NationId): PlayerArt | undefined =>
+  artNations(nation).map((n) => pack.nationColors[n]).find((art) => art !== undefined);
+
+/**
  * Each player's colors for a game between these nations, in player order (08-art-pipeline §12). A
  * player wears their nation's natural color unless another player would wear the same one (two
  * American players, say); then they take the first slot color, starting from their own slot, that
  * nobody else is wearing. A nation with no natural color does the same.
  */
 export function assignPlayerArt(pack: ArtPack, nations: readonly NationId[]): PlayerArt[] {
-  const natural = nations.map((nation) => pack.nationColors[nation]);
+  const natural = nations.map((nation) => naturalColor(pack, nation));
   const unique = natural.map((art) => (art && natural.filter((other) => other?.team === art.team).length === 1 ? art : undefined));
   const taken = new Set(unique.flatMap((art) => (art ? [art.team] : [])));
   return unique.map((art, player) => {
@@ -563,7 +586,8 @@ export function findPropertyArt(
 
 /**
  * Where to find this unit's art for this nation and player, or null to use the placeholder. Pass the
- * unit itself to get its own look: an air-dropped Infantry is a paratrooper, its suit picked by id.
+ * unit itself to get its own look: an air-dropped Infantry is a paratrooper, its look picked by id.
+ * A nation with no sheets of its own uses those of the nation it borrows art from (ART_LOANS).
  */
 export function findUnitArt(
   pack: ArtPack,
@@ -573,13 +597,16 @@ export function findUnitArt(
   unit?: Pick<Unit, "id" | "airDropped">,
 ): UnitArt | null {
   const { team } = playerArt(pack, player);
-  for (const [sheet, def] of pack.unitSheets.entries()) {
-    if (def.nation !== nation || def.team !== team) continue;
-    const paratrooper = type === "infantry" && unit?.airDropped && def.paratroopers.length > 0
-      ? def.paratroopers[unit.id % def.paratroopers.length]
-      : undefined;
-    const row = paratrooper ?? def.rows.indexOf(type);
-    if (row >= 0) return { sheet, row, frames: def.frames, frameSize: def.frameSize, facings: def.facings };
+  // A nation's own sheets first; failing those, the sheets of the nation it borrows art from.
+  for (const artNation of artNations(nation)) {
+    for (const [sheet, def] of pack.unitSheets.entries()) {
+      if (def.nation !== artNation || def.team !== team) continue;
+      const paratrooper = type === "infantry" && unit?.airDropped && def.paratroopers.length > 0
+        ? def.paratroopers[unit.id % def.paratroopers.length]
+        : undefined;
+      const row = paratrooper ?? def.rows.indexOf(type);
+      if (row >= 0) return { sheet, row, frames: def.frames, frameSize: def.frameSize, facings: def.facings };
+    }
   }
   return null;
 }

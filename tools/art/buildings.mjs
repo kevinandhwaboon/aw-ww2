@@ -12,9 +12,9 @@ export const palette = {
   c: "#a8d8e8", // glass
 };
 
-// Owner ramps, in sheet column order. Neutral is weathered slate. The last three are nations'
+// Owner ramps, in sheet column order. Neutral is weathered slate. The last four are nations'
 // natural colors (08-art-pipeline §12); German grey is darker than the slate so it can't pass for neutral.
-export const columns = ["neutral", "olive", "red", "blue", "green", "gold", "grey", "khaki", "green4bo"];
+export const columns = ["neutral", "olive", "red", "blue", "green", "gold", "grey", "khaki", "green4bo", "brown"];
 export const ramps = {
   neutral: { L: "#c4c6c8", M: "#8e9296", D: "#5e6266" },
   olive: { L: "#8ea25e", M: "#64783a", D: "#435428" },
@@ -25,6 +25,7 @@ export const ramps = {
   grey: { L: "#848a82", M: "#5a605a", D: "#3a3e3a" },
   khaki: { L: "#c4ae6c", M: "#9a8648", D: "#6c5c30" },
   green4bo: { L: "#7a8c5a", M: "#52643a", D: "#384628" },
+  brown: { L: "#a08462", M: "#765c3e", D: "#523e28" },
 };
 
 const hash = (x, y, salt) => {

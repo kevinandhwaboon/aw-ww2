@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseUrlOptions, type UrlParams } from "../src/urlOptions";
+import { parseUrlOptions, withNations, type UrlParams } from "../src/urlOptions";
 
 /** "?seed=1&ai=0,1" as URL parameters. */
 function query(text: string): UrlParams {
@@ -34,7 +34,17 @@ describe("URL options (11-tech-setup §7)", () => {
       level: "normal",
       pad: null,
       sound: true,
+      nations: [],
     });
+  });
+
+  it("?nations= swaps which nation each player fields, in player order, to show a nation's art on any map", () => {
+    expect(options("?nations=uk,germany").nations).toEqual(["uk", "germany"]);
+    expect(options("?nations=,uk").nations).toEqual([null, "uk"]);
+    expect(options("?nations=narnia").nations).toEqual([null]);
+    const players = [{ name: "Allies", nation: "us" as const }, { name: "Axis", nation: "germany" as const }];
+    expect(withNations(players, [null, "japan"]).map((p) => p.nation)).toEqual(["us", "japan"]);
+    expect(withNations(players, ["uk"]).map((p) => p.nation)).toEqual(["uk", "germany"]);
   });
 
   it("?map= skips the menus and starts that scenario", () => {

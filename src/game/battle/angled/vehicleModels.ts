@@ -6,10 +6,12 @@
 // Germany: R75 motorcycle and sidecar, Sd.Kfz. 251, Flakvierling, 88mm Flak, leFH 18, Nebelwerfer 41.
 // Soviet Union: the BM-13 Katyusha; its other machines are the US ones, which the Red Army received
 // by the thousand, with the red star in place of the white (`mark`).
+// UK (and Canada): Daimler armoured car, Universal Carrier, Crusader AA Mk II, Bofors 40mm,
+// 25-pounder, Land Mattress, each with the RAF roundel where it carries a marking.
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalX, decalY, decalZ, elevate, elevatePoint, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
-import { camoDecals, redStarDecal, roadWheel, running, sherman, starDecal } from "./models";
+import { camoDecals, redStarDecal, roadWheel, roundelDecal, running, sherman, starDecal } from "./models";
 
 /** A machine's parts, drawn in order with the crew between them, and the points the rig needs. */
 export interface Built<A extends string> {
@@ -114,6 +116,30 @@ export function r75(t: TeamShades, shake = 0): Built<"rider" | "bars" | "gunner"
   return { far, near, front, at: { rider: [-7, 4, 4], bars: [12, 4, 26], gunner: [-13, -8, 7], grip: [-2 + g, -8, 21], fore: [5 + g, -8, 21], muzzle: [16 + g, -8, 21] } };
 }
 
+/**
+ * Daimler armoured car: four big wheels evenly spaced under a low hull that slopes down at both
+ * ends, mudguards over the wheels, and a small two-man turret with the 2-pounder and a coaxial Besa.
+ */
+export function daimler(t: TeamShades): Built<"commander" | "muzzle"> {
+  const far: Face[] = [];
+  far.push(...tire(-15, 13, 6.5, 6.5), ...tire(15, 13, 6.5, 6.5));
+  far.push(...box(-22, 22, -9, 9, 6, 8, steelDark()));
+  const low: Poly = [[-24, -12], [22, -12], [26, -8], [26, 8], [22, 12], [-24, 12]];
+  const high: Poly = [[-19, -11], [16, -11], [21, -7], [21, 7], [16, 11], [-19, 11]];
+  far.push(...loftZ(7, low, 18, high, t.mid));
+  far.push(...roundelDecal(-11.6, -2, 12.5, 3));
+  far.push(decalX(23.6, [[-6, 13], [6, 13], [6, 14], [-6, 14]], ink()));
+  for (const x of [-15, 15]) far.push(...box(x - 7, x + 7, -15.5, -12, 13, 14, t.lo), ...box(x - 7, x + 7, 12, 15.5, 13, 14, t.lo));
+  far.push(...tire(-15, -13, 6.5, 6.5), ...tire(15, -13, 6.5, 6.5));
+  // The turret, its mantlet, the 2-pounder with the Littlejohn adaptor and the coaxial Besa.
+  far.push(...loftZ(18, circle(-3, 0, 8.5, 12), 25, circle(-3, 0, 7.4, 12), t.mid));
+  far.push(...box(4, 7, -3.5, 3.5, 19, 24, t.lo));
+  far.push(...barrel(6, 30, 0, 21.5, 0.9, steelDark()), ...barrel(27, 31, 0, 21.5, 1.3, steelDark()));
+  far.push(...barrel(6, 12, 2.4, 20.2, 0.5, steelDark()));
+  far.push(...loftZ(25, circle(-5, 2.5, 3, 8), 26, circle(-5, 2.5, 2.8, 8), t.lo));
+  return { far, near: [], at: { commander: [-5, 2.5, 26], muzzle: [12, 2.4, 20.2] } };
+}
+
 // ---- Halftracks ----
 
 /** M3: a box troop compartment, armored cab with its shutter up, louvred hood, winch roller. */
@@ -188,6 +214,34 @@ export function sdkfz251(t: TeamShades, shake = 0): Built<"muzzle" | "troop0" | 
   return { far, near: [], at: { muzzle: [16 + g, 0, 31.5], troop0: TROOPS[0] ?? [0, 0, 0], troop1: TROOPS[1] ?? [0, 0, 0], troop2: TROOPS[2] ?? [0, 0, 0] } };
 }
 
+/**
+ * Universal Carrier: a small, very low open steel box on tracks, a Horstmann bogie of two road
+ * wheels and a single wheel each side, the driver and the Bren gunner side by side behind the raised
+ * front plate, the engine in the middle and the rest of the section in the back. Its keys are a
+ * halftrack's, so it rides in the same rig.
+ */
+export function universalCarrier(t: TeamShades, shake = 0): Built<"muzzle" | "troop0" | "troop1" | "troop2"> {
+  const far: Face[] = [];
+  far.push(...running(-22, 22, 9, 8, 13, t.lo));
+  far.push(...wheel(19, -13.6, 5, 3.6, 1.2, steelDark(), steel()), ...wheel(-19, -13.6, 5, 3.4, 1.2, steel(), steelDark()));
+  for (const x of [-11, -4, 9]) far.push(...roadWheel(x, -13.4, 3.6, 3.4));
+  // Floor, walls and the raised front plate with its two visors; the engine cover in the middle.
+  far.push(...box(-22, 20, -12, 12, 8, 10, t.lo));
+  far.push(...box(-22, 20, 11, 12, 8, 17, t.mid), ...box(-22, -21, -11, 11, 8, 17, t.mid));
+  far.push(inside(10.05, [[-21, -11], [19, -11], [19, 11], [-21, 11]]));
+  far.push(...box(-6, 6, -4, 4, 10, 16, t.lo));
+  far.push(...box(18, 22, -12, 12, 8, 20, t.mid));
+  far.push(...box(18.5, 22.5, -11, -2, 20, 23, t.mid), ...box(18.5, 22.5, 2, 11, 20, 23, t.mid));
+  far.push(decalX(22.55, [[-9, 21], [-4, 21], [-4, 22], [-9, 22]], ink()));
+  far.push(...box(-22, 20, -12, -11, 8, 17, t.mid));
+  far.push(...roundelDecal(-12.05, -12, 13, 2.8));
+  // The Bren on the front plate, its curved magazine on top.
+  const g = -shake;
+  far.push(...box(14 + g, 21 + g, 4, 6, 20, 22, steelDark()), ...barrel(21 + g, 31 + g, 5, 21, 0.6, steelDark()), ...barrel(29 + g, 31 + g, 5, 21, 0.9, steelDark()));
+  far.push(...beam([16 + g, 5, 22], [18 + g, 5, 26], 1.4, 1, steelDark()));
+  return { far, near: [], at: { muzzle: [31 + g, 5, 21], troop0: [13, -5, 16], troop1: [-12, 5, 16], troop2: [-17, -4, 16] } };
+}
+
 // ---- Mobile AA ----
 
 /** The four guns' places across the mount: two side by side, two above them. */
@@ -230,6 +284,42 @@ export function quadAA(t: TeamShades, german: boolean, elevation: number, kick: 
   return { far, near: [], at: { gunner: [px - 6, 0, 32], muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3) } };
 }
 
+const CRUSADER_PIVOT: V3 = [2, 0, 32];
+
+/**
+ * Crusader AA Mk II: the long, low Crusader hull on five big Christie road wheels, its driver's
+ * hood at the front, and an open-topped six-sided turret carrying twin 20mm Oerlikons. Its keys are
+ * the quad mounts', the two guns each answering for two.
+ */
+export function crusaderAA(t: TeamShades, elevation: number, kick: number): Built<"gunner" | "muzzle0" | "muzzle1" | "muzzle2" | "muzzle3"> {
+  const far: Face[] = [];
+  far.push(...running(-37, 37, 13, 11, 17, t.lo));
+  far.push(...wheel(-35, -17.6, 7, 4.6, 1.2, steelDark(), steel()), ...wheel(35, -17.6, 6.5, 4.2, 1.2, steel(), steelDark()));
+  for (let i = 0; i < 5; i++) {
+    const x = -26 + i * 13;
+    far.push(...wheel(x, -17.9, 6.6, 6.2, 1.3, steel(), steelDark()), ...wheel(x, -18.4, 6.6, 2, 0.6, steelDark(), steel()));
+  }
+  far.push(...extrudeY(-16, 16, [[-37, 13], [34, 13], [38, 16], [35, 21], [-35, 21], [-37, 19]], t.mid));
+  far.push(...box(20, 31, -13, -3, 21, 25, t.mid), ...box(31, 31.6, -11, -5, 22, 24, ink()));
+  for (let x = -32; x < -16; x += 3) far.push(decalZ(21.05, [[x, -10], [x + 1.4, -10], [x + 1.4, 10], [x, 10]], t.lo));
+  far.push(...roundelDecal(-16.05, -18, 17, 3.2));
+  const [px, , pz] = CRUSADER_PIVOT;
+  const hex: Poly = [[-12, -11], [4, -11], [11, -6], [11, 6], [4, 11], [-12, 11]];
+  const hexTop: Poly = [[-11, -9.5], [3, -9.5], [9, -5], [9, 5], [3, 9.5], [-11, 9.5]];
+  far.push(...loftZ(21, hex, 31, hexTop, t.mid));
+  far.push({ points: hexTop.map(([x, y]) => [x * 0.86, y * 0.82, 31.1] as V3), color: ink(), decal: true, facing: [0, 0, 1] });
+  const guns: Face[] = [];
+  for (const [i, y] of [-2.5, 2.5].entries()) {
+    const back = kick % 2 === i ? 2 : 0;
+    guns.push(...barrel(px - 6 - back, px + 22 - back, y, pz, 0.8, steelDark()), ...barrel(px - 6 - back, px + 2 - back, y, pz, 1.5, steelDark()));
+    guns.push(...box(px - 4 - back, px - 1 - back, y - 0.8, y + 0.8, pz + 1.4, pz + 4.5, steel()));
+  }
+  guns.push(...box(px - 2, px + 2, -5, 5, pz - 4, pz + 3, t.lo));
+  far.push(...elevate(guns, px, pz, elevation));
+  const muzzle = (i: number): V3 => elevatePoint([px + 22, i % 2 ? 2.5 : -2.5, pz], px, pz, elevation);
+  return { far, near: [], at: { gunner: [-6, 0, 30], muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3) } };
+}
+
 // ---- Flak guns ----
 
 const FLAK_PIVOT: V3 = [0, 0, 26];
@@ -267,13 +357,55 @@ export function flakGun(t: TeamShades, german: boolean, elevation: number, recoi
   };
 }
 
+const BOFORS_PIVOT: V3 = [0, 0, 22];
+const BOFORS_LEN = 42;
+
+/**
+ * Bofors 40mm: a four-wheeled carriage with its outriggers swung out, the mount between two side
+ * plates, the barrel in its recoil spring with the cone flash hider at the muzzle, and a four-round
+ * clip standing up out of the breech. Its keys are the heavy flak guns', so it fights in their rig.
+ */
+export function bofors(t: TeamShades, elevation: number, recoil: number): Built<"muzzle" | "breech" | "handwheel"> {
+  const far: Face[] = [];
+  const [px, , pz] = BOFORS_PIVOT;
+  far.push(...box(-30, 30, -4, 4, 4, 8, t.lo), ...box(-3, 3, -26, 26, 3, 6, t.lo));
+  for (const [x, y] of [[-30, 0], [30, 0], [0, -26], [0, 26]] as const) far.push(...box(x - 3, x + 3, y - 3, y + 3, 0, 3, steelDark()));
+  for (const x of [-24, 24]) far.push(...tire(x, 9, 7, 5, 2.4));
+  far.push(...loftZ(8, circle(0, 0, 8, 12), 12, circle(0, 0, 7, 12), t.mid));
+  far.push(...box(-8, 8, 5, 7, 11, 26, t.mid));
+  far.push(...box(-8, 8, -7, -5, 11, 26, t.mid));
+  for (const x of [-24, 24]) far.push(...tire(x, -9, 7, 5, 2.4));
+  const gun: Face[] = [
+    ...barrel(-6 - recoil, BOFORS_LEN - recoil, 0, pz, 1.2, steelDark()),
+    ...barrel(-4 - recoil, 16 - recoil, 0, pz, 2, t.lo),
+    ...box(-14 - recoil, -4 - recoil, -3, 3, pz - 3, pz + 3, steelDark()),
+    ...box(-11 - recoil, -7 - recoil, -1, 1, pz + 3, pz + 9, C("battleBrass")),
+  ];
+  // The cone flash hider, widening toward the muzzle.
+  gun.push(...barrel(BOFORS_LEN - 6 - recoil, BOFORS_LEN - 3 - recoil, 0, pz, 1.8, steelDark()), ...barrel(BOFORS_LEN - 3 - recoil, BOFORS_LEN - recoil, 0, pz, 2.4, steelDark()));
+  far.push(...elevate(gun, px, pz, elevation));
+  return {
+    far,
+    near: [],
+    at: { muzzle: elevatePoint([BOFORS_LEN, 0, pz], px, pz, elevation), breech: elevatePoint([-14, 0, pz], px, pz, elevation), handwheel: [8, -9, 16] },
+  };
+}
+
 // ---- Howitzers ----
 
 const HOWITZER_PIVOT: V3 = [4, 0, 30];
 const HOWITZER_LEN = 44;
 
-/** The leFH 18 (tall notched shield, spoked steel wheels, muzzle brake) or the US 105mm M2A1. */
-export function howitzer(t: TeamShades, german: boolean, elevation: number, recoil: number): Built<"muzzle" | "breech"> {
+/** Whose field gun: the US 105mm M2A1, the German leFH 18, or the British 25-pounder. */
+export type HowitzerStyle = "us" | "de" | "uk";
+
+/**
+ * The leFH 18 (tall notched shield, spoked steel wheels, muzzle brake), the US 105mm M2A1, or the
+ * British 25-pounder (see twentyFivePounder).
+ */
+export function howitzer(t: TeamShades, style: HowitzerStyle, elevation: number, recoil: number): Built<"muzzle" | "breech"> {
+  if (style === "uk") return twentyFivePounder(t, elevation, recoil);
+  const german = style === "de";
   const far: Face[] = [];
   const near: Face[] = [];
   const [px, , pz] = HOWITZER_PIVOT;
@@ -311,6 +443,38 @@ export function howitzer(t: TeamShades, german: boolean, elevation: number, reco
   if (german) gun.push(...box(HOWITZER_LEN - 4 - recoil, HOWITZER_LEN + 1 - recoil, -3.4, 3.4, pz - 3.4, pz + 3.4, steelDark()));
   far.push(...elevate(gun, px, pz, elevation));
   return { far, near, at: { muzzle: elevatePoint([HOWITZER_LEN, 0, pz], px, pz, elevation), breech: elevatePoint([-20, 0, pz], px, pz, elevation) } };
+}
+
+const TFP_LEN = 38;
+
+/**
+ * The 25-pounder: the round steel firing platform under its wheels, a single box trail with its
+ * spade, a low shield with the top edge swept back, and a short barrel with a muzzle brake.
+ */
+function twentyFivePounder(t: TeamShades, elevation: number, recoil: number): Built<"muzzle" | "breech"> {
+  const far: Face[] = [];
+  const near: Face[] = [];
+  const [px, , pz] = HOWITZER_PIVOT;
+  far.push(...loftZ(0, circle(0, 0, 21, 16, 0.85), 1.2, circle(0, 0, 20, 16, 0.85), steelDark()));
+  far.push(...beam([-2, 0, 13], [-50, 0, 3], 6, 5, t.lo), ...box(-56, -48, -5, 5, 0, 6, steelDark()));
+  far.push(...box(-66, -56, -4, 4, 0, 7, C("battleWood")));
+  for (let i = 0; i < 3; i++) far.push(...box(-65 + i * 4, -62 + i * 4, -2, 1, 7, 10, C("battleBrass")));
+  far.push(...tire(0, 14, 13, 12, 4));
+  far.push(...extrudeY(-14, 14, circle(0, 13, 2, 8), steelDark()));
+  far.push(...box(-6, 8, -5, 5, 15, 26, t.mid));
+  far.push(...box(9, 11, 4, 14, 9, 30, t.mid), ...box(9, 11, -4, 4, 9, 22, t.mid));
+  far.push(...box(7, 9, 4, 14, 30, 33, t.mid));
+  near.push(...tire(0, -14, 13, 12, 4));
+  near.push(...box(9, 11, -14, -4, 9, 30, t.mid), ...box(7, 9, -14, -4, 30, 33, t.mid));
+  near.push(decalY(-14.05, [[9.2, 24], [10.8, 24], [10.8, 28], [9.2, 28]], ink()));
+  const gun: Face[] = [
+    ...barrel(-16 - recoil, TFP_LEN - recoil, 0, pz, 2.2, steelDark()),
+    ...barrel(-10, 24, 0, pz - 4.2, 1.8, t.lo),
+    ...box(-22 - recoil, -14 - recoil, -3.5, 3.5, pz - 3.5, pz + 3.5, steelDark()),
+    ...box(TFP_LEN - 5 - recoil, TFP_LEN + 1 - recoil, -3.6, 3.6, pz - 3, pz + 3, steelDark()),
+  ];
+  far.push(...elevate(gun, px, pz, elevation));
+  return { far, near, at: { muzzle: elevatePoint([TFP_LEN, 0, pz], px, pz, elevation), breech: elevatePoint([-20, 0, pz], px, pz, elevation) } };
 }
 
 // ---- Rocket artillery ----
@@ -422,6 +586,46 @@ export function katyusha(t: TeamShades, elevation: number): Built<"muzzle0" | "m
   return {
     far,
     near: [],
+    at: { muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3), muzzle4: muzzle(4), muzzle5: muzzle(5), muzzle6: muzzle(6), muzzle7: muzzle(7) },
+  };
+}
+
+const MATTRESS_PIVOT: V3 = [0, 0, 20];
+const MATTRESS = { x0: -16, x1: 16, half: 10, rows: 4, cols: 8 };
+
+/**
+ * The Land Mattress: thirty-two launch tubes in a box frame, four rows of eight, on a light
+ * two-wheeled carriage with a single trail, raised toward the front. It's fired from cover by cable,
+ * like the Nebelwerfer. Its tube mouths show on the front of the frame.
+ */
+export function landMattress(t: TeamShades, elevation: number): Built<"muzzle0" | "muzzle1" | "muzzle2" | "muzzle3" | "muzzle4" | "muzzle5" | "muzzle6" | "muzzle7"> {
+  const far: Face[] = [];
+  const near: Face[] = [];
+  const [px, , pz] = MATTRESS_PIVOT;
+  const { x0, x1, half, rows, cols } = MATTRESS;
+  far.push(...beam([0, 0, 8], [-34, 0, 2], 3, 3, t.lo), ...box(-38, -33, -3, 3, 0, 4, steelDark()));
+  far.push(...tire(0, 12, 7, 7, 3));
+  far.push(...extrudeY(-12, 12, circle(0, 7, 1.4, 8), steelDark()));
+  far.push(...box(-4, 6, -3, 3, 7, 15, t.mid));
+  const z0 = pz - 6, z1 = pz + 6;
+  const frame: Face[] = [...box(x0, x1, -half, half, z0, z1, t.lo)];
+  const rowH = (z1 - z0) / rows;
+  const colW = (2 * half) / cols;
+  for (let r = 0; r < rows; r++) {
+    const z = z0 + r * rowH;
+    frame.push(decalY(-half - 0.05, [[x0 + 1, z + rowH * 0.45], [x1 - 1, z + rowH * 0.45], [x1 - 1, z + rowH * 0.6], [x0 + 1, z + rowH * 0.6]], t.deep));
+    for (let c = 0; c < cols; c++) {
+      const y = -half + (c + 0.5) * colW;
+      frame.push(decalX(x1 + 0.05, circle(y, z + rowH / 2, Math.min(colW, rowH) * 0.36, 8), ink()));
+    }
+  }
+  for (const x of [x0 + 2, x1 - 4]) frame.push(...box(x, x + 2, -half - 0.6, half + 0.6, z0 - 0.6, z1 + 0.6, steelDark()));
+  far.push(...elevate(frame, px, pz, elevation));
+  near.push(...tire(0, -12, 7, 7, 3));
+  const muzzle = (k: number): V3 => elevatePoint([x1, -half + ((k % cols) + 0.5) * colW, z0 + ((k % rows) + 0.5) * rowH], px, pz, elevation);
+  return {
+    far,
+    near,
     at: { muzzle0: muzzle(0), muzzle1: muzzle(1), muzzle2: muzzle(2), muzzle3: muzzle(3), muzzle4: muzzle(4), muzzle5: muzzle(5), muzzle6: muzzle(6), muzzle7: muzzle(7) },
   };
 }

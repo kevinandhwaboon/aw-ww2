@@ -3,7 +3,9 @@
 // bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4). Japanese
 // aircraft carry the hinomaru, Soviet aircraft the white-edged red star; ships carry no marking.
 // The USSR gets aircraft only: no ships yet, and no carrier aircraft, as it had no carriers.
-import { finish, hinomaru, redStar, sprite, star } from "./kit32.mjs";
+// British aircraft carry the RAF roundel; the Swordfish is a biplane, the Lancaster has four engines
+// and twin fins.
+import { finish, hinomaru, redStar, roundel, sprite, star } from "./kit32.mjs";
 import { specViews } from "./facings32.mjs";
 
 const frames = (draw) => [draw(0), draw(1)];
@@ -35,13 +37,23 @@ function plane(frame, o) {
   if (o.bodyStar) redStar(s, o.bodyStar[0], y(c - 2), true);
   s.fill(o.canopy[0], y(c - o.girth + 1), o.canopy[1], y(c - 1), "glass", 0);
   if (o.glassNose) s.fill(o.nose - 3, y(c - 1), o.nose - 1, y(c), "glass", 0);
-  // Fin standing up from the tail.
-  s.poly([[o.tail, y(c - 1)], [o.tail + 5, y(c - 1)], [o.tail + 2, y(c - o.fin)], [o.tail, y(c - o.fin)]], "team", 0);
+  if (o.bodyRoundel) roundel(s, o.bodyRoundel[0], y(c - 0.5), 2.2);
+  // Fin standing up from the tail; twin fins stand at the tailplane's tips instead.
+  if (o.twinFin) {
+    s.rect(o.tail + 1, y(c - o.fin), o.tail + 3, y(c - 3), "team", 0, true);
+    s.rect(o.tail + 2, y(c + 1), o.tail + 4, y(c + 6), "team", 0, true);
+  } else s.poly([[o.tail, y(c - 1)], [o.tail + 5, y(c - 1)], [o.tail + 2, y(c - o.fin)], [o.tail, y(c - o.fin)]], "team", 0);
+  // A biplane's upper wing, high over the fuselage on its struts.
+  if (o.biplane) {
+    for (const sx of [o.biplane[0] + 1, o.biplane[1] - 2]) s.line(sx, y(c - 7), sx + 1, y(c + 3), "metal", 2);
+    s.rect(o.biplane[0], y(c - 9), o.biplane[1], y(c - 7), "team", 1, true);
+  }
   // Near wing and tailplane, in front of the fuselage.
   s.poly(o.nearWing.map(([px, py]) => [px, y(py)]), "team", 1);
   if (o.star) star(s, o.star[0], y(o.star[1]));
   if (o.sun) hinomaru(s, o.sun[0], y(o.sun[1]), o.sun[2] ?? 2.5);
   if (o.redStar) redStar(s, o.redStar[0], y(o.redStar[1]), true);
+  if (o.roundel) roundel(s, o.roundel[0], y(o.roundel[1]), 2.6);
   if (o.wingCamo) camo(s, o.wingCamo.map(([a, b, cc, d]) => [a, y(b), cc, y(d)]));
   s.poly([[o.tail + 1, y(c + 2)], [o.tail + 6, y(c + 2)], [o.tail + 5, y(c + 6)], [o.tail + 1, y(c + 6)]], "team", 1);
   if (o.gear) for (const gx of o.gear) s.rect(gx, y(c + 3), gx + 1, y(c + 5), "rubber", 3);
@@ -265,6 +277,66 @@ const li2 = def("plane", {
   farEngine: [17], nearEngine: [17], bodyStar: [4],
 });
 
+// ---- British aircraft ----
+// Spitfire: slim, the elliptical wing, a long pointed nose and a bubble canopy.
+const spitfire = def("plane", {
+  tail: 2, nose: 28, girth: 2, fin: 7, canopy: [15, 18], noseProp: 4,
+  farWing: [[11, 13], [20, 13], [18, 9], [15, 7], [13, 8]], nearWing: [[10, 16], [21, 16], [20, 21], [17, 27], [14, 27], [11, 22]],
+  roundel: [15, 21], bodyRoundel: [7],
+});
+// Lancaster: a long fuselage, four engines on a big wing, a glazed nose, a turret on the spine and twin fins.
+const lancaster = def("plane", {
+  tail: 1, nose: 30, girth: 3, fin: 8, canopy: [21, 25], glassNose: true, twinFin: true,
+  farWing: [[11, 12], [22, 12], [19, 2], [16, 2]], nearWing: [[10, 16], [23, 16], [21, 30], [15, 30]], roundel: [16, 26],
+  farEngine: [13, 18], nearEngine: [11, 17], bodyRoundel: [6],
+});
+// The Dakota: the C-47 in RAF colors.
+const dakota = def("plane", {
+  tail: 1, nose: 29, girth: 4, fin: 9, canopy: [24, 26], windows: [8, 20],
+  farWing: [[11, 11], [22, 11], [19, 3], [16, 3]], nearWing: [[10, 17], [23, 17], [20, 30], [15, 30]], roundel: [16, 23],
+  farEngine: [17], nearEngine: [17], bodyRoundel: [5],
+});
+// Fairey Barracuda: a deep fuselage, a long glazed canopy, a bomb under the belly. Fleet Air Arm.
+const barracuda = def("plane", {
+  tail: 2, nose: 27, girth: 4, fin: 8, canopy: [11, 21], noseProp: 4, store: [13, 18], gear: [19],
+  farWing: [[12, 11], [21, 11], [18, 5], [16, 5]], nearWing: [[11, 16], [22, 16], [19, 26], [15, 26]], roundel: [16, 21], bodyRoundel: [6],
+});
+// Fairey Swordfish: a fabric biplane, open cockpits, fixed legs and a torpedo between them.
+const swordfish = def("plane", {
+  tail: 2, nose: 27, girth: 3, fin: 7, canopy: [14, 14], noseProp: 4, store: [9, 21], gear: [18, 21], biplane: [10, 23],
+  farWing: [[13, 13], [20, 13], [19, 10], [14, 10]], nearWing: [[11, 16], [22, 16], [21, 22], [12, 22]], roundel: [16, 19], bodyRoundel: [6],
+});
+
+// ---- British ships ----
+// HMS Warspite: four twin 15-inch turrets, two forward and two aft, the tall tower bridge, one funnel.
+const warspite = def("ship", {
+  stern: 1, bow: 31, deck: 12, beam: 8, side: 4,
+  turrets: [[6, 15, 4, 2.2], [10, 15, 3, 2.2], [21, 15, 3, 2.2], [25, 15, 4, 2.2]],
+  blocks: [[14, 9, 18, 17]], funnels: [[13, 13]], masts: [[16, 9, 9], [11, 12, 5]],
+});
+// Tribal class: four twin 4.7-inch mounts, two forward, two aft, a tall bridge and two funnels.
+const tribal = def("ship", {
+  stern: 2, bow: 31, deck: 14, beam: 5, side: 3,
+  turrets: [[6, 16, 3, 1.6], [9, 16, 2, 1.6], [22, 16, 2, 1.6], [25, 16, 3, 1.6]],
+  blocks: [[18, 13, 21, 18]], funnels: [[12, 16], [15, 16]], masts: [[19, 13, 7]],
+});
+// T-class submarine: the big bulged bow of its external torpedo tubes, the conning tower, a deck gun.
+const tClass = def("ship", {
+  stern: 2, bow: 31, deck: 17, beam: 4, side: 2,
+  blocks: [[13, 13, 17, 19]], turrets: [[20, 18, 2, 1.2]], masts: [[15, 13, 5]],
+});
+const ukLct = def("ship", {
+  stern: 2, bow: 29, deck: 13, beam: 8, side: 4, wellDeck: [8, 26],
+  blocks: [[2, 10, 7, 20]], masts: [[4, 10, 6]],
+});
+// Vosper MTB: a hard-chined planing hull, a small bridge, torpedo tubes along the deck edges.
+const mtb = def("ship", {
+  stern: 6, bow: 28, deck: 16, beam: 4, side: 3,
+  blocks: [[15, 14, 19, 19]], turrets: [[9, 17, 2, 1.2], [24, 17, 2, 1.2]], masts: [[17, 14, 5]],
+});
+// HMS Illustrious: an armored flight deck closing in the hangar, a small island with one funnel.
+const illustrious = def("carrier", { deck: "metal", elevators: [10, 24], island: [17, 21], funnel: 20, mast: 2 });
+
 // ---- Japanese ships ----
 const yamato = def("ship", {
   stern: 1, bow: 31, deck: 12, beam: 8, side: 4,
@@ -324,6 +396,22 @@ export const suAir = [
 ];
 export const suNaval = [];
 
+export const ukAir = [
+  { code: "FT", name: "Fighter", real: "Spitfire", frames: frames(spitfire), views: views(spitfire) },
+  { code: "BM", name: "Bomber", real: "Avro Lancaster", frames: frames(lancaster), views: views(lancaster) },
+  { code: "TA", name: "Transport Aircraft", real: "Dakota (RAF C-47)", frames: frames(dakota), views: views(dakota) },
+  { code: "DB", name: "Dive Bomber", real: "Fairey Barracuda", frames: frames(barracuda), views: views(barracuda) },
+  { code: "TR", name: "Torpedo Bomber", real: "Fairey Swordfish", frames: frames(swordfish), views: views(swordfish) },
+];
+export const ukNaval = [
+  { code: "BB", name: "Battleship", real: "HMS Warspite", frames: frames(warspite), views: views(warspite) },
+  { code: "DD", name: "Destroyer", real: "Tribal class", frames: frames(tribal), views: views(tribal) },
+  { code: "SS", name: "Submarine", real: "T class", frames: frames(tClass), views: views(tClass) },
+  { code: "LC", name: "Landing Craft", real: "LCT", frames: frames(ukLct), views: views(ukLct) },
+  { code: "TB", name: "Torpedo Boat", real: "Vosper MTB", frames: frames(mtb), views: views(mtb) },
+  { code: "CV", name: "Carrier", real: "HMS Illustrious", frames: frames(illustrious), views: views(illustrious) },
+];
+
 export const jpAir = [
   { code: "FT", name: "Fighter", real: "A6M Zero", frames: frames(zero), views: views(zero) },
   { code: "BM", name: "Bomber", real: "G4M (Betty)", frames: frames(betty), views: views(betty) },
@@ -340,6 +428,6 @@ export const jpNaval = [
   { code: "CV", name: "Carrier", real: "Shōkaku class", frames: frames(shokaku), views: views(shokaku) },
 ];
 
-for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...suAir, ...jpAir, ...jpNaval]) for (const f of u.frames) {
+for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...suAir, ...ukAir, ...ukNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {
   if (f.length !== 32 || f.some((r) => r.length !== 32)) throw new Error(`${u.code}: not 32x32`);
 }

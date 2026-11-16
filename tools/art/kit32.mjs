@@ -19,6 +19,9 @@ const MATERIALS = {
   card: ["S", "S", "S", "S", "S"],
   ink: ["k", "k", "k", "k", "k"],
   glass: ["c", "c", "c", "c", "c"],
+  // The RAF roundel's blue, and the Airborne's maroon beret (two tones).
+  roundel: ["u", "u", "u", "u", "u"],
+  beret: ["v", "v", "m", "m", "y"],
 };
 
 /** Fixed colors shared by every team. */
@@ -26,6 +29,7 @@ export const fixedColors = {
   K: "#16160f", t: "#2e2c26", r: "#6a665a", p: "#8e8a7c", W: "#9c9888", h: "#4a473e", X: "#c4c0b0",
   S: "#f2efe0", o: "#ecc090", q: "#c08a5c", b: "#7a4e28", B: "#b07a42", x: "#4a3a24",
   i: "#e6dab4", a: "#c8b88c", A: "#9c8c64", k: "#1e1e1e", c: "#a8d8e8", e: "#c03028",
+  u: "#2c3c8c", v: "#a83442", m: "#80202e", y: "#4e1420",
 };
 
 /** Five-tone team ramps. */
@@ -38,6 +42,9 @@ export const teamRamps = {
   red: { H: "#f8b49c", L: "#ec8a70", M: "#c9503a", D: "#8c3022", N: "#5a1c14" },
   // Soviet 4BO protective green: darker and a little bluer than army green. Natural color only.
   green4bo: { H: "#a6b48c", L: "#7a8c5a", M: "#52643a", D: "#384628", N: "#222c18" },
+  // British Service Colour No. 2 brown: the UK's battledress and vehicles from 1942. Browner and darker
+  // than Japan's khaki, so a US and a UK player never match. Natural color only.
+  brown: { H: "#c8b08e", L: "#a08462", M: "#765c3e", D: "#523e28", N: "#33261a" },
 };
 
 /** A blank sprite to paint shapes into. Each rect/oval starts a new shape with its own outline. */
@@ -140,7 +147,7 @@ export function finish(s, inner = true) {
     if (neighbors.some((n) => !n || (inner && n.part < c.part))) return "K";
     const ramp = MATERIALS[c.mat];
     if (!ramp) throw new Error(`unknown material ${c.mat}`);
-    if (c.mat === "star" || c.mat === "sun" || c.mat === "card" || c.mat === "ink" || c.mat === "glass") return ramp[0];
+    if (["star", "sun", "card", "ink", "glass", "roundel"].includes(c.mat)) return ramp[0];
     let tone = c.tone;
     const ul = at(x - 1, y - 1), dr = at(x + 1, y + 1);
     if (!ul || ul.part !== c.part) tone -= 1;
@@ -224,6 +231,26 @@ export function redStar(s, x, y, edged = false) {
 }
 
 /**
+ * The RAF roundel, the UK's only marking (08-art-pipeline §12): a red centre in a white ring in a
+ * blue ring, painted into the current shape. Vehicles carry it where the US carries its star.
+ */
+export function roundel(s, cx, cy, r = 3) {
+  // Centred between pixels, so the red centre is a round 2x2 dot and never a plus (a red cross).
+  const ox = Math.floor(cx) + 0.5, oy = Math.floor(cy) + 0.5;
+  for (let y = Math.floor(oy - r); y <= Math.ceil(oy + r); y++) {
+    for (let x = Math.floor(ox - r); x <= Math.ceil(ox + r); x++) {
+      const d = Math.hypot(x + 0.5 - ox - 0.5, y + 0.5 - oy - 0.5);
+      if (d <= 0.8) s.dot(x, y, "sun", 0);
+      else if (d <= 1.75) s.dot(x, y, "star", 0);
+      else if (d <= r) s.dot(x, y, "roundel", 0);
+    }
+  }
+}
+
+/** The roundel where a nation file paints a star: (x, y) is the top left of the star's 7x5 box. */
+export const roundelMark = (s, x, y) => roundel(s, x + 3, y + 2);
+
+/**
  * The hinomaru, Japan's aircraft marking: a red disc in a thin white ring, painted into the current
  * shape. The plain national disc only; the rising-sun ensign is never drawn (08-art-pipeline §12).
  */
@@ -278,6 +305,53 @@ export function stahlhelm(s, cx = 15.5, top = 2, rim = 10, half = 6) {
   spans.forEach(([from, to], i) => {
     for (let x = Math.round(cx + from * k); x <= Math.round(cx + to * k); x++) s.dot(x, crownBottom + 1 + i, "team", i === 0 ? 2 : 3);
   });
+}
+
+/**
+ * The British Mk II "Brodie" helmet: a shallow dome on a wide flat brim that sticks out well past the
+ * head at the front and the back.
+ */
+export function brodie(s, cx = 15.5, top = 4, rim = 9, half = 5.4) {
+  s.shape();
+  for (let y = top; y < rim; y++) {
+    for (let x = Math.floor(cx - half - 1); x <= Math.ceil(cx + half + 1); x++) {
+      const dx = (x - cx) / half, dy = (y - rim) / (rim - top);
+      if (dx * dx + dy * dy > 1) continue;
+      const lit = dx * 0.7 + dy * 0.7;
+      s.dot(x, y, "team", lit < -0.55 ? 0 : lit < 0 ? 1 : 2);
+    }
+  }
+  const brim = half * 1.65;
+  for (let x = Math.round(cx - brim); x <= Math.round(cx + brim); x++) s.dot(x, rim, "team", 2);
+  s.dot(cx - brim - 1, rim + 1, "team", 3).dot(cx + brim + 1, rim + 1, "team", 3);
+}
+
+/**
+ * The airborne helmet: a rimless round dome worn low over the ears, with its leather chin cup and a
+ * scrim net with burlap tufts.
+ */
+export function paraHelmet(s, cx = 15.5, top = 3, rim = 11, half = 5.8) {
+  s.shape();
+  for (let y = top; y <= rim; y++) {
+    for (let x = Math.floor(cx - half - 1); x <= Math.ceil(cx + half + 1); x++) {
+      const dx = (x - cx) / half, dy = (y - (rim + 0.5)) / (rim - top + 0.5);
+      if (dx * dx + dy * dy > 1) continue;
+      const lit = dx * 0.7 + dy * 0.7;
+      s.dot(x, y, "team", lit < -0.55 ? 0 : lit < 0 ? 1 : 2);
+    }
+  }
+  for (const [x, y] of [[cx - 3, top + 2], [cx + 1, top + 1], [cx + 3, top + 4], [cx - 1, top + 5]]) s.dot(x, y, "canvas", 1);
+  s.line(cx + 2, rim, cx + 3, rim + 4, "leather", 1);
+}
+
+/** The Airborne's maroon beret, pulled down over the right ear, the cap badge over the left eye. */
+export function redBeret(s, cx = 15.5, top = 6, rim = 10) {
+  s.shape();
+  for (let y = top; y <= rim; y++) {
+    const w = y === top ? 3 : y === rim ? 5.5 : 6;
+    for (let x = Math.round(cx - w - (y - top) * 0.6); x <= Math.round(cx + w - 1); x++) s.dot(x, y, "beret", y === top ? 0 : y === rim ? 3 : 1);
+  }
+  s.dot(cx + 3, rim - 1, "metal", 0).dot(cx + 3, rim - 2, "metal", 1);
 }
 
 /**
@@ -354,6 +428,40 @@ export function kar98k(dy = 3) {
   r.rect(19, 17 + dy, 25, 19 + dy, "darkwood", 1);
   r.rect(26, 17 + dy, 31, 18 + dy, "metal", 1);
   r.rect(30, 16 + dy, 30, 16 + dy, "metal", 1);
+  return finish(r, false);
+}
+
+/**
+ * The Lee-Enfield No. 4: a wooden fore-end running nearly to the muzzle, the bolt knob behind the
+ * receiver, a short stub of barrel and the spike bayonet fixed.
+ */
+export function leeEnfield(dy = 3) {
+  const r = sprite();
+  r.rect(0, 18 + dy, 0, 21 + dy, "metal", 2);
+  r.rect(1, 18 + dy, 8, 21 + dy, "wood", 0, true);
+  r.rect(9, 18 + dy, 11, 20 + dy, "wood", 0);
+  r.rect(12, 17 + dy, 15, 19 + dy, "metal", 2);
+  r.dot(13, 20 + dy, "metal", 0).dot(13, 21 + dy, "metal", 1);
+  r.rect(16, 18 + dy, 26, 19 + dy, "wood", 1);
+  r.rect(16, 17 + dy, 25, 17 + dy, "wood", 0);
+  r.rect(27, 17 + dy, 28, 18 + dy, "metal", 1);
+  r.line(29, 18 + dy, 31, 18 + dy, "metal", 0);
+  return finish(r, false);
+}
+
+/**
+ * The Sten: a wire skeleton stock, a plain tube of a receiver, the long magazine sticking out of
+ * its left side (seen end-on here, as a block), and a short perforated barrel jacket.
+ */
+export function sten(dy = 3) {
+  const r = sprite();
+  r.line(4, 18 + dy, 4, 21 + dy, "metal", 2);
+  r.line(4, 18 + dy, 10, 18 + dy, "metal", 2);
+  r.line(4, 21 + dy, 10, 19 + dy, "metal", 2);
+  r.rect(10, 17 + dy, 20, 19 + dy, "metal", 2, true);
+  r.rect(14, 15 + dy, 16, 16 + dy, "metal", 3);
+  r.rect(21, 17 + dy, 25, 18 + dy, "metal", 1);
+  for (let x = 21; x <= 24; x += 2) r.dot(x, 17 + dy, "metal", 4);
   return finish(r, false);
 }
 
