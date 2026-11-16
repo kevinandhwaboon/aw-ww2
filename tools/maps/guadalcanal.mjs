@@ -202,14 +202,14 @@ const units = [
   // The Tokyo Express off the Russells, a night's run from Guadalcanal: destroyers, two transports
   // with reinforcements, and a Supply Ship for the destroyers' fuel and the troops' rations and shells.
   // The destroyers have already come down the Slot and are short of fuel.
-  jp("destroyer", 10, 12, { fuel: 44 }), jp("destroyer", 11, 10, { fuel: 44 }),
-  jp("landingCraft", 11, 11, { fuel: 40, cargo: ["infantry", "artillery"] }),
-  jp("landingCraft", 12, 12, { fuel: 40, cargo: ["infantry", "assaultInfantry"] }),
+  jp("destroyer", 10, 12, { fuel: 36 }), jp("destroyer", 11, 10, { fuel: 36 }),
+  jp("landingCraft", 11, 11, { fuel: 20, cargo: ["infantry", "artillery"] }),
+  jp("landingCraft", 12, 12, { fuel: 20, cargo: ["infantry", "assaultInfantry"] }),
   jp("supplyShip", 9, 11),
   // The bombardment force: Kongō and Haruna, which shelled Henderson Field on the night of 13 October,
   // with a destroyer, north of Savo.
   // One day's sailing from range of the airfield: they close in on Japan's first turn and fire on its second.
-  jp("battleship", 20, 11, { fuel: 80 }), jp("battleship", 21, 10, { fuel: 80 }), jp("destroyer", 19, 10, { fuel: 50 }),
+  jp("battleship", 20, 11, { fuel: 60 }), jp("battleship", 21, 10, { fuel: 60 }), jp("destroyer", 19, 10, { fuel: 40 }),
   // A submarine on the US supply route, as I-19 and I-26 were.
   jp("submarine", 35, 17),
   // Rabaul's air groups: Zeros and Bettys, a long flight from Guadalcanal. A home garrison.

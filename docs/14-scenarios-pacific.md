@@ -236,7 +236,7 @@ On 7 August 1942 the 1st Marine Division landed on Guadalcanal and took the airf
 ### Why it's about supply
 
 - **The US has no port on the island.** Its ships refuel at Tulagi, one at a time, two days from its base, or at its Supply Ship off Lunga Point.
-- **Japan's ships are four or five days from home.** Its convoy's destroyers have already come down the Slot and start short of fuel (44 of 80), with their Supply Ship a day's sailing away. Rekata Bay is a neutral port half way down the Slot for whoever puts infantry ashore to take it.
+- **Japan's ships are four or five days from home.** Its convoy's destroyers have already come down the Slot and start short of fuel (36 of 65), with their Supply Ship a day's sailing away. Rekata Bay is a neutral port half way down the Slot for whoever puts infantry ashore to take it.
 - **Land units need it too.** A Supply Ship next to the shore refuels and rearms the troops on the beach. One US Marine battery starts on the beach at Lunga Point with 2 shells left, next to the US Supply Ship, which refills it at the start of day 1.
 
 ### Starting forces (mid-October 1942)

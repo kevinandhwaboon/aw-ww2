@@ -167,7 +167,8 @@ describe("tile info box (00-master-design §12)", () => {
     it("a ship with no sea route to any port only gets the simple rules (Japan's port on Midway is cut off)", () => {
       const state = makeGame(["P.SSSSSSSSSS"], [{ type: "destroyer", owner: 0, pos: P(10, 0) }], owned(0));
       expect(lowAt(state, 10, 29)).toBe(false);
-      expect(lowAt(state, 10, 20)).toBe(true); // a quarter of 80
+      expect(lowAt(state, 10, 17)).toBe(false);
+      expect(lowAt(state, 10, 16)).toBe(true); // a quarter of 65, rounded down
     });
 
     it("a ship measures the sea route to its nearest port", () => {

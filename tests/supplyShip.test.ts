@@ -60,8 +60,8 @@ describe("the Supply Ship (01-units §4, 05-supply-transport §3a)", () => {
   it("at the start of its owner's turn it refuels and rearms every friendly ship next to it, at sea, for free", () => {
     const state = makeGame(["SSS"], [u("supplyShip", 0, 1), u("destroyer", 0, 0, 0, { fuel: 10, ammo: 2 }), u("battleship", 0, 2, 0, { fuel: 20, ammo: 0 })], funded(0));
     const { state: after, events } = nextRound(state);
-    expect(unit(after, 1)).toMatchObject({ fuel: 80, ammo: 9 });
-    expect(unit(after, 2)).toMatchObject({ fuel: 99, ammo: 9 });
+    expect(unit(after, 1)).toMatchObject({ fuel: 65, ammo: 9 });
+    expect(unit(after, 2)).toMatchObject({ fuel: 80, ammo: 9 });
     expect(ofType(events, "unitResupplied").map((e) => (e as { unitId: number }).unitId).sort()).toEqual([1, 2]);
   });
 
@@ -138,7 +138,7 @@ describe("the Supply Ship (01-units §4, 05-supply-transport §3a)", () => {
   it("the Supply action refuels and rearms neighbors after it moves, ending its turn, but repairs nobody", () => {
     const state = makeGame(["SSS"], [u("supplyShip", 0, 0), u("destroyer", 0, 2, 0, { fuel: 10, ammo: 1, hp: 50 })], funded(10_000));
     const { state: after, events } = must(state, order(0, [P(1, 0)], { type: "supply" }));
-    expect(unit(after, 1)).toMatchObject({ fuel: 80, ammo: 9, hp: 50 });
+    expect(unit(after, 1)).toMatchObject({ fuel: 65, ammo: 9, hp: 50 });
     expect(unit(after, 0)).toMatchObject({ pos: P(1, 0), hasActed: true });
     expect(events.map((e) => e.type)).toEqual(["unitMoved", "unitResupplied"]);
   });

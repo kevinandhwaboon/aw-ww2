@@ -89,21 +89,26 @@ export function applyUnload(state: GameState, transport: Unit, passenger: Unit, 
 }
 
 /**
- * Short of fuel or ammo, and something a Halftrack can refill: aircraft can't be, they have to fly
- * home to an airfield or Carrier (05-supply-transport §3, §5).
+ * Short of fuel or ammo, and something this supply unit can refill (05-supply-transport §3, §3a, §5):
+ * a Halftrack refills land units only, a Supply Ship land units and ships. Aircraft never: they have
+ * to fly home to an airfield or Carrier.
  */
-function needsSupply(state: GameState, unit: Unit): boolean {
-  if (unitDef(unit.type).category === "air") return false;
+function needsSupply(state: GameState, supplier: Unit, unit: Unit): boolean {
+  const category = unitDef(unit.type).category;
+  if (category === "air" || (category === "naval" && unitDef(supplier.type).category !== "naval")) return false;
   return unit.fuel < stats.maxFuel(state, unit) || unit.ammo < stats.maxAmmo(state, unit);
 }
 
-/** Friendly units next to this supply unit that are short of fuel or ammo, never aircraft (05-supply-transport §3). */
+/**
+ * Friendly units next to this supply unit that are short of fuel or ammo: land units for a Halftrack,
+ * land units and ships for a Supply Ship, never aircraft (05-supply-transport §3, §3a).
+ */
 export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
   if (!unitDef(supplier.type).specialActions.includes("resupply")) return [];
   const side = state.players[supplier.owner]?.side;
   return neighborsOf(state, supplier.pos)
     .map((p) => unitAt(state, p))
-    .filter((u): u is Unit => u !== undefined && state.players[u.owner]?.side === side && needsSupply(state, u));
+    .filter((u): u is Unit => u !== undefined && state.players[u.owner]?.side === side && needsSupply(state, supplier, u));
 }
 
 /**

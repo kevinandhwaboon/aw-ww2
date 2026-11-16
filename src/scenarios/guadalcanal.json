@@ -171,19 +171,19 @@
       "type": "destroyer",
       "owner": 1,
       "pos": { "x": 10, "y": 12 },
-      "fuel": 44
+      "fuel": 36
     },
     {
       "type": "destroyer",
       "owner": 1,
       "pos": { "x": 11, "y": 10 },
-      "fuel": 44
+      "fuel": 36
     },
     {
       "type": "landingCraft",
       "owner": 1,
       "pos": { "x": 11, "y": 11 },
-      "fuel": 40,
+      "fuel": 20,
       "cargo": [
         { "type": "infantry" },
         { "type": "artillery" }
@@ -193,7 +193,7 @@
       "type": "landingCraft",
       "owner": 1,
       "pos": { "x": 12, "y": 12 },
-      "fuel": 40,
+      "fuel": 20,
       "cargo": [
         { "type": "infantry" },
         { "type": "assaultInfantry" }
@@ -204,19 +204,19 @@
       "type": "battleship",
       "owner": 1,
       "pos": { "x": 20, "y": 11 },
-      "fuel": 80
+      "fuel": 60
     },
     {
       "type": "battleship",
       "owner": 1,
       "pos": { "x": 21, "y": 10 },
-      "fuel": 80
+      "fuel": 60
     },
     {
       "type": "destroyer",
       "owner": 1,
       "pos": { "x": 19, "y": 10 },
-      "fuel": 50
+      "fuel": 40
     },
     { "type": "submarine", "owner": 1, "pos": { "x": 35, "y": 17 } },
     { "type": "fighter", "owner": 1, "pos": { "x": 1, "y": 8 } },

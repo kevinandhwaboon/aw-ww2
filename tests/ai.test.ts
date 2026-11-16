@@ -756,7 +756,7 @@ describe("Greedy v4: a mixed army and guarded objectives (09-ai §4d)", () => {
   it("an empty Landing Craft under half a tank refuels before it goes to collect anyone", () => {
     const state = makeGame(["._SP" + "S".repeat(8) + "_.Q", "..SS" + "S".repeat(8) + "S.."], [
       { type: "infantry", owner: 0, pos: P(0, 0) },
-      { type: "landingCraft", owner: 0, pos: P(2, 1), fuel: 20 },
+      { type: "landingCraft", owner: 0, pos: P(2, 1), fuel: 12 },
     ], { propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(14, 0), owner: 1 }] });
     const craft = find(state, "landingCraft", 0);
     const best = scoreUnitCommands(state, craft)[0]?.command;

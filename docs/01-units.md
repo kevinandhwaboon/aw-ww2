@@ -22,7 +22,7 @@
 | Assault Infantry | Anti-armor and engineering infantry | Heavy foot (slower) | Can capture. Strong vs. armor and vs. fortifications/obstacles (see section 6). Costs more than Infantry | Bazooka team, assault engineers / Panzerschreck team, Pioniere |
 | Mortar Team | Short-range indirect fire | Heavy foot (slower than Infantry) | Indirect, range exactly 2. Low ammo (~3). Cannot capture. Fits in all infantry transports, including Transport Aircraft | US/UK mortar team / Granatwerfer team |
 | Recon | Fast scout, kills infantry | Wheels | High movement and vision. Weak vs. armor | Willys jeep, Daimler / Zündapp KS 750 with sidecar, Sd.Kfz. 234 |
-| Halftrack | Infantry transport and resupply | Tracks | Carries 1 foot unit. Resupplies fuel/ammo to adjacent units, except aircraft. Unarmed | M3 / Sd.Kfz. 251 |
+| Halftrack | Infantry transport and resupply | Tracks | Carries 1 foot unit. Resupplies fuel/ammo to adjacent land units only: not ships (since 2026-11-16) or aircraft. Unarmed | M3 / Sd.Kfz. 251 |
 | Light Tank | Cheap, fast armor | Tracks | Good vs. infantry and light vehicles | M5 Stuart / Panzer II |
 | Medium Tank | Main battle unit | Tracks | Balanced attack and defense | Sherman / Panzer IV |
 | Heavy Tank | Expensive breakthrough armor | Tracks | Strong armor, slow, fuel-hungry. Availability limited by nation | Churchill (UK) / Tiger |
@@ -148,19 +148,31 @@ These are starting points for the first playable build, based on the original ga
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
 | Dive Bomber | 14,000 | 6 | 2 | 70 | 5 | Bomb (1) | — | 1 | — |
 | Torpedo Bomber | 16,000 | 6 | 2 | 70 | 5 | Torpedo (1) | — | 1 | — |
-| Battleship | 28,000 | 5 | 2 | 99 | 1 | Main guns (9) | AA guns (return fire only) | 2–6 | — |
-| Destroyer | 16,000 | 6 | 3 | 80 | 2 | Guns/depth charges (9) | AA guns | 1 | — |
-| Submarine | 20,000 | 5 | 5 | 80 | 1 (5 dived) | Torpedoes (6) | — | 1 | — |
-| Landing Craft | 12,000 | 6 | 1 | 70 | 1 | — | — | — | 2 land |
-| Torpedo Boat | 8,000 | 7 | 3 | 50 | 2 | Torpedoes (4) | MG | 1 | — |
-| Carrier | 40,000 | 5 | 2 | 99 | 1 | — | AA guns (return fire only) | its aircraft's | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
+| Battleship | 28,000 | 5 | 2 | 80 | 1 | Main guns (9) | AA guns (return fire only) | 2–6 | — |
+| Destroyer | 16,000 | 6 | 3 | 65 | 2 | Guns/depth charges (9) | AA guns | 1 | — |
+| Submarine | 20,000 | 5 | 5 | 90 | 1 (5 dived) | Torpedoes (6) | — | 1 | — |
+| Landing Craft | 12,000 | 6 | 1 | 35 | 1 | — | — | — | 2 land |
+| Torpedo Boat | 8,000 | 7 | 3 | 20 | 2 | Torpedoes (4) | MG | 1 | — |
+| Carrier | 40,000 | 5 | 2 | 85 | 1 | — | AA guns (return fire only) | its aircraft's | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
 | Supply Ship | 10,000 | 5 | 1 | 99 | 1 | — | — | — | — |
 
 Fighter ground attack (strafing) uses the same guns, with very low damage values in the damage chart.
 
 ## 8a. Fuel and ammo from the real machines (decided 2026-11-10)
 
-At the developer's request, fuel was rescaled so each unit's tank reflects the machine it stands for. **Land:** fuel is roughly the vehicle's road range in km divided by 6, capped at 50 (first set at ÷ 3, capped at 99; halved the same day at the developer's request, rounding halves up). The table below gives the halved values. **Air and naval:** the full tank and the daily burn together give roughly how long the real machine could stay out; the developer's balance requests for Bombers override realism where they conflict.
+At the developer's request, fuel was rescaled so each unit's tank reflects the machine it stands for. **Land:** fuel is roughly the vehicle's road range in km divided by 6, capped at 50 (first set at ÷ 3, capped at 99; halved the same day at the developer's request, rounding halves up). The table below gives the halved values. **Air:** the full tank and the daily burn together give roughly how long the real machine could stay out; the developer's balance requests for Bombers override realism where they conflict. **Naval** (rescaled 2026-11-16, at the developer's request): the days a ship can sail at full speed on a full tank, its move plus its daily burn each day, follow the **square root** of the real ship's endurance at cruising speed, times 2.33, so the longest-legged (the Supply Ship, about 50 real days) fills the 99 tank. Straight proportion would give a PT boat (about one real day) 3 fuel and make small craft useless on any map; the square root keeps the real order and the gaps between classes while leaving them playable. Endurance is averaged over the ships the art shows, and tanks are rounded to 5.
+
+| Ship | Real endurance at cruising speed | Real days | Days at full speed in the game | Fuel |
+|---|---|---|---|---|
+| Supply Ship | Cimarron-class oiler, about 18,000 nautical miles | ~50 | 16.5 | 99 |
+| Submarine | Gato 11,000 nmi at 10 knots, Type VII 8,500 at 10 | ~40 | 15 | 90 |
+| Carrier | Essex 20,000 nmi at 15 knots, Shōkaku 9,700 at 18, Illustrious 11,000 at 14 | ~37 | 14 | 85 |
+| Battleship | Iowa 15,000 nmi at 15 knots, Yamato 7,200 at 16, Warspite 8,600 at 10 | ~32 | 13 | 80 |
+| Destroyer | Fletcher 6,500 nmi at 15 knots, Kagero 5,000 at 18, Tribal 5,700 at 15, Z-class 1936A about 2,900 at 19 | ~13 | 8 | 65 |
+| Landing Craft | LCT about 700 nmi at 7 knots; the Daihatsu much less | ~4 | 5 | 35 |
+| Torpedo Boat | PT boat about 500 nmi at 23 knots, S-boot about 800 at 30 | ~1 | 2 | 20 |
+
+Daily burns are unchanged: 2 for Destroyers and Torpedo Boats, 1 for the rest (5 for a dived Submarine). Before 2026-11-16 the tanks were Battleship and Carrier 99, Destroyer and Submarine 80, Landing Craft 70 and Torpedo Boat 50: Destroyers, Landing Craft and above all Torpedo Boats went much further than the real ones.
 
 | Unit | Fuel | Per day | Real basis |
 |---|---|---|---|
@@ -178,12 +190,13 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Bomber | 70 | 4 | Developer's balance call: first half the old tank (50), raised to 70 on 2026-11-14 at the developer's request. The daily burn was 8, the heaviest of any aircraft, until it was halved to 4 later on 2026-11-14 at the developer's request, so Bombers can stay out longer on long runs such as Iwo Jima's from the Marianas airfield |
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
 | Dive Bomber, Torpedo Bomber | 70 | 5 | SBD, TBF, D3A, B5N: about 1,600–1,800 km |
-| Battleship, Carrier | 99 | 1 | 15,000+ nautical miles at cruising speed |
-| Submarine | 80 | 1 (5 dived) | Long-ranged on the surface; batteries only last a day or two dived |
-| Destroyer | 80 | 2 | Notoriously thirsty: refuelled at sea every few days |
-| Landing Craft | 70 | 1 | LCTs were short-ranged coastal craft |
-| Torpedo Boat | 50 | 2 | PT boats and E-boats: fast coastal raiders that had to return to base often |
 | Supply Ship | 99 | 1 | Fleet oilers carried fuel for a whole task force. It doesn't refuel itself: two side by side refuel each other |
+| Submarine | 90 | 1 (5 dived) | Long-ranged on the surface; batteries only last a day or two dived |
+| Carrier | 85 | 1 | See the naval table above |
+| Battleship | 80 | 1 | See the naval table above |
+| Destroyer | 65 | 2 | Notoriously thirsty: refuelled at sea every few days |
+| Landing Craft | 35 | 1 | LCTs were short-ranged coastal craft |
+| Torpedo Boat | 20 | 2 | PT boats and E-boats: fast coastal raiders that went out at night and were back by morning |
 
 **Moving burns more for aircraft:** every aircraft spends 2 fuel per tile flown (`fuelPerMove`), on top of its daily burn (05-supply-transport §1). Land units and ships spend 1 per movement point.
 

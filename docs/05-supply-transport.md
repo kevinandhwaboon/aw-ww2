@@ -27,13 +27,13 @@ A resupply restores fuel and ammo to maximum. It's free and doesn't heal.
 | Source | When | Who |
 |---|---|---|
 | Owned property of the right category | Owner's turn start (with repair; 04-economy section 5) | The unit on the tile |
-| Halftrack, automatic | Owner's turn start, after property repair | All friendly units orthogonally adjacent to the Halftrack, except aircraft |
-| Halftrack, `Supply` action | After the Halftrack moves (or without moving) | All friendly units orthogonally adjacent, except aircraft; ends the Halftrack's action |
-| Supply Ship, automatic and `Supply` action | As for the Halftrack | As for the Halftrack: ships and land units on the shore next to it. It also repairs ships (§3a) |
+| Halftrack, automatic | Owner's turn start, after property repair | All friendly land units orthogonally adjacent to the Halftrack: never ships or aircraft |
+| Halftrack, `Supply` action | After the Halftrack moves (or without moving) | All friendly land units orthogonally adjacent; ends the Halftrack's action |
+| Supply Ship, automatic and `Supply` action | As for the Halftrack | All friendly ships and land units orthogonally adjacent, never aircraft. It also repairs ships (§3a) |
 
 A carried passenger isn't resupplied by its transport.
 
-**Halftracks never resupply aircraft** (since 2026-11-14, at the developer's request): an aircraft has to fly back to an owned airfield, or a Carrier for carrier aircraft (§10), to refuel and rearm. Ships and land units are still resupplied by an adjacent Halftrack.
+**Halftracks never resupply aircraft** (since 2026-11-14, at the developer's request): an aircraft has to fly back to an owned airfield, or a Carrier for carrier aircraft (§10), to refuel and rearm. **Nor ships** (since 2026-11-16, at the developer's request): a ship refuels and rearms only at an owned port or next to a friendly Supply Ship (§3a). A Halftrack resupplies land units only.
 
 The `Supply` action is only available when at least one adjacent friendly unit is short of fuel or ammo. Automatic supply also reaches units of an allied player on the same side.
 
@@ -41,7 +41,7 @@ The `Supply` action is only available when at least one adjacent friendly unit i
 
 Added at the developer's request: ships could only refuel at a port, while land units have the Halftrack and carrier aircraft their Carrier. It follows the original game's later naval supply boat, minus the troops it carried (the Landing Craft does that here). Stats in 01-units §8.
 
-- **Resupply:** exactly the Halftrack's (§3). At the start of its owner's turn, after property repair, it refuels and rearms every friendly unit orthogonally next to it, an ally's included, except aircraft. That means ships, and land units on the shore or on a port. It has the same `Supply` action after moving, which ends its action. Free.
+- **Resupply:** like the Halftrack's (§3), but it also reaches ships, which a Halftrack can't. At the start of its owner's turn, after property repair, it refuels and rearms every friendly unit orthogonally next to it, an ally's included, except aircraft. That means ships, and land units on the shore or on a port. It has the same `Supply` action after moving, which ends its action. Free.
 - **Repair:** at the start of its owner's turn, each of **its own player's ships** orthogonally next to it is repaired **1 displayed HP**, for 10% of the ship's cost, with the same affordability and order rules as property repair (04-economy §5). This is the Carrier's repair of its aircraft (§10), for ships. It repairs only in that start-of-turn step, never with the `Supply` action.
   - **Only ships**, never land units: the Halftrack and cities look after those.
   - **Only its own player's**: an ally's ship is refuelled and rearmed but not repaired, since each player pays for their own repairs (04-economy §5).
@@ -83,7 +83,7 @@ Added at the developer's request: ships could only refuel at a port, while land 
 
 - **Movement:** type `sea` covers Sea, Reef and Port. Landing Craft use `landingCraft`, which also allows Beach (02-terrain §3).
 - **Daily fuel:** `fuelPerDay` at the start of the owner's turn. At 0 fuel the ship sinks. A sinking isn't a kill. No burn on day 1 **(D1)**, and none for a ship in an owned port.
-- **Service:** owned ports repair and resupply naval units. Halftracks resupply adjacent ships as well, and Supply Ships resupply and repair them at sea (§3a).
+- **Service:** owned ports repair and resupply naval units, and Supply Ships resupply and repair them at sea (§3a). Nothing else does: a Halftrack can't resupply a ship (§3, since 2026-11-16).
 - **Capture:** ships can't capture. Ports are captured by infantry like any property.
 
 ## 8. Landing Craft (phase 2)
