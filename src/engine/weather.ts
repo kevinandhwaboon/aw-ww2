@@ -1,5 +1,6 @@
 // Weather (docs/12-weather.md). The day's weather comes from the scenario's forecast and the day
-// number, and works only through the modifier layer: it adds to terrain movement costs.
+// number, and works only through the modifier layer: it adds to terrain movement costs and vision.
+// Rain also brings fog of war for the day.
 
 import { TERRAIN, TERRAIN_IDS, type MovementType, type TerrainId } from "./data/terrain";
 import { WEATHER, WEATHER_IDS, type WeatherId } from "./data/weather";
@@ -11,6 +12,19 @@ export function weatherOn(state: Pick<GameState, "weather" | "day">, day: number
   let weather: WeatherId = "clear";
   for (const entry of state.weather.forecast) if (entry.fromDay <= day) weather = entry.weather;
   return weather;
+}
+
+/**
+ * Whether there's fog of war today: the game was started with it, or today's weather brings it
+ * (rain, 12-weather §3a). Every visibility rule asks this (19-fog-of-war).
+ */
+export function fogToday(state: Pick<GameState, "weather" | "day" | "settings">): boolean {
+  return state.settings.fogOfWar || WEATHER[weatherOn(state)].fog;
+}
+
+/** Whether there can be fog of war on any day of this game: it's on, or the forecast has rain in it. */
+export function fogInGame(state: Pick<GameState, "weather" | "settings">): boolean {
+  return state.settings.fogOfWar || state.weather.forecast.some((e) => WEATHER[e.weather].fog);
 }
 
 /** A modifier that turns a clear-weather cost into this weather's cost, so other modifiers still stack on top. */
@@ -40,6 +54,7 @@ function buildModifiers(weather: WeatherId): readonly Modifier[] {
       if (m) out.push(m);
     }
   }
+  if (def.vision !== 0) out.push({ source: `weather:${weather}`, stat: "vision", op: "add", value: def.vision });
   return out;
 }
 

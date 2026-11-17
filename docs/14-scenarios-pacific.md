@@ -74,7 +74,7 @@ On 19 February 1945 the US 3rd, 4th and 5th Marine Divisions landed on the black
 
 ### Weather
 
-- Clear all game (the default). The real battle had rain on some days; rain isn't in the game yet (12-weather).
+- Clear all game (the default). The real battle had rain on some days; rain exists since 2026-11-17 (12-weather §3a) but isn't forecast here.
 
 ### How it's made
 

@@ -3,7 +3,7 @@
 // A hint, not part of the game: it lives in the AI player object, so it's lost if the game is
 // reloaded, and the AI then plays from what it sees, as it would anyway (09-ai §3).
 
-import { isHiddenFrom, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine";
+import { fogToday, isHiddenFrom, unitAt, type GameState, type PlayerId, type Unit, type UnitId } from "../engine";
 
 interface Sighting {
   readonly unit: Unit;
@@ -20,14 +20,14 @@ export class EnemyMemory {
   /**
    * The game as player `me` believes it is: what it sees, plus each enemy unit it saw within the
    * last `days` days and can't see now, where it last saw it. An enemy is forgotten once the AI can
-   * see the tile it was on and it isn't there. Only with fog of war on; otherwise the state as given.
+   * see the tile it was on and it isn't there. Only on a day with fog of war; otherwise the state as given.
    *
    * A remembered unit is only ever on a tile the AI can't see into, so the engine's helpers treat it
    * as hidden: moves can pass through it and it can't be attacked, as for any hidden unit, and every
    * command the AI picks is one the engine accepts.
    */
   believe(state: GameState, me: PlayerId): GameState {
-    if (!state.settings.fogOfWar || this.days <= 0) return state;
+    if (!fogToday(state) || this.days <= 0) return state;
     const side = state.players[me]?.side;
     let memory = this.byPlayer.get(me);
     if (!memory) this.byPlayer.set(me, (memory = new Map<UnitId, Sighting>()));

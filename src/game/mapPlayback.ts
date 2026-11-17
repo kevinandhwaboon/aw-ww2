@@ -95,7 +95,8 @@ export class MapPlayback {
 
   /** Animates engine events. Call before setState(newState); resolves when the animations finish. */
   async playEvents(events: readonly GameEvent[]): Promise<void> {
-    setBattleWeather({ season: this.state.weather.season, snowing: weatherOn(this.state) === "snow" });
+    const today = weatherOn(this.state);
+    setBattleWeather({ season: this.state.weather.season, snowing: today === "snow", raining: today === "rain" });
     for (const event of events) {
       await this.revealTiles(this.eventTiles(event), ACTION_PAN_MS);
       const sound = mapEventSound(event);

@@ -20,6 +20,7 @@ import { drawnAs, packColor } from "../artPack";
 import { SCENE } from "./backdrops";
 import { BattleScene } from "./BattleScene";
 import { battleWeather, setBattleWeather } from "./colors";
+import { drawRainfall } from "./rainfall";
 import { drawSnowfall } from "./snowfall";
 import { BattleRenderer } from "./renderer";
 import { showAngledSamples } from "./angled/samples";
@@ -130,8 +131,9 @@ function showFrozen(root: HTMLElement, matchups: readonly Matchup[], at: string,
     // "fire": just as the first shot leaves; "hit": just as it lands; or a time in ms.
     const t = at === "fire" ? (first?.fireAt ?? 0) + 30 : at === "hit" ? (first?.landAt ?? 0) + 60 : Number(at);
     renderer.render(t);
-    const ctx = battleWeather().snowing ? source.getContext("2d") : null;
-    if (ctx) drawSnowfall(ctx, t);
+    const ctx = source.getContext("2d");
+    if (ctx && battleWeather().snowing) drawSnowfall(ctx, t);
+    if (ctx && battleWeather().raining) drawRainfall(ctx, t);
     show(root, source, [zx, zy, zw, zh], scale, `${m.a} vs ${m.d}`);
   }
 }
@@ -263,8 +265,9 @@ export function startBattlePreview(root: HTMLElement, params: URLSearchParams): 
   const alliedNation = params.get("allies");
   if (alliedNation === "ussr" || alliedNation === "uk") allies = alliedNation;
   const weather = params.get("weather");
-  if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow" });
-  if (weather === "desert") setBattleWeather({ season: "desert", snowing: false });
+  if (weather === "winter" || weather === "snow") setBattleWeather({ season: "winter", snowing: weather === "snow", raining: false });
+  if (weather === "desert") setBattleWeather({ season: "desert", snowing: false, raining: false });
+  if (weather === "rain") setBattleWeather({ season: "summer", snowing: false, raining: true });
   if (params.get("angled") !== null) {
     showAngledSamples(root, params);
     return;

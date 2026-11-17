@@ -3,6 +3,9 @@ import type { NationId } from "../engine/data/nations";
 import type { GameState } from "../engine/state";
 import { weatherOn } from "../engine/weather";
 import { weatherName } from "../game/artPack";
+import type { WeatherId } from "../engine/data/weather";
+
+const WEATHER_ICON: Record<WeatherId, string> = { clear: "☀", snow: "❄", rain: "☂" };
 import { objectiveLines, type ObjectiveLine } from "../game/objectives";
 import { playerColors } from "../game/placeholderUnits";
 import type { SoundLevel } from "../game/sound/settings";
@@ -87,7 +90,7 @@ export function createHud(root: HTMLElement, sound: SoundControl, onCommanders: 
       }
       day.textContent = `Day ${state.day}`;
       const today = weatherOn(state);
-      weather.textContent = `${today === "snow" ? "❄" : "☀"} ${weatherName(today)}`;
+      weather.textContent = `${WEATHER_ICON[today]} ${weatherName(today)}`;
       weather.dataset.weather = today;
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
       const lines = objectiveLines(state);

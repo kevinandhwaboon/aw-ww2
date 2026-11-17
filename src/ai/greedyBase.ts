@@ -5,6 +5,7 @@
 import {
   baseDamage,
   distance,
+  fogToday,
   inBounds,
   isHiddenFrom,
   propertyAt,
@@ -145,7 +146,7 @@ export abstract class BrainBase {
    * they're the enemies hidden from us (09-ai §4g). None without fog.
    */
   protected ghosts(): readonly Unit[] {
-    this.ghostCache ??= this.state.settings.fogOfWar ? this.enemies.filter((e) => isHiddenFrom(this.state, e, this.me)) : [];
+    this.ghostCache ??= fogToday(this.state) ? this.enemies.filter((e) => isHiddenFrom(this.state, e, this.me)) : [];
     return this.ghostCache;
   }
 
@@ -156,7 +157,7 @@ export abstract class BrainBase {
 
   /** Our scouts in fog of war: the first `scoutsInFog` of our scout-type units on the map, by id. */
   protected scoutIds(): ReadonlySet<number> {
-    if (!this.state.settings.fogOfWar) return new Set();
+    if (!fogToday(this.state)) return new Set();
     const mine = this.state.units.filter((u) => u.owner === this.me && this.isScoutType(u.type));
     return new Set(mine.slice(0, this.w.scoutsInFog).map((u) => u.id));
   }

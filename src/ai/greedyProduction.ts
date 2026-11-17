@@ -3,6 +3,7 @@
 import {
   baseDamage,
   buildOptions,
+  fogInGame,
   buildProblem,
   distance,
   inBounds,
@@ -140,12 +141,12 @@ export abstract class ProductionBrain extends LandingBrain {
    * have, up to a few, when we can afford it here.
    */
   /**
-   * In fog of war, a scout when we have fewer than `scoutsInFog` (09-ai §4g): the cheapest unit
+   * In a game with fog of war, or rain coming, a scout when we have fewer than `scoutsInFog` (09-ai §4g): the cheapest unit
    * that can scout, at the first site that can build it. Not while we're short of the minimum of
    * capture-capable units, which come first.
    */
   protected scoutWanted(): Command | null {
-    if (!this.state.settings.fogOfWar || this.w.scoutsInFog <= 0) return null;
+    if (!fogInGame(this.state) || this.w.scoutsInFog <= 0) return null;
     const have = this.state.units.flatMap((u) => (u.owner === this.me ? [u, ...u.cargo] : [])).filter((u) => this.isScoutType(u.type)).length;
     if (have >= this.w.scoutsInFog || this.capturersNeeded() === "belowMinimum") return null;
     for (const property of this.state.properties) {

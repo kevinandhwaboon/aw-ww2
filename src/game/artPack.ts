@@ -59,6 +59,8 @@ const BUILT_IN_COLORS = {
   // Snow falling over the map and battle scenes while it snows (12-weather §5)
   snowfall: "#ffffff",
   snowfallShadow: "#4a5a78",
+  // Rain falling over the map and battle scenes while it rains (12-weather §5)
+  rainfall: "#b8cce0",
   labelGold: "#f0d040",
   labelGreen: "#80f080",
   labelBlue: "#a0d8ff",

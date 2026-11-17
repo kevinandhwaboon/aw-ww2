@@ -7,6 +7,8 @@ import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
+import type { WeatherId } from "./engine/data/weather";
+import { fogInGame } from "./engine/weather";
 import { unitAt, type GameState, type PlayerId } from "./engine/state";
 import { eventsSeenBy, revealsAnything, stateSeenBy, tileInSight, tilesInSight } from "./engine/visibility";
 import { packColor, setGameNations } from "./game/artPack";
@@ -53,6 +55,9 @@ export interface Session {
    */
   end(): void;
 }
+
+/** What the banner says when the weather changes (12-weather §5). */
+const WEATHER_BANNER: Record<WeatherId, string> = { clear: "The skies clear", snow: "Snow is falling", rain: "Rain is falling" };
 
 /** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
 const AI_PAUSE_MS = 250;
@@ -229,7 +234,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     render();
     for (const event of result.events) {
       if (event.type === "weatherChanged") {
-        await banner.show(event.weather === "snow" ? "Snow is falling" : "The skies clear", packColor("uiInk"));
+        await banner.show(WEATHER_BANNER[event.weather], packColor("uiInk"));
         continue;
       }
       if (event.type !== "turnStarted") continue;
@@ -240,9 +245,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
       sounds.play("turnStart");
-      // The pass-the-device screen only matters between two people (09-ai §5). With fog of war it's
-      // always used, so nobody sees the other's view (19-fog-of-war §7).
-      if ((passDevice || state.settings.fogOfWar) && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
+      // The pass-the-device screen only matters between two people (09-ai §5). In a game with fog of
+      // war, or rain in the forecast, it's always used, so nobody sees the other's view (19-fog-of-war §7).
+      if ((passDevice || fogInGame(state)) && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
     render();

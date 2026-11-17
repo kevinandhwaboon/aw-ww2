@@ -75,7 +75,7 @@ export {
   type ForecastEntry,
   type WeatherPlan,
 } from "./state";
-export { weatherOn } from "./weather";
+export { fogInGame, fogToday, weatherOn } from "./weather";
 export { eventsSeenBy, hiddenUnitIds, isHiddenFrom, revealsAnything, stateSeenBy, tileInSight, tilesInSight } from "./visibility";
 export * as stats from "./stats";
 export type { FightRole, Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";

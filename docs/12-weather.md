@@ -1,7 +1,7 @@
 # Topic Doc 12: Weather
 
-**Status:** v0 decided. Snow follows the original game's movement costs (default rule). Expect tuning after playtesting.
-**Last updated:** 2026-11-08
+**Status:** v0 decided. Snow and Rain follow the original game (default rule). Expect tuning after playtesting.
+**Last updated:** 2026-11-17 (§3a Rain)
 **Depends on:** 00-master-design.md §7 (modifier layer), 02-terrain.md. **Feeds:** scenarios (13-scenarios-ardennes), 08-art-pipeline §21 (winter art).
 
 ---
@@ -20,8 +20,7 @@
 |---|---|
 | **Clear** | None. The terrain table in 02-terrain §3 applies as written. |
 | **Snow** | Higher movement costs for most units (§3). Combat, vision, fuel and income are unchanged. |
-
-Rain is left for later: in the original's later games rain brings fog of war and cuts vision. Fog of war exists as an option since 2026-11-17 (19-fog-of-war); rain is still to come.
+| **Rain** | Fog of war for the day, every unit sees 1 square less, and mud slows wheels and tracks off the roads (§3a). Since 2026-11-17. |
 
 ## 3. Snow movement costs
 
@@ -47,6 +46,27 @@ What it means in play:
 - **Every tile costs aircraft 2**, which halves how far they fly. They still burn the same fuel per day.
 - Ships pay double on open water and in port.
 
+## 3a. Rain (decided and built 2026-11-17)
+
+At the developer's request, following the original game's rain:
+
+- **Fog of war for the day** (19-fog-of-war), even in a game started without it. The next clear or snowy day the fog lifts again, unless the game has fog on anyway.
+- **Every unit sees 1 square less** (a weather modifier on vision). A unit always sees its own square and the squares next to it (19-fog-of-war §2), so even a Halftrack or an Artillery isn't blind.
+- **Mud:** wheels and tracks pay more off the roads, as in the original. Only the cells that change:
+
+| Terrain | wheels | tracks |
+|---|---|---|
+| Plains | **3** | **2** |
+| Forest | **4** | **3** |
+| Ridge | **4** | **3** |
+| Bocage | — | **4** |
+| Rubble | **3** | **2** |
+
+  Ridge moves like Forest and Rubble like Plains, as in snow; Bocage's tracks pay one more, as in snow. Foot soldiers, aircraft and ships aren't slowed, and roads, bridges and towns cost the same.
+- Combat, fuel and income are unchanged.
+- **Hot-seat:** a game with rain anywhere in its forecast always uses the pass-the-device screen between human players (19-fog-of-war §7), since some of its days have fog.
+- **The computer** plays rainy days as fog days (09-ai §4g), and keeps a scout in a game with rain coming.
+
 ## 4. When the weather changes
 
 - The weather for a day is the forecast's last entry whose start day is that day or earlier.
@@ -57,7 +77,8 @@ What it means in play:
 
 - The HUD shows the day's weather next to the day number.
 - When the weather changes, a short banner names the new weather.
-- Snow falls over the map and in battle scenes while it's snowing.
+- Snow falls over the map and in battle scenes while it's snowing. **Rain** falls as short slanted streaks over the map and in battle scenes while it's raining (the art pack's `rainfall` color), and the battle sky is overcast. The HUD shows ☂ Rain, and the banner says "Rain is falling".
+- With fog of war (on, or brought by rain) the tiles out of sight are drawn darker (19-fog-of-war §7).
 - A winter scenario's map uses the art pack's winter terrain and buildings (08-art-pipeline §21), and its battle scenes use snowy ground and trees. Under Snow the battle sky is overcast and snow falls; under Clear the sky is blue over the snow.
 
 ## 6. Scenario format
@@ -70,10 +91,10 @@ What it means in play:
 ```
 
 - `season`: `"summer"` (default), `"winter"` or `"desert"` (since 2026-11-15, for El Alamein: 08-art-pipeline §21). Drawing only.
-- `forecast`: optional; the first entry must start on day 1, and start days must rise.
+- `forecast`: optional; the first entry must start on day 1, and start days must rise. Each entry's weather is `"clear"`, `"snow"` or `"rain"`.
+- For testing, `?weather=clear|snow|rain` in the URL replaces the forecast with that weather every day (the map keeps its season's art).
 
 ## 7. Open questions
 
 - Random weather as a scenario or game option.
-- Rain, once fog of war exists.
 - Whether Snow should cost more fuel (some later games in the series did this) or slow supply.
