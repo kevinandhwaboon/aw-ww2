@@ -6,6 +6,7 @@ import {
   baseDamage,
   distance,
   inBounds,
+  isHiddenFrom,
   propertyAt,
   propertyDefAt,
   servicesUnit,
@@ -83,6 +84,7 @@ export abstract class BrainBase {
   protected readonly dangerCache = new Map<string, number>();
   protected readonly followUpCache = new Map<number, readonly { id: number; damage: number }[]>();
   protected loadableCache: readonly Point[] | null = null;
+  protected ghostCache: readonly Unit[] | null = null;
 
   constructor(
     protected readonly state: GameState,
@@ -136,6 +138,27 @@ export abstract class BrainBase {
     const builds = propertyDefAt(this.state, p)?.builds;
     if (!builds || propertyAt(this.state, p)?.owner !== this.me) return false;
     return (this.state.players[this.me]?.buildable ?? []).some((t) => defOf(t).category === builds);
+  }
+
+  /**
+   * Enemy units we remember but can't see now (fog of war, ai/memory.ts): in the state we plan from,
+   * they're the enemies hidden from us (09-ai §4g). None without fog.
+   */
+  protected ghosts(): readonly Unit[] {
+    this.ghostCache ??= this.state.settings.fogOfWar ? this.enemies.filter((e) => isHiddenFrom(this.state, e, this.me)) : [];
+    return this.ghostCache;
+  }
+
+  /** A land unit that sees far enough to scout in fog of war (09-ai §4g): the Recon. */
+  protected isScoutType(type: UnitTypeId): boolean {
+    return defOf(type).category === "land" && defOf(type).vision >= this.w.scoutMinVision;
+  }
+
+  /** Our scouts in fog of war: the first `scoutsInFog` of our scout-type units on the map, by id. */
+  protected scoutIds(): ReadonlySet<number> {
+    if (!this.state.settings.fogOfWar) return new Set();
+    const mine = this.state.units.filter((u) => u.owner === this.me && this.isScoutType(u.type));
+    return new Set(mine.slice(0, this.w.scoutsInFog).map((u) => u.id));
   }
 
   protected enemyProperties(): Point[] {

@@ -3,7 +3,8 @@
 // the weights are data (ai/weights.ts).
 //
 // It's stateless: every call looks at the state afresh and returns one command, so saves, undo and
-// replays need nothing extra (09-ai §3). Ties go to the first candidate, so it's deterministic.
+// replays need nothing extra (09-ai §3). The one exception is fog of war, where it remembers enemies
+// it has seen (ai/memory.ts), a hint lost on reload. Ties go to the first candidate, so it's deterministic.
 
 import {
   displayHp,
@@ -14,6 +15,7 @@ import {
   movementBudget,
   stats,
   terrainAt,
+  tileInSight,
   unitAt,
   unitCommands,
   unloadTiles,
@@ -37,11 +39,17 @@ import {
   samePoint,
 } from "./greedyBase";
 import { ProductionBrain } from "./greedyProduction";
+import { EnemyMemory } from "./memory";
 import type { AiPlayer } from "./player";
 import { EASY_WEIGHTS, GREEDY_WEIGHTS, type GreedyWeights } from "./weights";
 
 export function greedyAi(weights: GreedyWeights = GREEDY_WEIGHTS): AiPlayer {
-  return { name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy", chooseCommand: (view) => chooseCommand(view.state, weights) };
+  // Each Greedy player remembers the enemies it has seen in fog of war (09-ai §4g).
+  const memory = new EnemyMemory(weights.memoryDays);
+  return {
+    name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy",
+    chooseCommand: (view) => chooseCommand(memory.believe(view.state, view.me), weights),
+  };
 }
 
 /** The Greedy AI's next command for the current player. */
@@ -71,11 +79,14 @@ class Brain extends ProductionBrain {
   private group(unit: Unit): number {
     if (defOf(unit.type).transport) return 3;
     const range = stats.attackRange(this.state, unit);
+    const ghosts = this.ghosts();
     if (range) {
       const direct = defOf(unit.type).canMoveAndFire;
       const reach = (direct ? movementBudget(this.state, unit) : 0) + range.max;
       // Indirect fire goes first, so targets are softened before direct-fire units close in (09-ai §4c).
-      if (this.enemies.some((e) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach)) return direct && this.w.indirectFirst ? 0.5 : 0;
+      // Only enemies it can see: one it only remembers can't be attacked until it's seen again (09-ai §4g).
+      const inReach = (e: Unit) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach && !ghosts.includes(e);
+      if (this.enemies.some(inReach)) return direct && this.w.indirectFirst ? 0.5 : 0;
     }
     if (defOf(unit.type).canCapture) {
       const reach = movementBudget(this.state, unit);
@@ -220,6 +231,13 @@ class Brain extends ProductionBrain {
       if (properties.length > 0) return this.advance(unit, properties, `capturable${unit.id}`);
     }
 
+    // In fog of war our scout drives to the edge of what we can see, on the enemy's side (09-ai §4g).
+    // It still takes a good shot on the way: attacks are scored against its move as for any unit.
+    if (this.scoutIds().has(unit.id)) {
+      const frontier = this.scoutTiles(unit);
+      if (frontier.length > 0) return this.advance(unit, frontier, `scout${unit.id}`);
+    }
+
     const targets = this.enemies.filter((e) => this.canHurt(unit.type, e));
     const range = stats.attackRange(this.state, unit);
     const convoy = this.escorts().get(unit.id);
@@ -236,8 +254,10 @@ class Brain extends ProductionBrain {
       const firing = this.firingTiles(unit, targets, range);
       return this.advance(unit, firing, `firing:${unit.type}`);
     }
-    // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait.
+    // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait,
+    // except in fog of war, where an armed one goes looking near the enemy's properties (09-ai §4g).
     if (def.category === "land") return this.advance(unit, this.enemyProperties(), "enemyProperties");
+    if (range && this.state.settings.fogOfWar && this.w.patrolInFog) return this.advance(unit, this.patrolTiles(unit), `patrol:${unit.type}`);
     return IDLE;
   }
 
@@ -287,6 +307,45 @@ class Brain extends ProductionBrain {
     const noAmmo = def.primaryWeapon !== null && unit.ammo === 0 && def.secondaryWeapon === null;
     const hurt = displayHp(unit.hp) <= this.w.retreatHp;
     return (lowFuel || noAmmo || hurt) && Number.isFinite(fromHere) ? dist : null;
+  }
+
+  /**
+   * Where an armed aircraft or ship with nothing in sight patrols to in fog of war (09-ai §4g): the
+   * enemy's properties and the squares next to them that it can enter, so ships come in along the
+   * coast. Out of the AI's sight, since there's nothing to look for where it can already see.
+   */
+  private patrolTiles(unit: Unit): Point[] {
+    const tiles = new Map<number, Point>();
+    for (const property of this.enemyProperties()) {
+      for (const p of [property, ...this.neighbors(property)]) {
+        if (tileInSight(this.state, p, this.me) || stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) === null) continue;
+        tiles.set(this.index(p), p);
+      }
+    }
+    return [...tiles.values()];
+  }
+
+  /**
+   * Where a scout heads (09-ai §4g): the tiles just out of sight, next to ones we can see, that it
+   * can enter and that are nearer the enemy's properties than it is now. Going there shows us
+   * what's beyond, so the edge moves on ahead of it.
+   */
+  private scoutTiles(unit: Unit): Point[] {
+    const { width, height } = this.state.map;
+    const theirs = this.enemyProperties();
+    const nearest = (p: Point) => theirs.reduce((best, q) => Math.min(best, distance(p, q)), Infinity);
+    const ahead = nearest(unit.pos);
+    const tiles: Point[] = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const p = { x, y };
+        if (tileInSight(this.state, p, this.me) || !this.neighbors(p).some((q) => tileInSight(this.state, q, this.me))) continue;
+        if (stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) === null) continue;
+        if (theirs.length > 0 && nearest(p) >= ahead) continue;
+        tiles.push(p);
+      }
+    }
+    return tiles;
   }
 
   protected advance(unit: Unit, goals: readonly Point[], key: string, offsets?: readonly number[]): Plan {

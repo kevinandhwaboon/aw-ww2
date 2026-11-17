@@ -76,7 +76,7 @@ export {
   type WeatherPlan,
 } from "./state";
 export { weatherOn } from "./weather";
-export { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./visibility";
+export { eventsSeenBy, hiddenUnitIds, isHiddenFrom, revealsAnything, stateSeenBy, tileInSight, tilesInSight } from "./visibility";
 export * as stats from "./stats";
 export type { FightRole, Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
 export { COMMANDERS, COMMANDER_IDS, commanderDef, type CommanderDef, type CommanderId } from "./data/commanders";
