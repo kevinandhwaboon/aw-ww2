@@ -3,7 +3,8 @@
 // the weights are data (ai/weights.ts).
 //
 // It's stateless: every call looks at the state afresh and returns one command, so saves, undo and
-// replays need nothing extra (09-ai §3). Ties go to the first candidate, so it's deterministic.
+// replays need nothing extra (09-ai §3). The one exception is fog of war, where it remembers enemies
+// it has seen (ai/memory.ts), a hint lost on reload. Ties go to the first candidate, so it's deterministic.
 
 import {
   displayHp,
@@ -14,6 +15,7 @@ import {
   movementBudget,
   stats,
   terrainAt,
+  tileInSight,
   unitAt,
   unitCommands,
   unloadTiles,
@@ -37,11 +39,17 @@ import {
   samePoint,
 } from "./greedyBase";
 import { ProductionBrain } from "./greedyProduction";
+import { EnemyMemory } from "./memory";
 import type { AiPlayer } from "./player";
 import { EASY_WEIGHTS, GREEDY_WEIGHTS, type GreedyWeights } from "./weights";
 
 export function greedyAi(weights: GreedyWeights = GREEDY_WEIGHTS): AiPlayer {
-  return { name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy", chooseCommand: (view) => chooseCommand(view.state, weights) };
+  // Each Greedy player remembers the enemies it has seen in fog of war (09-ai §4g).
+  const memory = new EnemyMemory(weights.memoryDays);
+  return {
+    name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy",
+    chooseCommand: (view) => chooseCommand(memory.believe(view.state, view.me), weights),
+  };
 }
 
 /** The Greedy AI's next command for the current player. */
@@ -236,8 +244,10 @@ class Brain extends ProductionBrain {
       const firing = this.firingTiles(unit, targets, range);
       return this.advance(unit, firing, `firing:${unit.type}`);
     }
-    // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait.
+    // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait,
+    // except in fog of war, where an armed one goes looking near the enemy's properties (09-ai §4g).
     if (def.category === "land") return this.advance(unit, this.enemyProperties(), "enemyProperties");
+    if (range && this.state.settings.fogOfWar && this.w.patrolInFog) return this.advance(unit, this.patrolTiles(unit), `patrol:${unit.type}`);
     return IDLE;
   }
 
@@ -287,6 +297,22 @@ class Brain extends ProductionBrain {
     const noAmmo = def.primaryWeapon !== null && unit.ammo === 0 && def.secondaryWeapon === null;
     const hurt = displayHp(unit.hp) <= this.w.retreatHp;
     return (lowFuel || noAmmo || hurt) && Number.isFinite(fromHere) ? dist : null;
+  }
+
+  /**
+   * Where an armed aircraft or ship with nothing in sight patrols to in fog of war (09-ai §4g): the
+   * enemy's properties and the squares next to them that it can enter, so ships come in along the
+   * coast. Out of the AI's sight, since there's nothing to look for where it can already see.
+   */
+  private patrolTiles(unit: Unit): Point[] {
+    const tiles = new Map<number, Point>();
+    for (const property of this.enemyProperties()) {
+      for (const p of [property, ...this.neighbors(property)]) {
+        if (tileInSight(this.state, p, this.me) || stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) === null) continue;
+        tiles.set(this.index(p), p);
+      }
+    }
+    return [...tiles.values()];
   }
 
   protected advance(unit: Unit, goals: readonly Point[], key: string, offsets?: readonly number[]): Plan {

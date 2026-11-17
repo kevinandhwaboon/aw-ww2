@@ -16,6 +16,16 @@ export interface GreedyWeights {
   readonly finishCaptureBonus: number;
   /** Extra value when the property is a scenario objective (04-economy §8). */
   readonly objectiveBonus: number;
+  /**
+   * Fog of war (09-ai §4g): days an enemy unit is remembered where it was last seen; 0 remembers
+   * nothing.
+   */
+  readonly memoryDays: number;
+  /**
+   * Fog of war (09-ai §4g): armed aircraft and ships with no enemy in sight to go after head for
+   * the enemy's properties instead of waiting.
+   */
+  readonly patrolInFog: boolean;
   /** Value of each movement point closer to the unit's goal. */
   readonly advancePerStep: number;
   /** The same while retreating for repair or supplies. */
@@ -192,6 +202,8 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   carrierStandoff: 2,
   blowBridge: 6000,
   rebuildBridge: 3000,
+  memoryDays: 3,
+  patrolInFog: true,
 };
 
 /** The levels the player can choose for the computer (09-ai §4c). */
@@ -219,6 +231,8 @@ export const EASY_WEIGHTS: GreedyWeights = {
   maxIndirectShare: 1,
   capturerShare: 0,
   guardObjectives: false,
+  // In fog it forgets an enemy it can't see after a day (09-ai §4g).
+  memoryDays: 1,
 };
 
 export function weightsFor(level: AiLevel): GreedyWeights {
