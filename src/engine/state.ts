@@ -124,6 +124,8 @@ export interface Settings {
   readonly incomePerProperty: number;
   /** Most units a player may have; null = no limit (04-economy §4). */
   readonly unitCap: number | null;
+  /** Each side sees only what its units see (19-fog-of-war). */
+  readonly fogOfWar: boolean;
 }
 
 /** From `fromDay` on, the weather is `weather` (12-weather §4). */
@@ -143,7 +145,7 @@ export interface WeatherPlan {
 /** Clear all game, summer art: a scenario that says nothing about weather. */
 export const DEFAULT_WEATHER: WeatherPlan = { season: "summer", forecast: [{ fromDay: 1, weather: "clear" }] };
 
-export const DEFAULT_SETTINGS: Settings = { luck: true, incomePerProperty: 1000, unitCap: null };
+export const DEFAULT_SETTINGS: Settings = { luck: true, incomePerProperty: 1000, unitCap: null, fogOfWar: false };
 
 export interface GameState {
   readonly map: {

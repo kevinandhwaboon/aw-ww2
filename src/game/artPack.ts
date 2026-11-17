@@ -44,6 +44,8 @@ const BUILT_IN_COLORS = {
   objective: "#f0d040",
   // A submerged submarine: its sprite is tinted this color, and its badge drawn in it (05-supply-transport §9)
   submerged: "#78b0f0",
+  // Laid over tiles out of sight in fog of war (19-fog-of-war §7)
+  fog: "#0a1020",
   // Effects and floating labels
   flash: "#ffffff",
   blast: "#ffa030",

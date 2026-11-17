@@ -21,7 +21,7 @@
 | **Clear** | None. The terrain table in 02-terrain §3 applies as written. |
 | **Snow** | Higher movement costs for most units (§3). Combat, vision, fuel and income are unchanged. |
 
-Rain is left for later: in the original's later games rain brings fog of war, which this game doesn't have yet (00-master-design §4).
+Rain is left for later: in the original's later games rain brings fog of war and cuts vision. Fog of war exists as an option since 2026-11-17 (19-fog-of-war); rain is still to come.
 
 ## 3. Snow movement costs
 

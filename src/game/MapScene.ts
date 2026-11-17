@@ -59,6 +59,8 @@ const CURSOR_PAN_MS = 90;
 /** Unit shadows fall to the lower right, like the terrain's (08-art-pipeline §16). */
 const UNIT_SHADOW_OFFSET = { x: 2, y: 1 };
 const UNIT_SHADOW_ALPHA = 0.35;
+/** How dark tiles out of sight are drawn in fog of war (19-fog-of-war §7). */
+const FOG_ALPHA = 0.5;
 const unitSheetKey = (sheet: number) => `pack-units-${sheet}`;
 
 /** What a unit's sprite was drawn from, so it can be turned to face the way it moves. */
@@ -100,6 +102,10 @@ export class MapScene extends Phaser.Scene implements MapView {
   private drawnTerrain: GameState["map"]["terrain"] = [];
   private cursor?: Phaser.GameObjects.Graphics;
   private rangeLayer?: Phaser.GameObjects.Graphics;
+  /** Darkens tiles out of sight in fog of war. */
+  private fogLayer?: Phaser.GameObjects.Graphics;
+  /** The tiles in sight, by index; null when every tile is (no fog, or nobody's view). */
+  private inSight: ReadonlySet<number> | null = null;
   private stateLayer?: Phaser.GameObjects.Container;
   /** Who owned each property when the terrain was last painted, since buildings are painted with it. */
   private drawnOwners = "";
@@ -378,7 +384,9 @@ export class MapScene extends Phaser.Scene implements MapView {
       });
     }
 
-    // Draw order, bottom to top: terrain and buildings, range, flags + units, path arrow, cursor, menu.
+    // Draw order, bottom to top: terrain and buildings, fog, range, flags + units, path arrow, cursor, menu.
+    this.fogLayer = this.add.graphics();
+    this.drawFog();
     this.rangeLayer = this.add.graphics();
     this.stateLayer = this.add.container(0, 0);
     this.pathLayer = this.add.graphics();
@@ -456,6 +464,34 @@ export class MapScene extends Phaser.Scene implements MapView {
     this.previewed = undefined;
     this.preview = undefined;
     this.renderState();
+  }
+
+  /** Which tiles are in sight (19-fog-of-war §7); the rest are drawn darker. Null shows every tile clear. */
+  setFog(inSight: ReadonlySet<number> | null): void {
+    this.inSight = inSight;
+    this.drawFog();
+  }
+
+  private drawFog(): void {
+    const g = this.fogLayer;
+    if (!g) return;
+    g.clear();
+    const inSight = this.inSight;
+    if (!inSight) return;
+    const { width, height } = this.state.map;
+    g.fillStyle(packColorNumber("fog"), FOG_ALPHA);
+    // One rectangle per run of fogged tiles along a row.
+    for (let y = 0; y < height; y++) {
+      let run = -1;
+      for (let x = 0; x <= width; x++) {
+        const fogged = x < width && !inSight.has(y * width + x);
+        if (fogged && run < 0) run = x;
+        if (!fogged && run >= 0) {
+          g.fillRect(run * TILE_SIZE, y * TILE_SIZE, (x - run) * TILE_SIZE, TILE_SIZE);
+          run = -1;
+        }
+      }
+    }
   }
 
   // ---- Input ----

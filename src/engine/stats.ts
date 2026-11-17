@@ -2,7 +2,7 @@
 // from the data tables directly, so every value passes through the modifier layer.
 
 import { commanderDef } from "./data/commanders";
-import { TERRAIN, type TerrainId } from "./data/terrain";
+import { TERRAIN, TERRAIN_IDS, terrainDef, type TerrainId } from "./data/terrain";
 import { UNITS, type UnitTypeId } from "./data/units";
 import { VETERANCY, veterancyFor, type VeterancyDef } from "./data/veterancy";
 import { applyModifiers, modifierApplies, type FightRole, type ModifiableStat, type Modifier, type PlayerId, type StatContext } from "./modifiers";
@@ -69,6 +69,13 @@ export function commanderModifiers(state: GameState): readonly Modifier[] {
   return mods;
 }
 
+/** Built-in modifiers from the terrain table: foot soldiers see further from Hills (19-fog-of-war §2). */
+const TERRAIN_MODIFIERS: readonly Modifier[] = TERRAIN_IDS.flatMap((id): Modifier[] => {
+  const bonus = terrainDef(id).visionBonus;
+  if (!bonus) return [];
+  return [{ source: `terrain:${id}`, stat: "vision", op: "add", value: bonus.add, scope: { terrain: [id], movementTypes: bonus.movementTypes } }];
+});
+
 interface StateModifiers {
   readonly players: readonly Player[];
   readonly day: number;
@@ -86,7 +93,7 @@ const stateModifierCache = new WeakMap<readonly Modifier[], StateModifiers>();
 function compiledModifiers(state: GameState): StateModifiers {
   const cached = stateModifierCache.get(state.modifiers);
   if (cached && cached.players === state.players && cached.day === state.day && cached.weather === state.weather) return cached;
-  const all = [...state.modifiers, ...commanderModifiers(state), ...weatherModifiers(state)];
+  const all = [...state.modifiers, ...TERRAIN_MODIFIERS, ...commanderModifiers(state), ...weatherModifiers(state)];
   const fresh: StateModifiers = {
     players: state.players,
     day: state.day,
@@ -98,7 +105,7 @@ function compiledModifiers(state: GameState): StateModifiers {
   return fresh;
 }
 
-/** Scenario modifiers, the players' commanders and today's weather: everything stored in or derived from GameState. */
+/** Scenario modifiers, terrain, the players' commanders and today's weather: everything stored in or derived from GameState. */
 function stateModifiers(state: GameState): readonly Modifier[] {
   return compiledModifiers(state).all;
 }

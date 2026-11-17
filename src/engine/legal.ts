@@ -55,13 +55,13 @@ export function unitCommands(state: GameState, unit: Unit): Command[] {
       // Only what the player could see when giving the order (05-supply-transport §9).
       if (!isHiddenFrom(state, target, unit.owner)) move(path, { type: "attack", target: target.id });
     }
-    for (const target of fortTargets(afterMove, moved, moving)) move(path, { type: "attackFort", target });
+    for (const target of fortTargets(afterMove, moved, moving, state)) move(path, { type: "attackFort", target });
     if (captureProblem(afterMove, moved) === null) move(path, { type: "capture" });
     if (blowProblem(afterMove, moved) === null) move(path, { type: "blowBridge" });
     if (rebuildProblem(afterMove, moved) === null) move(path, { type: "rebuildBridge" });
     if (supplyTargets(afterMove, moved).length > 0) move(path, { type: "supply" });
     for (const passenger of moved.cargo) {
-      for (const to of unloadTiles(afterMove, moved, passenger)) move(path, { type: "unload", passenger: passenger.id, to });
+      for (const to of unloadTiles(afterMove, moved, passenger, state)) move(path, { type: "unload", passenger: passenger.id, to });
     }
     if (diveProblem(moved) === null) move(path, { type: "dive" });
     if (surfaceProblem(moved) === null) move(path, { type: "surface" });

@@ -10,6 +10,7 @@ import { inBounds, terrainAt, type Point } from "./map";
 import { tileIndex } from "./movement";
 import { displayHp, propertyAt, unitAt, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
+import { isHiddenFrom } from "./visibility";
 
 const NEIGHBORS: readonly Point[] = [
   { x: 0, y: -1 },
@@ -65,15 +66,19 @@ export function applyLoad(state: GameState, unit: Unit, transport: Unit): { stat
 }
 
 /**
- * Tiles this passenger could be unloaded onto: next to the transport, passable for it, and empty.
- * Never the transport's own tile, even for an aircraft, since one unit per tile still holds (02-terrain §5).
+ * Tiles this passenger could be unloaded onto: next to the transport, passable for it, and empty as
+ * far as its player can see from `view`, the state the order is given from. Unloading onto an enemy
+ * they couldn't see is an ambush (19-fog-of-war §5). Never the transport's own tile, even for an
+ * aircraft, since one unit per tile still holds (02-terrain §5).
  */
-export function unloadTiles(state: GameState, transport: Unit, passenger: Unit): Point[] {
+export function unloadTiles(state: GameState, transport: Unit, passenger: Unit, view: GameState = state): Point[] {
   // A Carrier's aircraft launch instead (05-supply-transport §10).
   if (isCarrier(transport) || landingSpotProblem(state, transport)) return [];
   return neighborsOf(state, transport.pos).filter((p) => {
     const terrain = state.map.terrain[tileIndex(state, p)];
-    return terrain !== undefined && !unitAt(state, p) && stats.moveCost(state, passenger, terrain) !== null;
+    const occupant = unitAt(state, p);
+    const seen = occupant !== undefined && !isHiddenFrom(view, occupant, transport.owner);
+    return terrain !== undefined && !seen && stats.moveCost(state, passenger, terrain) !== null;
   });
 }
 

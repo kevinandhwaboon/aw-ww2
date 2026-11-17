@@ -156,7 +156,7 @@ describe("what each player is shown of a hidden submarine (05-supply-transport Â
   it("the enemy doesn't watch a hidden submarine move", () => {
     const state = game();
     const result = must(state, order(1, [P(5, 1), P(4, 1)]));
-    const shown = eventsSeenBy(state, result.events, 0);
+    const shown = eventsSeenBy(state, result.state, result.events, 0);
     expect(shown.events).toEqual([]);
     expect(shown.before.units.map((x) => x.id)).toEqual([0, 2]);
   });
@@ -164,7 +164,7 @@ describe("what each player is shown of a hidden submarine (05-supply-transport Â
   it("a hidden submarine that attacks is shown where it ends its move, ready to fire", () => {
     const state = game();
     const result = must(state, order(1, [P(5, 1), P(4, 1), P(3, 1)], { type: "attack", target: 2 }));
-    const shown = eventsSeenBy(state, result.events, 0);
+    const shown = eventsSeenBy(state, result.state, result.events, 0);
     expect(shown.events.map((e) => e.type)).toEqual(["combat"]);
     expect(shown.revealed).toEqual([1]);
     expect(unit(shown.before, 1).pos).toEqual(P(3, 1));
@@ -173,6 +173,6 @@ describe("what each player is shown of a hidden submarine (05-supply-transport Â
   it("its own player watches everything it does", () => {
     const state = game();
     const result = must(state, order(1, [P(5, 1), P(4, 1)]));
-    expect(eventsSeenBy(state, result.events, 1).events).toEqual(result.events);
+    expect(eventsSeenBy(state, result.state, result.events, 1).events).toEqual(result.events);
   });
 });

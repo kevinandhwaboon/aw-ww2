@@ -23,6 +23,7 @@ const padLayout = url.pad ?? smallTouchScreen;
 
 const defaults: GameOptions = {
   luck: url.luck,
+  fog: url.fog,
   passDevice: url.passDevice,
   battleScenes: url.battleScenes,
   computer: url.computer,
@@ -38,7 +39,7 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
       ...scenario.setup,
       players: withCommanders(withNations(scenario.setup.players, url.nations), options.commanders),
       seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
-      settings: { ...scenario.setup.settings, luck: options.luck },
+      settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog },
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,

@@ -47,6 +47,13 @@ export interface TerrainDef {
    * displayed HP each time until it reaches `points`, then the tile becomes `becomes` (02-terrain §4a).
    */
   readonly rebuild?: { readonly points: number; readonly becomes: TerrainId };
+  /**
+   * In fog of war, a unit here is seen only by a side with a unit right next to it; aircraft are
+   * never hidden (19-fog-of-war §3).
+   */
+  readonly hidesUnits?: true;
+  /** Extra vision for units of these movement types standing here (19-fog-of-war §2). */
+  readonly visionBonus?: { readonly movementTypes: readonly MovementType[]; readonly add: number };
 }
 
 const _ = null;
@@ -66,13 +73,18 @@ export const TERRAIN = {
   plains: { name: "Plains", defenseStars: 1, moveCost: costs(1, 1, 2, 1, 1, _, _) },
   road: { name: "Road", defenseStars: 0, moveCost: costs(1, 1, 1, 1, 1, _, _) },
   bridge: { name: "Bridge", defenseStars: 0, moveCost: costs(1, 1, 1, 1, 1, _, _) },
-  forest: { name: "Forest", defenseStars: 2, moveCost: costs(1, 1, 3, 2, 1, _, _) },
-  hills: { name: "Hills", defenseStars: 4, moveCost: costs(2, 1, _, _, 1, _, _) },
+  forest: { name: "Forest", defenseStars: 2, moveCost: costs(1, 1, 3, 2, 1, _, _), hidesUnits: true },
+  hills: {
+    name: "Hills",
+    defenseStars: 4,
+    moveCost: costs(2, 1, _, _, 1, _, _),
+    visionBonus: { movementTypes: ["foot", "heavyFoot"], add: 3 },
+  },
   river: { name: "River", defenseStars: 0, moveCost: costs(2, 1, _, _, 1, _, _) },
-  bocage: { name: "Bocage", defenseStars: 3, moveCost: costs(1, 1, _, 3, 1, _, _) },
+  bocage: { name: "Bocage", defenseStars: 3, moveCost: costs(1, 1, _, 3, 1, _, _), hidesUnits: true },
   sea: { name: "Sea", defenseStars: 0, moveCost: costs(_, _, _, _, 1, 1, 1) },
   beach: { name: "Beach", defenseStars: 0, moveCost: costs(1, 1, 1, 1, 1, _, 1) },
-  reef: { name: "Reef", defenseStars: 1, moveCost: costs(_, _, _, _, 1, 2, 2) },
+  reef: { name: "Reef", defenseStars: 1, moveCost: costs(_, _, _, _, 1, 2, 2), hidesUnits: true },
   city: { name: "City", defenseStars: 3, moveCost: LAND_PROPERTY, property: { builds: null, repairs: "land" } },
   factory: { name: "Factory", defenseStars: 3, moveCost: LAND_PROPERTY, property: { builds: "land", repairs: "land" } },
   airfield: { name: "Airfield", defenseStars: 3, moveCost: LAND_PROPERTY, property: { builds: "air", repairs: "air" } },
@@ -100,7 +112,7 @@ export const TERRAIN = {
     rebuild: { points: 20, becomes: "majorBridge" },
   },
   // 02-terrain §4b: desert terrain for El Alamein. A Minefield has the Obstacle's rules; a Ridge has
-  // Forest's numbers; the Salt Marsh (the Qattara Depression) is impassable to every land unit.
+  // Forest's numbers but doesn't hide units (19-fog-of-war §3); the Salt Marsh (the Qattara Depression) is impassable to every land unit.
   minefield: {
     name: "Minefield",
     defenseStars: 0,

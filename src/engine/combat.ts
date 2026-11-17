@@ -14,6 +14,7 @@ import { moveDestinations, tileIndex, tilePoint } from "./movement";
 import { nextInt, type RngState } from "./rng";
 import { displayHp, fortAt, unitAt, type FortificationState, type GameState, type Unit } from "./state";
 import * as stats from "./stats";
+import { isHiddenFrom } from "./visibility";
 
 export const MAX_LUCK = 9;
 
@@ -124,19 +125,25 @@ export function targetProblem(state: GameState, attacker: Unit, defender: Unit, 
 /**
  * Why the attacker can't hit a fortification on this tile, or null if it can. Pass the state with
  * the attacker already moved, since a unit can step off a bunker and then shell it (03-combat §4).
+ * `view` is the state its player gave the order from: a unit inside that they couldn't see then
+ * doesn't stop the shot (19-fog-of-war §5).
  */
-export function fortTargetProblem(state: GameState, attacker: Unit, pos: Point, moved: boolean): string | null {
+export function fortTargetProblem(state: GameState, attacker: Unit, pos: Point, moved: boolean, view: GameState = state): string | null {
   if (!fortAt(state, pos)) return "there is no fortification there";
-  if (unitAt(state, pos)) return "it's occupied, so attack the unit instead";
+  const occupant = unitAt(state, pos);
+  if (occupant && !isHiddenFrom(view, occupant, attacker.owner)) return "it's occupied, so attack the unit instead";
   const problem = rangeProblem(state, attacker, pos, moved);
   if (problem) return problem;
   if (!chooseWeapon(attacker, "fort")) return "no usable weapon against fortifications";
   return null;
 }
 
-/** Empty fortifications and obstacles this attacker can hit. Pass the state with the attacker moved. */
-export function fortTargets(state: GameState, attacker: Unit, moved: boolean): Point[] {
-  return state.fortifications.map((f) => f.pos).filter((pos) => fortTargetProblem(state, attacker, pos, moved) === null);
+/**
+ * Fortifications and obstacles this attacker can hit, empty as far as its player can see. Pass the
+ * state with the attacker moved, and the state the order is given from as `view`.
+ */
+export function fortTargets(state: GameState, attacker: Unit, moved: boolean, view: GameState = state): Point[] {
+  return state.fortifications.map((f) => f.pos).filter((pos) => fortTargetProblem(state, attacker, pos, moved, view) === null);
 }
 
 /** Enemy units this attacker can hit from where it stands. */

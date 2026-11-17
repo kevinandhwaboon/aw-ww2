@@ -152,7 +152,7 @@ export class MapPlayback {
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
       }
       if (event.type === "unitAmbushed") {
-        // The submarine it ran into comes into view (05-supply-transport §9).
+        // The hidden unit it ran into comes into view (05-supply-transport §9, 19-fog-of-war §5).
         await this.floatLabel(event.pos, "AMBUSH!", packColor("labelWarning"));
       }
       if (event.type === "unitDived" || event.type === "unitSurfaced") {
@@ -230,7 +230,8 @@ export class MapPlayback {
   private async playCombat(event: Extract<GameEvent, { type: "combat" }>): Promise<void> {
     const { attacker, defender, attack, counter } = event;
     const plan = planCombat(this.state, event);
-    if (this.battle) {
+    // A unit firing from out of sight stays hidden, so its shot plays on the map (19-fog-of-war §6).
+    if (this.battle && this.unitSprites.has(attacker.unitId)) {
       await this.battle.play(plan);
       const lost = [attacker, defender].filter((u) => u.destroyed).map((u) => this.explode({ pos: u.pos, unitId: u.unitId }));
       await Promise.all(lost);
