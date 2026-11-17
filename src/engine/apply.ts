@@ -174,9 +174,13 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
       const transport = current.units.find((u) => u.id === unitId) ?? moved;
       const passenger = transport.cargo.find((c) => c.id === passengerId);
       if (!passenger) return reject("cannotUnload", `Unit ${passengerId} isn't aboard`);
-      if (!unloadTiles(current, transport, passenger).some((p) => p.x === to.x && p.y === to.y)) {
+      if (!unloadTiles(current, transport, passenger, state).some((p) => p.x === to.x && p.y === to.y)) {
         return reject("cannotUnload", `Can't unload onto (${to.x}, ${to.y})`);
       }
+      // An enemy there its player couldn't see: the passenger stays aboard, and the transport's
+      // turn is over (19-fog-of-war §5). One already unloaded stays unloaded.
+      const hidden = unitAt(current, to);
+      if (hidden) return { ok: true, state: current, events: [...events, { type: "unitAmbushed", unitId, by: hidden.id, pos: to }] };
       const unloaded = applyUnload(current, transport, passenger, to);
       current = unloaded.state;
       events.push(unloaded.event);
@@ -195,7 +199,7 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
   }
 
   if (action.type === "attackFort") {
-    const problem = fortTargetProblem(afterMove, moved, action.target, path.length > 0);
+    const problem = fortTargetProblem(afterMove, moved, action.target, path.length > 0, state);
     if (problem) return reject("invalidTarget", `Can't attack there: ${problem}`);
     const attacked = resolveFortAttack(afterMove, moved, action.target);
     return { ok: true, state: attacked.state, events: [...events, attacked.event] };
@@ -210,7 +214,7 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
 }
 
 /**
- * The unit ran into a submarine it couldn't see (05-supply-transport §9): it stops on the last tile
+ * The unit ran into an enemy it couldn't see (05-supply-transport §9, 19-fog-of-war §5): it stops on the last tile
  * it could, burns fuel for what it moved, and its turn is over whatever it was ordered to do.
  */
 function ambushed(state: GameState, unit: Unit, path: readonly Point[], by: Unit): ApplyResult {

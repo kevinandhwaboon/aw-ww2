@@ -33,7 +33,7 @@ The two goals are equally weighted:
 | **2: Systems** | Air and naval units, transports and amphibious unloading, modifier layer (CO hooks), scenario-defined victory conditions, the pluggable AI interface and a first basic AI |
 | **3: Content and polish** | Commanders, battle cutscene art (a code-drawn version exists since 2026-11-07), more scenarios, better art, mobile phone layout |
 | **4: Normandy theater** | Full Normandy + southeastern England theater map and scenario |
-| **Later / maybe** | Fog of war, save/load, campaign mode, custom community AIs, online multiplayer |
+| **Later / maybe** | Save/load, campaign mode, custom community AIs, online multiplayer. (Fog of war moved in on 2026-11-17 as an option: 19-fog-of-war) |
 
 The Normandy theater is the north star, but it's designed and built **last**, after the core gameplay is proven on small maps.
 
@@ -50,8 +50,9 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 - Player vs. player hot-seat (same device, taking turns), as the MVP
 - Player vs. AI (post-MVP, pluggable)
 
+- Fog of war, as an option on the new-game screen (19-fog-of-war, since 2026-11-17)
+
 **Out for now:**
-- Fog of war (may return later)
 - Online multiplayer
 - Save/load (the architecture should make it easy to add later)
 - Battle cutscene (deferred; see section 13)
@@ -233,6 +234,7 @@ UI falls into four categories:
 | 16-sound.md | **v0 built with placeholder sounds**: what makes a sound, licensing (CC0 or CC-BY with credits), sounds in art packs, the sound level; real sounds still to pick |
 | 17-scenarios-market-garden.md | **Built (v0)**: Market Garden, 32 × 44, airborne drops and bridges that can be blown and rebuilt (02-terrain §4a), the US and the UK as two Allied players against Germany |
 | 18-scenarios-north-africa.md | **Built (v0)**: Second El Alamein, 36 × 32, the UK against Germany and Italy through two minefield belts, a desert art season, and Minefield, Ridge and Salt Marsh terrain (02-terrain §4b) |
+| 19-fog-of-war.md | **v0 decided**: optional fog following the original's rules; Forest, Bocage and Reef hide units; rain later |
 
 ## 18. Open questions
 
@@ -400,3 +402,4 @@ UI falls into four categories:
 | 2026-11-16 | At the developer's request, **Halftracks no longer resupply ships**, only land units (05-supply-transport §3, §7): a ship refuels and rearms at an owned port or next to a friendly Supply Ship. And **ship fuel is rescaled to the real ships' endurance** (01-units §8a): the days a ship can sail at full speed on a full tank follow the square root of its real endurance at cruising speed, so the order and gaps between classes are kept but small craft stay usable. Battleship 80 (was 99), Carrier 85 (99), Submarine 90 (80), Destroyer 65 (80), Landing Craft 35 (70), Torpedo Boat 20 (50); the Supply Ship keeps 99. Daily burns are unchanged |
 | 2026-11-16 | At the developer's request, **ships no longer sink when they run out of fuel** (05-supply-transport §7), a departure from the original: like a land unit, a ship at 0 fuel is stranded where it is, unable to move until a port or Supply Ship refuels it, but can still attack, launch aircraft or resupply. A submerged submarine that runs dry surfaces and can't dive again until refuelled (§9). Aircraft still crash. And **Supply Ships carry 5 supplies** (05-supply-transport §3b), kept as their ammo count: each resupply (a start-of-turn round that tops anyone up, or a Supply action) spends one, however many units it refills; only a port refills them, never another Supply Ship, so two can't keep each other and their fleet supplied forever. Repairs, paid in funds, don't need supplies. The tile info shows "Supplies", and the ammo can warns at 2 or fewer. The AI sends an empty Supply Ship back to port and doesn't count on one for its ships (09-ai §4f) |
 | 2026-11-16 | At the developer's request, **a new game is two screens, each usable from the keyboard alone** (06-commanders §5): the map, then players and commanders with the options and Start. Menus are designed for keyboard first; the mouse is a convenience. On the players screen Left and Right change the commander in focus, and X goes back to the maps keeping the choices. Replaces the single map select screen, where the commander choice was awkward to reach without a mouse |
+| 2026-11-17 | At the developer's request, **fog of war** (19-fog-of-war), an option on the new-game screen (off by default), not a scenario setting. The original's rules: each side sees within its units' vision, counted in steps, plus its own properties; foot soldiers on Hills +3 vision; Forest, **Bocage** (hedgerows, made for ambushes) and Reef hide units from anyone not next to them; **Ridge doesn't hide** (low, open, raised ground); aircraft never hide. Running into a hidden unit is an ambush for every unit, and so is unloading onto one. Orders are judged by what the player saw when giving them, so a unit hidden in a Forest must be spotted by one unit before another can attack it (differs from the original). Units firing from the fog stay hidden. With two or more humans the pass-the-device screen is always used; Undo is cleared by any move that brings a tile into sight. Rain is left for later |

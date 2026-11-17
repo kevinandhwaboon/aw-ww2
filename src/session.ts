@@ -8,7 +8,7 @@ import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
 import { createGame, type GameSetup } from "./engine/setup";
 import { unitAt, type GameState, type PlayerId } from "./engine/state";
-import { eventsSeenBy, hiddenUnitIds, isHiddenFrom, stateSeenBy } from "./engine/visibility";
+import { eventsSeenBy, revealsAnything, stateSeenBy, tileInSight, tilesInSight } from "./engine/visibility";
 import { packColor, setGameNations } from "./game/artPack";
 import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
@@ -184,7 +184,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     const onLeft = scene.tileInLeftHalf(cursor);
     hud.update(seen(state), onLeft);
     // While an aircraft is out on its Carrier being launched, the panel describes it.
-    tileInfoPanel.show(scene.shownState(), cursor, onLeft);
+    tileInfoPanel.show(scene.shownState(), cursor, onLeft, viewer !== null && !tileInSight(state, cursor, viewer));
     unitPanel?.show(state, unitAt(seen(state), cursor));
     refreshCargoPeek();
   }
@@ -207,15 +207,14 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     }
     const attacked = command.type === "move" && (command.action.type === "attack" || command.action.type === "attackFort");
     const watching = viewer;
-    // A hidden submarine coming into view is news an Undo mustn't let anyone take back.
-    const spotted = watching !== null && [...hiddenUnitIds(state, watching)].some((id) => {
-      const unit = result.state.units.find((u) => u.id === id);
-      return unit !== undefined && !isHiddenFrom(result.state, unit, watching);
-    });
+    // A tile coming into sight or a hidden unit coming into view is news an Undo mustn't let anyone
+    // take back (19-fog-of-war §7).
+    const spotted = watching !== null && revealsAnything(state, result.state, watching);
     const revealsInformation = command.type === "endTurn" || attacked || spotted;
     history = revealsInformation || result.state.result ? [] : [...history, state];
-    // Only what the viewer could see plays out: a hidden submarine's moves don't (05-supply-transport §9).
-    const shown = watching === null ? { before: state, events: result.events, revealed: [] } : eventsSeenBy(state, result.events, watching);
+    // Only what the viewer could see plays out (19-fog-of-war §7, 05-supply-transport §9).
+    const shown =
+      watching === null ? { before: state, events: result.events, revealed: [] } : eventsSeenBy(state, result.state, result.events, watching);
     if (shown.revealed.length > 0) scene.setState(shown.before);
     try {
       await scene.playEvents(shown.events);
@@ -241,8 +240,9 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
       scene.setCursor(turnStartTile(state, player.id));
       const color = playerColors(player.id)[0];
       sounds.play("turnStart");
-      // The pass-the-device screen only matters between two people (09-ai §5).
-      if (passDevice && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
+      // The pass-the-device screen only matters between two people (09-ai §5). With fog of war it's
+      // always used, so nobody sees the other's view (19-fog-of-war §7).
+      if ((passDevice || state.settings.fogOfWar) && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
     }
     render();
@@ -301,6 +301,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
 
   function render(): void {
     scene.setState(seen(state));
+    scene.setFog(viewer === null ? null : tilesInSight(state, viewer));
     debugPanel?.update(state);
     showCursorInfo();
   }

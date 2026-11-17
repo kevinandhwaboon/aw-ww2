@@ -68,7 +68,7 @@ All numbers are starting points for balancing.
 
 ### What the merge dropped
 
-From the first roster of 14: cheaper foot movement on Hills and Rivers, the Halftrack defense and Assault Infantry bonuses, the Rocket Artillery bonus, city defense, foot soldiers' bonus against vehicles with the faster Transport Aircraft, and every vision bonus. Vision does nothing until the game has fog of war (00-master-design §5), so no commander is built on it. Calloway is the only naval specialist.
+From the first roster of 14: cheaper foot movement on Hills and Rivers, the Halftrack defense and Assault Infantry bonuses, the Rocket Artillery bonus, city defense, foot soldiers' bonus against vehicles with the faster Transport Aircraft, and every vision bonus. Vision did nothing until fog of war arrived as an option on 2026-11-17 (19-fog-of-war), so no commander is built on it yet. Calloway is the only naval specialist.
 
 ## 4. Portraits
 

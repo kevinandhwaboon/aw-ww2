@@ -34,13 +34,13 @@ Movement cost is movement points spent to **enter** the tile. `—` = impassable
 | Plains | 1 | 1 | 1 | 2 | 1 | 1 | — | — | |
 | Road | 0 | 1 | 1 | 1 | 1 | 1 | — | — | |
 | Bridge | 0 | 1 | 1 | 1 | 1 | 1 | — | — | Over river; same as road |
-| Forest | 2 | 1 | 1 | 3 | 2 | 1 | — | — | |
-| Hills | 4 | 2 | 1 | — | — | 1 | — | — | Original's mountains, renamed for WW2 Europe |
+| Forest | 2 | 1 | 1 | 3 | 2 | 1 | — | — | Hides units in fog of war (19-fog-of-war §3) |
+| Hills | 4 | 2 | 1 | — | — | 1 | — | — | Original's mountains, renamed for WW2 Europe. Foot soldiers here get +3 vision (19-fog-of-war §2) |
 | River | 0 | 2 | 1 | — | — | 1 | — | — | |
-| Bocage **(new)** | 3 | 1 | 1 | — | 3 | 1 | — | — | Hedgerow country. Great cover, blocks wheels, slows tracks |
+| Bocage **(new)** | 3 | 1 | 1 | — | 3 | 1 | — | — | Hedgerow country. Great cover, blocks wheels, slows tracks. Hides units in fog of war |
 | Sea | 0 | — | — | — | — | 1 | 1 | 1 | |
 | Beach | 0 | 1 | 1 | 1 | 1 | 1 | — | 1 | Original's shoal. Landing Craft must stand here, or on a Port, to load or unload (05-supply-transport §8) |
-| Reef | 1 | — | — | — | — | 1 | 2 | 2 | |
+| Reef | 1 | — | — | — | — | 1 | 2 | 2 | Hides ships in fog of war |
 | City | 3 | 1 | 1 | 1 | 1 | 1 | — | — | Property |
 | Factory | 3 | 1 | 1 | 1 | 1 | 1 | — | — | Property; builds land units |
 | Airfield | 3 | 1 | 1 | 1 | 1 | 1 | — | — | Property; builds air units (phase 2) |
@@ -110,7 +110,7 @@ Following the original:
 - **Friendly units** can be passed through, but a unit can't end its move on a friendly unit unless it is loading into a transport or joining (04-economy, 05-supply-transport).
 - A unit can always choose not to move (move 0) and still act.
 - **One unit per tile, of any category.** An aircraft over a tile blocks a ground unit from ending there, and the reverse. Load and Join are the only exceptions (05-supply-transport §5).
-- Movement is all-or-nothing within the turn: a unit moves once, then acts or waits. (Fog-of-war ambush interruptions are not relevant while fog of war is out.)
+- Movement is all-or-nothing within the turn: a unit moves once, then acts or waits. Running into an enemy hidden by fog of war is an ambush: the move stops short and the turn is over (19-fog-of-war §5).
 
 ## 6. Map edges and data
 

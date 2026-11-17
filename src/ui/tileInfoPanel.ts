@@ -6,11 +6,13 @@ import { el, stars } from "./dom";
 
 /** The terrain under the cursor and its defense, and the unit there if any. Stays away from the cursor. */
 /** `cursorOnLeft`: the cursor is in the left half of the screen, so the panel goes right. */
-export function createTileInfo(root: HTMLElement): { show: (state: GameState, tile: Point, cursorOnLeft: boolean) => void } {
+/** `inFog`: the tile is out of the viewer's sight (19-fog-of-war §7). */
+export function createTileInfo(root: HTMLElement): { show: (state: GameState, tile: Point, cursorOnLeft: boolean, inFog: boolean) => void } {
   const panel = el("div", "panel tile-info");
   const name = el("div", "panel-title");
   const defense = el("div", "tile-defense");
   const objectiveLine = el("div", "tile-objective", "★ Objective");
+  const fogLine = el("div", "tile-fog", "Fog: out of sight");
   const captureLine = el("div", "tile-capture");
   const bridgeLine = el("div", "tile-capture");
   const unitLine = el("div", "tile-unit");
@@ -19,12 +21,13 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   const ammoText = el("span");
   supplyLine.append(fuelText, ammoText);
   const cargoLine = el("div", "tile-cargo");
-  panel.append(name, defense, objectiveLine, captureLine, bridgeLine, unitLine, supplyLine, cargoLine);
+  panel.append(name, defense, fogLine, objectiveLine, captureLine, bridgeLine, unitLine, supplyLine, cargoLine);
   root.append(panel);
 
   return {
-    show(state, tile, cursorOnLeft) {
+    show(state, tile, cursorOnLeft, inFog) {
       const info = tileInfo(state, tile);
+      fogLine.hidden = !inFog;
       name.textContent = info.terrain;
       defense.textContent = info.stars > 0 ? `Defense ${stars(info.stars)}` : "No defense";
       unitLine.hidden = !info.unit;

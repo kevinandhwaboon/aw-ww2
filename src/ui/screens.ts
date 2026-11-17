@@ -15,6 +15,8 @@ export { defaultComputerPlayers };
 export interface GameOptions {
   /** Random variation in damage (03-combat §3). */
   readonly luck: boolean;
+  /** Each side sees only what its units see (19-fog-of-war). */
+  readonly fog: boolean;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
   /** Attacks play as split-screen battle scenes (08-art-pipeline §18). */
@@ -133,11 +135,13 @@ export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario
   });
 
   const luck = checkbox("Luck in combat", defaults.luck);
+  const fog = checkbox("Fog of war", defaults.fog);
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
   const battleScenes = checkbox("Battle scenes", defaults.battleScenes);
   const easy = checkbox("Easy computer opponent", defaults.level === "easy");
   const options = (): GameOptions => ({
     luck: luck.input.checked,
+    fog: fog.input.checked,
     passDevice: passDevice.input.checked,
     battleScenes: battleScenes.input.checked,
     computer: computerBoxes.flatMap((box, id) => (box.checked ? [id] : [])),
@@ -157,6 +161,7 @@ export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario
     easy.row,
     el("div", "panel-subtitle", "Options"),
     luck.row,
+    fog.row,
     passDevice.row,
     battleScenes.row,
     start,
@@ -170,6 +175,7 @@ export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario
       ...commanderPickers.flatMap((picker, id) => [picker.button, ...(computerBoxes[id] ? [computerBoxes[id]] : [])]),
       easy.input,
       luck.input,
+      fog.input,
       passDevice.input,
       battleScenes.input,
       start,

@@ -209,7 +209,7 @@ Daily burns are unchanged: 2 for Destroyers and Torpedo Boats, 1 for the rest (5
 - **Tank ladder:** Light (6k, fast, scouting armor) → Medium (8k, the workhorse, like the original's basic tank) → Heavy (15k, slow, thirsty, like the original's medium tank). The jump to Heavy is deliberately steep so it stays rare.
 - **Tank Destroyer** costs a bit more than a Medium Tank and beats it, but has no machine gun and weaker defense, so cheap Infantry or Mortars can wear it down.
 - **Mortar Team** costs the same as Assault Infantry: half the price of Artillery, with shorter range, little ammo and foot movement, but it can go where vehicles can't and ride in transports.
-- **Recon** keeps the original's high movement and vision; it's the scouting unit for later fog of war.
+- **Recon** keeps the original's high movement and vision; it's the scouting unit for fog of war (19-fog-of-war).
 - **Halftrack** stays unarmed for now; it is a transport and supply unit, not a fighter.
 
 ## 9. Unit stat schema (for data files)

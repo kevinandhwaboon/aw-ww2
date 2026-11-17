@@ -134,6 +134,11 @@ body {
   font-weight: bold;
 }
 
+.tile-fog {
+  font-size: 13px;
+  font-style: italic;
+}
+
 .panel-title {
   font-weight: bold;
   text-transform: uppercase;

@@ -4,6 +4,7 @@
 //   ?map=bastogne        skips the menus and starts that scenario
 //   ?seed=123            fixes the luck rolls
 //   ?luck=off            turns luck off
+//   ?fog=on              turns fog of war on (19-fog-of-war)
 //   ?handoff=off         skips the pass-the-device screen
 //   ?battle=off          plays attacks on the map instead of as battle scenes
 //   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
@@ -36,6 +37,7 @@ export interface UrlOptions {
   /** A fixed seed for the luck rolls; null picks a random one. */
   readonly seed: number | null;
   readonly luck: boolean;
+  readonly fog: boolean;
   readonly passDevice: boolean;
   readonly battleScenes: boolean;
   /** Show the battle preview page instead of a game. */
@@ -64,6 +66,7 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
     map: params.get("map"),
     seed: seed !== "" && Number.isFinite(Number(seed)) ? Number(seed) : null,
     luck: params.get("luck") !== "off",
+    fog: params.get("fog") === "on",
     passDevice: params.get("handoff") !== "off",
     battleScenes: params.get("battle") !== "off",
     battleDemo: params.get("battle") === "demo",

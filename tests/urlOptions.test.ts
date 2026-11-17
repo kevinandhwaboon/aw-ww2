@@ -24,6 +24,7 @@ describe("URL options (11-tech-setup §7)", () => {
       map: null,
       seed: null,
       luck: true,
+      fog: false,
       passDevice: true,
       battleScenes: true,
       battleDemo: false,
@@ -37,6 +38,11 @@ describe("URL options (11-tech-setup §7)", () => {
       nations: [],
       commanders: [],
     });
+  });
+
+  it("?fog=on starts with fog of war on; anything else leaves it off (19-fog-of-war §1)", () => {
+    expect(options("?fog=on").fog).toBe(true);
+    expect(options("?fog=yes").fog).toBe(false);
   });
 
   it("?commanders= gives each player a commander, in player order; blanks and unknown names mean no commander (06-commanders §5)", () => {

@@ -5,6 +5,7 @@
 //   npm run selfplay -- --maps midway,kursk --seeds 1-20 --days 40
 //   npm run selfplay -- --players random --deep        random legal play, trying every legal command each turn
 //   npm run selfplay -- --commanders                   every player under a commander of their side, picked by seed (06-commanders)
+//   npm run selfplay -- --fog                          with fog of war on (19-fog-of-war)
 //
 // Exits with 1 if any game had a problem, so a script or an agent can loop on it.
 
@@ -25,6 +26,7 @@ const { values: args } = parseArgs({
     players: { type: "string", default: "greedy" },
     deep: { type: "boolean", default: false },
     commanders: { type: "boolean", default: false },
+    fog: { type: "boolean", default: false },
   },
 });
 
@@ -37,7 +39,7 @@ function seedList(text) {
 const lastDay = Number(args.days);
 const seeds = seedList(args.seeds);
 if (!Number.isInteger(lastDay) || lastDay < 1 || seeds.length === 0 || seeds.some((s) => !Number.isInteger(s))) {
-  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders]");
+  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders] [--fog]");
   process.exit(2);
 }
 
@@ -68,7 +70,7 @@ try {
   });
 
   rmSync(failuresDir, { recursive: true, force: true });
-  console.log(`${args.players} vs ${args.players}, ${seeds.length} seed(s), up to day ${lastDay}${args.commanders ? ", with commanders" : ""}${args.deep ? ", trying every legal command each turn" : ""}\n`);
+  console.log(`${args.players} vs ${args.players}, ${seeds.length} seed(s), up to day ${lastDay}${args.commanders ? ", with commanders" : ""}${args.fog ? ", fog of war" : ""}${args.deep ? ", trying every legal command each turn" : ""}\n`);
   for (const scenario of scenarios) {
     const wins = new Map();
     const endDays = [];
@@ -76,7 +78,8 @@ try {
     let problems = 0;
     const t0 = performance.now();
     for (const seed of seeds) {
-      const start = createGame({ ...(args.commanders ? withCommanders(scenario.setup, seed) : scenario.setup), seed });
+      const setup = args.commanders ? withCommanders(scenario.setup, seed) : scenario.setup;
+      const start = createGame({ ...setup, seed, ...(args.fog ? { settings: { ...setup.settings, fogOfWar: true } } : {}) });
       const report = await selfPlay(start, start.players.map((p) => makeAi(seed, p.id)), lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
       if (report.state.result) {
@@ -89,7 +92,7 @@ try {
         failed++;
         mkdirSync(failuresDir, { recursive: true });
         const file = join(failuresDir, `${scenario.id}-${args.players}-seed${seed}.json`);
-        writeFileSync(file, JSON.stringify({ map: scenario.id, seed, players: args.players, commanders: args.commanders ? start.players.map((p) => p.commander) : null, lastDay, problems: report.problems, commands: report.commands }, null, 1));
+        writeFileSync(file, JSON.stringify({ map: scenario.id, seed, players: args.players, commanders: args.commanders ? start.players.map((p) => p.commander) : null, fog: args.fog, lastDay, problems: report.problems, commands: report.commands }, null, 1));
         const first = report.problems[0];
         console.log(`  PROBLEM ${scenario.id} seed ${seed}: [${first.kind}] day ${first.day}, player ${first.player}, command ${first.commandIndex}: ${first.text}`);
         if (report.problems.length > 1) console.log(`    and ${report.problems.length - 1} more, in ${file}`);
