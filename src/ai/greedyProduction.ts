@@ -50,7 +50,11 @@ export abstract class ProductionBrain extends LandingBrain {
       if (this.supplyShipWanted(property.pos)) return { type: "build", unitType: "supplyShip", pos: property.pos };
     }
 
-    // Everything else is chosen among armed units; transports and Supply Ships only by the rules above.
+    // A scout in fog of war (09-ai §4g), at the first factory that can build one.
+    const scout = this.scoutWanted();
+    if (scout) return scout;
+
+    // Everything else is chosen among armed units; transports, Supply Ships and scouts only by the rules above.
     const sites = this.state.properties
       .map((p) => ({ pos: p.pos, options: buildOptions(this.state, p.pos).filter((o) => defOf(o.type).range !== null && buildProblem(this.state, o.type, p.pos) === null) }))
       .filter((s) => s.options.length > 0);
@@ -135,6 +139,25 @@ export abstract class ProductionBrain extends LandingBrain {
    * Whether this free port should build a Supply Ship now (09-ai §4f): one for every few warships we
    * have, up to a few, when we can afford it here.
    */
+  /**
+   * In fog of war, a scout when we have fewer than `scoutsInFog` (09-ai §4g): the cheapest unit
+   * that can scout, at the first site that can build it. Not while we're short of the minimum of
+   * capture-capable units, which come first.
+   */
+  protected scoutWanted(): Command | null {
+    if (!this.state.settings.fogOfWar || this.w.scoutsInFog <= 0) return null;
+    const have = this.state.units.flatMap((u) => (u.owner === this.me ? [u, ...u.cargo] : [])).filter((u) => this.isScoutType(u.type)).length;
+    if (have >= this.w.scoutsInFog || this.capturersNeeded() === "belowMinimum") return null;
+    for (const property of this.state.properties) {
+      const options = buildOptions(this.state, property.pos)
+        .filter((o) => this.isScoutType(o.type) && buildProblem(this.state, o.type, property.pos) === null)
+        .sort((a, b) => a.cost - b.cost);
+      const cheapest = options[0];
+      if (cheapest) return { type: "build", unitType: cheapest.type, pos: property.pos };
+    }
+    return null;
+  }
+
   protected supplyShipWanted(site: Point): boolean {
     if (propertyDefAt(this.state, site)?.builds !== "naval" || buildProblem(this.state, "supplyShip", site) !== null) return false;
     if (this.w.keepSitesForService && this.neededForService(site)) return false;

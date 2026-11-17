@@ -26,6 +26,14 @@ export interface GreedyWeights {
    * the enemy's properties instead of waiting.
    */
   readonly patrolInFog: boolean;
+  /**
+   * Fog of war (09-ai §4g): how many scouts we keep: land units seeing at least `scoutMinVision`
+   * (the Recon), which drive to the edge of what we can see on the enemy's side. Built if we have
+   * fewer.
+   */
+  readonly scoutsInFog: number;
+  readonly scoutMinVision: number;
+
   /** Value of each movement point closer to the unit's goal. */
   readonly advancePerStep: number;
   /** The same while retreating for repair or supplies. */
@@ -204,6 +212,8 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   rebuildBridge: 3000,
   memoryDays: 1,
   patrolInFog: true,
+  scoutsInFog: 1,
+  scoutMinVision: 4,
 };
 
 /** The levels the player can choose for the computer (09-ai §4c). */
@@ -213,7 +223,8 @@ export type AiLevel = "easy" | "normal";
  * Easy is the same AI, by the same rules and with no handicap: it doesn't coordinate (no focus fire,
  * no look ahead, no waves, escorts or garrison), doesn't weigh nearby threats more when building,
  * builds the best-scoring unit over and over, leaves objectives unguarded, counts only half of
- * the damage it will take back when it attacks, and in fog of war remembers nothing it can't see.
+ * the damage it will take back when it attacks, and in fog of war remembers nothing it can't see
+ * and keeps no scout.
  */
 export const EASY_WEIGHTS: GreedyWeights = {
   ...GREEDY_WEIGHTS,
@@ -231,8 +242,9 @@ export const EASY_WEIGHTS: GreedyWeights = {
   maxIndirectShare: 1,
   capturerShare: 0,
   guardObjectives: false,
-  // In fog it forgets an enemy as soon as it can't see it (09-ai §4g).
+  // In fog it forgets an enemy as soon as it can't see it, and keeps no scout (09-ai §4g).
   memoryDays: 0,
+  scoutsInFog: 0,
 };
 
 export function weightsFor(level: AiLevel): GreedyWeights {

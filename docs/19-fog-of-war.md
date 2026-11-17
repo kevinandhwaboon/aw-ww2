@@ -67,11 +67,11 @@ A unit that attacks from a tile the defender's side can't see **stays hidden**, 
 ## 8. The computer
 
 - It sees exactly what its side sees (09-ai §3), no more.
-- Since 2026-11-17 the Greedy AI remembers enemies it saw for a day, and its aircraft and ships patrol toward the enemy's properties when there's nothing in sight (09-ai §4g). It doesn't scout on purpose yet, nor spot units hidden in Forests before attacking them.
+- Since 2026-11-17 the Greedy AI remembers enemies it saw for a day, and its aircraft and ships patrol toward the enemy's properties when there's nothing in sight (09-ai §4g). It keeps a Recon as a scout, building one if it has none, which drives to the edge of what its side can see. It doesn't deliberately spot units hidden in Forests for its other units: that was tried and made it play worse (09-ai §4g).
 
 ## 9. Later
 
 - **Rain**, which in the original's later games brings fog and cuts vision by 1 (12-weather).
 - Commanders with vision bonuses (06-commanders §3 dropped them while vision did nothing).
-- AI scouting, and spotting before attacking into hiding terrain (§8, 09-ai §4g).
+- AI spotting before attacking into hiding terrain, done in a way that helps (§8, 09-ai §4g).
 - Last-seen markers for enemy units (not in the original).

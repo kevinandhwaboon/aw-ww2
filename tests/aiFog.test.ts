@@ -8,6 +8,7 @@ import type { Command } from "../src/engine/commands";
 import type { Point } from "../src/engine/map";
 import type { GameSetup, UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
+import { tileInSight } from "../src/engine/visibility";
 import { makeGame } from "./helpers";
 
 // The Greedy AI in fog of war (09-ai §4g, 19-fog-of-war §8).
@@ -105,5 +106,46 @@ describe("patrols in fog of war (09-ai §4g)", () => {
   it("an armed aircraft with nothing in sight to go after heads for the enemy's properties, rather than waiting", () => {
     expect(destination(GREEDY_WEIGHTS)?.x).toBeGreaterThan(0);
     expect(destination({ ...GREEDY_WEIGHTS, patrolInFog: false })).toEqual(P(0, 0));
+  });
+});
+
+describe("scouting in fog of war (09-ai §4g)", () => {
+  // Player 0 has a Factory at x = 0 and Infantry enough for capturing; player 1 holds a City far east.
+  const game = (fogOfWar: boolean, units: UnitSetup[] = []) =>
+    makeGame(["f.....................C", "======================="], [u("infantry", 0, 1), u("infantry", 0, 2), u("infantry", 0, 3), u("infantry", 1, 22), ...units], {
+      propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(22, 0), owner: 1 }],
+      players: [
+        { name: "Allies", nation: "us", funds: 20000 },
+        { name: "Axis", nation: "germany", funds: 0 },
+      ],
+      settings: { luck: false, fogOfWar },
+    });
+  /** What the computer builds once its units have acted. */
+  const firstBuild = (state: GameState) => {
+    let current = state;
+    for (const unit of state.units.filter((x) => x.owner === 0)) current = must(current, { type: "move", unitId: unit.id, path: [], action: { type: "wait" } });
+    const command = chooseCommand(makeView(current).state);
+    return command.type === "build" ? command.unitType : null;
+  };
+
+  it("with no scout, it builds a Recon to scout with", () => {
+    expect(firstBuild(game(true))).toBe("recon");
+  });
+
+  it("with a scout already, or without fog, it builds as before", () => {
+    expect(firstBuild(game(true, [u("recon", 0, 4, 1)]))).not.toBe("recon");
+    expect(firstBuild(game(false))).not.toBe("recon");
+  });
+
+  it("the scout drives to the edge of what its side can see, toward the enemy", () => {
+    // The Recon at x = 4 on the road sees as far as x = 9 along it, and could drive 8 squares.
+    const state = game(true, [u("recon", 0, 4, 1)]);
+    const recon = state.units.find((x) => x.type === "recon");
+    const command = chooseCommand(makeView(state).state);
+    expect(command).toMatchObject({ type: "move", unitId: recon?.id });
+    const end = command.type === "move" ? command.path[command.path.length - 1] : undefined;
+    expect(end && tileInSight(state, end, 0)).toBe(false);
+    expect(end?.x).toBeGreaterThan(8);
+    expect(end?.x).toBeLessThan(12);
   });
 });

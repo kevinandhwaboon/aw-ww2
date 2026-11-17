@@ -79,11 +79,14 @@ class Brain extends ProductionBrain {
   private group(unit: Unit): number {
     if (defOf(unit.type).transport) return 3;
     const range = stats.attackRange(this.state, unit);
+    const ghosts = this.ghosts();
     if (range) {
       const direct = defOf(unit.type).canMoveAndFire;
       const reach = (direct ? movementBudget(this.state, unit) : 0) + range.max;
       // Indirect fire goes first, so targets are softened before direct-fire units close in (09-ai §4c).
-      if (this.enemies.some((e) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach)) return direct && this.w.indirectFirst ? 0.5 : 0;
+      // Only enemies it can see: one it only remembers can't be attacked until it's seen again (09-ai §4g).
+      const inReach = (e: Unit) => this.canHurt(unit.type, e) && distance(unit.pos, e.pos) <= reach && !ghosts.includes(e);
+      if (this.enemies.some(inReach)) return direct && this.w.indirectFirst ? 0.5 : 0;
     }
     if (defOf(unit.type).canCapture) {
       const reach = movementBudget(this.state, unit);
@@ -228,6 +231,13 @@ class Brain extends ProductionBrain {
       if (properties.length > 0) return this.advance(unit, properties, `capturable${unit.id}`);
     }
 
+    // In fog of war our scout drives to the edge of what we can see, on the enemy's side (09-ai §4g).
+    // It still takes a good shot on the way: attacks are scored against its move as for any unit.
+    if (this.scoutIds().has(unit.id)) {
+      const frontier = this.scoutTiles(unit);
+      if (frontier.length > 0) return this.advance(unit, frontier, `scout${unit.id}`);
+    }
+
     const targets = this.enemies.filter((e) => this.canHurt(unit.type, e));
     const range = stats.attackRange(this.state, unit);
     const convoy = this.escorts().get(unit.id);
@@ -313,6 +323,29 @@ class Brain extends ProductionBrain {
       }
     }
     return [...tiles.values()];
+  }
+
+  /**
+   * Where a scout heads (09-ai §4g): the tiles just out of sight, next to ones we can see, that it
+   * can enter and that are nearer the enemy's properties than it is now. Going there shows us
+   * what's beyond, so the edge moves on ahead of it.
+   */
+  private scoutTiles(unit: Unit): Point[] {
+    const { width, height } = this.state.map;
+    const theirs = this.enemyProperties();
+    const nearest = (p: Point) => theirs.reduce((best, q) => Math.min(best, distance(p, q)), Infinity);
+    const ahead = nearest(unit.pos);
+    const tiles: Point[] = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const p = { x, y };
+        if (tileInSight(this.state, p, this.me) || !this.neighbors(p).some((q) => tileInSight(this.state, q, this.me))) continue;
+        if (stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) === null) continue;
+        if (theirs.length > 0 && nearest(p) >= ahead) continue;
+        tiles.push(p);
+      }
+    }
+    return tiles;
   }
 
   protected advance(unit: Unit, goals: readonly Point[], key: string, offsets?: readonly number[]): Plan {
