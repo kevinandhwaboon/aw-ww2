@@ -25,6 +25,7 @@ describe("URL options (11-tech-setup §7)", () => {
       seed: null,
       luck: true,
       fog: false,
+      weather: null,
       passDevice: true,
       battleScenes: true,
       battleDemo: false,
@@ -43,6 +44,12 @@ describe("URL options (11-tech-setup §7)", () => {
   it("?fog=on starts with fog of war on; anything else leaves it off (19-fog-of-war §1)", () => {
     expect(options("?fog=on").fog).toBe(true);
     expect(options("?fog=yes").fog).toBe(false);
+  });
+
+  it("?weather= sets the weather for every day: clear, snow or rain; anything else keeps the scenario's (12-weather)", () => {
+    expect(options("?weather=rain").weather).toBe("rain");
+    expect(options("?weather=snow").weather).toBe("snow");
+    expect(options("?weather=hail").weather).toBeNull();
   });
 
   it("?commanders= gives each player a commander, in player order; blanks and unknown names mean no commander (06-commanders §5)", () => {

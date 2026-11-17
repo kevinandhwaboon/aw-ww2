@@ -9,6 +9,7 @@
 import {
   displayHp,
   distance,
+  fogToday,
   launchable,
   launchProblem,
   launchState,
@@ -257,7 +258,7 @@ class Brain extends ProductionBrain {
     // Nothing to shoot at: land units push on toward enemy properties; aircraft and ships wait,
     // except in fog of war, where an armed one goes looking near the enemy's properties (09-ai §4g).
     if (def.category === "land") return this.advance(unit, this.enemyProperties(), "enemyProperties");
-    if (range && this.state.settings.fogOfWar && this.w.patrolInFog) return this.advance(unit, this.patrolTiles(unit), `patrol:${unit.type}`);
+    if (range && fogToday(this.state) && this.w.patrolInFog) return this.advance(unit, this.patrolTiles(unit), `patrol:${unit.type}`);
     return IDLE;
   }
 

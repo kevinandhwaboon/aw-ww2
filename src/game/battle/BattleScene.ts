@@ -6,6 +6,7 @@ import Phaser from "phaser";
 import { packColorNumber } from "../artPack";
 import { SCENE } from "./backdrops";
 import { battleWeather } from "./colors";
+import { drawRainfall } from "./rainfall";
 import { drawSnowfall } from "./snowfall";
 import type { BattlePlan } from "./plan";
 import { BattleRenderer } from "./renderer";
@@ -131,17 +132,20 @@ export class BattleScene extends Phaser.Scene implements BattlePlayer {
     playing?.resolve();
   }
 
-  private drawSnowfall(t: number): void {
+  /** Snow or rain over the scene, while it's falling (12-weather §5). */
+  private drawWeather(t: number): void {
     const canvas = this.texture?.getSourceImage();
     const ctx = canvas instanceof HTMLCanvasElement ? canvas.getContext("2d") : null;
-    if (ctx) drawSnowfall(ctx, t);
+    if (!ctx) return;
+    if (battleWeather().snowing) drawSnowfall(ctx, t);
+    if (battleWeather().raining) drawRainfall(ctx, t);
   }
 
   private draw(): void {
     const playing = this.playing;
     if (!playing || !this.texture || !this.image || !this.dim) return;
     playing.renderer.render(playing.t);
-    if (battleWeather().snowing) this.drawSnowfall(playing.t);
+    this.drawWeather(playing.t);
     this.texture.refresh();
     // Fit the screen at a whole-number scale when it can, so battle pixels stay square.
     const { width, height } = this.scale;

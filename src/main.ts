@@ -40,6 +40,10 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
       players: withCommanders(withNations(scenario.setup.players, url.nations), options.commanders),
       seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
       settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog },
+      // ?weather= replaces the forecast for testing; the map keeps its season's art (12-weather).
+      ...(url.weather === null
+        ? {}
+        : { weather: { season: scenario.setup.weather?.season ?? "summer", forecast: [{ fromDay: 1, weather: url.weather }] } }),
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,

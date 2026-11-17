@@ -437,7 +437,9 @@ export class MapScene extends Phaser.Scene implements MapView {
     const layer = this.snowLayer;
     if (!layer) return;
     layer.clear();
-    if (weatherOn(this.state) !== "snow") return;
+    const today = weatherOn(this.state);
+    if (today === "rain") this.drawRain(layer, time);
+    if (today !== "snow") return;
     const view = this.cameras.main.worldView;
     const color = packColorNumber("snowfall");
     const shadow = packColorNumber("snowfallShadow");
@@ -455,6 +457,24 @@ export class MapScene extends Phaser.Scene implements MapView {
       layer.fillRect(view.x + x + size / 2, view.y + y + size, size, size);
       layer.fillStyle(color, 0.95);
       layer.fillRect(view.x + x, view.y + y, size, size);
+    }
+  }
+
+  /**
+   * Rain over the visible part of the map while it rains (12-weather §5): short slanted streaks,
+   * falling fast. Like the snow, each drop's place is a function of the time.
+   */
+  private drawRain(layer: Phaser.GameObjects.Graphics, time: number): void {
+    const view = this.cameras.main.worldView;
+    const drops = Math.round((view.width * view.height) / 700);
+    layer.fillStyle(packColorNumber("rainfall"), 0.8);
+    for (let i = 0; i < drops; i++) {
+      const seedX = ((i * 7919) % 1009) / 1009;
+      const seedY = ((i * 104729) % 997) / 997;
+      const fall = 0.12 + ((i * 31) % 7) * 0.01; // map pixels per millisecond
+      const y = (seedY * view.height + time * fall) % view.height;
+      const x = (((seedX * view.width - y * 0.25) % view.width) + view.width) % view.width;
+      for (let k = 0; k < 5; k++) layer.fillRect(view.x + x - k * 0.25, view.y + y - k, 1, 1);
     }
   }
 

@@ -70,6 +70,7 @@ export interface TeamShades {
 export interface BattleWeather {
   readonly season: Season;
   readonly snowing: boolean;
+  readonly raining: boolean;
 }
 
 /** On a winter map, snow-covered colors stand in for the summer ground and trees. */
@@ -96,14 +97,14 @@ const DESERT: Partial<Record<ColorKey, ColorKey>> = {
   battleSkyTop: "battleDesertSkyTop",
   battleSkyLow: "battleDesertSkyLow",
 };
-/** While it snows, the sky is overcast. */
-const SNOWING: Partial<Record<ColorKey, ColorKey>> = {
+/** While it snows or rains, the sky is overcast. */
+const OVERCAST: Partial<Record<ColorKey, ColorKey>> = {
   battleSkyTop: "battleOvercastTop",
   battleSkyLow: "battleOvercastLow",
   battleCloud: "battleOvercastLow",
 };
 
-let weather: BattleWeather = { season: "summer", snowing: false };
+let weather: BattleWeather = { season: "summer", snowing: false, raining: false };
 
 /** Sets the weather the next battle scenes are drawn in. Drawing only: no outcome depends on it. */
 export function setBattleWeather(next: BattleWeather): void {
@@ -117,7 +118,7 @@ export function battleWeather(): BattleWeather {
 /** Shorthand for battle colors from the art pack, in the current battle weather. */
 export const C = (key: ColorKey): string => {
   const season = weather.season === "winter" ? WINTER[key] : weather.season === "desert" ? DESERT[key] : undefined;
-  const sky = weather.snowing ? SNOWING[key] : undefined;
+  const sky = weather.snowing || weather.raining ? OVERCAST[key] : undefined;
   return packColor(sky ?? season ?? key);
 };
 

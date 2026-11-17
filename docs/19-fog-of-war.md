@@ -1,14 +1,14 @@
 # Topic Doc 19: Fog of War
 
-**Status:** v0 decided 2026-11-17 at the developer's request: an option on the map select screen, following the original game's rules (default rule) except where marked **(differs)**. Rain is left for later.
+**Status:** v0 decided 2026-11-17 at the developer's request: an option on the map select screen, following the original game's rules (default rule) except where marked **(differs)**. Rain brings fog for the day (12-weather §3a, since 2026-11-17).
 **Last updated:** 2026-11-17
-**Depends on:** 01-units §8 (vision stats), 02-terrain (hiding terrain), 05-supply-transport §9 (hidden submarines, ambush), 00-master-design §7 (modifier layer). **Feeds:** 09-ai (what the computer sees), 12-weather (rain, later).
+**Depends on:** 01-units §8 (vision stats), 02-terrain (hiding terrain), 05-supply-transport §9 (hidden submarines, ambush), 00-master-design §7 (modifier layer). **Feeds:** 09-ai (what the computer sees), 12-weather §3a (rain).
 
 ---
 
 ## 1. Principles
 
-1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. Scenario files don't set it. The choice is saved with the game (`settings.fogOfWar`).
+1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. Scenario files don't set it. The choice is saved with the game (`settings.fogOfWar`). **Rain** brings fog for that day even when the option is off (12-weather §3a).
 2. **Each side sees only what its own units see.** Allies on the same side share what they see.
 3. **The engine knows everything; players and the computer don't.** The screen and the AI both work from the game as their side sees it (09-ai rule 3: no cheating), the same mechanism hidden submarines already use (05-supply-transport §9).
 4. **Original's rules by default.** Vision is a plain count of steps, with no line of sight, as in the original.
@@ -60,7 +60,7 @@ A unit that attacks from a tile the defender's side can't see **stays hidden**, 
 - **Tiles out of sight are drawn darker** (the art pack's `fog` color laid over them). Terrain and property colors still show through.
 - The map is drawn for **the human whose turn it is**, as for submarines (05-supply-transport §9): during the computer's turn, for the last human who played; with only computers playing, and once the game is over, everything shows and there's no fog drawn.
 - **The enemy's moves play out only where they can be seen.** A unit coming out of the fog appears on the first tile in sight and walks from there; a unit walking into the fog walks to its last tile in sight and is gone. (A path that dips out of sight and back in shows the whole stretch between.) Something that happens entirely in the fog doesn't show at all.
-- **Hot-seat:** with fog on and two or more humans, the pass-the-device screen between turns is always used, whatever its own checkbox says, so nobody sees the other's view.
+- **Hot-seat:** with fog on, or rain anywhere in the forecast, and two or more humans, the pass-the-device screen between turns is always used, whatever its own checkbox says, so nobody sees the other's view.
 - **Undo** is cleared by any move that brings a tile into sight that wasn't before, so a move can't be taken back once it has shown something. In practice most moves in the fog can't be undone. (The original has no undo at all.)
 - The tile info for a tile out of sight says **Fog**.
 
@@ -71,7 +71,6 @@ A unit that attacks from a tile the defender's side can't see **stays hidden**, 
 
 ## 9. Later
 
-- **Rain**, which in the original's later games brings fog and cuts vision by 1 (12-weather).
 - Commanders with vision bonuses (06-commanders §3 dropped them while vision did nothing).
 - AI spotting before attacking into hiding terrain, done in a way that helps (§8, 09-ai §4g).
 - Last-seen markers for enemy units (not in the original).

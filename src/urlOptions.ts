@@ -5,6 +5,7 @@
 //   ?seed=123            fixes the luck rolls
 //   ?luck=off            turns luck off
 //   ?fog=on              turns fog of war on (19-fog-of-war)
+//   ?weather=rain        that weather every day, in place of the scenario's forecast (12-weather): clear, snow or rain
 //   ?handoff=off         skips the pass-the-device screen
 //   ?battle=off          plays attacks on the map instead of as battle scenes
 //   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
@@ -25,6 +26,7 @@
 import type { AiLevel } from "./ai/weights";
 import { COMMANDER_IDS, COMMANDERS, type CommanderId } from "./engine/data/commanders";
 import { NATIONS, type NationId } from "./engine/data/nations";
+import { WEATHER_IDS, type WeatherId } from "./engine/data/weather";
 
 /** Anything that looks up a URL parameter by name, like URLSearchParams. */
 export interface UrlParams {
@@ -38,6 +40,8 @@ export interface UrlOptions {
   readonly seed: number | null;
   readonly luck: boolean;
   readonly fog: boolean;
+  /** Weather for every day in place of the scenario's forecast; null keeps the forecast. */
+  readonly weather: WeatherId | null;
   readonly passDevice: boolean;
   readonly battleScenes: boolean;
   /** Show the battle preview page instead of a game. */
@@ -67,6 +71,7 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
     seed: seed !== "" && Number.isFinite(Number(seed)) ? Number(seed) : null,
     luck: params.get("luck") !== "off",
     fog: params.get("fog") === "on",
+    weather: WEATHER_IDS.find((id) => id === params.get("weather")) ?? null,
     passDevice: params.get("handoff") !== "off",
     battleScenes: params.get("battle") !== "off",
     battleDemo: params.get("battle") === "demo",

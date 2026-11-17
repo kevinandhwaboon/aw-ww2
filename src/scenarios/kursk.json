@@ -219,5 +219,15 @@
     {
       "type": "hqCapture"
     }
-  ]
+  ],
+  "weather": {
+    "season": "summer",
+    "forecast": [
+      { "fromDay": 1, "weather": "clear" },
+      { "fromDay": 3, "weather": "rain" },
+      { "fromDay": 4, "weather": "clear" },
+      { "fromDay": 8, "weather": "rain" },
+      { "fromDay": 9, "weather": "clear" }
+    ]
+  }
 }

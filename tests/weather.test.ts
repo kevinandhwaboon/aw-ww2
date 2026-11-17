@@ -8,7 +8,8 @@ import { parseScenario } from "../src/engine/scenario";
 import type { UnitSetup } from "../src/engine/setup";
 import { DEFAULT_WEATHER, type GameState, type WeatherPlan } from "../src/engine/state";
 import * as stats from "../src/engine/stats";
-import { weatherOn } from "../src/engine/weather";
+import { isHiddenFrom } from "../src/engine/visibility";
+import { fogInGame, fogToday, weatherOn } from "../src/engine/weather";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -196,6 +197,10 @@ describe("weather in scenario files and saves (12-weather §6)", () => {
     expect(parseScenario({ ...valid, weather: { season: "winter" } }).setup.weather).toEqual({ season: "winter", forecast: [{ fromDay: 1, weather: "clear" }] });
   });
 
+  it("scenario files can forecast rain", () => {
+    expect(parseScenario({ ...valid, weather: { forecast: [{ fromDay: 1, weather: "rain" }] } }).setup.weather?.forecast).toEqual([{ fromDay: 1, weather: "rain" }]);
+  });
+
   it("rejects unknown weather and seasons", () => {
     expect(() => parseScenario({ ...valid, weather: { forecast: [{ fromDay: 1, weather: "hail" }] } })).toThrow(/unknown weather/);
     expect(() => parseScenario({ ...valid, weather: { season: "spring" } })).toThrow(/season/);
@@ -206,5 +211,61 @@ describe("weather in scenario files and saves (12-weather §6)", () => {
     const old = Object.fromEntries(Object.entries(state).filter(([key]) => key !== "weather"));
     expect(loadGame(JSON.stringify({ version: 1, state: old })).weather).toEqual(DEFAULT_WEATHER);
     expect(loadGame(saveGame(state))).toEqual(state);
+  });
+});
+
+describe("rain (12-weather §3a)", () => {
+  const RAIN: WeatherPlan = { season: "summer", forecast: [{ fromDay: 1, weather: "rain" }] };
+  const costs = (type: UnitSetup["type"], terrains: readonly ("plains" | "forest" | "ridge" | "bocage" | "rubble" | "road" | "hills")[]) => {
+    const state = solo(["...."], type, RAIN);
+    const unit = state.units[0];
+    if (!unit) throw new Error("no unit");
+    return terrains.map((t) => stats.moveCost(state, unit, t));
+  };
+
+  it("wheels pay 3 per plains tile and 4 per forest tile in rain, as in snow", () => {
+    expect(costs("recon", ["plains", "forest", "ridge", "rubble"])).toEqual([3, 4, 4, 3]);
+  });
+
+  it("tracks pay 2 per plains tile, 3 per forest tile and 4 in bocage in rain", () => {
+    expect(costs("mediumTank", ["plains", "forest", "ridge", "bocage", "rubble"])).toEqual([2, 3, 3, 4, 2]);
+  });
+
+  it("foot soldiers, roads and aircraft aren't slowed by rain", () => {
+    expect(costs("infantry", ["plains", "forest", "hills"])).toEqual([1, 1, 2]);
+    expect(costs("mediumTank", ["road"])).toEqual([1]);
+    expect(costs("fighter", ["plains", "forest", "hills"])).toEqual([1, 1, 1]);
+  });
+
+  it("every unit sees 1 square less in rain", () => {
+    const state = solo(["...."], "recon", RAIN);
+    const unit = state.units[0];
+    if (!unit) throw new Error("no unit");
+    expect(stats.vision(state, unit)).toBe(4);
+  });
+
+  it("rain brings fog of war for the day, even in a game without it (19-fog-of-war)", () => {
+    const plan: WeatherPlan = { season: "summer", forecast: [{ fromDay: 1, weather: "clear" }, { fromDay: 2, weather: "rain" }, { fromDay: 3, weather: "clear" }] };
+    const start = makeGame([".........."], [{ type: "infantry", owner: 0, pos: P(0, 0) }, { type: "infantry", owner: 1, pos: P(9, 0) }], { weather: plan });
+    const seen = (state: GameState) => {
+      const enemy = state.units.find((u) => u.owner === 1);
+      if (!enemy) throw new Error("no enemy");
+      return !isHiddenFrom(state, enemy, 0);
+    };
+    expect(fogToday(start)).toBe(false);
+    expect(seen(start)).toBe(true);
+    const rainy = endTurns(start, 2).state;
+    expect(weatherOn(rainy)).toBe("rain");
+    expect(fogToday(rainy)).toBe(true);
+    expect(seen(rainy)).toBe(false);
+    const clear = endTurns(rainy, 2).state;
+    expect(seen(clear)).toBe(true);
+  });
+
+  it("a game with rain in its forecast can have fog, so hot-seat players always pass the device", () => {
+    const plan: WeatherPlan = { season: "summer", forecast: [{ fromDay: 1, weather: "clear" }, { fromDay: 5, weather: "rain" }] };
+    expect(fogInGame(makeGame(["..."], [], { weather: plan }))).toBe(true);
+    expect(fogInGame(makeGame(["..."], [], { weather: SNOW }))).toBe(false);
+    expect(fogInGame(makeGame(["..."], [], { settings: { fogOfWar: true } }))).toBe(true);
   });
 });

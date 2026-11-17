@@ -9,6 +9,7 @@ import { UNITS } from "./data/units";
 import type { Point } from "./map";
 import { CAPTURE_POINTS, type GameState, type PlayerId, type Unit, type UnitId } from "./state";
 import * as stats from "./stats";
+import { fogToday } from "./weather";
 
 const sideOf = (state: GameState, player: PlayerId): Side | undefined => state.players[player]?.side;
 
@@ -83,7 +84,7 @@ function sideIsNextTo(state: GameState, side: Side | undefined, p: Point): boole
 export function isHiddenFrom(state: GameState, unit: Unit, viewer: PlayerId): boolean {
   const side = sideOf(state, viewer);
   if (sideOf(state, unit.owner) === side) return false;
-  if (!state.settings.fogOfWar) return unit.submerged === true && !sideIsNextTo(state, side, unit.pos);
+  if (!fogToday(state)) return unit.submerged === true && !sideIsNextTo(state, side, unit.pos);
   const i = unit.pos.y * state.map.width + unit.pos.x;
   const level = sightOf(state, side)[i] ?? OUT_OF_SIGHT;
   if (unit.submerged === true) return level < CLOSE;
@@ -98,7 +99,7 @@ export function isHiddenFrom(state: GameState, unit: Unit, viewer: PlayerId): bo
  * war, when every tile is. A tile in sight can still hide a unit (§3).
  */
 export function tilesInSight(state: GameState, viewer: PlayerId): ReadonlySet<number> | null {
-  if (!state.settings.fogOfWar) return null;
+  if (!fogToday(state)) return null;
   const sight = sightOf(state, sideOf(state, viewer));
   const out = new Set<number>();
   sight.forEach((level, i) => {
@@ -109,7 +110,7 @@ export function tilesInSight(state: GameState, viewer: PlayerId): ReadonlySet<nu
 
 /** Whether the viewer's side has this tile in sight (always, without fog of war). */
 export function tileInSight(state: GameState, p: Point, viewer: PlayerId): boolean {
-  if (!state.settings.fogOfWar) return true;
+  if (!fogToday(state)) return true;
   return (sightOf(state, sideOf(state, viewer))[p.y * state.map.width + p.x] ?? OUT_OF_SIGHT) !== OUT_OF_SIGHT;
 }
 
@@ -118,7 +119,7 @@ export function tileInSight(state: GameState, p: Point, viewer: PlayerId): boole
  * into sight, or a hidden unit coming into view. Undo is cleared then (19-fog-of-war §7).
  */
 export function revealsAnything(before: GameState, after: GameState, viewer: PlayerId): boolean {
-  if (before.settings.fogOfWar) {
+  if (fogToday(before)) {
     const was = sightOf(before, sideOf(before, viewer));
     const now = sightOf(after, sideOf(after, viewer));
     if (now.some((level, i) => level !== OUT_OF_SIGHT && was[i] === OUT_OF_SIGHT)) return true;
@@ -190,7 +191,7 @@ export function eventsSeenBy(
 ): { readonly before: GameState; readonly events: readonly GameEvent[]; readonly revealed: readonly UnitId[] } {
   const hidden = hiddenUnitIds(before, viewer);
   const seenBefore = stateSeenBy(before, viewer);
-  if (hidden.size === 0 && !before.settings.fogOfWar) return { before: seenBefore, events, revealed: [] };
+  if (hidden.size === 0 && !fogToday(before)) return { before: seenBefore, events, revealed: [] };
 
   /** Units put into `before` where the viewer first sees them. */
   const placed = new Map<UnitId, Unit>();

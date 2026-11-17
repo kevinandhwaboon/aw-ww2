@@ -66,7 +66,7 @@ The Soviet Union moves first, so it's the army green player (08-art-pipeline §1
 
 ### Weather
 
-Clear all game: no weather is set. The real battle had heavy summer thunderstorms; rain waits for fog of war (12-weather).
+Summer, with two days of **rain** (since 2026-11-17, 12-weather §3a), for the heavy summer thunderstorms of the real battle: day 3, as the northern attack stalls in the belts, and day 8, the eve of the Prokhorovka tank battle. Clear on every other day. Rain brings fog for the day and mud off the roads, so on those days the attackers lose sight of the defenders and their armor slows. Not balance-tested yet.
 
 ### Build lists
 
