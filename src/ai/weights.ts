@@ -202,7 +202,7 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   carrierStandoff: 2,
   blowBridge: 6000,
   rebuildBridge: 3000,
-  memoryDays: 3,
+  memoryDays: 1,
   patrolInFog: true,
 };
 
@@ -212,8 +212,8 @@ export type AiLevel = "easy" | "normal";
 /**
  * Easy is the same AI, by the same rules and with no handicap: it doesn't coordinate (no focus fire,
  * no look ahead, no waves, escorts or garrison), doesn't weigh nearby threats more when building,
- * builds the best-scoring unit over and over, leaves objectives unguarded, and counts only half of
- * the damage it will take back when it attacks.
+ * builds the best-scoring unit over and over, leaves objectives unguarded, counts only half of
+ * the damage it will take back when it attacks, and in fog of war remembers nothing it can't see.
  */
 export const EASY_WEIGHTS: GreedyWeights = {
   ...GREEDY_WEIGHTS,
@@ -231,8 +231,8 @@ export const EASY_WEIGHTS: GreedyWeights = {
   maxIndirectShare: 1,
   capturerShare: 0,
   guardObjectives: false,
-  // In fog it forgets an enemy it can't see after a day (09-ai §4g).
-  memoryDays: 1,
+  // In fog it forgets an enemy as soon as it can't see it (09-ai §4g).
+  memoryDays: 0,
 };
 
 export function weightsFor(level: AiLevel): GreedyWeights {
