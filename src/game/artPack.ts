@@ -236,6 +236,12 @@ export interface TerrainSheet {
    * it, beaches are drawn all sand from `tiles`.
    */
   readonly beach?: number;
+  /**
+   * First of 32 beach flare pieces, drawn over a beach piece where sea on one side meets full land on
+   * the side beside it: the sand sweeps out to the land's corner. 8 for each corner NE, SE, SW, NW
+   * (see `beachFlares` in terrainTiles.ts for the order). Without it, the waterline meets the land halfway.
+   */
+  readonly beachFlares?: number;
   /** The same layout drawn in snow, for winter maps (08-art-pipeline §21). Relative to the pack's folder. */
   readonly winterPath?: string;
   /** The same layout drawn as desert, for desert maps (08-art-pipeline §21). Relative to the pack's folder. */
@@ -422,7 +428,7 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, winterPath, desertPath } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, beachFlares, winterPath, desertPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -453,6 +459,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   const blown = bridgeTiles("blownBridges", blownBridges);
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
   if (beach !== undefined && !isTileNumber(beach)) return fail(`terrain: "beach" must be a whole number`);
+  if (beachFlares !== undefined && !isTileNumber(beachFlares)) return fail(`terrain: "beachFlares" must be a whole number`);
   if (winterPath !== undefined && !isRelativePath(winterPath)) return fail(`terrain: "winterPath" must be a file in the pack`);
   if (desertPath !== undefined && !isRelativePath(desertPath)) return fail(`terrain: "desertPath" must be a file in the pack`);
   return {
@@ -467,6 +474,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     ...(blown === undefined ? {} : { blownBridges: blown }),
     ...(shore === undefined ? {} : { shore }),
     ...(beach === undefined ? {} : { beach }),
+    ...(beachFlares === undefined ? {} : { beachFlares }),
     ...(winterPath === undefined ? {} : { winterPath }),
     ...(desertPath === undefined ? {} : { desertPath }),
   };

@@ -118,6 +118,37 @@ export function beachCorners(map: GameMap, x: number, y: number): number[] {
   return out;
 }
 
+/** Full land beside a beach: anything but another beach or open water. Off the map doesn't count. */
+const isFullLand = (t: TerrainId | undefined) => t !== undefined && t !== "beach" && !isOpenWater(t);
+
+/**
+ * Flares of a beach (08-art-pipeline §14): at a corner where one side is open water and the other is
+ * full land, the sand sweeps out to the land's corner, so the waterline never runs into the middle
+ * of a plain or forest tile's side. Numbered as in the sheet: 8 for each corner NE, SE, SW, NW; plus
+ * 4 when the sea is on the corner's east or west side (and the land north or south) rather than the
+ * other way round; plus 1 when the side opposite the corner's north/south side is sea, and 2 when
+ * the side opposite its east/west side is.
+ */
+export function beachFlares(map: GameMap, x: number, y: number): number[] {
+  const mask = beachWaterMask(map, x, y);
+  const N = 1, E = 2, S = 4, W = 8;
+  const corners = [
+    { upDown: N, across: E, dy: -1, dx: 1 },
+    { upDown: S, across: E, dy: 1, dx: 1 },
+    { upDown: S, across: W, dy: 1, dx: -1 },
+    { upDown: N, across: W, dy: -1, dx: -1 },
+  ];
+  const out: number[] = [];
+  corners.forEach(({ upDown, across, dx, dy }, i) => {
+    const opposites = (mask & (upDown === N ? S : N) ? 1 : 0) + (mask & (across === E ? W : E) ? 2 : 0);
+    const seaUpDown = (mask & upDown) !== 0 && isFullLand(at(map, x + dx, y));
+    const seaAcross = (mask & across) !== 0 && isFullLand(at(map, x, y + dy));
+    if (seaUpDown) out.push(i * 8 + opposites);
+    else if (seaAcross) out.push(i * 8 + 4 + opposites);
+  });
+  return out;
+}
+
 export type Side = "N" | "E" | "S" | "W";
 
 /**
@@ -166,7 +197,12 @@ export function terrainLayers(map: GameMap, x: number, y: number, sheet: Terrain
     const mask = beachWaterMask(map, x, y);
     const sand = sheet.tiles.beach;
     const base = mask === 0 && sand && sand.length > 0 ? (sand[variantFor(x, y, sand.length)] ?? beach) : beach + mask;
-    return [tile(base), ...beachCorners(map, x, y).map((c) => tile(beach + 16 + c))];
+    const flares = sheet.beachFlares;
+    return [
+      tile(base),
+      ...beachCorners(map, x, y).map((c) => tile(beach + 16 + c)),
+      ...(flares === undefined ? [] : beachFlares(map, x, y).map((f) => tile(flares + f))),
+    ];
   }
 
   const variants = sheet.tiles[id];

@@ -108,7 +108,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Item | Needs |
 |---|---|
 | HP number | Digits 1–9, shown when a unit is damaged |
-| Veterancy badges | Veteran (1 chevron), Elite (3 chevrons) |
+| Veterancy badges | Veteran (1 chevron), Elite (3 chevrons). Since 2026-11-16 the chevrons point up, like a sergeant's stripes, with no dark box behind them |
 | Capturing | C badge |
 | Carrying passengers | + badge |
 | Low fuel warning | A flashing red gas can (jerrycan) on the left edge, since 2026-11-10 (it was an F); rule in 05-supply-transport §11 |
@@ -298,7 +298,7 @@ The terrain tiles are pixel grids in `tools/art/terrain.mjs`. `npm run art` rend
 | Terrain | What's drawn |
 |---|---|
 | Plains, Forest, Hills, Bocage | One of several variants, picked by map position. A cell always gets the same one |
-| Beach | Since 2026-11-14, at the developer's request: **half sea, half sand**. Each side that faces open sea (Sea or Reef) is drawn as water, with surf along the waterline, so the beach runs down into the sea beside it. Pieces by the mask of those sides: one side gives half sand, two sides that meet a sand corner with a rounded tip, two opposite sides a sand spit, three a point, four a sandbar. The waterline always crosses a tile edge exactly halfway, so neighboring beaches meet. Where sea touches only a corner and a beach is beside it, an inner-corner piece rounds a quarter of sea into the sand, carrying the waterline on. A beach with no sea beside it is all sand, in its variants. Rivers, ports and land beside a beach stay sand |
+| Beach | Since 2026-11-14, at the developer's request: **half sea, half sand**. Each side that faces open sea (Sea or Reef) is drawn as water, with surf along the waterline, so the beach runs down into the sea beside it. Pieces by the mask of those sides: one side gives half sand, two sides that meet a sand corner with a rounded tip, two opposite sides a sand spit, three a point, four a sandbar. The waterline always crosses a tile edge exactly halfway, so neighboring beaches meet. Where sea touches only a corner and a beach is beside it, an inner-corner piece rounds a quarter of sea into the sand, carrying the waterline on. A beach with no sea beside it is all sand, in its variants. Rivers, ports and land beside a beach stay sand. Since 2026-11-16, at the developer's request: **the sand flares out to the corner of full land beside it**. Where one side of a beach is sea and the side next to it is full land (anything but another beach or open sea, so plains, forest, a river or a port all count), a flare piece drawn over the beach sweeps the sand out to that land tile's corner, so the waterline carries on from the land's own edge instead of running into the middle of its side and leaving a quarter of sand beside a full tile. No flare toward another beach, the sea or the map's edge, where the waterline carries on halfway |
 | Road | The piece matching which sides join a road or bridge. Roads are 10 pixels wide, most of the tile |
 | River | The piece matching which sides join a river, bridge, sea or reef, so rivers flow into the sea |
 | Bridge | The river piece beneath it, with a deck on top. Water above or below means the deck runs left to right, otherwise top to bottom |
@@ -330,6 +330,7 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | 50–57 | Shore foam: edges N, E, S, W, then corners NE, SE, SW, NW |
 | 58–73 | Beach, half sea on the sides facing open sea, by the same mask (58 is all sand). 32-pixel sheet only |
 | 74–77 | Beach inner corners, drawn over a beach piece: NE, SE, SW, NW. 32-pixel sheet only |
+| 87–118 | Beach flares, drawn over a beach piece. 8 for each corner NE, SE, SW, NW: add 4 when the sea is on the corner's east or west side (and the land north or south) rather than the other way round, 1 when the side opposite the corner's north/south side is sea too, and 2 when the side opposite its east/west side is. 32-pixel sheet only |
 
 **Pack fields** for a terrain sheet. Only `path` and `tiles` are required, so a pack with one tile per terrain still works:
 
@@ -344,6 +345,7 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | `blownBridges` | Optional. `horizontal` and `vertical` Blown Bridge wrecks, drawn over the river piece: girder stubs at both banks and fallen spans in the water. Without it, a Blown Bridge is drawn as river |
 | `shore` | The first of the 8 foam pieces |
 | `beach` | The first of the 20 beach pieces: 16 by sea mask, then 4 inner corners. Without it, beaches are all sand from `tiles` and sea foams against them |
+| `beachFlares` | Optional. The first of the 32 beach flare pieces. Without it, a beach's waterline meets full land halfway along its side |
 
 ## 15. Buildings
 
@@ -432,7 +434,7 @@ In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (
 
 **Since 2026-11-07,** every attack plays as a split-screen battle scene before the map updates, in the style of the original game's battle animations. The art is original. The scene only shows what the engine already decided (00-master-design §13): the combat event carries the damage, the counter and who was destroyed, and the scene plays it back.
 
-**Layout.** The screen splits down the middle, with the horizon a little above the middle of each half so formations have room to stand in depth. A unit on Hills stands on the hill's grassy, rocky crest, with the valley far below in the haze behind it: small fields, hedgerows, a road and a village. The side whose army faces right on the map stands on the left half, so the two face each other; if both face the same way, the attacker is on the left. Each half shows the unit's name at the top, its HP and 10 HP pips at the bottom, and a background for the terrain the unit stands on: fields and a treeline for Plains, trees for Forest, a hilltop (see Layout), a hedgerow bank for Bocage, houses for a City, a sawtooth factory, a hangar for an Airfield, a harbor for a Port (see "Ports" below), sand with the sea behind and beach obstacles for a Beach, open water for Sea and Reef. The Factory is a brick hall with a sawtooth roof of skylights, arched windows and a loading door, a banded chimney trailing smoke, a water tower, a gantry crane, crates and a railway siding. Aircraft fight against open sky. A submerged submarine fights underwater.
+**Layout.** The screen splits down the middle, with the horizon a little above the middle of each half so formations have room to stand in depth. A unit on Hills stands on a mountainside (since 2026-11-16, at the developer's request; a rounded grassy crest before, which read as a mound): the near ground climbs to a bare rock crag with ledges, cracks and scree, its peak toward the half's outer side, and ranges of jagged peaks fade into the haze behind. The side whose army faces right on the map stands on the left half, so the two face each other; if both face the same way, the attacker is on the left. Each half shows the unit's name at the top, its HP and 10 HP pips at the bottom, and a background for the terrain the unit stands on: fields and a treeline for Plains, trees for Forest, a hilltop (see Layout), a hedgerow bank for Bocage, houses for a City, a sawtooth factory, a hangar for an Airfield, a harbor for a Port (see "Ports" below), sand with the sea behind and beach obstacles for a Beach, open water for Sea and Reef. The Factory is a brick hall with a sawtooth roof of skylights, arched windows and a loading door, a banded chimney trailing smoke, a water tower, a gantry crane, crates and a railway siding. Aircraft fight against open sky. A submerged submarine fights underwater.
 
 **Order.** The halves slide in, the attacker fires, its shots fly across and land, HP ticks down as each one lands, and figures fall. Then the defender counterattacks the same way if the engine says it did. The scene fades out and the map shows the result. A unit destroyed in the scene also blows up on the map, so it's clear which one is gone. Z, X, Enter, Space, Escape or a click skips the scene.
 
@@ -469,7 +471,7 @@ Figures fall from the back of the formation first, as the shots that take them l
 | Fighter | Wing guns (and the Bf 109's nose guns) fire tracers |
 | Bomber | The bomb bay opens and bombs fall out of the bottom of the half, then onto the target |
 | Battleship | Turrets fire salvo by salvo, with huge flashes; the ship rolls |
-| Destroyer | Deck guns fire; against a submarine, surfaced or submerged, it throws depth charges from the stern |
+| Destroyer | Deck guns fire; against a submarine, surfaced or submerged, it drops depth charges: they roll off the rack at the stern into the wake (since 2026-11-16; they were thrown in an arc before), then are seen sinking onto the submarine in its half |
 | Submarine, Torpedo Boat | Torpedoes run just under the surface with a trail of bubbles |
 
 Halftracks, Transport Aircraft and Landing Craft are unarmed in the rules (01-units), so they only ever take fire.
