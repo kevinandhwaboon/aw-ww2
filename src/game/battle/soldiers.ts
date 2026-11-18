@@ -89,7 +89,7 @@ function suit(p: Painter, x: number, y: number, which: number): void {
   });
 }
 
-/** A soldier's steel helmet over a face whose top-left is (hx, hy): M1, Stahlhelm, Type 90 or SSh-40. */
+/** A soldier's steel helmet over a face whose top-left is (hx, hy): M1, Stahlhelm, Type 90, SSh-40, Brodie or M33. */
 export function helmet(p: Painter, hx: number, hy: number, look: Look): void {
   const t = look.team;
   if (kitOf(look) === "uk") {
@@ -127,6 +127,22 @@ export function helmet(p: Painter, hx: number, hy: number, look: Look): void {
     p.px(hx + 11, hy - 2, t.deep);
     p.px(hx + 4, hy + 1, C("battleLeather"));
     p.px(hx + 4, hy + 2, C("battleLeather"));
+    return;
+  }
+  if (kitOf(look) === "it") {
+    // M33: a smooth, deep round dome with a short brim flaring out all round, a little longer over
+    // the neck, and the ventilation boss on the crown.
+    p.rect(hx, hy - 7, 6, 1, t.lo);
+    p.rect(hx - 1, hy - 6, 8, 1, t.lo);
+    p.rect(hx - 2, hy - 5, 10, 2, t.lo);
+    p.rect(hx - 3, hy - 3, 12, 1, t.lo);
+    p.rect(hx - 4, hy - 2, 13, 1, t.deep);
+    p.px(hx - 4, hy - 1, t.deep);
+    p.rect(hx + 1, hy - 7, 3, 1, t.mid);
+    p.rect(hx, hy - 6, 2, 1, t.mid);
+    p.px(hx - 1, hy - 5, t.mid);
+    p.px(hx + 1, hy + 1, C("battleLeather"));
+    p.px(hx + 1, hy + 2, C("battleLeather"));
     return;
   }
   if (look.nation === "ussr") {
@@ -233,7 +249,9 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
   const skin = C("battleSkin");
   const boot = C("battleRubber");
   const de = look.nation === "germany";
-  const jp = look.nation === "japan";
+  // Italian soldiers wore puttees like the Japanese, and leather cartridge pouches on the belt.
+  const jp = look.nation === "japan" || kitOf(look) === "it";
+  const it = kitOf(look) === "it";
   const su = look.nation === "ussr";
   // Germany and the Soviet Union both wore tall leather boots.
   const jackboots = de || su;
@@ -344,6 +362,13 @@ export function drawSoldier(p: Painter, x: number, y: number, stance: Stance, lo
     p.px(x - 9 + l, f.top + 7, shade(sack, 0.8));
     p.line(x - 7 + l, f.hip - 2, x - 9 + l, f.hip + 5, C("battleWood"), 2);
     p.rect(x - 10 + l, f.hip + 4, 3, 3, C("battleSteelDark"));
+  } else if (it) {
+    // Italy: the small canvas pack with the mess tin strapped on it, and a canteen at the hip.
+    const canvas = mix(C("battleSand"), cloth, 0.4);
+    p.rect(x - 9 + l, f.top + 2, 4, 8, canvas);
+    p.rect(x - 9 + l, f.top + 2, 4, 1, shade(canvas, 1.2));
+    p.rect(x - 10 + l, f.top + 5, 2, 3, C("battleSteel"));
+    p.rect(x - 9 + l, f.hip - 5, 3, 5, mix(C("battleWood"), C("battleSteel"), 0.4));
   } else if (jp) {
     p.rect(x - 9 + l, f.top + 3, 4, 9, clothLo);
     p.rect(x - 10 + l, f.top + 1, 5, 2, mix(C("battleSand"), cloth, 0.5));
@@ -485,7 +510,10 @@ export type GunKind =
   | "dp"
   | "lee"
   | "sten"
-  | "bren";
+  | "bren"
+  | "carcano"
+  | "mab38"
+  | "breda30";
 
 /** Each gun's length from butt to muzzle, and where the hands go on it. */
 export const GUN: Record<GunKind, { readonly length: number; readonly trigger: number; readonly fore: number }> = {
@@ -505,10 +533,13 @@ export const GUN: Record<GunKind, { readonly length: number; readonly trigger: n
   lee: { length: 31, trigger: 10, fore: 19 },
   sten: { length: 23, trigger: 9, fore: 16 },
   bren: { length: 33, trigger: 9, fore: 16 },
+  carcano: { length: 30, trigger: 10, fore: 19 },
+  mab38: { length: 27, trigger: 9, fore: 16 },
+  breda30: { length: 32, trigger: 9, fore: 15 },
 };
 
 /** The bolt-action rifles, whose firer works the bolt between shots. */
-const BOLT_ACTION: readonly GunKind[] = ["kar98", "arisaka", "mosin", "lee"];
+const BOLT_ACTION: readonly GunKind[] = ["kar98", "arisaka", "mosin", "lee", "carcano"];
 
 /** British '37 pattern webbing, blancoed a pale khaki green. */
 const UK_WEBBING = () => mix(C("battleSand"), C("battleOlive"), 0.55);
@@ -539,8 +570,9 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
     case "kar98":
     case "arisaka":
     case "mosin":
+    case "carcano":
     case "carbine": {
-      const long = kind === "kar98" || kind === "arisaka" || kind === "mosin";
+      const long = kind === "kar98" || kind === "arisaka" || kind === "mosin" || kind === "carcano";
       const end = GUN[kind].length;
       seg2(0, 1, 4, C("battleInk"), 1);
       seg2(1, 9, 3, wood, 1);
@@ -562,6 +594,11 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
         dot(end - 2, 1, steel);
         seg2(end - 1, end + 11, 1, C("battleSteel"), 1);
         dot(end + 11, 1, C("battleStar"));
+      }
+      if (kind === "carcano") {
+        // The bolt handle bent down, and the folding bayonet laid back under the barrel.
+        dot(14, 2, steelHi);
+        seg2(end - 10, end - 1, 1, C("battleSteel"), 2);
       }
       if (kind === "mosin") {
         // The bolt handle sticking straight out, and the long spike bayonet, always fixed.
@@ -714,6 +751,41 @@ export function drawGun(p: Painter, x: number, y: number, angle: number, kind: G
       for (let d = 18; d < 23; d += 2) dot(d, 0, steel);
       break;
     }
+    case "mab38": {
+      // Beretta MAB 38: a rifle-style wooden stock, two triggers, the long magazine straight down
+      // under the receiver, a perforated barrel jacket and the two-slot compensator.
+      seg2(0, 1, 4, C("battleInk"), 1);
+      seg2(1, 12, 3, wood, 1);
+      seg2(2, 11, 1, woodHi, 0);
+      seg2(12, 16, 2, steel);
+      const mag = q(13, 2);
+      p.rect(mag.x, mag.y, 2, 6, steel);
+      seg2(16, 25, 2, steelHi);
+      for (let d = 17; d < 24; d += 2) dot(d, 0, steel);
+      seg2(25, 27, 3, steel);
+      dot(26, -1, C("battleInk"));
+      break;
+    }
+    case "breda30": {
+      // Breda 30: a wooden butt with a pistol grip, the fixed box magazine sticking out of the near
+      // side, a thin barrel with its carrying handle, and the bipod down to the ground.
+      seg2(0, 8, 3, wood, 1);
+      seg2(2, 7, 1, woodHi, 0);
+      const grip = q(8, 2);
+      p.rect(grip.x, grip.y, 2, 3, wood);
+      seg2(8, 16, 3, steel);
+      const mag = q(12, 0);
+      p.rect(mag.x - 1, mag.y - 2, 4, 3, steelHi);
+      p.px(mag.x, mag.y - 1, steel);
+      seg2(16, 31, 1, steel);
+      seg2(16, 24, 1, steelHi, -1);
+      dot(20, -2, steel);
+      seg2(30, 32, 2, steel);
+      const leg = q(26, 1);
+      p.line(leg.x, leg.y, leg.x - 3, leg.y + 7, steel);
+      p.line(leg.x, leg.y, leg.x + 2, leg.y + 7, steelHi);
+      break;
+    }
     case "bren": {
       // Bren: a wooden butt, the curved box magazine standing up out of the top and curving forward,
       // a carrying handle, the cone flash hider and the bipod down to the ground.
@@ -782,10 +854,10 @@ const stanceOf = (index: number) => INFANTRY_STANCE[index] ?? "stand";
 export function squadGun(index: number, look: Look): GunKind {
   const kit = kitOf(look);
   const weapon = squadWeapon(index, look.nation, look.paratrooper);
-  if (weapon === "smg") return ({ us: "thompson", de: "mp40", jp: "type100", su: "ppsh", uk: "sten" } as const)[kit];
-  if (weapon === "lmg") return ({ us: "bar", de: "mg42", jp: "type99", su: "dp", uk: "bren" } as const)[kit];
+  if (weapon === "smg") return ({ us: "thompson", de: "mp40", jp: "type100", su: "ppsh", uk: "sten", it: "mab38" } as const)[kit];
+  if (weapon === "lmg") return ({ us: "bar", de: "mg42", jp: "type99", su: "dp", uk: "bren", it: "breda30" } as const)[kit];
   if (kit === "us") return look.paratrooper ? "carbine" : "garand";
-  return ({ de: "kar98", jp: "arisaka", su: "mosin", uk: "lee" } as const)[kit];
+  return ({ de: "kar98", jp: "arisaka", su: "mosin", uk: "lee", it: "carcano" } as const)[kit];
 }
 
 /** How the gun sits: butt position and angle, aiming or held at port arms. */
@@ -890,9 +962,9 @@ export const infantryRig: Rig = {
 
 // ---- Assault Infantry: a launcher gunner and his loader ----
 
-/** Bazooka, Panzerschreck, Type 4, PTRD or PIAT length, and the gunner's submachine gun. */
-const launcherLength = (look: Look) => ({ us: 38, de: 34, jp: 36, su: 44, uk: 30 })[kitOf(look)];
-const assaultSmg = (look: Look): GunKind => ({ us: "thompson", de: "mp40", jp: "type100", su: "ppsh", uk: "sten" } as const)[kitOf(look)];
+/** Bazooka, Panzerschreck, Type 4, PTRD, PIAT or Solothurn length, and the gunner's submachine gun. */
+const launcherLength = (look: Look) => ({ us: 38, de: 34, jp: 36, su: 44, uk: 30, it: 42 })[kitOf(look)];
+const assaultSmg = (look: Look): GunKind => ({ us: "thompson", de: "mp40", jp: "type100", su: "ppsh", uk: "sten", it: "mab38" } as const)[kitOf(look)];
 
 export const assaultRig: Rig = {
   body: "soldier",
@@ -901,8 +973,10 @@ export const assaultRig: Rig = {
   draw(p, pose, look) {
     const de = look.nation === "germany";
     const jp = look.nation === "japan";
+    // The Italian team fires a Solothurn S-18/1000 anti-tank rifle, its loader handing up 20mm rounds.
+    const it = kitOf(look) === "it";
     // The Soviet team fires a PTRD anti-tank rifle, its loader handing up the big 14.5mm rounds.
-    const su = look.nation === "ussr";
+    const su = look.nation === "ussr" || it;
     // The British team fires a PIAT, its loader laying the bomb in the trough at its front.
     const uk = kitOf(look) === "uk";
     const ct = pose.fire === "bazooka" ? pose.ct : null;
@@ -1013,6 +1087,12 @@ export const assaultRig: Rig = {
           p.rect(tubeBack + 19, tubeY, tubeLen - 22, 1, steel);
           p.rect(tubeBack + 19, tubeY - 1, tubeLen - 22, 1, shade(steel, 1.35));
           p.rect(tubeBack + tubeLen - 4, tubeY - 2, 4, 4, steel);
+          if (it) {
+            // The Solothurn's magazine standing out of the near side, and its bigger box brake.
+            p.rect(tubeBack + 12, tubeY - 6, 3, 5, steel);
+            p.rect(tubeBack + 12, tubeY - 6, 3, 1, shade(steel, 1.35));
+            p.rect(tubeBack + tubeLen - 5, tubeY - 3, 5, 6, steel);
+          }
           const legAt = { x: tubeBack + tubeLen - 14, y: tubeY + 1 };
           p.line(legAt.x, legAt.y, legAt.x - 3, 0, C("battleSteelDark"));
           p.line(legAt.x, legAt.y, legAt.x + 3, 0, C("battleSteel"));

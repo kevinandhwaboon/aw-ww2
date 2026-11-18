@@ -120,14 +120,15 @@ export function r75(t: TeamShades, shake = 0): Built<"rider" | "bars" | "gunner"
  * Daimler armoured car: four big wheels evenly spaced under a low hull that slopes down at both
  * ends, mudguards over the wheels, and a small two-man turret with the 2-pounder and a coaxial Besa.
  */
-export function daimler(t: TeamShades): Built<"commander" | "muzzle"> {
+/** The Daimler armoured car, with the roundel; unmarked, it stands in for Italy's AB 41. */
+export function daimler(t: TeamShades, marked = true): Built<"commander" | "muzzle"> {
   const far: Face[] = [];
   far.push(...tire(-15, 13, 6.5, 6.5), ...tire(15, 13, 6.5, 6.5));
   far.push(...box(-22, 22, -9, 9, 6, 8, steelDark()));
   const low: Poly = [[-24, -12], [22, -12], [26, -8], [26, 8], [22, 12], [-24, 12]];
   const high: Poly = [[-19, -11], [16, -11], [21, -7], [21, 7], [16, 11], [-19, 11]];
   far.push(...loftZ(7, low, 18, high, t.mid));
-  far.push(...roundelDecal(-11.6, -2, 12.5, 3));
+  if (marked) far.push(...roundelDecal(-11.6, -2, 12.5, 3));
   far.push(decalX(23.6, [[-6, 13], [6, 13], [6, 14], [-6, 14]], ink()));
   for (const x of [-15, 15]) far.push(...box(x - 7, x + 7, -15.5, -12, 13, 14, t.lo), ...box(x - 7, x + 7, 12, 15.5, 13, 14, t.lo));
   far.push(...tire(-15, -13, 6.5, 6.5), ...tire(15, -13, 6.5, 6.5));

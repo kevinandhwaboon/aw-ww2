@@ -482,21 +482,29 @@ describe("each nation's colors (08-art-pipeline §12)", () => {
     }
   });
 
-  it("Italy borrows Germany's unit art but wears blue, its azzurro, so Germany keeps field grey (18-scenarios-north-africa §1)", () => {
+  it("Italy has its own unit art, in blue, its azzurro, so Germany keeps field grey on a map with both (18-scenarios-north-africa §1)", () => {
     expect(teams(["uk", "germany", "italy"])).toEqual(["brown", "grey", "blue"]);
     const pack = parseArtPack(defaultPack);
     try {
       setGameNations(["uk", "germany", "italy"]);
-      const tank = findUnitArt(pack, "italy", 2, "mediumTank");
-      expect(tank && pack.unitSheets[tank.sheet]?.nation).toBe("germany");
-      expect(tank && pack.unitSheets[tank.sheet]?.team).toBe("blue");
+      for (const type of ["infantry", "assaultInfantry", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"] as const) {
+        const art = findUnitArt(pack, "italy", 2, type);
+        expect(art && pack.unitSheets[art.sheet]?.nation, type).toBe("italy");
+        expect(art && pack.unitSheets[art.sheet]?.team, type).toBe("blue");
+      }
     } finally {
       setGameNations([]);
     }
   });
 
-  it("battle scenes draw Italians with Germany's equipment, but flags stay each nation's own", () => {
-    expect(drawnAs("italy")).toBe("germany");
+  it("Italy fielded no heavy tank, rocket artillery or ships of its own here, so it has no art for them (01-units §1)", () => {
+    const pack = parseArtPack(defaultPack);
+    const rows = pack.unitSheets.filter((s) => s.nation === "italy").flatMap((s) => s.rows);
+    for (const type of ["heavyTank", "rocketArtillery", "battleship", "diveBomber"] as const) expect(rows).not.toContain(type);
+  });
+
+  it("battle scenes draw each nation's own equipment; only Canada borrows the UK's", () => {
+    expect(drawnAs("italy")).toBe("italy");
     expect(drawnAs("canada")).toBe("uk");
     expect(drawnAs("germany")).toBe("germany");
     expect(FLAGS.italy).not.toEqual(FLAGS.germany);

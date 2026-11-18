@@ -475,7 +475,9 @@ export class StormRenderer implements Cutscene {
     const bob = stride % 2 === 0 ? -1 : 0;
     const f = soldierFrame(0, bob, "run");
     const de = look.nation === "germany";
-    const su = look.nation === "ussr";
+    // Italy's Solothurn is drawn like the PTRD: a long anti-tank rifle over the shoulder.
+    const it = kitOf(look) === "it";
+    const su = look.nation === "ussr" || it;
     const uk = kitOf(look) === "uk";
     const plan = this.plan;
     if (plan.unit === "infantry") {
@@ -531,7 +533,7 @@ export class StormRenderer implements Cutscene {
       return;
     }
     // The other man: a baseplate or a rocket bag on his back, a rifle or carbine in his hands.
-    const kind = de ? "kar98" : su ? "ppsh" : uk ? "lee" : "carbine";
+    const kind = it ? "carcano" : de ? "kar98" : su ? "ppsh" : uk ? "lee" : "carbine";
     const butt = { x: f.frontShoulder.x - 6, y: f.hip };
     drawSoldier(p, 0, bob, "run", look, {
       stride,

@@ -145,8 +145,9 @@ export class BattleEffects {
         const ground = this.slot(h, shot.shooterFigure).y;
         for (let k = 0; k < 3; k++) this.puff({ x: m.x + h.dir * (k * 6 - 4) + h.dir * u * 10, y: ground - 3 - u * 4 }, 3 + u * 6, 0.7 * (1 - u));
       }
-      // The PTRD is a rifle and the PIAT throws its bomb off a spring-loaded spigot: neither has a backblast.
-      const noBackblast = h.data.nation === "ussr" || h.data.nation === "uk" || h.data.nation === "canada";
+      // The PTRD and the Solothurn are rifles and the PIAT throws its bomb off a spring-loaded spigot:
+      // none has a backblast.
+      const noBackblast = h.data.nation === "ussr" || h.data.nation === "uk" || h.data.nation === "canada" || h.data.nation === "italy";
       if (shot.fire === "bazooka" && !noBackblast && age < 1000) {
         // Backblast out of the rear of the tube.
         const u = age / 1000;
@@ -321,9 +322,10 @@ export class BattleEffects {
     return { at: { x: lerp(m.x, target.x, u), y: lerp(m.y, target.y, u) }, dir: { x: (target.x - m.x) / len, y: (target.y - m.y) / len } };
   }
 
-  /** What flies: the Soviet Assault Infantry's PTRD fires a bullet, not the others' rocket. */
+  /** What flies: the Soviet PTRD and the Italian Solothurn fire a bullet, not the others' rocket. */
   private missileOf(shot: PlannedShot): Missile {
-    if (shot.fire === "bazooka" && this.halves[shot.from].data.nation === "ussr") return "shell";
+    const nation = this.halves[shot.from].data.nation;
+    if (shot.fire === "bazooka" && (nation === "ussr" || nation === "italy")) return "shell";
     return MISSILE[shot.fire];
   }
 

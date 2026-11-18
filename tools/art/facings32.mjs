@@ -109,6 +109,14 @@ const HELMETS = {
     }
     if (view !== "back") s.dot(cx - 3 * k, rim - 1, "metal", 0);
   },
+  /** The Italian M33: a smooth deep dome, a short brim flaring out all round, the vent boss on top. */
+  m33(s, view, cx, top, rim, k = 1) {
+    s.shape();
+    dome(s, cx, top, rim - 1, 6.6 * k);
+    span(s, cx, rim, -7.5, 7.5, "team", 3, k);
+    if (view === "back") span(s, cx, rim + 1, -7, 7, "team", 3, k);
+    s.dot(cx, top - 1, "team", 1);
+  },
   /** The Soviet SSh-40: a tall dome with a short rim flaring out all round. */
   ssh40(s, view, cx, top, rim, k = 1) {
     s.shape();
@@ -766,6 +774,20 @@ function daimler(view, frame) {
   return finish(s);
 }
 
+/** The AB 41: four big wheels, an angular hull sloped at both ends, a small turret with the 20mm. No marking. */
+function ab41(view, frame) {
+  const s = sprite();
+  const down = view === "down", d = frame;
+  for (const y of [10, 25]) for (const x of [6, 25]) tyre(s, x, y, 3.8, frame, 2.4);
+  s.poly([[10, 4 + d], [21, 4 + d], [24, 9 + d], [24, 26 + d], [21, 29 + d], [10, 29 + d], [7, 26 + d], [7, 9 + d]], "team", 1);
+  s.rect(9, 23 + d, 22, 29 + d, "team", 2);
+  s.fill(12, 25 + d, 19, 25 + d, "ink", 0);
+  s.poly([[11, 17 + d], [12, 11 + d], [19, 11 + d], [20, 17 + d]], "team", 1).shadow();
+  s.oval(CX + (down ? 2 : -2), 13 + d, 1.3, 1, "metal", 1);
+  s.rect(15, (down ? 17 : 3) + d, 16, (down ? 24 : 11) + d, "metal", 2);
+  return finish(s);
+}
+
 /** The Universal Carrier: a small, very low open box on tracks, two heads in Brodies, the Bren. */
 function universalCarrier(view, frame) {
   const s = sprite();
@@ -1054,6 +1076,19 @@ const LAND = {
     AR: fieldGun({ brake: true, platform: true }),
     RK: landMattress,
     AA: tank({ w: 12, turret: { shape: "open", w: 6, h: 4.5, y: 13 }, gun: { w: 1, len: 9, twin: true }, marking: "roundel" }),
+    FK: flakGun({ brake: true }),
+  },
+  it: {
+    IN: soldierUnit({ helmet: "m33", kit: "pack", legs: "puttees", weapon: "rifle" }),
+    AI: soldierUnit({ helmet: "m33", kit: "pack", legs: "puttees", weapon: "ptrd" }),
+    MO: soldierUnit({ helmet: "m33", kit: "pack", legs: "puttees", weapon: "mortar" }),
+    RC: ab41,
+    HT: truck({ load: "tilt" }),
+    LT: tank({ w: 9, rivets: true, turret: { shape: "hex", w: 4.5, h: 3.5, y: 13, dx: -1.5 }, gun: { w: 1, len: 10 } }),
+    MT: tank({ w: 12, rivets: true, turret: { shape: "box", w: 5.5, h: 4.5, y: 12 }, gun: { w: 2, len: 8 }, bowMg: true }),
+    TD: tank({ w: 12, rivets: true, turret: { shape: "casemate", w: 8.5, h: 4, y: 15 }, gun: { w: 3, len: 6 }, hatch: false }),
+    AR: fieldGun({ spoked: true }),
+    AA: truck({ load: "cannon" }),
     FK: flakGun({ brake: true }),
   },
   su: {

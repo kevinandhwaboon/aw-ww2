@@ -72,12 +72,14 @@ export interface Rig {
 }
 
 /**
- * Whose equipment a figure carries: the US's, Germany's, Japan's, the Soviet Union's, or the UK's,
- * which Canada shares (00-master-design §6).
+ * Whose equipment a figure carries: the US's, Germany's, Japan's, the Soviet Union's, the UK's,
+ * which Canada shares, or Italy's (00-master-design §6).
  */
-export type Kit = "us" | "de" | "jp" | "su" | "uk";
+export type Kit = "us" | "de" | "jp" | "su" | "uk" | "it";
 export const kitOf = (look: Pick<Look, "nation">): Kit =>
-  look.nation === "germany"
+  look.nation === "italy"
+    ? "it"
+    : look.nation === "germany"
     ? "de"
     : look.nation === "japan"
       ? "jp"

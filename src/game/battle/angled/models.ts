@@ -3,7 +3,7 @@
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
 // StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. Soviet Union: T-70,
 // T-34/76 (1943), KV-1, SU-152. UK (and Canada): Stuart, Sherman Firefly, Churchill, Achilles, with
-// the RAF roundel where the US carries its star. `recoil` slides the gun back along its barrel.
+// the RAF roundel where the US carries its star. Italy: L6/40, M13/40, Semovente 75/18, unmarked. `recoil` slides the gun back along its barrel.
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, shift, wheel, type Face, type V3 } from "./mesh";
@@ -478,6 +478,93 @@ export function hoNi(t: TeamShades, recoil = 0): Model {
   return { faces: f, commander: null, crew: [[-5, -3, 35], [3, 4, 35]], muzzle: [51 - recoil, 0, 28.5], mg: [44, 0, 28.5] };
 }
 
+// ---- Italy ----
+
+/**
+ * Italian leaf-sprung bogies on the near side: each bogie carries four little road wheels in two
+ * pairs under a stack of leaf springs, with return rollers above.
+ */
+function leafBogies(centres: readonly number[], y: number, r: number, rollers: readonly number[]): Face[] {
+  const f: Face[] = [];
+  for (const b of centres) {
+    f.push(...box(b - 8, b + 8, y - 0.8, y, r + 0.5, r + 2, steelDark()));
+    f.push(...box(b - 6, b + 6, y - 1.2, y - 0.8, r + 2, r + 3.4, steel()));
+    for (const dx of [-6, -2, 2, 6]) f.push(...roadWheel(b + dx, y, r, r - 0.4));
+  }
+  for (const x of rollers) f.push(...wheel(x, y, r * 2 + 3.5, 1.3, 1, steel(), steelDark()));
+  return f;
+}
+
+/** The M13/40's chassis: two leaf-sprung bogies a side, and a tall riveted box of a hull. */
+function m13Hull(t: TeamShades, top = 21): Face[] {
+  const f: Face[] = [];
+  f.push(...running(-31, 31, 10, 10, 16, t.lo));
+  f.push(...wheel(29, -16.6, 6.5, 4.2, 1.2, steelDark(), steel()));
+  f.push(...wheel(-29, -16.6, 5.5, 3.8, 1.2, steel(), steelDark()));
+  f.push(...leafBogies([-12, 11], -16.8, 2.6, [-18, -4, 6, 18]));
+  f.push(...extrudeY(-16, 16, [[-31, 10], [31, 10], [33, 14], [25, 17], [21, top], [-29, top], [-31, top - 3]], t.mid));
+  f.push(...rivets(-16.05, -28, 18, top - 2, t));
+  f.push(...rivets(-16.05, -28, 28, 12, t));
+  // The engine deck's louvres at the back.
+  for (let x = -27; x < -15; x += 3) f.push(...box(x, x + 1.4, -10, 10, top, top + 0.5, t.lo));
+  return f;
+}
+
+/**
+ * M13/40: the riveted hull with the driver's visor and the twin Breda machine guns in the bow plate,
+ * and a riveted turret with the short 47/32 gun and its coaxial MG.
+ */
+export function m1340(t: TeamShades, recoil = 0): Model {
+  const f = m13Hull(t);
+  f.push(...box(20, 24, -2, 10, 16, 21, t.mid));
+  f.push(...box(23.6, 24, 2, 6, 19, 20, C("battleInk")));
+  for (const y of [5, 8.5]) f.push(...barrel(23, 31, y, 17, 0.6, steelDark()));
+  const turret: Poly = [[-11, -9], [7, -9], [11, -6], [11, 6], [7, 9], [-11, 9], [-13, 6], [-13, -6]];
+  const roof: Poly = [[-10, -8], [5, -8], [9, -5], [9, 5], [5, 8], [-10, 8], [-12, 5], [-12, -5]];
+  f.push(...loftZ(21, turret, 32, roof, t.mid));
+  f.push(...rivets(-9.05, -10, 6, 30, t));
+  f.push(...box(10, 14, -4, 4, 23, 29, t.lo));
+  f.push(...barrel(13 - recoil, 32 - recoil, 0, 26.5, 1.2, steelDark()));
+  f.push(...barrel(13, 18, 3, 27, 0.5, steelDark()));
+  f.push(...loftZ(32, circle(-4, -2, 3.4, 8), 34, circle(-4, -2, 3, 8), t.lo));
+  return { faces: f, commander: [-4, -2, 34], muzzle: [32 - recoil, 0, 26.5], mg: [31, 7, 17] };
+}
+
+/** L6/40: small and short, two pairs of road wheels a side, a little eight-sided turret with the long 20mm. */
+export function l640(t: TeamShades, recoil = 0): Model {
+  const f: Face[] = [];
+  f.push(...running(-23, 23, 8, 7, 12, t.lo));
+  f.push(...wheel(21, -12.6, 5, 3.6, 1.2, steelDark(), steel()));
+  f.push(...wheel(-21, -12.6, 4.5, 3.2, 1.2, steel(), steelDark()));
+  for (const b of [-8, 8]) {
+    f.push(...box(b - 5, b + 5, -13.6, -12.8, 3.5, 5.5, steelDark()));
+    f.push(...roadWheel(b - 3, -12.8, 3.2, 3));
+    f.push(...roadWheel(b + 3, -12.8, 3.2, 3));
+  }
+  f.push(...extrudeY(-12, 12, [[-23, 8], [23, 8], [25, 11], [17, 14], [14, 19], [-21, 19], [-23, 17]], t.mid));
+  f.push(...rivets(-12.05, -20, 12, 17, t));
+  const turret: Poly = [[-7, -2], [3, -2], [6, 1], [6, 8], [3, 11], [-7, 11], [-9, 8], [-9, 1]];
+  const roof: Poly = [[-6, -1], [2, -1], [5, 2], [5, 7], [2, 10], [-6, 10], [-8, 7], [-8, 2]];
+  f.push(...loftZ(19, turret, 26, roof, t.mid));
+  f.push(...box(5, 8, 2, 6, 21, 24, t.lo));
+  f.push(...barrel(7 - recoil, 31 - recoil, 4, 22.5, 0.6, steelDark()));
+  f.push(...barrel(28 - recoil, 31 - recoil, 4, 22.5, 0.9, steelDark()));
+  return { faces: f, commander: [-2, 5, 26], muzzle: [31 - recoil, 4, 22.5], mg: [31 - recoil, 4, 22.5] };
+}
+
+/** Semovente 75/18: the M13 chassis, a low, wide riveted casemate, and the stubby 75mm howitzer in a ball mantlet. */
+export function semovente(t: TeamShades, recoil = 0): Model {
+  const f = m13Hull(t, 20);
+  const casemate: Poly = [[-14, -14], [12, -14], [17, -9], [17, 9], [12, 14], [-14, 14]];
+  const roof: Poly = [[-13, -12], [9, -12], [13, -8], [13, 8], [9, 12], [-13, 12]];
+  f.push(...loftZ(20, casemate, 29, roof, t.mid));
+  f.push(...rivets(-14.05, -12, 10, 27, t));
+  f.push(...loftZ(22, circle(17, 0, 3.6, 8), 28, circle(17, 0, 3.2, 8), t.lo));
+  f.push(...barrel(17 - recoil, 31 - recoil, 0, 25, 1.7, steelDark()));
+  f.push(...loftZ(29, circle(-5, -5, 3, 8), 30.5, circle(-5, -5, 2.7, 8), t.lo));
+  return { faces: f, commander: [-5, -5, 30.5], muzzle: [31 - recoil, 0, 25], mg: [31 - recoil, 0, 25] };
+}
+
 // ---- Soviet Union ----
 
 /**
@@ -593,19 +680,20 @@ export type TankKind = "light" | "medium" | "heavy" | "td";
 type MakeModel = (t: TeamShades, recoil?: number) => Model;
 
 /**
- * Each nation's model for each tank kind (08-art-pipeline §18); Canada uses the UK's. Japan fielded
- * no heavy tank, so its scenarios never offer one; the Chi-Ha stands in if one is ever drawn. The
+ * Each nation's model for each tank kind (08-art-pipeline §18); Canada uses the UK's. Japan and Italy
+ * fielded no heavy tank, so their scenarios never offer one; the Chi-Ha and the M13/40 stand in if
+ * one is ever drawn. The
  * US has no Heavy Tank on the map either; the Churchill stands in for it here.
  */
 /** Whose models: the same keys as the battle scenes' `Kit` (rig.ts), kept here so this file needs no DOM types. */
-type ModelKit = "us" | "de" | "jp" | "su" | "uk";
+type ModelKit = "us" | "de" | "jp" | "su" | "uk" | "it";
 
 const ukStuart: MakeModel = (t, recoil) => stuart(t, recoil, roundelDecal);
 const ukChurchill: MakeModel = (t, recoil) => churchill(t, recoil, roundelDecal);
 
 export const TANK_MODELS: Record<TankKind, Record<ModelKit, MakeModel>> = {
-  light: { us: stuart, de: panzerII, jp: haGo, su: t70, uk: ukStuart },
-  medium: { us: sherman, de: panzerIV, jp: chiHa, su: t34, uk: firefly },
-  heavy: { us: churchill, de: tiger, jp: chiHa, su: kv1, uk: ukChurchill },
-  td: { us: m10, de: stug, jp: hoNi, su: su152, uk: achilles },
+  light: { us: stuart, de: panzerII, jp: haGo, su: t70, uk: ukStuart, it: l640 },
+  medium: { us: sherman, de: panzerIV, jp: chiHa, su: t34, uk: firefly, it: m1340 },
+  heavy: { us: churchill, de: tiger, jp: chiHa, su: kv1, uk: ukChurchill, it: m1340 },
+  td: { us: m10, de: stug, jp: hoNi, su: su152, uk: achilles, it: semovente },
 };

@@ -8,7 +8,9 @@
 // Army received under Lend-Lease, with the red star and Soviet crews, except its rockets: the
 // Katyusha. The UK's (and Canada's) are their own: a Daimler armoured car, a Universal Carrier, a
 // Crusader AA, a Bofors, a 25-pounder and a Land Mattress, with the RAF roundel and crews in Brodie
-// helmets or the tank arm's black beret.
+// helmets or the tank arm's black beret. Italy's tanks are its own (L6/40, M13/40, Semovente 75/18),
+// its recon an unmarked armoured car like the Daimler (the AB 41), and its other machines take the
+// German shapes, as Japan's do, with Italian crews.
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
@@ -24,10 +26,12 @@ import { drawSoldier, earsCovered, sandbags, soldierFrame } from "./soldiers";
 import { FIRE_TIMING } from "./timeline";
 import { justFired, kick, kitOf, lerp, seg, type Look, type Muzzle, type Pose, type Pt, type Rig } from "./rig";
 
-/** The Axis shapes: Germany's machines, which Japan's other machines also use (see the top). */
-const de = (look: Look) => kitOf(look) === "de" || kitOf(look) === "jp";
+/** The Axis shapes: Germany's machines, which Japan's and Italy's other machines also use (see the top). */
+const de = (look: Look) => kitOf(look) === "de" || kitOf(look) === "jp" || kitOf(look) === "it";
 /** The UK's own machines, which Canada shares. */
 const uk = (look: Look) => kitOf(look) === "uk";
+/** Recon in an armoured car: the UK's Daimler, or Italy's AB 41 (drawn as an unmarked Daimler). */
+const armouredCar = (look: Look) => uk(look) || kitOf(look) === "it";
 /** The star on the US shapes: white, or red when the Soviet Union drives them. */
 const markOf = (look: Look) => (kitOf(look) === "su" ? C("battleSun") : C("battleStar"));
 
@@ -67,6 +71,12 @@ export function commander(p: Painter, x: number, y: number, look: Look): void {
     p.rect(x - 1, y - 9, 7, 3, pad);
     p.rect(x - 1, y - 6, 2, 4, pad);
     for (const rx of [x + 1, x + 3]) p.px(rx, y - 9, shade(pad, 1.5));
+  } else if (kitOf(look) === "it") {
+    // The padded leather casco da carrista with its rolled brim.
+    const pad = mix(C("battleLeather"), C("battleInk"), 0.3);
+    p.rect(x - 1, y - 9, 7, 3, pad);
+    p.rect(x - 2, y - 7, 9, 1, shade(pad, 0.7));
+    p.rect(x - 1, y - 6, 2, 3, pad);
   } else if (kitOf(look) === "jp") {
     const pad = mix(C("battleKhaki"), C("battleLeather"), 0.4);
     p.rect(x - 1, y - 9, 6, 3, pad);
@@ -161,7 +171,12 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
   p.rect(x - 1, y - 2, 8, 4, look.team.clothLo);
   p.rect(x, y - 8, 6, 6, C("battleSkin"));
   p.px(x + 4, y - 6, C("battleInk"));
-  if (kitOf(look) === "jp") {
+  if (kitOf(look) === "it") {
+    // M33: a deep round dome with a short brim all round.
+    p.rect(x + 1, y - 12, 4, 1, look.team.lo);
+    p.rect(x - 1, y - 11, 8, 3, look.team.lo);
+    p.rect(x - 3, y - 8, 11, 1, look.team.deep);
+  } else if (kitOf(look) === "jp") {
     // Type 90 helmet, its neck flaps hanging behind.
     p.rect(x - 2, y - 8, 3, 6, mix(look.team.cloth, C("battleSand"), 0.3));
     p.rect(x, y - 11, 6, 3, look.team.lo);
@@ -188,12 +203,12 @@ function trooper(p: Painter, x: number, y: number, look: Look): void {
 
 const reconBounce = (pose: Pose, look: Look) => Math.floor(pose.t / (de(look) ? 150 : 160) + pose.index) % 2;
 const reconModel = (look: Look, shake: number): Built<"muzzle"> =>
-  uk(look)
+  armouredCar(look)
     ? daimlerModel(look)
     : de(look)
       ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake))
       : memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
-const daimlerModel = (look: Look) => memo(`daimler|${look.team.mid}`, () => daimler(look.team));
+const daimlerModel = (look: Look) => memo(`daimler|${uk(look)}|${look.team.mid}`, () => daimler(look.team, uk(look)));
 
 export const reconRig: Rig = {
   body: "machine",
@@ -201,8 +216,8 @@ export const reconRig: Rig = {
   draw(p, pose, look) {
     const shake = pose.fire === "mg" && justFired(pose.ct, FIRE_TIMING.mg.shots, 40) >= 0 ? 1 : 0;
     const oy = -MODEL_LIFT - reconBounce(pose, look);
-    if (uk(look)) {
-      // The Daimler: its commander up in the turret hatch, the Besa firing beside the 2-pounder.
+    if (armouredCar(look)) {
+      // The Daimler (or AB 41): its commander up in the turret hatch, the MG firing beside the gun.
       const m = daimlerModel(look);
       mesh(p, m.far, oy - shake);
       const c = at(m.at.commander, oy - shake);

@@ -3,6 +3,7 @@
 // bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4). Japanese
 // aircraft carry the hinomaru, Soviet aircraft the white-edged red star; ships carry no marking.
 // The USSR gets aircraft only: no ships yet, and no carrier aircraft, as it had no carriers.
+// Italian aircraft carry only the white fuselage band and the white rudder cross.
 // British aircraft carry the RAF roundel; the Swordfish is a biplane, the Lancaster has four engines
 // and twin fins.
 import { finish, hinomaru, redStar, roundel, sprite, star } from "./kit32.mjs";
@@ -38,11 +39,23 @@ function plane(frame, o) {
   s.fill(o.canopy[0], y(c - o.girth + 1), o.canopy[1], y(c - 1), "glass", 0);
   if (o.glassNose) s.fill(o.nose - 3, y(c - 1), o.nose - 1, y(c), "glass", 0);
   if (o.bodyRoundel) roundel(s, o.bodyRoundel[0], y(c - 0.5), 2.2);
+  // Italy: the white band round the rear fuselage that Axis aircraft wore in the Mediterranean.
+  if (o.whiteBand) s.fill(o.whiteBand[0], y(c - o.girth + 1), o.whiteBand[0] + 1, y(c + 1), "star", 0);
   // Fin standing up from the tail; twin fins stand at the tailplane's tips instead.
   if (o.twinFin) {
     s.rect(o.tail + 1, y(c - o.fin), o.tail + 3, y(c - 3), "team", 0, true);
     s.rect(o.tail + 2, y(c + 1), o.tail + 4, y(c + 6), "team", 0, true);
   } else s.poly([[o.tail, y(c - 1)], [o.tail + 5, y(c - 1)], [o.tail + 2, y(c - o.fin)], [o.tail, y(c - o.fin)]], "team", 0);
+  // Italy: the plain white cross on the rudder, without the Savoy crest (08-art-pipeline §12).
+  if (o.tailCross) {
+    s.fill(o.tail, y(c - o.fin + 3), o.tail + 2, y(c - o.fin + 3), "star", 0);
+    s.fill(o.tail + 1, y(c - o.fin + 1), o.tail + 1, y(c - 2), "star", 0);
+  }
+  // The SM.79's hump: the gun position on top of the fuselage behind the cockpit.
+  if (o.hump) {
+    s.rect(o.hump[0], y(c - o.girth - 2), o.hump[1], y(c - o.girth), "team", 1, true);
+    s.fill(o.hump[0] + 1, y(c - o.girth - 2), o.hump[1] - 1, y(c - o.girth - 2), "glass", 0);
+  }
   // A biplane's upper wing, high over the fuselage on its struts.
   if (o.biplane) {
     for (const sx of [o.biplane[0] + 1, o.biplane[1] - 2]) s.line(sx, y(c - 7), sx + 1, y(c + 3), "metal", 2);
@@ -189,6 +202,24 @@ const ju52 = def("plane", {
   tail: 1, nose: 28, girth: 4, fin: 8, canopy: [23, 25], ribs: true, noseProp: 4, gear: [16, 21],
   farWing: [[10, 11], [22, 11], [19, 3], [15, 3]], nearWing: [[9, 17], [23, 17], [20, 30], [14, 30]],
   farEngine: [16], nearEngine: [16],
+});
+
+// ---- Italian aircraft (Regia Aeronautica) ----
+// White fuselage band and white rudder cross only: never the fasces roundels or the Savoy crest.
+const c202 = def("plane", {
+  tail: 2, nose: 28, girth: 2, fin: 7, canopy: [16, 19], noseProp: 4, whiteBand: [7], tailCross: true,
+  farWing: [[12, 13], [20, 13], [18, 7], [16, 7]], nearWing: [[11, 16], [21, 16], [19, 26], [15, 26]],
+  camo: [[9, 12, 11, 13], [21, 14, 23, 15]], wingCamo: [[14, 20, 16, 21], [17, 23, 18, 24]],
+});
+const sm79 = def("plane", {
+  tail: 1, nose: 29, girth: 3, fin: 8, canopy: [21, 24], noseProp: 3, hump: [17, 21], whiteBand: [6], tailCross: true,
+  farWing: [[11, 12], [22, 12], [19, 3], [16, 3]], nearWing: [[10, 16], [23, 16], [20, 29], [15, 29]],
+  farEngine: [14], nearEngine: [13], camo: [[9, 12, 12, 13], [24, 14, 26, 15]], wingCamo: [[15, 21, 18, 23]],
+});
+const sm82 = def("plane", {
+  tail: 1, nose: 29, girth: 4, fin: 9, canopy: [24, 26], windows: [9, 20], noseProp: 4, gear: [16, 21], whiteBand: [6], tailCross: true,
+  farWing: [[10, 11], [22, 11], [19, 2], [15, 2]], nearWing: [[9, 17], [23, 17], [20, 30], [14, 30]],
+  farEngine: [15], nearEngine: [15],
 });
 
 // ---- US ships ----
@@ -404,6 +435,12 @@ export const deNaval = [
   { code: "DD", name: "Destroyer", real: "Z-class", frames: frames(zClass), views: views(zClass) },
   { code: "SS", name: "Submarine", real: "Type VII U-boat", frames: frames(uBoat), views: views(uBoat) },
   { code: "TB", name: "Torpedo Boat", real: "S-boot (E-boat)", frames: frames(eBoat), views: views(eBoat) },
+];
+
+export const itAir = [
+  { code: "FT", name: "Fighter", real: "Macchi C.202 Folgore", frames: frames(c202), views: views(c202) },
+  { code: "BM", name: "Bomber", real: "SM.79 Sparviero", frames: frames(sm79), views: views(sm79) },
+  { code: "TA", name: "Transport Aircraft", real: "SM.82 Marsupiale", frames: frames(sm82), views: views(sm82) },
 ];
 
 export const suAir = [
