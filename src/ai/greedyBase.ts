@@ -75,6 +75,7 @@ export abstract class BrainBase {
   protected readonly distCache = new Map<string, Float64Array>();
   protected readonly componentCache = new Map<string, Int32Array>();
   protected readonly goalLabelCache = new Map<UnitTypeId, ReadonlySet<number>>();
+  protected readonly shoreLabelCache = new Map<string, ReadonlySet<number>>();
   protected readonly pickupCache = new Map<string, Point | null>();
   protected waitingCache: readonly Unit[] | null = null;
   protected pressCache: boolean | null = null;

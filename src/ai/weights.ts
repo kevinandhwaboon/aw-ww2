@@ -128,6 +128,8 @@ export interface GreedyWeights {
   readonly capturerShare: number;
   /** Land units stay on the landmass of an objective of ours the enemy must capture, and one stands on it (09-ai §4d). */
   readonly guardObjectives: boolean;
+  /** Landings aim at the properties our side wins by capturing, when one can be reached from a beach (09-ai §4h). */
+  readonly landOnObjectives: boolean;
   /** A Landing Craft or Transport Aircraft short of fuel for its next trip refuels first (09-ai §4d). */
   readonly topUpTransports: boolean;
   /** Days of fuel burn an aircraft or ship keeps in hand on top of what the trip home needs (09-ai §4c). */
@@ -203,6 +205,7 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   maxIndirectShare: 0.34,
   capturerShare: 0.25,
   guardObjectives: true,
+  landOnObjectives: true,
   topUpTransports: true,
   fuelReserveDays: 2,
   keepSitesForService: true,
