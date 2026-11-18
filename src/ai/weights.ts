@@ -130,6 +130,8 @@ export interface GreedyWeights {
   readonly guardObjectives: boolean;
   /** Landings aim at the properties our side wins by capturing, when one can be reached from a beach (09-ai §4h). */
   readonly landOnObjectives: boolean;
+  /** Score per step a land unit's move brings it nearer an objective our side has yet to take (09-ai §4i). 0 = off. */
+  readonly objectivePull: number;
   /** A Landing Craft or Transport Aircraft short of fuel for its next trip refuels first (09-ai §4d). */
   readonly topUpTransports: boolean;
   /** Days of fuel burn an aircraft or ship keeps in hand on top of what the trip home needs (09-ai §4c). */
@@ -206,6 +208,7 @@ export const GREEDY_WEIGHTS: GreedyWeights = {
   capturerShare: 0.25,
   guardObjectives: true,
   landOnObjectives: true,
+  objectivePull: 60,
   topUpTransports: true,
   fuelReserveDays: 2,
   keepSitesForService: true,
