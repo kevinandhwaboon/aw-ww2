@@ -3,6 +3,7 @@ import type { GameState } from "../engine/state";
 import { playerColors } from "../game/placeholderUnits";
 import { tileInfo, type Passenger } from "../game/tileInfo";
 import { el, stars } from "./dom";
+import { drawFlag } from "./flag";
 
 /** The terrain under the cursor and its defense, and the unit there if any. Stays away from the cursor. */
 /** `cursorOnLeft`: the cursor is in the left half of the screen, so the panel goes right. */
@@ -16,6 +17,11 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
   const captureLine = el("div", "tile-capture");
   const bridgeLine = el("div", "tile-capture");
   const unitLine = el("div", "tile-unit");
+  const unitFlag = el("span", "tile-flag");
+  const unitName = el("span");
+  unitLine.append(unitFlag, unitName);
+  // The flag is only redrawn when the nation under the cursor changes.
+  let flagOf: string | null = null;
   const supplyLine = el("div", "tile-supply");
   const fuelText = el("span");
   const ammoText = el("span");
@@ -31,7 +37,13 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       name.textContent = info.terrain;
       defense.textContent = info.stars > 0 ? `Defense ${stars(info.stars)}` : "No defense";
       unitLine.hidden = !info.unit;
-      unitLine.textContent = info.unit?.name ?? "";
+      unitName.textContent = info.unit?.name ?? "";
+      const nation = info.unit?.nation ?? null;
+      unitFlag.hidden = nation === null;
+      if (nation !== flagOf) {
+        unitFlag.replaceChildren(...(nation ? [drawFlag(nation)] : []));
+        flagOf = nation;
+      }
       unitLine.style.color = info.unit ? playerColors(info.unit.owner)[0] : "";
       objectiveLine.hidden = !info.objective;
       const unit = info.unit;

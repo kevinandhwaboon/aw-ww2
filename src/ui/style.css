@@ -87,6 +87,26 @@ body {
 
 .tile-unit {
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tile-unit[hidden] {
+  display: none;
+}
+
+.tile-flag {
+  display: flex;
+  border: 1px solid var(--panel-ink);
+}
+
+.tile-flag[hidden] {
+  display: none;
+}
+
+.tile-flag canvas {
+  width: 24px;
 }
 
 .tile-capture,

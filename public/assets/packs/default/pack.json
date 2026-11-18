@@ -1275,7 +1275,8 @@
       "vertical": 81
     },
     "shore": 50,
-    "beach": 58
+    "beach": 58,
+    "beachFlares": 87
   },
   "properties": {
     "path": "../../terrain/buildings-32.png",

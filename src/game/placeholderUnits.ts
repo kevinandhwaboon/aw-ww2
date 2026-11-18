@@ -130,16 +130,17 @@ export function drawAmmoCanBadge(): HTMLCanvasElement {
   ], body, "#c8d088");
 }
 
-/** Veterancy chevrons: one for Veteran, three for Elite (03-combat §6). */
+/**
+ * Veterancy chevrons: one for Veteran, three for Elite (03-combat §6). Point up, like a sergeant's
+ * stripes, with nothing behind them: the unit shows through between the stripes.
+ */
 export function drawVeterancyBadge(level: Exclude<VeterancyLevel, "rookie">): HTMLCanvasElement {
   const count = level === "elite" ? 3 : 1;
   const [c, ctx] = canvas(5, count * 2 + 1);
-  ctx.fillStyle = "#101018";
-  ctx.fillRect(0, 0, c.width, c.height);
   ctx.fillStyle = "#f0d040";
   for (let i = 0; i < count; i++) {
-    // A "V" shape: 5 wide, 3 tall; chevrons stack every 2 rows.
-    for (const [x, dy] of [[0, 0], [1, 1], [2, 2], [3, 1], [4, 0]] as const) ctx.fillRect(x, i * 2 + dy, 1, 1);
+    // A "^" shape: 5 wide, 3 tall; chevrons stack every 2 rows.
+    for (const [x, dy] of [[0, 2], [1, 1], [2, 0], [3, 1], [4, 2]] as const) ctx.fillRect(x, i * 2 + dy, 1, 1);
   }
   return c;
 }
