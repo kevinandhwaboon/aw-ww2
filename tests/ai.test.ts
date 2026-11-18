@@ -931,6 +931,34 @@ describe("Greedy: steady pressure from the sea (09-ai §4h)", () => {
   });
 });
 
+describe("Greedy: the pull of the objectives (09-ai §4i)", () => {
+  // The enemy HQ 5 tiles west of our infantry; the airfield our side must capture 5 tiles east.
+  const map = ["Q.........A", "..........."];
+  const objective = (type: "captureProperties" | "holdProperties") => ({
+    victory: [{ type: "hqCapture" as const }, type === "captureProperties"
+      ? { type, side: "allies" as const, properties: [P(10, 0)] }
+      : { type, side: "allies" as const, properties: [P(10, 0)], days: 2 }],
+    propertyOwners: [{ pos: P(0, 0), owner: 1 }, { pos: P(10, 0), owner: 1 }],
+  });
+  const eastward = (state: GameState, weights = GREEDY_WEIGHTS) => (destination(state, chooseCommand(state, weights))?.x ?? 5) > 5;
+
+  it("between two equally near enemy properties, a land unit heads for the one its side must capture", () => {
+    const state = makeGame(map, [{ type: "infantry", owner: 0, pos: P(5, 1) }], objective("captureProperties"));
+    expect(eastward(state)).toBe(true);
+    expect(eastward(state, { ...GREEDY_WEIGHTS, objectivePull: 0 })).toBe(false);
+  });
+
+  it("a property its side wins by holding pulls the same way", () => {
+    const state = makeGame(map, [{ type: "infantry", owner: 0, pos: P(5, 1) }], objective("holdProperties"));
+    expect(eastward(state)).toBe(true);
+  });
+
+  it("on a map won only by taking the HQ there is no pull, and play is unchanged", () => {
+    const state = makeGame(map, [{ type: "infantry", owner: 0, pos: P(5, 1) }], { propertyOwners: [{ pos: P(0, 0), owner: 1 }, { pos: P(10, 0), owner: 1 }] });
+    expect(chooseCommand(state)).toEqual(chooseCommand(state, { ...GREEDY_WEIGHTS, objectivePull: 0 }));
+  });
+});
+
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   const start = (id: string, seed = 7) => {
     const scenario = SCENARIOS.find((s) => s.id === id);

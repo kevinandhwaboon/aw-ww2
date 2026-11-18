@@ -256,14 +256,14 @@ export abstract class LandingBrain extends BrainBase {
   }
 
   /**
-   * The properties our side wins by capturing (`captureProperties`) that our side doesn't hold yet:
-   * where every landing aims, so the pressure stays on them (09-ai §4h).
+   * The properties our side wins by capturing or holding (`captureProperties`, `holdProperties`) that
+   * our side doesn't hold yet: where every landing aims (09-ai §4h), and where land units are drawn (09-ai §4i).
    */
   protected objectivesToTake(): Point[] {
     const side = this.state.players[this.me]?.side;
     const points = new Map<number, Point>();
     for (const c of this.state.victoryConditions) {
-      if (c.type !== "captureProperties" || c.side !== side) continue;
+      if ((c.type !== "captureProperties" && c.type !== "holdProperties") || c.side !== side) continue;
       for (const p of c.properties) {
         const owner = propertyAt(this.state, p)?.owner ?? null;
         if (owner === null || this.isEnemy(owner)) points.set(this.index(p), p);
@@ -448,13 +448,31 @@ export abstract class LandingBrain extends BrainBase {
     const exposed = isCarrier(unit.type) && this.inDanger(unit, dest);
     const delivering = unit.cargo.length > 0 && (isLandingCraft(unit.type) || isAirTransport(unit.type));
     const danger = this.w.dangerWeight > 0 && staying && !delivering && !this.pressing() ? this.w.dangerWeight * this.danger(unit, dest) : 0;
+    const pull = staying && plan.kind === "advance" && !plan.embark ? this.objectivePull(unit, dest) : 0;
     return (
-      this.actionScore(unit, plan, command, dest) -
+      this.actionScore(unit, plan, command, dest) +
+      pull -
       (blocks || inTheWay ? this.w.blockSitePenalty : 0) -
       (exposed ? this.w.carrierDangerPenalty : 0) -
       danger -
       (staying && this.pastReturn(unit, plan, command, dest) ? Math.max(this.w.noReturnPenalty, this.w.noReturnOwnValue * this.worth(unit)) : 0)
     );
+  }
+
+  /**
+   * The pull of the objectives (09-ai §4i): a land unit's move scores a little for each step it
+   * brings the unit nearer the nearest objective our side has yet to take that it could walk to, and
+   * loses as much for each step away.
+   */
+  protected objectivePull(unit: Unit, dest: Point): number {
+    if (this.w.objectivePull <= 0 || defOf(unit.type).category !== "land" || defOf(unit.type).transport) return 0;
+    const objectives = this.objectivesToTake().filter((p) => this.connected(unit.type, unit.pos, p));
+    if (objectives.length === 0) return 0;
+    const dist = this.distances(unit, objectives, `objectives:${objectives.map((p) => this.index(p)).join(",")}`);
+    const from = dist[this.index(unit.pos)] ?? Infinity;
+    const to = dist[this.index(dest)] ?? Infinity;
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return 0;
+    return this.w.objectivePull * (from - to);
   }
 
   /**
