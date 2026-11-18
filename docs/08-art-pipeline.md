@@ -446,6 +446,8 @@ In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (
 | Every vehicle and gun: Recon, Halftrack, Light, Medium and Heavy Tank, Tank Destroyer, Artillery, Rocket Artillery, Mobile AA, Flak Gun | 5, in two staggered columns |
 | Assault Infantry, Fighter | 4 (Assault Infantry: launcher teams of gunner and loader) |
 | Mortar Team, Bomber, Transport Aircraft | 3 (Mortar Team: crews of loader and assistant) |
+| Obstacle (attacked) | 9 dragon's teeth in three staggered rows |
+| Minefield (attacked) | 6 stretches of wire and mines, in two rows |
 | Every naval unit: Battleship, Destroyer, Submarine, Landing Craft, Torpedo Boat; Bunker | 1 (since 2026-11-09 each naval unit is one larger, more detailed ship; before, Destroyers, Submarines and Landing Craft showed 2 and Torpedo Boats 4) |
 
 Figures fall from the back of the formation first, as the shots that take them land. Soldiers topple over and fade (a prone gunner slumps where he lies). Each man falls about his own feet; the gear around him stays where it is, so a Mortar Team's tube and its ammunition crate stay upright with the crew lying beside them, and a dug-in squad's sandbags stay put on a bunker (since 2026-11-08; before, the whole team rotated with its mortar); vehicles and guns blow up, go dark and keep burning; aircraft fall out of the sky trailing smoke; ships burn and settle.
@@ -453,6 +455,12 @@ Figures fall from the back of the formation first, as the shots that take them l
 **Infantry squads** carry what real squads did: mostly riflemen (Garand or Kar98k; the M1 carbine for paratroopers), the squad's automatic weapon (a BAR or an MG 42) fired prone off its bipod, and submachine guns. A German squad has one MP 40, the squad leader's. A US squad has two Thompsons, drawn as the drum-fed M1928 with its vertical foregrip; paratroopers carry a third. Riflemen fire single shots; the submachine guns and the automatic weapon fire bursts.
 
 **Paratroopers.** US Infantry dropped by a Transport Aircraft (01-units §5) fights as 101st Airborne paratroopers: the tan M1942 jump suit toned with the team color, brown jump boots with a knife strapped to one, bulging cargo pockets, a musette bag instead of a pack, a scrim-netted helmet with the regiment's card suit on it, M1 carbines and the extra Thompson. The suit is the same one the map shows for that unit, picked by unit id: spade, heart, diamond or club.
+
+**Fortifications as targets (since 2026-11-18).** An attack on a fortification shows the fortification that was hit, picked from the terrain of the attacked square, with the terrain's own name over its half and its own backdrop:
+- **Bunker:** the concrete bunker, as before.
+- **Minefield** (02-terrain §4b): a strip of churned ground with barbed wire on wooden pickets, a yellow triangular warning sign on each stretch, and mines buried in low humps in front. As its HP drops, stretches go up one by one: the mines go off in a blast and a dust cloud, leaving a crater, a snapped wire, one picket knocked flat and its sign lying in the dirt or blown away.
+- **Obstacle** (02-terrain §4): rows of concrete dragon's teeth, cracking as HP drops; each fallen tooth is blown off its footing and lies broken beside the stump, rebar showing.
+Before this, minefields and obstacles were drawn as a bunker. They are colored from the art pack, so a minefield on a desert map stands in sand (section 21). Fortifications never fire back. `?battle=demo&a=assaultInfantry&d=minefield&dt=minefield` previews one (`&d=obstacle&dt=obstacle` for the teeth).
 
 **Dug in.** Infantry, Assault Infantry and Mortar Teams on a Bunker fight from behind sandbags, with a concrete casemate, camouflage netting and barbed wire behind them.
 

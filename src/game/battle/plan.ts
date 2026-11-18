@@ -12,8 +12,22 @@ import { displayHp, type GameState, type PlayerId } from "../../engine/state";
 
 export type HalfId = "left" | "right";
 
-/** What a battle figure is: a unit type, or the bunker being shot at. */
-export type FigureKind = UnitTypeId | "bunker";
+/**
+ * The fortifications a battle scene can show as the target of an attack (02-terrain §4, §4b), each
+ * with its own figure: a Bunker, a Minefield, or an Obstacle (dragon's teeth).
+ */
+export const FORT_FIGURES = ["bunker", "minefield", "obstacle"] as const;
+export type FortFigure = (typeof FORT_FIGURES)[number];
+
+/** What a battle figure is: a unit type, or the fortification being shot at. */
+export type FigureKind = UnitTypeId | FortFigure;
+
+export const isFort = (kind: FigureKind): kind is FortFigure => (FORT_FIGURES as readonly string[]).includes(kind);
+
+/** The figure an attacked fortification shows, from the terrain it stands on. */
+export function fortFigure(terrain: TerrainId): FortFigure {
+  return terrain === "minefield" || terrain === "obstacle" ? terrain : "bunker";
+}
 
 /**
  * How a weapon looks when it fires, which sets the shooter's animation, what flies across and
@@ -41,7 +55,7 @@ export type FireKind =
 export interface BattleHalf {
   readonly half: HalfId;
   readonly kind: FigureKind;
-  /** Null for a bunker, which no one owns. */
+  /** Null for a fortification, which no one owns. */
   readonly owner: PlayerId | null;
   readonly nation: NationId | null;
   /** The terrain the unit stands on, which sets the half's background. */
@@ -100,6 +114,10 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   carrier: 1,
   supplyShip: 1,
   bunker: 1,
+  // A minefield shows six stretches of fence and mines; each goes up as HP falls.
+  minefield: 6,
+  // Nine dragon's teeth in three rows; they crack and topple as HP falls.
+  obstacle: 9,
 };
 
 /** What each soldier of an Infantry squad carries, front of the formation first. */
@@ -190,7 +208,7 @@ export function isIndirect(fire: FireKind): boolean {
   return fire === "mortar" || fire === "howitzer" || fire === "rockets" || fire === "bombs" || fire === "diveBomb" || fire === "aerialTorpedo" || fire === "depthCharges";
 }
 
-const isAir = (kind: FigureKind) => kind !== "bunker" && UNITS[kind].category === "air";
+const isAir = (kind: FigureKind) => !isFort(kind) && UNITS[kind].category === "air";
 
 /**
  * Which half a side stands on: the side whose army faces right stands on the left, so the two face
@@ -256,18 +274,22 @@ export function planCombat(state: GameState, event: Extract<GameEvent, { type: "
   return side.attacker === "left" ? { left: a, right: d, strikes } : { left: d, right: a, strikes };
 }
 
-/** The plan for an attack on a bunker (02-terrain §4). A bunker never fires back. */
+/**
+ * The plan for an attack on a fortification (02-terrain §4, §4b): a Bunker, a Minefield or an
+ * Obstacle, each shown as itself. A fortification never fires back.
+ */
 export function planFortAttack(state: GameState, event: Extract<GameEvent, { type: "fortAttacked" }>): BattlePlan | null {
   const attacker = state.units.find((u) => u.id === event.attackerId);
   if (!attacker) return null;
   const side = halves(state, attacker.owner, null);
   const fortBefore = displayHp(event.hp + event.attack.damage);
   const a = half(state, side.attacker, attacker.type, attacker.owner, event.attackerPos, displayHp(attacker.hp), attacker.id);
-  const d = half(state, side.defender, "bunker", null, event.pos, fortBefore, null);
+  const fort = fortFigure(terrainAt(state.map, event.pos));
+  const d = half(state, side.defender, fort, null, event.pos, fortBefore, null);
   const strikes: BattleStrike[] = [
     {
       from: side.attacker,
-      fire: fireKind(attacker.type, event.attack.weapon, "bunker"),
+      fire: fireKind(attacker.type, event.attack.weapon, fort),
       hpBefore: fortBefore,
       hpAfter: displayHp(event.hp),
       atAir: false,
