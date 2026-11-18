@@ -6,7 +6,6 @@ import { aiStep, type AiPlayer } from "./ai/player";
 import { apply } from "./engine/apply";
 import type { Command } from "./engine/commands";
 import { inBounds, terrainAt, type Point } from "./engine/map";
-import { createGame, type GameSetup } from "./engine/setup";
 import type { WeatherId } from "./engine/data/weather";
 import { fogInGame } from "./engine/weather";
 import { unitAt, type GameState, type PlayerId } from "./engine/state";
@@ -33,7 +32,12 @@ import { createUnitPanel } from "./ui/unitPanel";
 export interface SessionOptions {
   readonly gameRoot: HTMLElement;
   readonly uiRoot: HTMLElement;
-  readonly setup: GameSetup;
+  /** The game to play: a new one, or one carried on from the autosave (11-tech-setup §3j). */
+  readonly game: GameState;
+  /** True when the game was carried on from the autosave rather than just started. */
+  readonly resumed: boolean;
+  /** Called with the game as it now stands: at the start, after each order, and after an Undo. */
+  readonly onChange: (state: GameState) => void;
   /** Hot-seat: stop between turns until the next player says they're ready. */
   readonly passDevice: boolean;
   /** Attacks play as split-screen battle scenes (08-art-pipeline §18) instead of on the map. */
@@ -62,11 +66,11 @@ const WEATHER_BANNER: Record<WeatherId, string> = { clear: "The skies clear", sn
 /** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
 const AI_PAUSE_MS = 250;
 
-export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): Session {
+export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChange, passDevice, battleScenes, debug, ais, pad, onNewGame }: SessionOptions): Session {
   /** Aborted by end(): removes every listener the session added to the page. */
   const listening = new AbortController();
   let ended = false;
-  let state: GameState = createGame(setup);
+  let state: GameState = initial;
   // Each army is drawn in its nation's colors (08-art-pipeline §12).
   setGameNations(state.players.map((p) => p.nation));
   let cursor: Point = { x: 0, y: 0 };
@@ -80,7 +84,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
    * is, or during the computer's turn the last human to play. Null when only computers play, and
    * once the game is over: then everything shows.
    */
-  let viewer: PlayerId | null = setup.players.findIndex((_, id) => ais[id] == null);
+  let viewer: PlayerId | null = state.players.findIndex((_, id) => ais[id] == null);
   if (viewer < 0) viewer = null;
   const updateViewer = () => {
     if (state.result) viewer = null;
@@ -149,7 +153,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   });
   /** During the computer's turn the map can be looked at, but no orders given (09-ai §5). */
   const aiTurn = () => state.result === null && ais[state.currentPlayer] != null;
-  const humans = setup.players.filter((_, id) => ais[id] == null).length;
+  const humans = state.players.filter((_, id) => ais[id] == null).length;
   scene.setHandlers({
     onCursorMove: (tile) => controller.onCursorMove(tile),
     nextCursor: (from, step) => controller.nextCursor(from, step),
@@ -217,6 +221,8 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     const spotted = watching !== null && revealsAnything(state, result.state, watching);
     const revealsInformation = command.type === "endTurn" || attacked || spotted;
     history = revealsInformation || result.state.result ? [] : [...history, state];
+    // Kept before the animation plays, so a reload partway through doesn't lose the move.
+    onChange(result.state);
     // Only what the viewer could see plays out (19-fog-of-war §7, 05-supply-transport §9).
     const shown =
       watching === null ? { before: state, events: result.events, revealed: [] } : eventsSeenBy(state, result.state, result.events, watching);
@@ -299,6 +305,7 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
     controller.reset();
     history = history.slice(0, -1);
     state = previous;
+    onChange(state);
     updateViewer();
     debugPanel?.logNote("Undo: last move taken back");
     render();
@@ -356,6 +363,13 @@ export function startSession({ gameRoot, uiRoot, setup, passDevice, battleScenes
   });
 
   render();
+  onChange(state);
+  // A hot-seat game carried on after a reload starts behind the pass-the-device screen, so whoever
+  // reloaded doesn't see the player's view by accident (11-tech-setup §3j, 19-fog-of-war §7).
+  const current = state.players[state.currentPlayer];
+  if (resumed && current && (passDevice || fogInGame(state)) && humans > 1 && !aiTurn()) {
+    void handoff.show(`Day ${state.day} · ${current.name}`, "Game resumed", playerColors(current.id)[0]);
+  }
   // The computer's first turn waits for the map to be up, so its first moves and attacks animate.
   void scene.ready().then(() => {
     if (aiTurn()) void runAi();

@@ -1,34 +1,16 @@
 // The screens around a game: title and map select (00-master-design §12, HTML full screens).
 
-import type { AiLevel } from "../ai/weights";
-import type { CommanderId } from "../engine/data/commanders";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
 import { commandersFor } from "../urlOptions";
 import { commanderPicker, type CommanderPicker } from "./commanders";
 import { defaultComputerPlayers } from "./computerPlayers";
 import { el } from "./dom";
+import type { GameOptions } from "./gameOptions";
 import { menuKeys } from "./menuKeys";
 
 export { defaultComputerPlayers };
-
-export interface GameOptions {
-  /** Random variation in damage (03-combat §3). */
-  readonly luck: boolean;
-  /** Each side sees only what its units see (19-fog-of-war). */
-  readonly fog: boolean;
-  /** Hot-seat: stop between turns until the next player says they're ready. */
-  readonly passDevice: boolean;
-  /** Attacks play as split-screen battle scenes (08-art-pipeline §18). */
-  readonly battleScenes: boolean;
-  /** Player ids the computer plays (09-ai §5). On the map select, null means everyone not on the first player's side. */
-  readonly computer: readonly number[] | null;
-  /** How well the computer plays (09-ai §4c). */
-  readonly level: AiLevel;
-  /** Each player's commander, in player order; null or missing is no commander (06-commanders §5). */
-  readonly commanders: readonly (CommanderId | null)[];
-}
-
+export type { GameOptions };
 
 type OnStart = (scenario: Scenario, options: GameOptions) => void;
 
@@ -38,18 +20,36 @@ function screen(root: HTMLElement): { node: HTMLElement; close: () => void } {
   return { node, close: () => node.remove() };
 }
 
-export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart): void {
+/** A game left unfinished on this device (11-tech-setup §3j): what to call it, and how to carry it on. */
+export interface ResumeChoice {
+  readonly label: string;
+  readonly go: () => void;
+}
+
+export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, resume: ResumeChoice | null = null): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel title-panel");
   const play = el("button", "btn btn-big", "New Game");
   play.addEventListener("click", () => {
     close();
-    showMapSelect(root, scenarios, defaults, onStart);
+    showMapSelect(root, scenarios, defaults, onStart, undefined, resume);
   });
-  panel.append(el("h1", "title-name", "WW2 Tactics"), el("div", "title-sub", "Working title · Play the computer, or a friend on one device"), play);
+  panel.append(el("h1", "title-name", "WW2 Tactics"), el("div", "title-sub", "Working title · Play the computer, or a friend on one device"));
+  const buttons = [play];
+  if (resume) {
+    // Continue comes first, so Z on the title screen carries the game on.
+    const carryOn = el("button", "btn btn-big", "Continue");
+    carryOn.addEventListener("click", () => {
+      close();
+      resume.go();
+    });
+    panel.append(carryOn, el("div", "title-sub", resume.label));
+    buttons.unshift(carryOn);
+  }
+  panel.append(play);
   node.append(panel);
-  play.focus();
-  menuKeys(panel, [play]);
+  buttons[0]?.focus();
+  menuKeys(panel, buttons);
 }
 
 function matchup(scenario: Scenario): string {
@@ -69,7 +69,14 @@ function checkbox(label: string, checked: boolean): { row: HTMLElement; input: H
  * Step one of a new game: the map. Arrows walk the list and Z picks, which moves on to the players
  * screen. Nothing else on this screen takes the focus, so it works from the keyboard alone.
  */
-export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, initial?: Scenario): void {
+export function showMapSelect(
+  root: HTMLElement,
+  scenarios: readonly Scenario[],
+  defaults: GameOptions,
+  onStart: OnStart,
+  initial?: Scenario,
+  resume: ResumeChoice | null = null,
+): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
   const list = el("div", "map-list");
@@ -82,7 +89,7 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
     row.addEventListener("focus", () => show(scenario));
     row.addEventListener("click", () => {
       close();
-      showPlayerSelect(root, scenarios, scenario, defaults, onStart);
+      showPlayerSelect(root, scenarios, scenario, defaults, onStart, resume);
     });
     list.append(row);
     return { scenario, row };
@@ -106,7 +113,7 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
     rows.map(({ row }) => row),
     () => {
       close();
-      showTitleScreen(root, scenarios, defaults, onStart);
+      showTitleScreen(root, scenarios, defaults, onStart, resume);
     },
   );
 }
@@ -116,7 +123,14 @@ export function showMapSelect(root: HTMLElement, scenarios: readonly Scenario[],
  * the options and Start. Up and Down walk every control, Left and Right change the commander in
  * focus, and X goes back to the maps with everything chosen here kept.
  */
-export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario[], scenario: Scenario, defaults: GameOptions, onStart: OnStart): void {
+export function showPlayerSelect(
+  root: HTMLElement,
+  scenarios: readonly Scenario[],
+  scenario: Scenario,
+  defaults: GameOptions,
+  onStart: OnStart,
+  resume: ResumeChoice | null = null,
+): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
 
@@ -182,7 +196,7 @@ export function showPlayerSelect(root: HTMLElement, scenarios: readonly Scenario
     ],
     () => {
       close();
-      showMapSelect(root, scenarios, options(), onStart, scenario);
+      showMapSelect(root, scenarios, options(), onStart, scenario, resume);
     },
   );
 }

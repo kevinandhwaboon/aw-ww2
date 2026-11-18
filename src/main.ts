@@ -9,6 +9,9 @@ import { setPolish } from "./game/battle/angled/mesh";
 import { parseUrlOptions, withCommanders, withNations } from "./urlOptions";
 import { sounds } from "./game/sound/player";
 import "./ui/style.css";
+import { readAutosave, writeAutosave, type Autosave } from "./autosave";
+import { createGame } from "./engine/setup";
+import type { GameState } from "./engine/state";
 
 const url = parseUrlOptions(new URLSearchParams(window.location.search));
 setPolish(url.polish);
@@ -31,19 +34,30 @@ const defaults: GameOptions = {
   commanders: url.commanders,
 };
 
-function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions): void {
+/** Where the autosave is kept (11-tech-setup §3j); null where the browser blocks storage. */
+const store = (() => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+})();
+const scenarioIds = SCENARIOS.map((s) => s.id);
+/** A failed autosave is logged once, not after every move. */
+let autosaveWarned = false;
+
+/** Starts a new game on this map, or, given the autosave, carries that one on. */
+function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions, saved?: Autosave): void {
   const session = startSession({
     gameRoot: game,
     uiRoot: ui,
-    setup: {
-      ...scenario.setup,
-      players: withCommanders(withNations(scenario.setup.players, url.nations), options.commanders),
-      seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
-      settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog },
-      // ?weather= replaces the forecast for testing; the map keeps its season's art (12-weather).
-      ...(url.weather === null
-        ? {}
-        : { weather: { season: scenario.setup.weather?.season ?? "summer", forecast: [{ fromDay: 1, weather: url.weather }] } }),
+    game: saved?.state ?? newGame(scenario, options),
+    resumed: saved !== undefined,
+    onChange: (state) => {
+      if (!writeAutosave(store, { scenarioId: scenario.id, options, state }) && !autosaveWarned) {
+        autosaveWarned = true;
+        console.warn("Couldn't autosave the game: browser storage is blocked or full");
+      }
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,
@@ -58,6 +72,19 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
   });
 }
 
+function newGame(scenario: Scenario, options: GameOptions): GameState {
+  return createGame({
+    ...scenario.setup,
+    players: withCommanders(withNations(scenario.setup.players, url.nations), options.commanders),
+    seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
+    settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog },
+    // ?weather= replaces the forecast for testing; the map keeps its season's art (12-weather).
+    ...(url.weather === null
+      ? {}
+      : { weather: { season: scenario.setup.weather?.season ?? "summer", forecast: [{ fromDay: 1, weather: url.weather }] } }),
+  });
+}
+
 await loadArtPack(url.pack);
 
 const direct = SCENARIOS.find((s) => s.id === url.map);
@@ -65,4 +92,10 @@ if (url.battleDemo) {
   const { startBattlePreview } = await import("./game/battle/preview");
   startBattlePreview(gameRoot, new URLSearchParams(window.location.search));
 } else if (direct) start(gameRoot, uiRoot, direct, defaults);
-else showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options));
+else {
+  // The title screen offers Continue when a game was left unfinished on this device.
+  const saved = readAutosave(store, scenarioIds);
+  const savedScenario = saved && SCENARIOS.find((s) => s.id === saved.scenarioId);
+  const resume = saved && savedScenario ? { label: `${savedScenario.name} · Day ${saved.state.day}`, go: () => start(gameRoot, uiRoot, savedScenario, saved.options, saved) } : null;
+  showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), resume);
+}
