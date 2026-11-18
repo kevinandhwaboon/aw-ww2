@@ -255,6 +255,51 @@ export abstract class LandingBrain extends BrainBase {
     return found;
   }
 
+  /**
+   * The properties our side wins by capturing (`captureProperties`) that our side doesn't hold yet:
+   * where every landing aims, so the pressure stays on them (09-ai §4h).
+   */
+  protected objectivesToTake(): Point[] {
+    const side = this.state.players[this.me]?.side;
+    const points = new Map<number, Point>();
+    for (const c of this.state.victoryConditions) {
+      if (c.type !== "captureProperties" || c.side !== side) continue;
+      for (const p of c.properties) {
+        const owner = propertyAt(this.state, p)?.owner ?? null;
+        if (owner === null || this.isEnemy(owner)) points.set(this.index(p), p);
+      }
+    }
+    return [...points.keys()].sort((a, b) => a - b).map((i) => points.get(i) ?? { x: 0, y: 0 });
+  }
+
+  /** The landmasses, for this unit type's movement, that a Landing Craft could put it ashore on. */
+  protected shoreLabels(type: UnitTypeId): ReadonlySet<number> {
+    const key = defOf(type).movementType;
+    const cached = this.shoreLabelCache.get(key);
+    if (cached) return cached;
+    const labels = new Set<number>();
+    for (const tile of this.loadableTiles()) {
+      for (const n of [tile, ...this.neighbors(tile)]) {
+        const label = this.label(type, n);
+        if (label >= 0) labels.add(label);
+      }
+    }
+    this.shoreLabelCache.set(key, labels);
+    return labels;
+  }
+
+  /**
+   * An empty Landing Craft or Transport Aircraft is spent when it's under half a tank and can't get
+   * back to a port or airfield to refuel: it can't fetch anyone, so units don't wait for it and it
+   * doesn't count against building another (09-ai §4h).
+   */
+  protected spent(transport: Unit): boolean {
+    if (transport.cargo.length > 0 || transport.fuel >= stats.maxFuel(this.state, transport) / 2) return false;
+    const home = this.repairTiles(transport);
+    const back = home.length > 0 ? (this.distances(transport, home, "repair")[this.index(transport.pos)] ?? Infinity) : Infinity;
+    return !Number.isFinite(back) || transport.fuel < stats.moveFuel(this.state, transport, back);
+  }
+
   /** Our stranded units that are fit to travel: the ones transports come for. */
   protected waiting(): readonly Unit[] {
     this.waitingCache ??= this.state.units.filter((u) => u.owner === this.me && displayHp(u.hp) > this.w.retreatHp && this.isStranded(u));
@@ -292,7 +337,7 @@ export abstract class LandingBrain extends BrainBase {
     const carries = defOf(transport.type).transport?.carries ?? [];
     const waiting = this.waiting().filter((u) => carries.includes(u.type));
     let best: { tile: Point; cost: number } | null = null;
-    if (waiting.length > 0) {
+    if (waiting.length > 0 && !this.spent(transport)) {
       const fromTransport = this.distances(transport, [transport.pos], `from${key}`);
       const tiles = isAirTransport(transport.type) ? this.state.properties.filter((p) => this.canBoardAt(transport.type, p.pos)).map((p) => p.pos) : this.loadableTiles();
       for (const tile of tiles) {
@@ -348,7 +393,7 @@ export abstract class LandingBrain extends BrainBase {
     for (const t of this.state.units) {
       const rules = defOf(t.type).transport;
       if (t.owner !== this.me || !rules || !(isLandingCraft(t.type) || isAirTransport(t.type))) continue;
-      if (!rules.carries.includes(unit.type) || t.cargo.length >= rules.capacity) continue;
+      if (!rules.carries.includes(unit.type) || t.cargo.length >= rules.capacity || this.spent(t)) continue;
       const tile = this.canBoardAt(t.type, t.pos) ? t.pos : t.cargo.length === 0 ? this.pickup(t) : null;
       if (!tile || !this.connected(unit.type, unit.pos, tile)) continue;
       if (isAirTransport(t.type) && !this.canFly(t, tile, unit)) continue;
@@ -357,8 +402,17 @@ export abstract class LandingBrain extends BrainBase {
     return [...tiles.values()];
   }
 
-  /** What a passenger is after once it's ashore: properties to take, or else enemies and their properties. */
+  /**
+   * What a passenger is after once it's ashore: the properties our side wins by capturing, when it
+   * could be landed within walking distance of one (09-ai §4h); otherwise properties to take, or else
+   * enemies and their properties.
+   */
   protected goalsFor(passenger: Unit): Point[] {
+    if (this.w.landOnObjectives) {
+      const shore = this.shoreLabels(passenger.type);
+      const objectives = this.objectivesToTake().filter((p) => shore.has(this.label(passenger.type, p)));
+      if (objectives.length > 0) return objectives;
+    }
     if (defOf(passenger.type).canCapture) {
       const properties = this.capturable(passenger);
       if (properties.length > 0) return properties;

@@ -7,8 +7,10 @@ import {
   buildProblem,
   distance,
   inBounds,
+  propertyAt,
   propertyDefAt,
   stats,
+  unitAt,
   type Command,
   type Point,
   type Unit,
@@ -64,7 +66,8 @@ export abstract class ProductionBrain extends LandingBrain {
     for (const { pos, options } of sites) {
       if (this.w.keepSitesForService && this.neededForService(pos)) continue;
       const threatened = this.enemies.some((e) => this.nearThreat(e, pos));
-      const budget = threatened ? funds : Math.max(share, options[0]?.cost ?? 0);
+      // Never into the funds kept back for a transport (09-ai §4h): before, every site could still buy one unit.
+      const budget = threatened ? funds : Math.min(funds, Math.max(share, options[0]?.cost ?? 0));
       const opponents = this.opponentsFor(pos);
       const capturers = propertyDefAt(this.state, pos)?.builds === "land" ? this.capturersNeeded() : "enough";
       const capturersOnly = capturers === "belowMinimum" && options.some((o) => o.cost <= budget && defOf(o.type).canCapture);
@@ -123,11 +126,16 @@ export abstract class ProductionBrain extends LandingBrain {
    */
   protected transportWanted(site: Point): { type: UnitTypeId; cost: number } | null {
     const type = propertyDefAt(this.state, site)?.builds === "naval" ? "landingCraft" : propertyDefAt(this.state, site)?.builds === "air" ? "transportAircraft" : null;
-    const option = type && buildOptions(this.state, site).find((o) => o.type === type);
-    if (!type || !option) return null;
+    // A site one of our own units stands on for the moment (a ship in for fuel) still counts, so the
+    // funds are kept back for it rather than spent elsewhere meanwhile (09-ai §4h).
+    const occupant = unitAt(this.state, site);
+    if (!type || propertyAt(this.state, site)?.owner !== this.me || (occupant && occupant.owner !== this.me)) return null;
+    if (!(this.state.players[this.me]?.buildable ?? []).includes(type)) return null;
+    const option = { cost: stats.unitCost(this.state, this.me, type) };
     const carries = defOf(type).transport?.carries ?? [];
     const waiting = this.waiting().filter((u) => carries.includes(u.type));
-    const owned = this.state.units.filter((u) => u.owner === this.me && u.type === type).length;
+    // A spent craft, too low on fuel to get home, can't fetch anyone: it doesn't count (09-ai §4h).
+    const owned = this.state.units.filter((u) => u.owner === this.me && u.type === type && !this.spent(u)).length;
     const wanted =
       type === "landingCraft"
         ? owned < this.w.maxLandingCraft && owned * this.w.strandedPerCraft < waiting.length && this.pickup(this.phantom(type, site)) !== null

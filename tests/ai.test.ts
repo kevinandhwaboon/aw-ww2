@@ -873,6 +873,64 @@ describe("Greedy: Supply Ships (09-ai §4f, 05-supply-transport §3a)", () => {
   });
 });
 
+describe("Greedy: steady pressure from the sea (09-ai §4h)", () => {
+  const allies = (funds: number) => ({ players: [{ name: "Allies", nation: "us" as const, funds }, { name: "Axis", nation: "germany" as const }] });
+  const twoAtHome = [0, 1].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+
+  it("a Landing Craft too low on fuel to get home doesn't count, so the port builds another for the troops left behind", () => {
+    const map = ["...P" + "S".repeat(15) + "_..Q", "...." + "S".repeat(15) + "_..."];
+    const setup = { ...allies(30000), propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(22, 0), owner: 1 }] };
+    const spent = { type: "landingCraft" as const, owner: 0, pos: P(16, 1), fuel: 3 };
+    expect(nextBuild(makeGame(map, [...twoAtHome, spent], setup))).toBe("landingCraft");
+    // The same craft with a full tank can still come back for them, so none is built.
+    expect(nextBuild(makeGame(map, [...twoAtHome, { ...spent, fuel: 35 }], setup))).not.toBe("landingCraft");
+  });
+
+  it("stranded troops don't board a Landing Craft too low on fuel to carry them anywhere", () => {
+    const state = makeGame(["._" + "S".repeat(12) + "_.Q", ".." + "S".repeat(12) + "S.."], [
+      { type: "infantry", owner: 0, pos: P(0, 0) },
+      { type: "landingCraft", owner: 0, pos: P(1, 0), fuel: 2 },
+    ], { propertyOwners: [{ pos: P(16, 0), owner: 1 }] });
+    const command = chooseCommand(state);
+    expect(command.type === "move" && command.action.type === "load").toBe(false);
+  });
+
+  it("funds kept back for a Landing Craft aren't spent while one of our ships is in the port refuelling", () => {
+    const setup = { ...allies(9000), propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const troops = [0, 1, 2].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+    const state = makeGame(["f..PSSSS_..Q", "..._SSSS_..."], [
+      ...troops,
+      { type: "destroyer", owner: 0, pos: P(3, 0) },
+      { type: "mediumTank", owner: 1, pos: P(10, 1) },
+    ], setup);
+    expect(nextBuild(state)).toBeNull();
+  });
+
+  it("funds kept back for a Landing Craft aren't spent at the factory, not even on one cheap unit", () => {
+    const setup = { ...allies(9000), propertyOwners: [{ pos: P(3, 0), owner: 0 }, { pos: P(0, 0), owner: 0 }, { pos: P(11, 0), owner: 1 }] };
+    const troops = [0, 1, 2].map((x) => ({ type: "infantry" as const, owner: 0, pos: P(x, 1) }));
+    const state = makeGame(["f..PSSSS_..Q", "..._SSSS_..."], [
+      ...troops,
+      { type: "infantry", owner: 1, pos: P(10, 1) },
+      { type: "infantry", owner: 1, pos: P(10, 0) },
+    ], setup);
+    expect(nextBuild(state)).toBeNull();
+  });
+
+  it("landings aim at the property our side must capture, not at a nearer neutral city", () => {
+    // A neutral city 6 tiles west of the craft; the objective airfield 9 tiles east.
+    const map = ["C._" + "S".repeat(13) + "_.A.Q", "..." + "S".repeat(13) + "_...."];
+    const setup = {
+      victory: [{ type: "hqCapture" as const }, { type: "captureProperties" as const, side: "allies" as const, properties: [P(18, 0)] }],
+      propertyOwners: [{ pos: P(18, 0), owner: 1 }, { pos: P(20, 0), owner: 1 }],
+    };
+    const state = makeGame(map, [{ type: "landingCraft", owner: 0, pos: P(8, 1), cargo: [{ type: "infantry" }] }], setup);
+    const east = (weights = GREEDY_WEIGHTS) => (destination(state, chooseCommand(state, weights))?.x ?? 0) > 8;
+    expect(east()).toBe(true);
+    expect(east({ ...GREEDY_WEIGHTS, landOnObjectives: false })).toBe(false);
+  });
+});
+
 describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   const start = (id: string, seed = 7) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
