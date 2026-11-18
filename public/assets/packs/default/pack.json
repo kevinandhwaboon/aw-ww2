@@ -1200,6 +1200,138 @@
         "carrier",
         "supplyShip"
       ]
+    },
+    {
+      "nation": "italy",
+      "team": "blue",
+      "path": "../../units/it-land-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        null,
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "olive",
+      "path": "../../units/it-land-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        null,
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "red",
+      "path": "../../units/it-land-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        null,
+        "tankDestroyer",
+        "artillery",
+        null,
+        "mobileAA",
+        "flakGun"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "blue",
+      "path": "../../units/it-air-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "olive",
+      "path": "../../units/it-air-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "red",
+      "path": "../../units/it-air-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "fighter",
+        "bomber",
+        "transportAircraft"
+      ]
     }
   ],
   "terrain": {

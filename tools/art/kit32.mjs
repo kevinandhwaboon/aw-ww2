@@ -344,6 +344,27 @@ export function paraHelmet(s, cx = 15.5, top = 3, rim = 11, half = 5.8) {
   s.line(cx + 2, rim, cx + 3, rim + 4, "leather", 1);
 }
 
+/**
+ * The Italian M33 helmet: a smooth, deep round dome with a short brim flaring out all round, a little
+ * longer over the neck than over the eyes, and the ventilation boss on its crown. Faces right.
+ */
+export function m33Helmet(s, cx = 15.5, top = 2, rim = 10, half = 6.2) {
+  s.shape();
+  for (let y = top; y < rim; y++) {
+    for (let x = Math.floor(cx - half - 1); x <= Math.ceil(cx + half + 1); x++) {
+      const dx = (x - cx) / half, dy = (y - (rim - 0.5)) / (rim - top);
+      if (dx * dx + dy * dy > 1) continue;
+      const lit = dx * 0.7 + dy * 0.7;
+      s.dot(x, y, "team", lit < -0.55 ? 0 : lit < 0 ? 1 : 2);
+    }
+  }
+  // The brim: flared out past the dome, dipping lower at the back of the neck (left).
+  for (let x = Math.round(cx - half - 1.5); x <= Math.round(cx + half + 1); x++) s.dot(x, rim, "team", 3);
+  s.dot(cx - half - 2, rim + 1, "team", 3).dot(cx - half - 1, rim + 1, "team", 3);
+  // The ventilation boss on top.
+  s.dot(cx, top - 1, "team", 1);
+}
+
 /** The Airborne's maroon beret, pulled down over the right ear, the cap badge over the left eye. */
 export function redBeret(s, cx = 15.5, top = 6, rim = 10) {
   s.shape();
@@ -446,6 +467,24 @@ export function leeEnfield(dy = 3) {
   r.rect(16, 17 + dy, 25, 17 + dy, "wood", 0);
   r.rect(27, 17 + dy, 28, 18 + dy, "metal", 1);
   r.line(29, 18 + dy, 31, 18 + dy, "metal", 0);
+  return finish(r, false);
+}
+
+/**
+ * The Carcano M91/38 short rifle: a pale wooden stock with a straight grip, the bolt handle bent
+ * down, a fore-end nearly to the muzzle, a short barrel and the folding bayonet laid back under it.
+ */
+export function carcano(dy = 3) {
+  const r = sprite();
+  r.rect(0, 18 + dy, 0, 21 + dy, "metal", 2);
+  r.rect(1, 18 + dy, 8, 21 + dy, "wood", 0, true);
+  r.rect(9, 18 + dy, 11, 20 + dy, "wood", 0);
+  r.rect(12, 17 + dy, 16, 19 + dy, "metal", 2);
+  r.line(15, 20 + dy, 15, 22 + dy, "metal", 0);
+  r.rect(17, 17 + dy, 25, 19 + dy, "wood", 1);
+  r.rect(26, 17 + dy, 29, 18 + dy, "metal", 1);
+  r.line(21, 20 + dy, 27, 20 + dy, "metal", 0);
+  r.rect(28, 16 + dy, 28, 16 + dy, "metal", 1);
   return finish(r, false);
 }
 

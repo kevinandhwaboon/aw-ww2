@@ -160,7 +160,7 @@ export class DropRenderer implements Cutscene {
           drawSoldier(this.fig, 0, 0, "crouch", look, {});
           return;
         }
-        const kind = this.plan.unit === "infantry" ? squadGun(i, look) : look.nation === "germany" ? "kar98" : look.nation === "japan" ? "arisaka" : look.nation === "ussr" ? "ppsh" : kitOf(look) === "uk" ? "sten" : "carbine";
+        const kind = this.plan.unit === "infantry" ? squadGun(i, look) : look.nation === "germany" ? "kar98" : look.nation === "japan" ? "arisaka" : look.nation === "ussr" ? "ppsh" : kitOf(look) === "uk" ? "sten" : kitOf(look) === "it" ? "mab38" : "carbine";
         const f = soldierFrame(0, 0, "stand");
         const butt = { x: f.frontShoulder.x - 4, y: f.hip + 1 };
         const along = (d: number): Pt => ({ x: butt.x + Math.cos(-1.0) * d, y: butt.y + Math.sin(-1.0) * d });

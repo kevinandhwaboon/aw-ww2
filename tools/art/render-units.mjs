@@ -94,6 +94,7 @@ const { units: de32 } = await import("./de-units32.mjs");
 const { units: jp32 } = await import("./jp-units32.mjs");
 const { units: su32 } = await import("./su-units32.mjs");
 const { units: uk32, paratroopers: ukParatroopers } = await import("./uk-units32.mjs");
+const { units: it32 } = await import("./it-units32.mjs");
 // Each nation's natural color first (used for the docs preview), then the player colors.
 const big = [
   { id: "us", units: us32, extra: paratroopers.map((u) => ({ ...u, views: paratrooperViews(u.code.slice(3)) })), teams: ["olive", "red", "blue"] },
@@ -101,6 +102,8 @@ const big = [
   { id: "jp", units: jp32, extra: [], teams: ["khaki", "olive", "red", "blue"] },
   { id: "su", units: su32, extra: [], teams: ["green4bo", "olive", "red", "blue"] },
   { id: "uk", units: uk32, extra: ukParatroopers.map((u) => ({ ...u, views: ukParatrooperViews(u.head) })), teams: ["brown", "olive", "red", "blue"] },
+  // Italy wears blue, its azzurro (18-scenarios-north-africa §1).
+  { id: "it", units: it32, extra: [], teams: ["blue", "olive", "red"] },
 ];
 for (const { id, units, extra, teams: names } of big) {
   // Rows: the land units in §4 order, then any variants (the US paratrooper's four card suits, the
@@ -131,7 +134,7 @@ for (const { id, units, extra, teams: names } of big) {
 }
 
 // ---- 32x32 aircraft and ships. Rows: FT, BM, TA, DB, TR and BB, DD, SS, LC, TB, CV, SP; empty where a nation has none.
-const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir, ukAir, ukNaval } = await import("./air-naval32.mjs");
+const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir, ukAir, ukNaval, itAir } = await import("./air-naval32.mjs");
 const airRows = ["FT", "BM", "TA", "DB", "TR"];
 const navalRows = ["BB", "DD", "SS", "LC", "TB", "CV", "SP"];
 for (const { id, air, naval, teams: names } of [
@@ -140,6 +143,7 @@ for (const { id, air, naval, teams: names } of [
   { id: "jp", air: jpAir, naval: jpNaval, teams: ["khaki", "olive", "red", "blue"] },
   { id: "su", air: suAir, naval: [], teams: ["green4bo", "olive", "red", "blue"] },
   { id: "uk", air: ukAir, naval: ukNaval, teams: ["brown", "olive", "red", "blue"] },
+  { id: "it", air: itAir, naval: [], teams: ["blue", "olive", "red"] },
 ]) {
   for (const [kind, list, order] of [["air", air, airRows], ["naval", naval, navalRows]]) {
     if (list.length === 0) continue;

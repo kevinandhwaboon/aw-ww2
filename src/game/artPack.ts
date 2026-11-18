@@ -126,6 +126,8 @@ const BUILT_IN_COLORS = {
   battleBrown: "#6e5a3c",
   battleRoundel: "#2c3c8c",
   battleBeret: "#7e2030",
+  // Italy's khaki drill for the desert (the sahariana), toned with the team color like the others
+  battleSahariana: "#a4925e",
   battleSteel: "#5a5e60",
   battleSteelDark: "#33363a",
   battleRubber: "#26262a",
@@ -313,8 +315,8 @@ export const BUILT_IN_PACK: ArtPack = {
   ],
   // What each army actually wore and painted its vehicles: US olive drab, German field grey, Japanese
   // khaki, Soviet 4BO protective green, British Service Colour No. 2 brown (08-art-pipeline §12).
-  // Canada borrows the UK's (ART_LOANS). Italy, until it has art of its own, wears blue, its azzurro,
-  // so its borrowed German sheets come in a color Germany doesn't wear (18-scenarios-north-africa §1).
+  // Canada borrows the UK's (ART_LOANS). Italy wears blue, its azzurro, so it never matches Germany on
+  // a map with both (18-scenarios-north-africa §1).
   nationColors: {
     us: { team: "olive", fill: "#64783a", outline: "#2a3818" },
     uk: { team: "brown", fill: "#765c3e", outline: "#33261a" },
@@ -580,10 +582,10 @@ export function unitFrame(art: UnitArt, view: UnitView, frame = 0): number {
 
 /**
  * Nations drawn with another nation's art when a pack has none of their own (00-master-design §6):
- * Canada fields the UK's sprites, battle figures and color, and Italy Germany's sprites and battle
- * figures, in its own color (18-scenarios-north-africa §1).
+ * Canada fields the UK's sprites, battle figures and color. (Italy borrowed Germany's until it got
+ * its own on 2026-11-18.)
  */
-export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk", italy: "germany" };
+export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk" };
 
 /**
  * The nation whose equipment battle scenes draw for this one: the nation it borrows art from, if

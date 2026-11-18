@@ -134,7 +134,7 @@ export type SquadWeapon = "rifle" | "smg" | "lmg";
 export function squadWeapon(figure: number, nation: NationId | null, paratrooper = false): SquadWeapon {
   if (figure === 4) return "lmg";
   if (figure === 1) return "smg";
-  const oneSmg = nation === "germany" || nation === "japan" || nation === "uk" || nation === "canada";
+  const oneSmg = nation === "germany" || nation === "japan" || nation === "uk" || nation === "canada" || nation === "italy";
   if (!oneSmg && figure === 5) return "smg";
   if (paratrooper && figure === 3) return "smg";
   return "rifle";

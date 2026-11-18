@@ -4,7 +4,8 @@
 // ear flaps. Germany: the side cap under headphones, goggles on the cap and a throat microphone.
 // Japan: the cork tanker's helmet with its ribs and short peak. Soviet Union: the black padded
 // shlemofon with its three thick ribs, over dark overalls. UK: the Royal Armoured Corps' black beret
-// under a headset, over khaki denim overalls. Faces right; the hatch rim's
+// under a headset, over khaki denim overalls. Italy: the padded leather casco da carrista with its
+// thick rolled brim, over the black leather tanker's jacket. Faces right; the hatch rim's
 // centre is at (x, y). The same crewman in a steel helmet mans guns (`headgear: "helmet"`).
 
 import { C, mix, shade, type Painter } from "./paint";
@@ -29,6 +30,7 @@ function jacketOf(look: Look, headgear: "tanker" | "helmet"): string {
   if (kit === "jp") return C("battleKhaki");
   if (kit === "su") return mix(C("battleInk"), C("battleOlive"), 0.45);
   if (kit === "uk") return mix(C("battleSand"), C("battleBrown"), 0.55);
+  if (kit === "it") return mix(C("battleInk"), C("battleLeather"), 0.45);
   return mix(C("battleSand"), C("battleOlive"), 0.45);
 }
 
@@ -122,6 +124,8 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     const hat =
       kit === "jp"
         ? mix(C("battleKhaki"), C("battleLeather"), 0.35)
+        : kit === "it"
+          ? mix(C("battleLeather"), C("battleInk"), 0.3)
         : kit === "su"
           ? mix(C("battleInk"), C("battleLeather"), 0.3)
           : mix(C("battleLeather"), C("battleOlive"), 0.35);
@@ -138,6 +142,11 @@ export function tankCommander(p: Painter, x: number, y: number, look: Look, opts
     p.rect(x - 4, y - 14, 1, 5, hatLo);
     p.px(x - 2, y - 10, hatLo);
     if (kit === "jp") p.rect(x + 2, y - 14, 3, 1, hatLo); // peak
+    if (kit === "it") {
+      // The casco's thick padded roll round the brim.
+      p.rect(x - 4, y - 14, 8, 1, hatLo);
+      p.rect(x - 3, y - 15, 6, 1, hatHi);
+    }
     p.rect(x - 3, y - 15, 5, 1, C("battleLeather")); // goggle strap
     lens(x + 2, y - 16);
   }

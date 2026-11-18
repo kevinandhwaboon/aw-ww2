@@ -17,7 +17,7 @@ Sand is open desert, brown squares are minefields, tan squares ridges, white the
 At the developer's request, the first North Africa map. Second El Alamein was chosen over Gazala, Crusader, Kasserine and Torch. It fills these gaps in the built-in maps:
 - No map so far is in the **desert**. It needs a desert art season (§1 "Art") and three new terrains (02-terrain §4b).
 - No map so far is a **set-piece breakthrough through minefields**, cleared square by square by sappers.
-- **Italy** joins the Axis as a nation, as the second Axis player (§1 "Players"). For now it borrows Germany's art.
+- **Italy** joins the Axis as a nation, as the second Axis player (§1 "Players"). It borrowed Germany's art until 2026-11-18 and now has its own.
 - No map so far has the attacker's enemy **starved of fuel**.
 
 ### The history it follows
@@ -53,7 +53,7 @@ The Free French at El Alamein were two brigades (about 5,000 men) and a flying c
 ### Italy as a nation
 
 - **New nation `italy`**, on the Axis side, named "Italy".
-- **It borrows Germany's art** for now (`ART_LOANS`, as Canada borrows the UK's). Italian units look like German ones. Its own art is a later session (§2).
+- **Its own art since 2026-11-18** (08-art-pipeline §12, §18): map sprites with front and back views and battle-scene figures and models for every unit type below. Until then it borrowed Germany's (`ART_LOANS`).
 - **Color:** blue, Italy's azzurro (as built, 2026-11-15). Borrowing Germany's color too would have made Germany and Italy match, so by the usual rule both would have lost their color and Germany would no longer wear field grey. Germany's sheets already come in blue, so no new art was needed. Italy can get a color of its own with its own art.
 - **Flag (HUD and capture flag):** a plain green, white and red vertical tricolour. Never the Savoy crest of the wartime flag, and never the fasces (00-master-design §6).
 - **Unit types it fielded** (availability rule, 01-units §1): Infantry, Assault Infantry (the *guastatori* combat engineers), Mortar Team, Recon (AB 41 armoured car), Halftrack (standing in for its trucks), Light Tank (L6/40), Medium Tank (M13/40, M14/41), Tank Destroyer (Semovente 75/18, 47/32), Artillery (75/27, 100/17), Mobile AA (truck-mounted 20 mm), Flak Gun (90/53), Fighter (C.202) and Bomber (SM.79). No Heavy Tank, no Rocket Artillery, no carrier aircraft. It had a navy, but this map has no ships.
@@ -157,7 +157,7 @@ No new supply rule. The desert's long supply lines are shown through the map, un
   - **Building sheet:** flat-roofed whitewashed buildings, railway halts, tented camps and dumps. Roofs or awnings keep the owner's color.
   - **Battle scenes:** sand ground and dust, a pale hot sky, no trees.
 - **New terrain tiles** in every season sheet (summer, winter, desert): Minefield (wire on pickets with yellow warning triangles), Ridge, Salt Marsh (cracked white salt crust with dark wet patches). As built: 08-art-pipeline §21.
-- **Italy** borrows Germany's art for now. Its own art is a later session (§2).
+- **Italy** has its own art since 2026-11-18 (08-art-pipeline §12, §18).
 - **UK art** is 1944 equipment (Firefly, Achilles). Desert-era tanks (Crusader, Grant, Valentine) are optional extra art, not needed for v0.
 
 ### How it's made
@@ -198,7 +198,7 @@ Scenario tests ("El Alamein"):
 
 ## 2. Known gaps and later work
 
-- **Italian art** (map sprites with front and back views, battle figures and models): Carcano infantry with the M33 helmet, Bersaglieri plumes, *guastatori*, Breda mortar, AB 41, L6/40, M13/40, Semovente 75/18, 75/27, the 20 mm Breda and the 90/53, C.202 and SM.79, plus Italy's own nation color. A follow-up session, as for the UK.
+- **Italian battle scenes** draw Italy's own soldiers, tank crews, tanks, armoured car and aircraft; its lorry, guns and AA use the German shapes, as Japan's do. No Bersaglieri plumes yet.
 - **Free French** are folded into the UK (§1 "Why the Free French are folded in"). A nation borrowing the UK art can be added for a map where they matter more.
 - **No fog of war:** Montgomery's deception plan (Operation Bertram: dummy tanks and a fake pipeline in the south) and the surprise of the night attack can't be shown.
 - **No night:** Lightfoot was a night attack under a full moon.

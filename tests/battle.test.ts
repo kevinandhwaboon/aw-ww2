@@ -74,7 +74,7 @@ describe("figures on screen (08-art-pipeline §18)", () => {
 });
 
 describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
-  const squad = (nation: "us" | "germany" | "japan" | "ussr" | "uk", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
+  const squad = (nation: "us" | "germany" | "japan" | "ussr" | "uk" | "italy", paratrooper = false) => Array.from({ length: 8 }, (_, i) => squadWeapon(i, nation, paratrooper));
   const count = (weapons: string[], weapon: string) => weapons.filter((w) => w === weapon).length;
 
   it("a German squad is six riflemen, a squad leader with an MP 40 and an MG 42", () => {
@@ -95,6 +95,11 @@ describe("an infantry squad's weapons (08-art-pipeline §18)", () => {
   it("a British section is six riflemen with Lee-Enfields, a section leader with a Sten and a Bren gunner", () => {
     const uk = squad("uk");
     expect([count(uk, "rifle"), count(uk, "smg"), count(uk, "lmg")]).toEqual([6, 1, 1]);
+  });
+
+  it("an Italian squad is six riflemen with Carcanos, a squad leader with a MAB 38 and a Breda 30 gunner", () => {
+    const it_ = squad("italy");
+    expect([count(it_, "rifle"), count(it_, "smg"), count(it_, "lmg")]).toEqual([6, 1, 1]);
   });
 
   it("a US squad is mostly riflemen, with two Thompsons and a BAR", () => {
@@ -314,6 +319,17 @@ describe("tanks drawn turned 5° toward the viewer (08-art-pipeline §18)", () =
   it("the UK has its own tank models: Stuart, Sherman Firefly, Churchill and Achilles", () => {
     for (const kind of kinds) expect(TANK_MODELS[kind].uk(team).faces.length).toBeGreaterThan(20);
     expect(TANK_MODELS.medium.uk(team).muzzle[0]).toBeGreaterThan(TANK_MODELS.medium.us(team).muzzle[0]);
+  });
+
+  it("Italy has its own tank models: L6/40, M13/40 and Semovente 75/18; with no heavy tank, the M13/40 stands in", () => {
+    for (const kind of ["light", "medium", "td"] as const) {
+      expect(TANK_MODELS[kind].it(team).faces.length).toBeGreaterThan(20);
+      expect(TANK_MODELS[kind].it).not.toBe(TANK_MODELS[kind].de);
+    }
+    expect(TANK_MODELS.heavy.it).toBe(TANK_MODELS.medium.it);
+    // The L6/40 is the small one, and the Semovente sits lower than the M13/40's turret.
+    expect(TANK_MODELS.light.it(team).muzzle[2]).toBeLessThan(TANK_MODELS.medium.it(team).muzzle[2]);
+    expect(TANK_MODELS.td.it(team).muzzle[2]).toBeLessThan(TANK_MODELS.medium.it(team).muzzle[2]);
   });
 
   it("each gun points forward, ahead of the hull's middle, and slides back when it recoils", () => {

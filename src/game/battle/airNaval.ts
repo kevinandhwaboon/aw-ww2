@@ -2,7 +2,8 @@
 // fuselage. US: P-51, B-26, C-47, SBD Dauntless, TBF Avenger. Germany: Bf 109, Ju 88, Ju 52.
 // Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Soviet Union: Yak-9, Il-2 Sturmovik (its
 // Bomber), Li-2. UK (and Canada): Spitfire, Lancaster, Dakota, Fairey Barracuda, Fairey Swordfish.
-// Germany and the Soviet Union have no carrier aircraft.
+// Italy: Macchi C.202, SM.79, SM.82, with the white fuselage band and the plain white rudder cross,
+// never the fasces or the Savoy crest. Germany, the Soviet Union and Italy have no carrier aircraft.
 // Ships are in ships.ts.
 
 import { C, mix, shade, type Painter } from "./paint";
@@ -28,6 +29,16 @@ function finFlash(p: Painter, x: number, top: number, h: number): void {
 }
 const jp = (look: Look) => look.nation === "japan";
 const su = (look: Look) => look.nation === "ussr";
+const it = (look: Look) => kitOf(look) === "it";
+
+/** Italy's markings: the white band round the rear fuselage, and the plain white cross on the rudder. */
+function whiteBand(p: Painter, x: number, top: number, bottom: number): void {
+  p.rect(x, top, 3, bottom - top + 1, C("battleStar"));
+}
+function rudderCross(p: Painter, cx: number, cy: number, arm: number): void {
+  p.rect(cx - arm, cy, arm * 2 + 1, 1, C("battleStar"));
+  p.rect(cx, cy - arm, 1, arm * 2 + 1, C("battleStar"));
+}
 
 /** The hinomaru: a red disc in a thin white ring, Japan's aircraft marking (never the rising-sun ensign). */
 function sun(p: Painter, cx: number, cy: number, r: number): void {
@@ -123,6 +134,26 @@ export const fighterRig: Rig = {
       p.rect(21, -5, 4, 1, shade(C("battleSteelDark"), 1.5));
       p.px(19, 2, C("battleSteelDark"));
       p.poly([[25, -2], [28, 0], [25, 2]], C("battleSteel"));
+      prop(p, 28, 0, 10, pose.t);
+    } else if (it(look)) {
+      // Macchi C.202 Folgore: slim and rounded, a small framed canopy faired into the spine, the oil
+      // cooler under the nose, the white band and rudder cross, "smoke ring" mottle.
+      p.poly([[-26, 0], [-25, -11], [-20, -11], [-17, -3]], T.mid);
+      rudderCross(p, -23, -6, 2);
+      p.poly([[-27, -1], [-20, -3], [4, -5], [18, -4], [24, -2], [24, 2], [16, 3], [-20, 2], [-27, 1]], T.mid);
+      p.rect(-20, 1, 36, 2, T.lo);
+      p.rect(-18, -4, 34, 1, T.hi);
+      p.poly([[1, -5], [3, -8], [11, -8], [13, -5]], C("battleSkyLow"));
+      p.line(6, -8, 6, -5, T.deep);
+      p.poly([[-12, -5], [1, -5], [1, -6], [-10, -6]], T.mid);
+      p.rect(-30, -1, 9, 2, T.lo);
+      whiteBand(p, -16, -3, 2);
+      for (const [mx, my] of [[-8, -3], [4, -2], [12, 0]] as const) p.rect(mx, my, 2, 2, mix(T.lo, C("battleSand"), 0.4));
+      p.poly([[-6, 2], [12, 2], [9, 8], [-8, 7]], T.mid);
+      p.line(-6, 2, 12, 2, T.hi);
+      p.rect(14, 3, 6, 2, T.lo);
+      for (let x = 16; x < 22; x += 2) p.px(x, -1, C("battleSteelDark"));
+      p.poly([[24, -2], [28, 0], [24, 2]], C("battleSteel"));
       prop(p, 28, 0, 10, pose.t);
     } else if (de(look)) {
       // Bf 109: slim and angular, a framed canopy, a spiral on the spinner.
@@ -243,6 +274,37 @@ export const bomberRig: Rig = {
       p.ctx.restore();
       return;
     }
+    if (it(look)) {
+      // SM.79 Sparviero: three engines, one in the nose and one on each wing, the "gobbo" hump with
+      // its guns on the spine behind the cockpit, a ventral gondola, the white band and rudder cross.
+      p.poly([[-44, -1], [-42, -19], [-35, -19], [-30, -4]], T.mid);
+      rudderCross(p, -39, -11, 3);
+      p.rect(-48, -2, 14, 3, T.lo);
+      p.poly([[-46, -2], [-34, -7], [24, -8], [34, -6], [38, -3], [38, 3], [30, 6], [-30, 5], [-46, 1]], T.mid);
+      p.rect(-34, -7, 58, 1, T.hi);
+      p.rect(-30, 4, 60, 2, T.lo);
+      // The hump, glazed at the front, with the dorsal gun poking back out of it.
+      p.poly([[2, -8], [6, -14], [18, -14], [22, -8]], T.mid);
+      p.rect(16, -13, 5, 3, C("battleSkyLow"));
+      p.line(2, -12, -6, -12, C("battleSteelDark"));
+      p.poly([[22, -8], [25, -11], [31, -10], [33, -7]], C("battleSkyLow"));
+      whiteBand(p, -26, -6, 4);
+      p.rect(-8, 5, 16, 4, T.lo);
+      p.rect(-10, 5, 18, doors ? 4 : 1, doors ? C("battleInk") : T.deep);
+      // The nose engine and its propeller.
+      p.disc(39, 0, 4, C("battleSteelDark"));
+      p.poly([[42, -2], [45, 0], [42, 2]], C("battleSteel"));
+      prop(p, 45, 0, 10, pose.t);
+      // The near wing and its engine.
+      p.poly([[-14, 3], [22, 3], [18, 14], [-18, 12]], T.mid);
+      p.line(-14, 3, 22, 3, T.hi);
+      p.poly([[4, 2], [26, 2], [28, 6], [26, 10], [4, 10]], T.lo);
+      p.disc(27, 6, 4, C("battleSteelDark"));
+      p.poly([[26, 3], [30, 6], [26, 9]], C("battleSteel"));
+      prop(p, 30, 6, 12, pose.t + 70);
+      p.ctx.restore();
+      return;
+    }
     // Tail.
     p.poly([[-44, -1], [-42, -20], [-35, -20], [-30, -4]], T.mid);
     p.rect(-48, -2, 14, 3, T.lo);
@@ -314,6 +376,16 @@ export const transportRig: Rig = {
       p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
       p.disc(6, 19, 3, C("battleRubber"));
       mottle(p, -30, -6, 50, look);
+    } else if (it(look)) {
+      // SM.82 Marsupiale: a deep fuselage with a row of cabin windows, three engines (the nose one
+      // here), fixed undercarriage, the white band and rudder cross.
+      for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
+      whiteBand(p, -30, -7, 4);
+      rudderCross(p, -40, -10, 3);
+      p.disc(44, 0, 4, C("battleSteelDark"));
+      prop(p, 48, 0, 9, pose.t);
+      p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
+      p.disc(6, 19, 3, C("battleRubber"));
     } else if (uk(look)) {
       // Dakota: the C-47 in RAF colors, invasion stripes, the roundel and a fin flash.
       for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
