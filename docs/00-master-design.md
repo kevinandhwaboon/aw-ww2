@@ -33,7 +33,7 @@ The two goals are equally weighted:
 | **2: Systems** | Air and naval units, transports and amphibious unloading, modifier layer (CO hooks), scenario-defined victory conditions, the pluggable AI interface and a first basic AI |
 | **3: Content and polish** | Commanders, battle cutscene art (a code-drawn version exists since 2026-11-07), more scenarios, better art, mobile phone layout |
 | **4: Normandy theater** | Full Normandy + southeastern England theater map and scenario |
-| **Later / maybe** | Save/load, campaign mode, custom community AIs, online multiplayer. (Fog of war moved in on 2026-11-17 as an option: 19-fog-of-war) |
+| **Later / maybe** | Save/load slots and save files, campaign mode, custom community AIs, online multiplayer. (Fog of war moved in on 2026-11-17 as an option: 19-fog-of-war; an autosave of the game in progress on 2026-11-18: 11-tech-setup §3j) |
 
 The Normandy theater is the north star, but it's designed and built **last**, after the core gameplay is proven on small maps.
 
@@ -54,7 +54,7 @@ The Normandy theater is the north star, but it's designed and built **last**, af
 
 **Out for now:**
 - Online multiplayer
-- Save/load (the architecture should make it easy to add later)
+- Save/load with slots or files (the architecture should make it easy to add later). One autosave of the game in progress is in (11-tech-setup §3j)
 - Battle cutscene (deferred; see section 13)
 - Full phone playability (deferred; tablet and desktop first)
 
@@ -404,3 +404,4 @@ UI falls into four categories:
 | 2026-11-16 | At the developer's request, **a new game is two screens, each usable from the keyboard alone** (06-commanders §5): the map, then players and commanders with the options and Start. Menus are designed for keyboard first; the mouse is a convenience. On the players screen Left and Right change the commander in focus, and X goes back to the maps keeping the choices. Replaces the single map select screen, where the commander choice was awkward to reach without a mouse |
 | 2026-11-17 | At the developer's request, **fog of war** (19-fog-of-war), an option on the new-game screen (off by default), not a scenario setting. The original's rules: each side sees within its units' vision, counted in steps, plus its own properties; foot soldiers on Hills +3 vision; Forest, **Bocage** (hedgerows, made for ambushes) and Reef hide units from anyone not next to them; **Ridge doesn't hide** (low, open, raised ground); aircraft never hide. Running into a hidden unit is an ambush for every unit, and so is unloading onto one. Orders are judged by what the player saw when giving them, so a unit hidden in a Forest must be spotted by one unit before another can attack it (differs from the original). Units firing from the fog stay hidden. With two or more humans the pass-the-device screen is always used; Undo is cleared by any move that brings a tile into sight. Rain is left for later |
 | 2026-11-17 | At the developer's request, **Rain** (12-weather §3a), following the original game: fog of war for the day even in a game without it, every unit sees 1 square less, and mud raises wheel and track costs on Plains, Forest, Ridge, Bocage and Rubble as in the original (foot, air and sea unaffected). A game with rain in its forecast always uses the pass-the-device screen between humans. Kursk gets rain on days 3 and 8 for the summer thunderstorms. `?weather=` in the URL sets any weather for testing |
+| 2026-11-18 | At the developer's request, an **autosave** (11-tech-setup §3j), so a page reload (a phone dropping a background tab) doesn't lose the game: one slot in the browser's storage, written after every order, and a Continue button on the title screen. It keeps the game state and the new-game choices that aren't in it (computer players and level, pass-the-device, battle scenes). A reload loses Undo history and the AI's memory of enemies seen in fog. A hot-seat game resumes behind the pass-the-device screen. Save slots and save files stay for later |

@@ -138,7 +138,19 @@
 - **Hot-seat:** with the pass-the-device option on, a full screen waits between turns until the next player presses Ready. With it off, the turn banner shows instead.
 - **New Game** on the results screen ends the game (`end()` in `src/session.ts` removes its listeners, canvas and panels) and goes back to the map select with the options just played. Since 2026-11-13; before that it reloaded the page.
 - **Luck seeds** are random for each new game unless `?seed=` fixes one. They're not part of a scenario file.
-- **Saving:** `saveGame` and `loadGame` in `src/engine/save.ts` work and are tested, but no screen uses them yet, since save/load isn't in the MVP (00-master-design §5).
+- **Saving:** `saveGame` and `loadGame` in `src/engine/save.ts` turn a game into text and back. The autosave (§3j) is the only thing that uses them.
+
+## 3j. Autosave
+
+One game in progress is kept on the device, so a page that reloads (a phone browser dropping a background tab, say) carries on where it left off. Since 2026-11-18.
+
+- **When:** after every order the engine accepts (before its animation plays), after an Undo, and when a game starts. Kept in the browser's `localStorage` under `ww2-tactics.autosave`. `src/autosave.ts` reads and writes it; `src/main.ts` hooks it to the session.
+- **One slot.** Starting any new game replaces it, including one started with `?map=`. A game that's over is forgotten.
+- **Continue** on the title screen carries the saved game on, with the map's name and day under it. It shows only when there's a save this version can read, on a map still in the game.
+- **What's kept:** the whole game state (luck seed included, so a reload never re-rolls a fight), the map, and the choices from the new-game screens that aren't in the game state: who the computer plays and how well, the pass-the-device screen and battle scenes. Settings from the URL such as `?debug=on` come from the address being opened, not the save.
+- **What a reload loses:** Undo history, and what the computer remembers of enemy units it saw in fog of war (09-ai §4g), as the AI already allows for.
+- **Hot-seat:** a game with two or more people that uses the pass-the-device screen (always, with fog of war: 19-fog-of-war §7) resumes behind it when it's a person's turn, so whoever reloaded doesn't see that player's view.
+- **Storage blocked or full** (some private windows): the game plays on normally; it just won't survive a reload.
 
 ## 4. Data files
 
