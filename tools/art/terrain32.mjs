@@ -275,15 +275,19 @@ const reach = (mask, side, opposite) => (mask & opposite ? 11 : HALF) * (mask & 
 const wobble = (t) => 1.2 * Math.sin((4 * Math.PI * t) / SIZE);
 const CORNERS = [[SIZE, 0], [SIZE, SIZE], [0, SIZE], [0, 0]];
 
-/** How far into the water each pixel is: above 0 is sea, below 0 sand. */
-function wetness(mask, bites, x, y) {
+/**
+ * How far into the water each pixel is: above 0 is sea, below 0 sand. `skip` leaves out the sea on
+ * those sides, with the rest of the piece unchanged.
+ */
+function wetness(mask, bites, x, y, skip = 0) {
   let e = -Infinity;
-  if (mask) {
+  const live = mask & ~skip;
+  if (live) {
     const r = 5;
     const n = reach(mask, 1, 4), east = reach(mask, 2, 8), s = reach(mask, 4, 1), w = reach(mask, 8, 2);
     // The sand as a rectangle with rounded corners where two water sides meet.
-    const x0 = mask & 8 ? w + r : -Infinity, x1 = mask & 2 ? SIZE - east - r : Infinity;
-    const y0 = mask & 1 ? n + r : -Infinity, y1 = mask & 4 ? SIZE - s - r : Infinity;
+    const x0 = live & 8 ? w + r : -Infinity, x1 = live & 2 ? SIZE - east - r : Infinity;
+    const y0 = live & 1 ? n + r : -Infinity, y1 = live & 4 ? SIZE - s - r : Infinity;
     const dx = Math.max(x0 - x, 0, x - x1), dy = Math.max(y0 - y, 0, y - y1);
     e = Math.hypot(dx, dy) - r - (dy >= dx ? wobble(x) : wobble(y));
   }
@@ -296,21 +300,59 @@ function wetness(mask, bites, x, y) {
   return e;
 }
 
+/** The pixel for a wetness: open sea, two bands of surf that run up the sand and back between frames, wet sand, dry sand. */
+function shorePixel(e, x, y, frame, sea, sand) {
+  const foam = frame ? -0.7 : 0;
+  if (e > 4.5) return sea[y][x];
+  if (e > 1.7 + foam) return (x + y * 3 + frame) % 5 === 0 ? "f" : "l";
+  if (e > foam) return "f";
+  if (e > -1.8) return "A";
+  return sand[y][x];
+}
+
 function shoreline(mask, bites, frame, overlay) {
   const sea = water(3, frame);
   const sand = beach(10, []).map((row) => [...row]);
   const g = fill(".");
-  // The surf runs up the sand and back between frames.
-  const foam = frame ? -0.7 : 0;
   for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
     const e = wetness(mask, bites, x + 0.5, y + 0.5);
-    let ch;
-    if (e > 4.5) ch = sea[y][x];
-    else if (e > 1.7 + foam) ch = (x + y * 3 + frame) % 5 === 0 ? "f" : "l";
-    else if (e > foam) ch = "f";
-    else if (e > -1.8) ch = "A";
-    else ch = overlay ? null : sand[y][x];
-    if (ch) g[y][x] = ch;
+    if (!overlay || e > -1.8) g[y][x] = shorePixel(e, x, y, frame, sea, sand);
+  }
+  return toRows(g);
+}
+
+// Beach flares (08-art-pipeline §14): where a beach's waterline would run into the side of a full
+// land tile halfway along it, an overlay sweeps the sand out to that tile's corner instead, so the
+// coast carries on from the land's own edge. One per corner (NE, SE, SW, NW), for which of the
+// corner's two sides is the sea (0 the north or south one, 1 the east or west one; the other is the
+// land), and for whether each opposite side is sea too (1 opposite the north/south side, 2 opposite
+// the east/west side). Only the pixels that differ from the plain piece are drawn.
+const OPPOSITE = { 1: 4, 2: 8, 4: 1, 8: 2 };
+const CORNER_SIDES = [[1, 2], [4, 2], [4, 8], [1, 8]];
+/** How far a pixel is from a side of the tile. */
+const fromSide = (side, x, y) => (side === 1 ? y : side === 2 ? SIZE - x : side === 4 ? SIZE - y : x);
+
+function beachFlare(corner, seaIsAcross, opposites, frame) {
+  const [upDown, across] = CORNER_SIDES[corner];
+  const seaSide = seaIsAcross ? across : upDown, landSide = seaIsAcross ? upDown : across;
+  const mask = seaSide | (opposites & 1 ? OPPOSITE[upDown] : 0) | (opposites & 2 ? OPPOSITE[across] : 0);
+  const depth = reach(mask, seaSide, OPPOSITE[seaSide]);
+  const sea = water(3, frame);
+  const sand = beach(10, []).map((row) => [...row]);
+  const g = fill(".");
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    const px = x + 0.5, py = y + 0.5;
+    const plain = wetness(mask, [], px, py);
+    const u = fromSide(landSide, px, py), v = fromSide(seaSide, px, py);
+    if (u >= HALF) continue;
+    // The waterline leaves the land's corner at 45 degrees and straightens into the piece's own halfway down.
+    const t = u / HALF;
+    const line = HALF * (t ** 3 - 2 * t ** 2 + t) + depth * (3 * t ** 2 - 2 * t ** 3);
+    const slope = (3 * t ** 2 - 4 * t + 1) + (depth / HALF) * (6 * t - 6 * t ** 2);
+    const flared = (line - v) / Math.hypot(1, slope);
+    const e = Math.max(Math.min(plain, flared), wetness(mask, [], px, py, seaSide));
+    const was = shorePixel(plain, x, y, frame, sea, sand), now = shorePixel(e, x, y, frame, sea, sand);
+    if (now !== was) g[y][x] = now;
   }
   return toRows(g);
 }
@@ -447,6 +489,9 @@ export const layout = [
   ["minefield", still(minefield())],
   ["ridge", still(ridge([[16, 60, 16, 9]], 37))], ["ridge", still(ridge([[9, 56, 10, 6], [22, 61, 10, 8]], 38))],
   ["saltMarsh", still(saltMarsh(39))], ["saltMarsh", still(saltMarsh(40))],
+  // Added 2026-11-16: beach flares, 8 for each corner NE, SE, SW, NW.
+  ...[0, 1, 2, 3].flatMap((c) => [0, 1].flatMap((across) => [0, 1, 2, 3].map((opp) =>
+    [`beach-flare-${["NE", "SE", "SW", "NW"][c]}-${across}-${opp}`, moving((f) => beachFlare(c, across === 1, opp, f))]))),
 ];
 
 for (const entry of layout) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));

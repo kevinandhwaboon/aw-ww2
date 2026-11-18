@@ -20,6 +20,12 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(state, P(0, 0)).unit).toMatchObject({ name: "Infantry", owner: 1, cargo: null });
   });
 
+  it("gives the nation of the unit's owner, for the flag beside its name", () => {
+    const state = makeGame(["."], [{ type: "infantry", owner: 1, pos: P(0, 0) }]);
+    expect(tileInfo(state, P(0, 0)).unit?.nation).toBe(state.players[1]?.nation);
+    expect(state.players[1]?.nation).toBeDefined();
+  });
+
   it("says when a submarine is submerged (05-supply-transport §9)", () => {
     const state = makeGame(["S"], [{ type: "submarine", owner: 0, pos: P(0, 0) }]);
     expect(tileInfo(state, P(0, 0)).unit?.name).toBe("Submarine");

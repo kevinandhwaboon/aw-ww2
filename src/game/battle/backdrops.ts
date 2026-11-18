@@ -399,54 +399,88 @@ function fortification(p: Painter, x0: number, ground: number): void {
   }
 }
 
-/** The crest's top edge at local x (0 at the half's outer edge): highest in the middle of the half. */
-export const crestAt = (local: number): number => SCENE.horizon + 24 - Math.sin((Math.max(0, Math.min(SCENE.half, local)) / SCENE.half) * Math.PI) * 22;
+/** Knots of the crag's skyline, one every 12 pixels: a peak toward the half's outer side, with notches and shoulders. */
+const cragKnot = (i: number, salt: number): number => {
+  const local = i * 12;
+  const peak = SCENE.half * 0.36;
+  const rise = Math.max(0, 1 - Math.abs(local - peak) / (local < peak ? peak + 30 : SCENE.half - peak + 10));
+  return SCENE.horizon + 26 - rise ** 1.4 * 62 - (i % 2 === 0 ? 1 : -1) * (2 + hash(i, salt, 37) * 5) * (0.4 + rise);
+};
+
+/** The crag's top edge at local x (0 at the half's outer edge): straight runs between the knots, so it reads as rock, not a mound. */
+export const crestAt = (local: number, salt = 0): number => {
+  const x = Math.max(0, Math.min(SCENE.half, local)) / 12;
+  const i = Math.floor(x);
+  const k = x - i;
+  return cragKnot(i, salt) * (1 - k) + cragKnot(i + 1, salt) * k;
+};
+
+/** A far range of jagged peaks along the skyline, faded into the haze. */
+function peaks(p: Painter, x0: number, base: number, height: number, step: number, salt: number, color: string): void {
+  const knot = (i: number) => base - height * (0.35 + 0.65 * hash(i, salt, x0)) * (i % 2 === 0 ? 1 : 0.3);
+  for (let local = 0; local < SCENE.half; local++) {
+    const i = Math.floor(local / step);
+    const k = (local % step) / step;
+    const top = Math.round(knot(i) * (1 - k) + knot(i + 1) * k);
+    p.rect(x0 + local, top, 1, base - top, color);
+    // The side of each peak away from the light is a shade darker.
+    if (knot(i + 1) > knot(i)) p.rect(x0 + local, top, 1, Math.min(base - top, 6), shade(color, 0.9));
+  }
+}
 
 /**
- * Standing on a hilltop: the valley lies far below in the haze, with small fields, hedgerows, a
- * road and a village, and the near ground is the rounded, rocky crest the unit holds.
+ * Standing on a mountainside: ranges of jagged peaks fade into the haze behind, and the near ground
+ * climbs to a bare rock crag with ledges, cracks and scree, grass holding on only lower down where
+ * the unit stands.
  */
 function hilltop(p: Painter, x0: number, t: number): void {
   const valley = SCENE.horizon + 4;
   sky(p, x0, valley, t, 3);
   const haze = (c: string, k: number) => mix(c, C("battleSkyLow"), k);
-  p.rect(x0, valley - 6, SCENE.half, 6, haze(C("battleHill"), 0.6));
-  p.rect(x0, valley, SCENE.half, SCENE.bottom - valley, haze(C("battleGrass"), 0.45));
-  // Patchwork fields with hedgerows between them, a road and a village far off.
-  for (let row = 0; row < 4; row++) {
-    const y = valley + row * 5;
-    for (let x = 0; x < SCENE.half; x += 18 + row * 4) {
-      const w = 14 + Math.floor(hash(x, row) * 8);
-      p.rect(x0 + x + (row % 2) * 7, y + 1, w, 4, haze(hash(x, row, 3) > 0.5 ? C("battleGrassLight") : C("battleSand"), 0.5));
-      p.rect(x0 + x + (row % 2) * 7, y, w, 1, haze(C("battleTreeDark"), 0.5));
-    }
-  }
-  p.line(x0, valley + 18, x0 + SCENE.half, valley + 8, haze(C("battleRoad"), 0.4));
-  for (let i = 0; i < 4; i++) {
-    const vx = x0 + 120 + i * 6;
-    p.rect(vx, valley + 6, 4, 3, haze(C("battleStone"), 0.35));
-    p.px(vx + 1, valley + 5, haze(C("battleRoof"), 0.35));
-  }
-  // The crest: grass bending over the top, shaded toward the slopes, rocks and boulders.
+  const rock = C("battleConcrete");
+  peaks(p, x0, valley, 46, 22, 61, haze(rock, 0.72));
+  peaks(p, x0, valley, 28, 16, 67, haze(mix(rock, C("battleHill"), 0.4), 0.5));
+  p.rect(x0, valley, SCENE.half, SCENE.bottom - valley, haze(C("battleHill"), 0.35));
+
+  // The crag: bare rock from the skyline down, lit from the upper left, then grass below a ragged line.
   const grassC = C("battleGrass");
+  // The peak stands toward each half's outer side, leaving the far ranges in view toward the middle.
+  const crag = (local: number) => crestAt(x0 > 0 ? SCENE.half - local : local, x0);
   for (let local = 0; local < SCENE.half; local++) {
-    const top = Math.round(crestAt(local));
-    const slope = Math.abs(local - SCENE.half / 2) / (SCENE.half / 2);
-    p.rect(x0 + local, top, 1, SCENE.bottom - top, shade(grassC, 1 - slope * 0.12));
-    p.px(x0 + local, top, C("battleGrassLight"));
-    if (local % 3 === 0) p.px(x0 + local, top - 1, C("battleGrassLight"));
+    const top = Math.round(crag(local));
+    const climbing = crag(local + 1) < crag(local - 1);
+    const face = shade(rock, climbing ? 1.12 : 0.78);
+    const height = SCENE.horizon + 26 - top;
+    const rockDepth = Math.round(8 + height * 0.75 + (hash(Math.floor(local / 9), x0, 71) * (1 - (local % 9) / 9) + hash(Math.floor(local / 9) + 1, x0, 71) * ((local % 9) / 9)) * 12 + hash(local, x0, 73) * 2);
+    const grassTop = Math.min(SCENE.bottom, top + rockDepth);
+    p.rect(x0 + local, top, 1, grassTop - top, face);
+    p.px(x0 + local, top, shade(rock, climbing ? 1.3 : 0.95));
+    p.rect(x0 + local, grassTop, 1, SCENE.bottom - grassTop, shade(grassC, climbing ? 1 : 0.9));
+    if (grassTop < SCENE.bottom) p.px(x0 + local, grassTop, C("battleGrassLight"));
+    // Ledges: darker lines stepping across the face; cracks running down it.
+    for (let y = top + 4; y < grassTop - 1; y += 5) {
+      if (hash(Math.floor(local / 7), Math.floor((y - top) / 5), x0) > 0.45) p.px(x0 + local, y + Math.floor(hash(Math.floor(local / 7), y, 79) * 2), shade(rock, 0.62));
+    }
+    if (hash(local, x0, 83) > 0.93) p.rect(x0 + local, top + 2, 1, Math.min(grassTop - top - 2, 4 + Math.floor(hash(local, 89) * 10)), shade(rock, 0.6));
   }
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 70; i++) {
     const local = Math.floor(hash(i, x0, 41) * SCENE.half);
-    const y = Math.round(crestAt(local)) + 3 + Math.floor(hash(i, x0, 43) * (SCENE.bottom - crestAt(local) - 4));
+    const y = SCENE.horizon + 40 + Math.floor(hash(i, x0, 43) * (SCENE.bottom - SCENE.horizon - 42));
     p.px(x0 + local, y, hash(i, 47) > 0.5 ? C("battleGrassLight") : C("battleGrassDark"));
+  }
+  // Scree and boulders fallen onto the slope below the rock.
+  for (let i = 0; i < 26; i++) {
+    const local = Math.floor(hash(i, x0, 91) * SCENE.half);
+    const y = SCENE.horizon + 30 + Math.floor(hash(i, x0, 93) ** 2 * (SCENE.bottom - SCENE.horizon - 34));
+    p.rect(x0 + local, y, 2, 1, shade(rock, 1.1));
+    p.px(x0 + local + 1, y + 1, shade(rock, 0.7));
   }
   for (let i = 0; i < 6; i++) {
     const local = 12 + i * 32 + hash(i, 53) * 10;
-    const y = Math.round(crestAt(local)) + 6 + (i % 3) * 14;
+    const y = SCENE.horizon + 44 + (i % 3) * 16;
     const r = 3 + hash(i, 59) * 3;
-    p.ellipse(x0 + local, y, r + 1, r * 0.7, C("battleConcrete"));
-    p.ellipse(x0 + local - 1, y - 1, r * 0.6, r * 0.4, shade(C("battleConcrete"), 1.2));
+    p.ellipse(x0 + local, y, r + 1, r * 0.7, shade(rock, 0.8));
+    p.ellipse(x0 + local - 1, y - 1, r * 0.6, r * 0.4, shade(rock, 1.2));
   }
 }
 

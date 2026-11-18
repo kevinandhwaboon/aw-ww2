@@ -23,8 +23,12 @@ const INDIRECT_MS = { up: 260, rocketUp: 420, down: 380 };
  * guns fire. Speed in pixels per ms; `out` and `in` are how far it's seen going and coming.
  */
 const NAVAL = { speed: 0.35, launch: 0.35, out: 70, in: 80 };
-/** Depth charges: thrown clear of the stern for this long, then they sink until they go off. */
-const CHARGE_THROW_MS = 520;
+/**
+ * Depth charges are dropped, not fired: each rolls off the rack at the stern and falls into the
+ * wake (`fall`), sinks out of sight astern, and from `drop` on is seen in the target's half sinking
+ * down onto the submarine the destroyer has run over.
+ */
+const CHARGE_MS = { fall: 300, drop: 520 };
 /** Where a depth charge goes into the water: spread in a pattern around the submarine, not all on it. */
 const chargeX = (shot: Pick<Shot, "fireAt"> & { readonly target: Pt }): number => Math.round(shot.target.x + (hash(shot.fireAt, 11) - 0.5) * 40);
 
@@ -44,7 +48,7 @@ const BLAST_MS: Record<Blast, number> = { small: 260, medium: 650, large: 950 };
 /** Muzzle flash size in pixels; 0 for weapons that don't flash. */
 const FLASH: Record<FireKind, number> = {
   rifle: 3, mg: 3, aaGuns: 3, planeGuns: 3, bazooka: 5, tankGun: 8, flak: 8, deckGun: 6, mortar: 5,
-  howitzer: 11, rockets: 5, bombs: 0, diveBomb: 0, aerialTorpedo: 0, navalGuns: 13, depthCharges: 3, torpedo: 0,
+  howitzer: 11, rockets: 5, bombs: 0, diveBomb: 0, aerialTorpedo: 0, navalGuns: 13, depthCharges: 0, torpedo: 0,
 };
 /** Weapons whose blast kicks up dust along the ground in front of them. */
 const GROUND_BLAST = new Set<FireKind>(["tankGun", "howitzer", "flak"]);
@@ -177,6 +181,12 @@ export class BattleEffects {
   }
 
   /** The half's aircraft fly over the sea, so the sky backdrop shows water under them. */
+  /** Where a depth charge rolled off the stern goes into the water: just astern of the rack, at the ship's waterline. */
+  private chargeWake(shot: PlannedShot): Pt {
+    const h = this.halves[shot.from];
+    return { x: shot.muzzle.x - h.dir * 5, y: this.slot(h, shot.shooterFigure).y };
+  }
+
   private overWater(half: HalfId): boolean {
     const terrain = this.halves[half].data.terrain;
     return terrain === "sea" || terrain === "reef";
@@ -289,24 +299,23 @@ export class BattleEffects {
       return { at, dir: fall, fade: Math.min(1, (NAVAL.in - left) / 25) };
     }
     if (kind === "charge") {
-      // Thrown in an arc onto the water over the submarine, then sinking onto it.
+      // Rolled off the stern into the wake, then sinking onto the submarine in the target's half.
       const total = shot.landAt - shot.fireAt;
       const elapsed = u * total;
-      const surface = shot.targetView === "underwater" ? SCENE.top + 3 : shot.targetBase.y + 1;
-      const entry = { x: chargeX(shot), y: surface };
-      const depth = shot.targetView === "underwater" ? target : { x: entry.x, y: shot.targetBase.y + 16 };
-      if (elapsed >= CHARGE_THROW_MS) {
-        const k = (elapsed - CHARGE_THROW_MS) / Math.max(1, total - CHARGE_THROW_MS);
+      if (elapsed >= CHARGE_MS.drop) {
+        const surface = shot.targetView === "underwater" ? SCENE.top + 3 : shot.targetBase.y + 1;
+        const entry = { x: chargeX(shot), y: surface };
+        const depth = shot.targetView === "underwater" ? target : { x: entry.x, y: shot.targetBase.y + 16 };
+        const k = (elapsed - CHARGE_MS.drop) / Math.max(1, total - CHARGE_MS.drop);
         return { at: { x: lerp(entry.x, depth.x, k) + Math.sin(elapsed / 90) * 1, y: lerp(entry.y, depth.y, k) }, dir: { x: 0, y: 1 } };
       }
-      const k = elapsed / CHARGE_THROW_MS;
-      const c = { x: (m.x + entry.x) / 2, y: Math.min(m.y, entry.y) - 60 };
-      const v = 1 - k;
-      const at = { x: v * v * m.x + 2 * v * k * c.x + k * k * entry.x, y: v * v * m.y + 2 * v * k * c.y + k * k * entry.y };
-      const dx = 2 * v * (c.x - m.x) + 2 * k * (entry.x - c.x);
-      const dy = 2 * v * (c.y - m.y) + 2 * k * (entry.y - c.y);
-      const len = Math.hypot(dx, dy) || 1;
-      return { at, dir: { x: dx / len, y: dy / len } };
+      const wake = this.chargeWake(shot);
+      if (elapsed < CHARGE_MS.fall) {
+        const k = elapsed / CHARGE_MS.fall;
+        return { at: { x: lerp(m.x, wake.x, k), y: lerp(m.y, wake.y, k * k) }, dir: { x: 0, y: 1 } };
+      }
+      const k = (elapsed - CHARGE_MS.fall) / (CHARGE_MS.drop - CHARGE_MS.fall);
+      return { at: { x: wake.x, y: wake.y + k * 8 }, dir: { x: 0, y: 1 }, fade: 1 - k };
     }
     const len = Math.hypot(target.x - m.x, target.y - m.y) || 1;
     return { at: { x: lerp(m.x, target.x, u), y: lerp(m.y, target.y, u) }, dir: { x: (target.x - m.x) / len, y: (target.y - m.y) / len } };
@@ -372,25 +381,28 @@ export class BattleEffects {
       const side = dir.x > 0 ? 1 : -1;
       for (let k = 1; k < 10; k++) if ((k + Math.floor(t / 60)) % 2 === 0) p.px(at.x - side * k * 4, at.y - 1, C("battleFoam"));
     } else if (kind === "charge") {
-      const sinking = (t - shot.fireAt) >= CHARGE_THROW_MS;
-      // A dark drum; once in the water it trails bubbles, and it splashes as it goes in.
+      const since = t - shot.fireAt - CHARGE_MS.fall;
+      const sinking = since >= 0;
+      // A dark drum; once in the water it trails bubbles.
+      p.ctx.save();
+      p.ctx.globalAlpha *= here.fade ?? 1;
       p.rect(at.x - 2, at.y - 2, 5, 4, sinking ? C("battleSeaDeep") : C("battleSteelDark"));
       if (!sinking) p.rect(at.x - 2, at.y - 2, 5, 1, C("battleSteel"));
-      if (sinking) {
-        const since = t - shot.fireAt - CHARGE_THROW_MS;
+      p.ctx.restore();
+      if (t - shot.fireAt >= CHARGE_MS.drop) {
         for (let k = 1; k < 6; k++) if ((k + Math.floor(t / 80)) % 2 === 0) p.px(at.x + (k % 2 === 0 ? 1 : -1), at.y - 2 - k * 3, C("battleFoam"));
-        if (since < 420 && shot.targetView !== "underwater") {
-          // The splash as it goes in, and rings spreading on the surface after.
-          const u = since / 420;
-          const h = 18 * Math.sin(Math.min(1, u * 1.6) * Math.PI);
-          const surface = shot.targetBase.y + 1;
-          if (h > 0) {
-            p.rect(at.x - 3, surface - h, 6, h, C("battleFoam"));
-            p.rect(at.x - 5, surface - h * 0.5, 10, h * 0.5, C("battleSeaLight"));
-          }
-          for (let k = 0; k < 4; k++) p.px(at.x + (k - 1.5) * 4 * (1 + u * 2), surface - h * 0.8 - 2 + u * 10, C("battleFoam"));
-          p.line(at.x - 4 - u * 10, surface + 1, at.x + 4 + u * 10, surface + 1, C("battleFoam"));
+      }
+      if (sinking && since < 420) {
+        // The splash in the wake as it goes in, and rings spreading on the surface after.
+        const wake = this.chargeWake(shot);
+        const u = since / 420;
+        const h = 12 * Math.sin(Math.min(1, u * 1.6) * Math.PI);
+        if (h > 0) {
+          p.rect(wake.x - 2, wake.y - h, 4, h, C("battleFoam"));
+          p.rect(wake.x - 4, wake.y - h * 0.5, 8, h * 0.5, C("battleSeaLight"));
         }
+        for (let k = 0; k < 4; k++) p.px(wake.x + (k - 1.5) * 3 * (1 + u * 2), wake.y - h * 0.8 - 2 + u * 8, C("battleFoam"));
+        p.line(wake.x - 3 - u * 8, wake.y + 1, wake.x + 3 + u * 8, wake.y + 1, C("battleFoam"));
       }
     } else {
       // A shell or mortar round: a dark body with a glowing tracer behind it.

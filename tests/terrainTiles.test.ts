@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseAsciiMap } from "../src/engine/map";
 import type { TerrainSheet } from "../src/game/artPack";
-import { beachCorners, beachWaterMask, bridgeRunsAcross, joinMask, portOpening, shorePieces, terrainLayers, variantFor } from "../src/game/terrainTiles";
+import { beachCorners, beachFlares, beachWaterMask, bridgeRunsAcross, joinMask, portOpening, shorePieces, terrainLayers, variantFor } from "../src/game/terrainTiles";
 
 const N = 1, E = 2, S = 4, W = 8;
 const ROAD = ["road", "bridge"] as const;
@@ -260,6 +260,86 @@ describe("terrain tiles: beaches run down into the sea (08-art-pipeline §14)", 
       "S_",
     ]);
     expect(shorePieces(map, 0, 0)).toEqual([1]);
+  });
+
+  describe("the sand sweeps out to the corner of full land beside it", () => {
+    const withFlares: TerrainSheet = { ...withBeaches, beachFlares: 87 };
+    const NE = 0, SE = 8, SW = 16, NW = 24, SEA_ACROSS = 4, OPPOSITE_UP_DOWN = 1, OPPOSITE_ACROSS = 2;
+
+    it("a beach with sea to the west and plains to the north flares to the plains' corner", () => {
+      const map = parseAsciiMap([
+        "S.",
+        "S_",
+        "S_",
+      ]);
+      expect(beachFlares(map, 1, 1)).toEqual([NW + SEA_ACROSS]);
+      expect(terrainLayers(map, 1, 1, withFlares)).toEqual([{ kind: "sheet", tile: 58 + W }, { kind: "sheet", tile: 87 + NW + SEA_ACROSS }]);
+    });
+
+    it("a beach with sea to the south and forest to the east flares to the forest's corner", () => {
+      const map = parseAsciiMap([
+        "__F",
+        "SSS",
+      ]);
+      expect(beachFlares(map, 1, 0)).toEqual([SE]);
+    });
+
+    it("a beach on a corner of the coast flares on both sides that end at land", () => {
+      // Guadalcanal's capes: sea west and south, a beach to the north, forest to the east.
+      const map = parseAsciiMap([
+        "S_F",
+        "S_F",
+        "SSS",
+      ]);
+      expect(beachWaterMask(map, 1, 1)).toBe(S | W);
+      expect(beachFlares(map, 1, 1)).toEqual([SE + OPPOSITE_ACROSS]);
+    });
+
+    it("a sand spit running out from the land flares on both sides", () => {
+      const map = parseAsciiMap([
+        "...",
+        "S_S",
+        "S_S",
+      ]);
+      expect(beachFlares(map, 1, 1)).toEqual([NE + SEA_ACROSS + OPPOSITE_ACROSS, NW + SEA_ACROSS + OPPOSITE_ACROSS]);
+    });
+
+    it("a sand spit running along the land's side flares at its landward end", () => {
+      const map = parseAsciiMap([
+        "SSS",
+        ".__",
+        "SSS",
+      ]);
+      expect(beachFlares(map, 1, 1)).toEqual([SW + OPPOSITE_UP_DOWN, NW + OPPOSITE_UP_DOWN]);
+    });
+
+    it("rivers and ports beside a beach count as land to flare to", () => {
+      const map = parseAsciiMap([
+        "S~",
+        "S_",
+        "SP",
+      ]);
+      expect(beachFlares(map, 1, 1)).toEqual([SW + SEA_ACROSS, NW + SEA_ACROSS]);
+    });
+
+    it("no flare where the waterline carries on into another beach, the sea or the map's edge", () => {
+      const map = parseAsciiMap([
+        "S_",
+        "S_",
+        "SS",
+      ]);
+      expect(beachFlares(map, 1, 0)).toEqual([]);
+      expect(beachFlares(map, 1, 1)).toEqual([]);
+    });
+
+    it("a pack without flare pieces draws the beach as before", () => {
+      const map = parseAsciiMap([
+        "S.",
+        "S_",
+        "S_",
+      ]);
+      expect(terrainLayers(map, 1, 1, withBeaches)).toEqual([{ kind: "sheet", tile: 58 + W }]);
+    });
   });
 });
 

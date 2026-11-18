@@ -1,6 +1,7 @@
 // What the info box says about a tile. Stars come from the same stat the damage formula uses.
 
 import { bridgeWorkAt } from "../engine/bridges";
+import type { NationId } from "../engine/data/nations";
 import { TERRAIN, type TerrainDef } from "../engine/data/terrain";
 import { terrainAt, type Point } from "../engine/map";
 import { UNIT_TYPE_IDS, UNITS, unitDef } from "../engine/data/units";
@@ -143,6 +144,8 @@ export interface TileInfo {
   readonly unit: {
     readonly name: string;
     readonly owner: PlayerId;
+    /** The owner's nation, for the flag beside the name; null if the owner isn't a player in the game. */
+    readonly nation: NationId | null;
     readonly cargo: readonly Passenger[] | null;
     readonly fuel: Supply;
     readonly ammo: Supply | null;
@@ -187,6 +190,7 @@ export function tileInfo(state: GameState, tile: Point): TileInfo {
       ? {
           name: unit.submerged === true ? `${unitName(unit.type)} (submerged)` : unitName(unit.type),
           owner: unit.owner,
+          nation: state.players[unit.owner]?.nation ?? null,
           cargo: UNITS[unit.type].transport
             ? unit.cargo.map((c) => ({ name: unitName(c.type), hp: displayHp(c.hp), ...supplies(state, c) }))
             : null,
