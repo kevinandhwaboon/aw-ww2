@@ -192,6 +192,39 @@ describe("planning a battle scene from a combat (08-art-pipeline §18)", () => {
     expect(plan?.right.kind).toBe("bunker");
     expect(plan?.strikes).toHaveLength(1);
   });
+
+  function fortPlan(rows: string[], attacker: UnitTypeId): BattlePlan | null {
+    const state = makeGame(rows, [{ owner: 0, pos: P(0, 0), type: attacker }], { settings: { luck: false } });
+    const result = apply(state, { type: "move", unitId: 0, path: [], action: { type: "attackFort", target: P(1, 0) } });
+    if (!result.ok) throw new Error(result.message);
+    const event = result.events.find((e): e is Extract<GameEvent, { type: "fortAttacked" }> => e.type === "fortAttacked");
+    if (!event) throw new Error("No fort attack");
+    return planFortAttack(state, event);
+  }
+
+  it("attacking a minefield plays against a minefield, not a bunker (08-art-pipeline §18)", () => {
+    const plan = fortPlan([".m"], "assaultInfantry");
+    expect(plan?.right.kind).toBe("minefield");
+    expect(plan?.right.terrain).toBe("minefield");
+    expect(plan?.right.owner).toBeNull();
+    expect(plan?.strikes).toHaveLength(1);
+  });
+
+  it("attacking an obstacle plays against dragon's teeth, not a bunker (08-art-pipeline §18)", () => {
+    const plan = fortPlan([".o"], "mediumTank");
+    expect(plan?.right.kind).toBe("obstacle");
+    expect(plan?.right.terrain).toBe("obstacle");
+    expect(plan?.strikes).toHaveLength(1);
+  });
+
+  it("a minefield's stretches of wire and a dragon's teeth fall away as the fortification's HP drops (08-art-pipeline §18)", () => {
+    expect(figureCount("minefield", 10)).toBe(6);
+    expect(figureCount("minefield", 5)).toBe(3);
+    expect(figureCount("minefield", 1)).toBe(1);
+    expect(figureCount("obstacle", 10)).toBe(9);
+    expect(figureCount("obstacle", 4)).toBe(4);
+    expect(figureCount("obstacle", 0)).toBe(0);
+  });
 });
 
 const plan = (counter: boolean, defenderAfter: number): BattlePlan => ({

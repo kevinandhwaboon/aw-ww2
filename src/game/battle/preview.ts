@@ -2,7 +2,7 @@
 // so each one's animation can be checked without setting up a fight. `&a=mortar&d=infantry` plays
 // just that matchup, over and over; `&at=forest&dt=beach` sets each side's terrain, and `&para=1`
 // makes the attacking squad paratroopers with that card suit (0 spade, 1 heart, 2 diamond, 3 club).
-// Press Z or click to move on to the next. `&t=1200` instead shows every matchup held at that
+// `&d=bunker`, `&d=minefield` or `&d=obstacle` attacks that fortification. Press Z or click to move on to the next. `&t=1200` instead shows every matchup held at that
 // moment, side by side (`&t=fire` or `&t=hit` for the first shot leaving or landing);
 // `&zoom=0,150,192,72` enlarges one part of each and `&scale=1` sets the size. `&storm=all` (or
 // `capture`, `garrison`) shows the storming scenes instead, and `&t=end` holds each at its outcome.
@@ -28,7 +28,7 @@ import type { DropPlan } from "./drop";
 import { DropRenderer } from "./dropRenderer";
 import type { StormPlan, StormUnit } from "./storm";
 import { StormRenderer } from "./stormRenderer";
-import { fireKind, type BattlePlan, type FigureKind } from "./plan";
+import { fireKind, isFort, type BattlePlan, type FigureKind } from "./plan";
 
 interface Matchup {
   readonly a: UnitTypeId;
@@ -70,6 +70,8 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "fighter", d: "torpedoBomber" },
   { a: "fighter", d: "carrier", at: "sea", dt: "sea" },
   { a: "infantry", d: "bunker", dt: "bunker" },
+  { a: "assaultInfantry", d: "minefield", dt: "minefield" },
+  { a: "artillery", d: "obstacle", dt: "obstacle" },
   { a: "mediumTank", d: "infantry", dt: "bunker", weapon: "secondary", counter: "secondary" },
   { a: "mobileAA", d: "bomber", counter: "primary" },
   { a: "tankDestroyer", d: "heavyTank", counter: "primary" },
@@ -99,8 +101,8 @@ function planFor(m: Matchup, flip: boolean): BattlePlan {
   const right = {
     half: "right" as const,
     kind: m.d,
-    owner: m.d === "bunker" ? null : flip ? 0 : 1,
-    nation: m.d === "bunker" ? null : defenderNation,
+    owner: isFort(m.d) ? null : flip ? 0 : 1,
+    nation: isFort(m.d) ? null : defenderNation,
     terrain: m.dt ?? (naval(m.d) ? "sea" : "plains"),
     hp: 10,
     submerged: m.submerged === true,
@@ -111,7 +113,7 @@ function planFor(m: Matchup, flip: boolean): BattlePlan {
   const strikes: BattlePlan["strikes"][number][] = [
     { from: "left", fire: fireKind(m.a, m.weapon ?? "primary", m.d), hpBefore: 10, hpAfter: m.counter ? 6 : 3, atAir: air(m.d) },
   ];
-  if (m.counter && m.d !== "bunker") {
+  if (m.counter && !isFort(m.d)) {
     strikes.push({ from: "right", fire: fireKind(m.d, m.counter, m.a), hpBefore: 10, hpAfter: 7, atAir: air(m.a) });
   }
   return { left, right, strikes };
@@ -289,7 +291,7 @@ export function startBattlePreview(root: HTMLElement, params: URLSearchParams): 
   const chosen: readonly Matchup[] = isUnit(a)
     ? [{
         a,
-        d: d === "bunker" ? "bunker" : isUnit(d) ? d : "infantry",
+        d: d === "bunker" || d === "minefield" || d === "obstacle" ? d : isUnit(d) ? d : "infantry",
         ...(isTerrain(at) ? { at } : {}),
         ...(isTerrain(dt) ? { dt } : {}),
         ...(params.get("para") === null ? {} : { para: Number(params.get("para")) % 4 || 0 }),

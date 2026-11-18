@@ -44,8 +44,12 @@ export interface Pose {
   readonly down?: number;
 }
 
-/** How a figure goes down: soldiers fall, machines burn, aircraft drop out of the sky, ships settle. */
-export type BodyKind = "soldier" | "machine" | "air" | "ship";
+/**
+ * How a figure goes down: soldiers fall, machines burn, aircraft drop out of the sky, ships settle.
+ * A field fortification (a stretch of minefield, a dragon's tooth) draws its own wreck from
+ * `pose.down` and blows up without burning afterwards.
+ */
+export type BodyKind = "soldier" | "machine" | "air" | "ship" | "field";
 
 export interface Rig {
   readonly body: BodyKind;

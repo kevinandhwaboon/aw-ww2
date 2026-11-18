@@ -13,11 +13,12 @@ import { polished } from "./angled/mesh";
 import { rimLight } from "./colors";
 import { BLAST, BattleEffects } from "./effects";
 import { C, mix, Painter, ShadowPainter, teamShades } from "./paint";
-import { figureCount, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
+import { figureCount, isFort, type BattleHalf, type BattlePlan, type FigureKind, type FireKind, type HalfId } from "./plan";
 import { clamp01, seg, type Look, type Pose, type Pt, type Rig } from "./rig";
 import { assaultRig, infantryRig, mortarRig } from "./soldiers";
 import { battleCues, type SoundCue } from "../sound/sounds";
 import { buildTimeline, deathTimes, figureTiming, hash, hpAt, SCENE_MS, torpedoRun, type Shot, type Timeline } from "./timeline";
+import { minefieldRig, obstacleRig } from "./fieldWorks";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "./vehicles";
 
 const RIGS: Record<FigureKind, Rig> = {
@@ -47,6 +48,8 @@ const RIGS: Record<FigureKind, Rig> = {
   carrier: carrierRig,
   supplyShip: supplyShipRig,
   bunker: bunkerRig,
+  minefield: minefieldRig,
+  obstacle: obstacleRig,
 };
 
 const pt = (x: number, y: number): Pt => ({ x, y });
@@ -86,6 +89,10 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   carrier: [pt(98, 204)],
   supplyShip: [pt(98, 204)],
   bunker: [pt(96, 208)],
+  // Two rows of three stretches of fence, so the wire runs on across the half.
+  minefield: [pt(104, 214), pt(56, 214), pt(152, 214), pt(80, 186), pt(128, 186), pt(32, 186)],
+  // Three staggered rows of three teeth.
+  obstacle: [pt(92, 216), pt(56, 216), pt(128, 216), pt(110, 194), pt(74, 194), pt(146, 194), pt(92, 174), pt(56, 174), pt(128, 174)],
 };
 const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
 
@@ -95,6 +102,8 @@ const SHADOW: Record<FigureKind, number> = {
   heavyTank: 42, tankDestroyer: 34, artillery: 30, rocketArtillery: 32, mobileAA: 34, flakGun: 34,
   fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0, supplyShip: 0,
   bunker: 40,
+  minefield: 0,
+  obstacle: 10,
 };
 
 /**
@@ -149,8 +158,8 @@ function canvas(w: number, h: number, readBack = false): [HTMLCanvasElement, Can
 }
 
 const FOOT = new Set<FigureKind>(["infantry", "assaultInfantry", "mortar"]);
-const isNaval = (kind: FigureKind) => kind !== "bunker" && UNITS[kind].category === "naval";
-const isAirKind = (kind: FigureKind) => kind !== "bunker" && UNITS[kind].category === "air";
+const isNaval = (kind: FigureKind) => !isFort(kind) && UNITS[kind].category === "naval";
+const isAirKind = (kind: FigureKind) => !isFort(kind) && UNITS[kind].category === "air";
 
 export class BattleRenderer {
   readonly timeline: Timeline;
@@ -452,7 +461,7 @@ export class BattleRenderer {
       f.putImageData(img, r.x, r.y);
     }
     if (flash) tint(C("battleFlash"), 0.6);
-    if (!alive && h.rig.body !== "soldier") tint(C("battleInk"), 0.55);
+    if (!alive && h.rig.body !== "soldier" && h.rig.body !== "field") tint(C("battleInk"), 0.55);
 
     const s = this.sil;
     s.clearRect(0, 0, FIGURE_BOX.w, FIGURE_BOX.h);
@@ -508,6 +517,16 @@ export class BattleRenderer {
     const age = t - died;
     const at = this.slot(h, i);
     const hit = { x: at.x + h.dir * h.rig.hit.x, y: at.y + h.rig.hit.y };
+    if (h.rig.body === "field") {
+      // A mine goes off, or a tooth is blown over: a blast out of the ground and a dust cloud, no fire.
+      this.effects.explosion({ x: at.x, y: at.y - 4 }, age, "large", "ground", i);
+      for (let k = 0; k < 4; k++) {
+        const u = clamp01((age - k * 90) / 1800);
+        if (u <= 0 || u >= 1) continue;
+        this.effects.puff({ x: at.x + (k - 1.5) * 6 + u * 8, y: at.y - 4 - u * 22 - k * 3 }, 4 + u * 9, 0.6 * (1 - u));
+      }
+      return;
+    }
     this.effects.explosion(hit, age, "large", h.rig.body === "ship" ? "water" : "ground", i);
     if (h.rig.body === "air") {
       for (let k = 0; k < 8; k++) {
@@ -559,7 +578,7 @@ export class BattleRenderer {
     const edge = right ? h.x0 + SCENE.half - 6 : h.x0 + 6;
     p.rect(h.x0, 0, SCENE.half, SCENE.top, C("battlePanel"));
     p.rect(h.x0, SCENE.top - 3, SCENE.half, 2, h.fill);
-    const name = h.data.kind === "bunker" ? terrainName("bunker") : unitName(h.data.kind);
+    const name = isFort(h.data.kind) ? terrainName(h.data.kind) : unitName(h.data.kind);
     this.drawText(name, edge, 3, C("labelText"), 2, right);
 
     p.rect(h.x0, SCENE.bottom, SCENE.half, SCENE.height - SCENE.bottom, C("battlePanel"));
