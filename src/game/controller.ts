@@ -13,10 +13,18 @@ import { displayHp, unitAt, type GameState, type Unit, type UnitId } from "../en
 import * as stats from "../engine/stats";
 import { diveProblem, surfaceProblem } from "../engine/submarine";
 import { joinProblem, launchable, launchState, loadProblem, supplyTargets, unloadTiles } from "../engine/transport";
+import { airSightTiles } from "../engine/visibility";
 import { unitName } from "./artPack";
 import { extendPath } from "./pathBuilder";
 
-export type RangeKind = "move" | "inspect" | "attack";
+/** "radar": where a Radar Station sees enemy aircraft (19-fog-of-war §2a), drawn under the others. */
+export type RangeKind = "move" | "inspect" | "attack" | "radar";
+
+/** How far a Radar Station sees enemy aircraft, as a layer under its other ranges; none for other units. */
+function radarLayer(state: GameState, unit: Unit): RangeLayer[] {
+  const tiles = airSightTiles(state, unit);
+  return tiles.length > 0 ? [{ tiles, kind: "radar" }] : [];
+}
 
 export interface RangeLayer {
   readonly tiles: readonly Point[];
@@ -398,7 +406,7 @@ export class InputController {
       const state = this.state();
       const reach = reachableTiles(state, unit);
       this.mode = { kind: "selected", unitId: unit.id, reach, path: [] };
-      this.deps.view.showRanges([{ tiles: [...reach.keys()].map((i) => tilePoint(state, i)), kind: "move" }]);
+      this.deps.view.showRanges([...radarLayer(state, unit), { tiles: [...reach.keys()].map((i) => tilePoint(state, i)), kind: "move" }]);
       this.deps.view.showPath(unit.pos, []);
     } else if (!this.openBuildMenu(tile)) {
       this.openTurnMenu(tile);
@@ -464,7 +472,7 @@ export class InputController {
     const beyondMove = UNITS[unit.type].canMoveAndFire
       ? threat.filter((p) => !reach.has(p.y * state.map.width + p.x))
       : threat;
-    return [{ tiles, kind: "inspect" }, { tiles: beyondMove, kind: "attack" }];
+    return [...radarLayer(state, unit), { tiles, kind: "inspect" }, { tiles: beyondMove, kind: "attack" }];
   }
 
   private async chooseDestination(tile: Point): Promise<void> {

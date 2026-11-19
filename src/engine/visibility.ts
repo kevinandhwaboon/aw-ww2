@@ -82,6 +82,24 @@ function sightOf(state: GameState, side: Side | undefined): Sight {
   return sight;
 }
 
+/**
+ * The squares where this unit sees enemy aircraft by radar (19-fog-of-war §2a): every tile within its
+ * air vision, counted in steps, in row-major order. Empty for a unit without radar. For showing the
+ * player how far a Radar Station sees.
+ */
+export function airSightTiles(state: GameState, unit: Unit): Point[] {
+  const range = stats.airVision(state, unit);
+  if (range <= 0) return [];
+  const { width, height } = state.map;
+  const tiles = new Uint8Array(width * height);
+  markDiamond(tiles, width, height, unit.pos, range, 1);
+  const out: Point[] = [];
+  tiles.forEach((v, i) => {
+    if (v === 1) out.push({ x: i % width, y: Math.floor(i / width) });
+  });
+  return out;
+}
+
 const isAir = (unit: Unit) => UNITS[unit.type].category === "air";
 
 /** Whether any unit of this side is on a tile next to p (not diagonally). Fast enough without fog. */
