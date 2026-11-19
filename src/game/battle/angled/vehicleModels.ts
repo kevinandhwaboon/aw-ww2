@@ -11,7 +11,7 @@
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalX, decalY, decalZ, elevate, elevatePoint, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
-import { camoDecals, redStarDecal, roadWheel, roundelDecal, running, sherman, starDecal } from "./models";
+import { camoDecals, crossDecal, redStarDecal, roadWheel, roundelDecal, running, sherman, starDecal } from "./models";
 
 /** A machine's parts, drawn in order with the crew between them, and the points the rig needs. */
 export interface Built<A extends string> {
@@ -87,8 +87,11 @@ export function willys(t: TeamShades, shake = 0, mark = C("battleStar")): Built<
   return { far, near, at: { gunner: [-17, 0, 2], driver: [0, 5, 13], grip: [-9 + g, 0, 32], fore: [-1 + g, 0, 31], muzzle: [18 + g, 0, 32] } };
 }
 
-/** R75 motorcycle with its sidecar on the near side; an MG 34 on the sidecar's nose. */
-export function r75(t: TeamShades, shake = 0): Built<"rider" | "bars" | "gunner" | "grip" | "fore" | "muzzle"> {
+/**
+ * R75 motorcycle with its sidecar on the near side; an MG 34 on the sidecar's nose. `cross`: the
+ * Balkenkreuz on the sidecar, for Germany only (Japan's recon uses this shape unmarked).
+ */
+export function r75(t: TeamShades, shake = 0, cross = true): Built<"rider" | "bars" | "gunner" | "grip" | "fore" | "muzzle"> {
   const far: Face[] = [];
   const near: Face[] = [];
   // The bike, on the far side: spoked wheels, frame, boxer engine, tank, saddle, fork, headlight.
@@ -113,6 +116,7 @@ export function r75(t: TeamShades, shake = 0): Built<"rider" | "bars" | "gunner"
   near.push(...barrel(4 + g, 16 + g, -8, 21, 1, steelDark()), ...box(10 + g, 11 + g, -8.5, -7.5, 22, 24, steelDark()));
   // In front of the gunner: the sidecar's near wall and wheel.
   const front: Face[] = [...box(-25, 4, -12.6, -12, 5, 12, t.mid), ...wheel(-2, -13.5, 5, 5, 2, rubber(), steel())];
+  if (cross) front.push(...crossDecal(-12.65, -15, 8.5, 3));
   return { far, near, front, at: { rider: [-7, 4, 4], bars: [12, 4, 26], gunner: [-13, -8, 7], grip: [-2 + g, -8, 21], fore: [5 + g, -8, 21], muzzle: [16 + g, -8, 21] } };
 }
 
@@ -170,8 +174,11 @@ function m3Chassis(t: TeamShades, mark: string): Face[] {
   return f;
 }
 
-/** Sd.Kfz. 251: an armored body with plates angled in, a long sloped engine nose, interleaved wheels. */
-function sdkfz251Chassis(t: TeamShades): Face[] {
+/**
+ * Sd.Kfz. 251: an armored body with plates angled in, a long sloped engine nose, interleaved wheels.
+ * `cross`: the Balkenkreuz on the side, for Germany only (Japan and Italy use this shape unmarked).
+ */
+function sdkfz251Chassis(t: TeamShades, cross: boolean): Face[] {
   const f: Face[] = [];
   f.push(...running(-34, 10, 12, 7, 12, t.lo));
   for (let i = 0; i < 6; i++) f.push(...roadWheel(-28 + i * 6.5, i % 2 ? -12.2 : -12.9, 5.5, 5.4, i % 2 ? 0.8 : 1));
@@ -179,6 +186,7 @@ function sdkfz251Chassis(t: TeamShades): Face[] {
   // Lower body straight up, upper plates angled in; open on top.
   f.push(...box(-34, 4, -11, 11, 10, 18, t.mid));
   f.push(...camoDecals(-11.05, -32, 2, 11, 17, t, 1));
+  if (cross) f.push(...crossDecal(-11.15, -3, 14, 3.6));
   f.push(...loftZ(18, [[-34, -11], [4, -11], [4, 11], [-34, 11]], 28, [[-33, -9], [4, -9], [4, 9], [-33, 9]], t.mid));
   f.push(inside(28.05, [[-32, -8], [3, -8], [3, 8], [-32, 8]]));
   // The nose slopes down to the radiator; curved front fenders; a Notek light.
@@ -205,8 +213,8 @@ export function m3(t: TeamShades, shake = 0, mark = C("battleStar")): Built<"muz
   return { far, near: [], at: { muzzle: [29 + g, 0, 34.5], troop0: TROOPS[0] ?? [0, 0, 0], troop1: TROOPS[1] ?? [0, 0, 0], troop2: TROOPS[2] ?? [0, 0, 0] } };
 }
 
-export function sdkfz251(t: TeamShades, shake = 0): Built<"muzzle" | "troop0" | "troop1" | "troop2"> {
-  const far = sdkfz251Chassis(t);
+export function sdkfz251(t: TeamShades, shake = 0, cross = true): Built<"muzzle" | "troop0" | "troop1" | "troop2"> {
+  const far = sdkfz251Chassis(t, cross);
   // The MG 34 behind its shield at the front of the compartment.
   const g = -shake;
   far.push(...box(2, 3, -5, 5, 27, 35, t.mid));
@@ -252,10 +260,11 @@ const AA_PIVOT: V3 = [-14, 0, 35];
 /**
  * Mobile AA: the US M16 (an M3 with the Maxson quad .50 turret) or a Sd.Kfz. 251 carrying the
  * Flakvierling's four 20mm guns behind their shield. `elevation` raises the guns; `kick` is which
- * barrel just fired (it slides back), or -1.
+ * barrel just fired (it slides back), or -1. `mark` is the US star's color; `cross` puts the
+ * Balkenkreuz on the German shape, for Germany only.
  */
-export function quadAA(t: TeamShades, german: boolean, elevation: number, kick: number, mark = C("battleStar")): Built<"gunner" | "muzzle0" | "muzzle1" | "muzzle2" | "muzzle3"> {
-  const far = german ? sdkfz251Chassis(t) : m3Chassis(t, mark);
+export function quadAA(t: TeamShades, german: boolean, elevation: number, kick: number, mark = C("battleStar"), cross = german): Built<"gunner" | "muzzle0" | "muzzle1" | "muzzle2" | "muzzle3"> {
+  const far = german ? sdkfz251Chassis(t, cross) : m3Chassis(t, mark);
   const [px, , pz] = AA_PIVOT;
   const len = german ? 26 : 22;
   if (german) {

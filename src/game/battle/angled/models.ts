@@ -3,7 +3,7 @@
 // recognizable. US: M5 Stuart, M4 Sherman, Churchill, M10. Germany: Panzer II, Panzer IV, Tiger I,
 // StuG III. Japan: Type 95 Ha-Go, Type 97 Shinhoto Chi-Ha, Type 1 Ho-Ni I. Soviet Union: T-70,
 // T-34/76 (1943), KV-1, SU-152. UK (and Canada): Stuart, Sherman Firefly, Churchill, Achilles, with
-// the RAF roundel where the US carries its star. Italy: L6/40, M13/40, Semovente 75/18, unmarked. `recoil` slides the gun back along its barrel.
+// the RAF roundel where the US carries its star. Germany's carry the Balkenkreuz on the hull side or skirts. Italy: L6/40, M13/40, Semovente 75/18, unmarked. `recoil` slides the gun back along its barrel.
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalY, extrudeX, extrudeY, loftZ, shift, wheel, type Face, type V3 } from "./mesh";
@@ -55,7 +55,24 @@ export const roundelDecal: Marking = (y, x, z, r) => [
   decalY(y - 0.06, circle(x, z, r * 0.36, 10), C("battleSun")),
 ];
 
-/** German vehicles carry no insignia (08-art-pipeline §12): camouflage blotches on the side instead. */
+/** A plus sign centred at (x, z): arms `arm` long each way and `half` thick each way. */
+function plus(x: number, z: number, arm: number, half: number): Poly {
+  return [
+    [x - half, z + arm], [x + half, z + arm], [x + half, z + half], [x + arm, z + half], [x + arm, z - half], [x + half, z - half],
+    [x + half, z - arm], [x - half, z - arm], [x - half, z - half], [x - arm, z - half], [x - arm, z + half], [x - half, z + half],
+  ];
+}
+
+/**
+ * The Balkenkreuz, Germany's military marking (08-art-pipeline §12): black arms running out to the
+ * ends of a white cross, as on the HUD flag, on the vehicle's right side. Never the swastika.
+ */
+export const crossDecal: Marking = (y, x, z, r) => [
+  decalY(y, plus(x, z, r, r * 0.34), C("battleStar")),
+  decalY(y - 0.03, plus(x, z, r, r * 0.15), C("battleInk")),
+];
+
+/** Camouflage blotches on a German vehicle's side, under its cross. */
 export function camoDecals(y: number, x0: number, x1: number, z0: number, z1: number, t: TeamShades, seed: number): Face[] {
   const color = mix(t.lo, C("battleOlive"), 0.5);
   const out: Face[] = [];
@@ -261,6 +278,7 @@ export function panzerII(t: TeamShades, recoil = 0): Model {
   for (let i = 0; i < 4; i++) f.push(...wheel(-13 + i * 8.5, -13.6, 9.2, 1.4, 1, steel(), steelDark()));
   f.push(...extrudeY(-13, 13, [[-24, 10], [24, 10], [25, 15], [22, 18], [-22, 18], [-24, 16]], t.mid));
   f.push(...camoDecals(-13.05, -20, 18, 11, 17, t, 1));
+  f.push(...crossDecal(-13.1, -6, 14.2, 3.4));
   f.push(...loftZ(18, [[-8, -5], [7, -5], [9, -3], [9, 9], [7, 11], [-8, 11]], 26, [[-7, -4], [6, -4], [8, -2], [8, 8], [6, 10], [-7, 10]], t.mid));
   f.push(...box(8, 11, -1, 6, 20, 25, t.lo));
   f.push(...barrel(10 - recoil, 26 - recoil, 1.5, 22.5, 0.9, steelDark()));
@@ -289,6 +307,7 @@ export function panzerIV(t: TeamShades, recoil = 0): Model {
   // Side skirts in panels on their rail, hiding the top of the running gear.
   f.push(...box(-33, 32, -20.2, -19.4, 17.5, 18.5, steelDark()));
   for (let k = 0; k < 5; k++) f.push(...box(-32 + k * 13, -20 + k * 13, -21, -20.2, 7, 18, skirt));
+  f.push(...crossDecal(-21.05, -13, 12.5, 4.5));
   // Turret: angled front plates, turret skirts, the cupola at the back, the long 75 with its brake.
   const lower: Poly = [[-14, -11], [10, -11], [14, -7], [14, 7], [10, 11], [-14, 11]];
   const upper: Poly = [[-13, -9], [8, -9], [12, -6], [12, 6], [8, 9], [-13, 9]];
@@ -316,6 +335,7 @@ export function tiger(t: TeamShades, recoil = 0): Model {
   f.push(...extrudeY(-21, 21, [[-43, 13], [45, 13], [45, 27], [42, 29], [-42, 29], [-43, 27]], t.mid));
   for (let x = -40; x < 40; x += 3) f.push(decalY(-21.05, [[x, 15], [x + 1, 15], [x + 1, 27], [x, 27]], mix(t.mid, t.lo, 0.45)));
   f.push(...camoDecals(-21.1, -38, 36, 16, 26, t, 3));
+  f.push(...crossDecal(-21.15, -4, 19, 5));
   f.push(...box(45, 46, -16, -10, 22, 25, C("battleInk")));
   f.push(...barrel(45, 48, 10, 22, 0.9, steelDark()));
   // Tow cable along the side, mufflers on the back.
@@ -353,6 +373,7 @@ export function stug(t: TeamShades, recoil = 0): Model {
   f.push(...camoDecals(-16.05, -30, 28, 12, 19, t, 4));
   f.push(...box(-31, 30, -19.2, -18.4, 17, 18, steelDark()));
   for (let k = 0; k < 5; k++) f.push(...box(-30 + k * 12, -19 + k * 12, -20, -19.2, 7, 17, skirt));
+  f.push(...crossDecal(-20.05, -12.5, 12, 4.5));
   // Casemate with sloped plates, the "pig's head" mantlet, the 75 with its brake.
   const low: Poly = [[-22, -14], [10, -14], [17, -10], [17, 10], [10, 14], [-22, 14]];
   const high: Poly = [[-20, -12], [7, -12], [13, -8], [13, 8], [7, 12], [-20, 12]];

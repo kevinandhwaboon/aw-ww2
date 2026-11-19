@@ -1,13 +1,14 @@
 // Aircraft and ships at 32x32, top-down 3/4 view, facing right, two idle frames each
 // (docs/08-art-pipeline.md §17). Aircraft bob and their propellers spin; ships rock and their
 // bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4). Japanese
-// aircraft carry the hinomaru, Soviet aircraft the white-edged red star; ships carry no marking.
+// aircraft carry the hinomaru, Soviet aircraft the white-edged red star, German aircraft the
+// Balkenkreuz (never the swastika on the fin); ships carry no marking.
 // The USSR gets aircraft and one boat: the Volga Flotilla's armored boat as its Landing Craft, for
 // Stalingrad; no carrier aircraft, as it had no carriers.
 // Italian aircraft carry only the white fuselage band and the white rudder cross.
 // British aircraft carry the RAF roundel; the Swordfish is a biplane, the Lancaster has four engines
 // and twin fins.
-import { finish, hinomaru, redStar, roundel, sprite, star } from "./kit32.mjs";
+import { balkenkreuz, finish, hinomaru, redStar, roundel, sprite, star } from "./kit32.mjs";
 import { specViews } from "./facings32.mjs";
 
 const frames = (draw) => [draw(0), draw(1)];
@@ -69,6 +70,7 @@ function plane(frame, o) {
   if (o.redStar) redStar(s, o.redStar[0], y(o.redStar[1]), true);
   if (o.roundel) roundel(s, o.roundel[0], y(o.roundel[1]), 2.6);
   if (o.wingCamo) camo(s, o.wingCamo.map(([a, b, cc, d]) => [a, y(b), cc, y(d)]));
+  if (o.cross) balkenkreuz(s, o.cross[0] - 2, y(o.cross[1]) - 2, 5);
   s.poly([[o.tail + 1, y(c + 2)], [o.tail + 6, y(c + 2)], [o.tail + 5, y(c + 6)], [o.tail + 1, y(c + 6)]], "team", 1);
   if (o.gear) for (const gx of o.gear) s.rect(gx, y(c + 3), gx + 1, y(c + 5), "rubber", 3);
   // A bomb or torpedo slung under the fuselage, drawn over the near wing root.
@@ -192,17 +194,17 @@ const avenger = def("plane", {
 const bf109 = def("plane", {
   tail: 2, nose: 28, girth: 2, fin: 7, canopy: [16, 19], noseProp: 4,
   farWing: [[13, 13], [20, 13], [17, 7], [18, 7]], nearWing: [[12, 16], [21, 16], [18, 26], [16, 26]],
-  camo: [[6, 12, 9, 13], [20, 14, 23, 15]], wingCamo: [[14, 19, 16, 21], [16, 23, 18, 24]],
+  camo: [[13, 12, 15, 13], [20, 14, 23, 15]], wingCamo: [[17, 24, 18, 25]], cross: [16, 19],
 });
 const ju88 = def("plane", {
   tail: 1, nose: 29, girth: 3, fin: 8, canopy: [24, 28], glassNose: true,
   farWing: [[11, 12], [21, 12], [18, 4], [16, 4]], nearWing: [[10, 16], [22, 16], [19, 29], [15, 29]],
-  farEngine: [15], nearEngine: [15], camo: [[5, 13, 9, 14]], wingCamo: [[13, 22, 16, 24]],
+  farEngine: [15], nearEngine: [15], camo: [[11, 13, 15, 14]], cross: [17, 25],
 });
 const ju52 = def("plane", {
   tail: 1, nose: 28, girth: 4, fin: 8, canopy: [23, 25], ribs: true, noseProp: 4, gear: [16, 21],
   farWing: [[10, 11], [22, 11], [19, 3], [15, 3]], nearWing: [[9, 17], [23, 17], [20, 30], [14, 30]],
-  farEngine: [16], nearEngine: [16],
+  farEngine: [16], nearEngine: [16], cross: [17, 25],
 });
 
 // ---- Italian aircraft (Regia Aeronautica) ----
@@ -299,7 +301,7 @@ const betty = def("plane", {
 const ki57 = def("plane", {
   tail: 1, nose: 29, girth: 4, fin: 8, canopy: [24, 26], windows: [9, 19],
   farWing: [[11, 11], [22, 11], [19, 3], [16, 3]], nearWing: [[10, 17], [23, 17], [20, 30], [15, 30]], sun: [16, 26, 2],
-  farEngine: [17], nearEngine: [17],
+  farEngine: [17], nearEngine: [17], bodySun: [6],
 });
 
 const val = def("plane", {

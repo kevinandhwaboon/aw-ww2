@@ -7,11 +7,11 @@ import type { UnitSetup } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { figureCount, fireKind, planCombat, planFortAttack, squadWeapon, type BattlePlan } from "../src/game/battle/plan";
 import { buildTimeline, deathTimes, FIRE_TIMING, figureTiming, hpAt, TORPEDO_RUN, torpedoRun } from "../src/game/battle/timeline";
-import { BATTLE_VIEW, project, rampShade, RAMP_STEPS } from "../src/game/battle/angled/mesh";
+import { BATTLE_VIEW, project, rampShade, RAMP_STEPS, type Face } from "../src/game/battle/angled/mesh";
 import { TANK_MODELS } from "../src/game/battle/angled/models";
 import { bunker, calliope, flakGun, howitzer, m3, nebelwerfer, quadAA, r75, sdkfz251, willys } from "../src/game/battle/angled/vehicleModels";
 import { FALL_MS, fallAt } from "../src/game/battle/fall";
-import { rimLight } from "../src/game/battle/colors";
+import { C, rimLight } from "../src/game/battle/colors";
 import { makeGame } from "./helpers";
 
 const P = (x: number, y: number): Point => ({ x, y });
@@ -390,6 +390,34 @@ describe("the other land machines drawn turned 5° too (08-art-pipeline §18)", 
     expect(new Set([quad.muzzle0, quad.muzzle1, quad.muzzle2, quad.muzzle3].map((m) => m.join())).size).toBe(4);
     const nebel = nebelwerfer(team, 0.75).at;
     expect(new Set([nebel.muzzle0, nebel.muzzle1, nebel.muzzle2, nebel.muzzle3, nebel.muzzle4, nebel.muzzle5].map((m) => m.join())).size).toBe(6);
+  });
+});
+
+describe("national markings on battle machines (08-art-pipeline §12)", () => {
+  const team = { hi: "#88aaff", mid: "#4466cc", lo: "#334488", deep: "#223366", cloth: "#556677", clothLo: "#445566" };
+  /** The Balkenkreuz: a white cross under a black one, both painted on as markings. */
+  const crossed = (faces: readonly Face[]) =>
+    faces.some((f) => f.decal && f.color === C("battleStar")) && faces.some((f) => f.decal && f.color === C("battleInk"));
+  const faces = (m: { far: readonly Face[]; near: readonly Face[]; front?: readonly Face[] }) => [...m.far, ...m.near, ...(m.front ?? [])];
+
+  it("every German tank and tank destroyer carries the Balkenkreuz", () => {
+    for (const kind of ["light", "medium", "heavy", "td"] as const) expect(crossed(TANK_MODELS[kind].de(team).faces)).toBe(true);
+  });
+
+  it("Germany's recon, halftrack and Mobile AA carry the Balkenkreuz", () => {
+    expect(crossed(faces(r75(team)))).toBe(true);
+    expect(crossed(faces(sdkfz251(team)))).toBe(true);
+    expect(crossed(faces(quadAA(team, true, 1, -1)))).toBe(true);
+  });
+
+  it("Japan and Italy drive the German shapes without the cross", () => {
+    expect(crossed(faces(r75(team, 0, false)))).toBe(false);
+    expect(crossed(faces(sdkfz251(team, 0, false)))).toBe(false);
+    expect(crossed(faces(quadAA(team, true, 1, -1, C("battleStar"), false)))).toBe(false);
+    for (const kind of ["light", "medium", "td"] as const) {
+      expect(crossed(TANK_MODELS[kind].jp(team).faces)).toBe(false);
+      expect(crossed(TANK_MODELS[kind].it(team).faces)).toBe(false);
+    }
   });
 });
 

@@ -1,6 +1,7 @@
-// German land units at 32x32 in a top-down 3/4 view, two idle frames each, facing right. No national
-// insignia (08-art-pipeline §12): camouflage patches and silhouettes tell them apart.
-import { arches, finish, grille, wheelsInWells, hands, interleavedTrack, kar98k, overlay, soldier, sprite, stahlhelm, track, wheel } from "./kit32.mjs";
+// German land units at 32x32 in a top-down 3/4 view, two idle frames each, facing right. Vehicles
+// carry the Balkenkreuz on the hull side, where US vehicles carry the star (08-art-pipeline §12),
+// over camouflage patches; towed guns carry none.
+import { arches, balkenkreuz, finish, grille, wheelsInWells, hands, interleavedTrack, kar98k, overlay, soldier, sprite, stahlhelm, track, wheel } from "./kit32.mjs";
 
 const frames = (draw) => [draw(0), draw(1)];
 const boots = "leather";
@@ -63,6 +64,7 @@ function sidecar(frame) {
   s.poly([[2, 17 + dip], [26, 17 + dip], [30, 20 + dip], [29, 27 + dip], [2, 27 + dip]], "team", 2);
   arches(s, wheels);
   camo(s, [[6, 19 + dip, 9, 20 + dip], [16, 21 + dip, 20, 22 + dip]]);
+  balkenkreuz(s, 10, 17 + dip, 5);
   s.rect(14, 13 + dip, 23, 17 + dip, "team", 1);
   s.oval(18, 11 + dip, 2.6, 2, "skin", 1);
   stahlhelm(s, 18, 4 + dip, 9 + dip, 3.6);
@@ -85,6 +87,7 @@ function sdkfz251(frame) {
   s.poly([[1, 16 + dip], [24, 16 + dip], [31, 18 + dip], [31, 26 + dip], [21, 26 + dip], [21, 22 + dip], [1, 22 + dip]], "team", 3);
   arches(s, wheels);
   camo(s, [[4, 18 + dip, 9, 19 + dip], [15, 19 + dip, 19, 20 + dip]]);
+  balkenkreuz(s, 10, 17 + dip, 5);
   s.rect(1, 9 + dip, 22, 16 + dip, "team", 1, true);
   s.fill(3, 11 + dip, 20, 14 + dip, "team", 4);
   s.poly([[22, 11 + dip], [27, 12 + dip], [31, 16 + dip], [22, 16 + dip]], "team", 1);
@@ -101,6 +104,7 @@ function panzerII(frame) {
   track(s, frame, { left: 4, right: 26, wheels: [8, 13, 18, 23] });
   s.rect(4, 18 + dip, 26, 23 + dip, "team", 3);
   camo(s, [[8, 19 + dip, 12, 20 + dip], [17, 21 + dip, 21, 22 + dip]]);
+  balkenkreuz(s, 12, 18 + dip, 5);
   s.rect(4, 11 + dip, 26, 17 + dip, "team", 1, true);
   grille(s, 6, 9, 13 + dip, 16 + dip);
   // Small turret set off to one side, a thin 20mm autocannon.
@@ -119,6 +123,7 @@ function panzerIV(frame) {
   s.rect(0, 18 + dip, 31, 25 + dip, "team", 2);
   for (let x = 5; x < 31; x += 6) s.line(x, 19 + dip, x, 25 + dip, "team", 4);
   camo(s, [[2, 21 + dip, 4, 23 + dip], [13, 20 + dip, 16, 22 + dip], [24, 22 + dip, 27, 23 + dip]]);
+  balkenkreuz(s, 6, 18 + dip);
   s.rect(1, 8 + dip, 30, 17 + dip, "team", 1, true);
   grille(s, 2, 6, 10 + dip, 15 + dip);
   s.rect(24, 10 + dip, 27, 12 + dip, "team", 2);
@@ -138,6 +143,7 @@ function tiger(frame) {
   // A big slab-sided hull filling the tile, with a wide, flat box turret and the long 88.
   s.rect(0, 16 + dip, 31, 22 + dip, "team", 3);
   camo(s, [[3, 18 + dip, 7, 19 + dip], [14, 17 + dip, 18, 19 + dip], [24, 19 + dip, 28, 20 + dip]]);
+  balkenkreuz(s, 8, 16 + dip, 5);
   s.rect(0, 5 + dip, 31, 15 + dip, "team", 1, true);
   grille(s, 2, 7, 7 + dip, 13 + dip);
   s.rect(5, 2 + dip, 21, 13 + dip, "team", 1, true).shadow();
@@ -154,6 +160,7 @@ function stug(frame) {
   for (let cx = 3 + frame; cx < 30; cx += 4) s.oval(cx, 28, 1.6, 1.6, "metal", 1);
   s.rect(0, 19 + dip, 31, 25 + dip, "team", 2);
   for (let x = 5; x < 31; x += 6) s.line(x, 20 + dip, x, 25 + dip, "team", 4);
+  balkenkreuz(s, 13, 19 + dip, 5);
   s.rect(1, 12 + dip, 30, 18 + dip, "team", 1, true);
   grille(s, 2, 6, 13 + dip, 17 + dip);
   // No turret: a low armored box built onto the hull, the gun coming straight out of its front.
@@ -201,6 +208,7 @@ function flakvierling(frame) {
   s.fill(21, 23 + dip, 30, 26 + dip, "team", 3);
   arches(s, wheels);
   camo(s, [[4, 19 + dip, 8, 20 + dip], [17, 18 + dip, 21, 19 + dip]]);
+  balkenkreuz(s, 11, 18 + dip, 5);
   s.rect(1, 12 + dip, 20, 17 + dip, "team", 2, true);
   s.rect(20, 10 + dip, 30, 17 + dip, "team", 1, true);
   s.fill(22, 11 + dip, 28, 12 + dip, "glass", 0);

@@ -3,7 +3,7 @@
 // views in the nation files face right and are mirrored for left. Same 3/4 view from above, same
 // light from the top left, same two frames, which step, roll or spin, since these views are shown
 // while a unit moves.
-import { finish, hinomaru, overlay, redStar, roundel, sprite, star, SUITS } from "./kit32.mjs";
+import { balkenkreuz, finish, hinomaru, overlay, redStar, roundel, sprite, star, SUITS } from "./kit32.mjs";
 
 const CX = 15.5;
 const VIEWS = ["down", "up"];
@@ -310,7 +310,8 @@ function armsAcross(s, [[lx, ly], [rx, ry]]) {
  * o.w        half the overall width, tracks included
  * o.turret   { shape: "round" | "box" | "hex" | "open" | "casemate", w, h, y, dx, bustle }
  * o.gun      { w: barrel thickness, len, brake: muzzle brake, mantlet }
- * o.marking  "star" (US, on the engine deck), "redStar" (Soviet, on the turret), or none
+ * o.marking  "star" (US, on the engine deck), "roundel" (UK, on the deck), "cross" (German, on the
+ *            deck), "redStar" (Soviet, on the turret), or none
  * extras: camo, rivets, skirts, spareTanks, handrail, rack (the Calliope's rockets), muffler, bowMg
  */
 function tracked(o) {
@@ -340,6 +341,7 @@ function tracked(o) {
       for (let y = plateTop - 5; y <= plateTop - 1; y += 2) s.line(hl + 2, y, hr - 2, y, "team", 3);
       if (o.marking === "star") star(s, CX - 3.5, plateTop - 5);
       if (o.marking === "roundel") roundel(s, CX - 0.5, plateTop - 3);
+      if (o.marking === "cross") balkenkreuz(s, CX - 2.5, plateTop - 5, 5);
     }
     s.rect(hl, plateTop, hr, 29 + dip, "team", 2);
     if (down) {
@@ -538,6 +540,7 @@ function sidecarUnit(o) {
     tyre(s, car + (down ? -3 : 3), 26, 3, frame);
     s.oval(car, 20 + d, 5, 7, "team", 1, true);
     s.fill(car - 3, 15 + d, car + 3, 20 + d, "team", 4);
+    if (o.cross) balkenkreuz(s, car - 3, 21 + d, 5);
     // Bike: front wheel toward you, or the rear wheel and mudguard going away.
     tyre(s, bike, down ? 27 : 26, 3.5, frame);
     s.rect(bike - 2, 14 + d, bike + 2, 25 + d, "team", 2, true);
@@ -607,6 +610,8 @@ function halftrack(o) {
         s.fill(10, 9 + d, 21, 21 + d, "team", 4);
         if (o.crew) for (const hx of [11, 20]) HELMETS[o.crew](s, "back", hx, 12 + d, 15 + d, 0.5);
         s.rect(7, 22 + d, 24, 28 + d, "team", 2);
+        // The German cross on the left rear door panel.
+        if (o.marking === "cross") balkenkreuz(s, 8, 23 + d, 5);
         s.rect(13, 22 + d, 18, 28 + d, "team", 2);
         s.dot(17, 25 + d, "metal", 0);
         if (o.marking === "star") star(s, 18, 4 + d);
@@ -848,12 +853,17 @@ export function planeView(view, frame, o) {
   poly([[CX - span, wingY + 1], [CX + span, wingY + 1], [CX + span, wingY + chord - 2], [CX + 3, wingY + chord], [CX - 3, wingY + chord], [CX - span, wingY + chord - 2]], "team", 1);
   if (o.ribs) for (let x = Math.round(CX - span + 2); x < CX + span - 1; x += 2) if (Math.abs(x - CX) > hw + 1) s.line(x, Y(wingY + 2), x, Y(wingY + chord - 2), "team", 2);
   if (o.wingCamo || o.camo) camo(s, [[Math.round(CX - span + 3), Math.min(Y(wingY + 2), Y(wingY + 3)), Math.round(CX - span + 6), Math.max(Y(wingY + 2), Y(wingY + 3))], [Math.round(CX + 5), Math.min(Y(wingY + 3), Y(wingY + 4)), Math.round(CX + 8), Math.max(Y(wingY + 3), Y(wingY + 4))]]);
-  // Markings on the wings: the US star on the left wing, the hinomaru and red star on both.
+  // Markings on the wings: the US star on the left wing, the hinomaru, red star, roundel and cross on both.
   if (o.star) star(s, down ? CX + span - 7.5 : CX - span + 1, Math.min(Y(wingY + 2), Y(wingY + 6)));
   for (const sx of [-1, 1]) {
     if (o.sun) hinomaru(s, CX + sx * (span - 4), Y(wingY + chord / 2), 1.5);
     if (o.redStar) redStar(s, CX + sx * (span - 4.5) - 3, Math.min(Y(wingY + 2), Y(wingY + 6)), true);
     if (o.roundel) roundel(s, CX + sx * (span - 4.5), Y(wingY + chord / 2), 2.4);
+    // A fighter's wing is three pixels deep: the 3x3 cross; a bomber's takes the 5x5.
+    if (o.cross) {
+      const n = chord >= 8 ? 5 : 3;
+      balkenkreuz(s, Math.round(CX + sx * (span - 4.5) - (n - 1) / 2), Math.floor(Y(wingY + chord / 2) - (n - 1) / 2), n);
+    }
   }
   // A biplane's upper wing, a little forward of the lower one.
   if (o.biplane) poly([[CX - span, wingY - 1], [CX + span, wingY - 1], [CX + span, wingY + chord - 4], [CX - span, wingY + chord - 4]], "team", 0);
@@ -1038,15 +1048,15 @@ const LAND = {
     IN: soldierUnit({ helmet: "stahlhelm", kit: "pack", weapon: "rifle", stock: "darkwood" }),
     AI: soldierUnit({ helmet: "stahlhelm", kit: "pack", weapon: "tube", tube: { shield: true } }),
     MO: soldierUnit({ helmet: "stahlhelm", kit: "pack", weapon: "mortar" }),
-    RC: sidecarUnit({ helmet: "stahlhelm", mg: true }),
-    HT: halftrack({ gun: "mg34", crew: "stahlhelm", camo: [[8, 16, 11, 18], [20, 4, 23, 6]] }),
-    LT: tank({ w: 10, turret: { shape: "box", w: 4.5, h: 3.5, y: 13, dx: -1 }, gun: { w: 1, len: 8 }, camo: [[8, 19, 11, 21]] }),
-    MT: tank({ w: 12, skirts: true, turret: { shape: "box", w: 6, h: 4.5, y: 13, bustle: true }, gun: { w: 2, len: 13, brake: true }, camo: [[9, 9, 12, 11], [19, 20, 22, 22]], turretCamo: [[-4, -2, -1, 0]] }),
-    HV: tank({ w: 13, turret: { shape: "box", w: 7.5, h: 5, y: 13 }, gun: { w: 3, len: 14, brake: true }, camo: [[8, 20, 11, 22], [20, 9, 23, 11]], turretCamo: [[2, -3, 5, -1]] }),
-    TD: tank({ w: 12, turret: { shape: "casemate", w: 7, h: 4, y: 15 }, gun: { w: 2, len: 11, brake: true }, camo: [[8, 9, 11, 11], [20, 20, 23, 22]] }),
+    RC: sidecarUnit({ helmet: "stahlhelm", mg: true, cross: true }),
+    HT: halftrack({ gun: "mg34", crew: "stahlhelm", marking: "cross", camo: [[18, 16, 21, 18], [20, 4, 23, 6]] }),
+    LT: tank({ w: 10, turret: { shape: "box", w: 4.5, h: 3.5, y: 13, dx: -1 }, gun: { w: 1, len: 8 }, marking: "cross", camo: [[8, 19, 11, 21]] }),
+    MT: tank({ w: 12, skirts: true, turret: { shape: "box", w: 6, h: 4.5, y: 13, bustle: true }, gun: { w: 2, len: 13, brake: true }, marking: "cross", camo: [[9, 9, 12, 11], [19, 20, 22, 22]], turretCamo: [[-4, -2, -1, 0]] }),
+    HV: tank({ w: 13, turret: { shape: "box", w: 7.5, h: 5, y: 13 }, gun: { w: 3, len: 14, brake: true }, marking: "cross", camo: [[8, 20, 11, 22], [20, 9, 23, 11]], turretCamo: [[2, -3, 5, -1]] }),
+    TD: tank({ w: 12, turret: { shape: "casemate", w: 7, h: 4, y: 15 }, gun: { w: 2, len: 11, brake: true }, marking: "cross", camo: [[8, 9, 11, 11], [20, 20, 23, 22]] }),
     AR: fieldGun({}),
     RK: nebelwerfer,
-    AA: halftrack({ gun: "flak4", crew: "stahlhelm" }),
+    AA: halftrack({ gun: "flak4", crew: "stahlhelm", marking: "cross" }),
     FK: flakGun({ shield: true, brake: true }),
   },
   jp: {
