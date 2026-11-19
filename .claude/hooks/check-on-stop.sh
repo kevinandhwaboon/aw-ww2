@@ -6,10 +6,19 @@
 # - A failure is sent back to Claude once, with the end of the output, so it keeps working.
 #   If Claude stops again without changing anything, the turn ends with a warning rather than
 #   looping forever (for example when another session's half-done work is what is red).
+# - It checks the folder of the session that is stopping (its worktree), taken from the
+#   hook input's "cwd". Not CLAUDE_PROJECT_DIR: that is the main checkout, where other
+#   sessions' uncommitted work would make every session wait on a full check.
 
-cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 [ -d "$HOME/.local/node/bin" ] && PATH="$HOME/.local/node/bin:$PATH"
 command -v npm >/dev/null || exit 0
+
+input=$(cat)
+session_dir=$(printf '%s' "$input" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(JSON.parse(s).cwd||"")}catch{}})' 2>/dev/null)
+[ -n "$session_dir" ] || session_dir=$PWD
+repo_root=$(git -C "$session_dir" rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$repo_root" || exit 0
+[ -d node_modules ] || exit 0
 
 SCOPE=(src tests tools package.json package-lock.json tsconfig.json tsconfig.base.json tsconfig.engine.json eslint.config.js vite.config.ts index.html)
 
