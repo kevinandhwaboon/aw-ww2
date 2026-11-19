@@ -185,11 +185,11 @@ describe("the packs that ship with the game", () => {
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank");
   });
 
-  it("the Soviet Union has art for every land unit, Heavy Tank included, plus Fighter, Bomber and Transport Aircraft (01-units §1)", () => {
+  it("the Soviet Union has art for every land unit, Heavy Tank included, plus Fighter, Bomber, Transport Aircraft and the Volga armored boat as its Landing Craft (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) {
-      const fielded = UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber"].includes(type);
+      const fielded = type === "landingCraft" || (UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber"].includes(type));
       expect(drawn.has(type), type).toBe(fielded);
     }
   });
@@ -200,10 +200,10 @@ describe("the packs that ship with the game", () => {
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(true);
   });
 
-  it("the Soviet Union has no ships and no carrier aircraft, as it fielded no carriers (01-units §1)", () => {
+  it("the Soviet Union has no seagoing ships and no carrier aircraft, as it fielded no carriers; its only boat is the Landing Craft (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
-    for (const type of ["battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier", "diveBomber", "torpedoBomber"] as const) {
+    for (const type of ["battleship", "destroyer", "submarine", "torpedoBoat", "carrier", "supplyShip", "diveBomber", "torpedoBomber"] as const) {
       expect(drawn.has(type), type).toBe(false);
     }
   });

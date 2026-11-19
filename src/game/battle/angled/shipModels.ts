@@ -4,6 +4,7 @@
 // S-boot, and the LCT hull carrying two Panzer IVs. Japan: the Yamato, a Kagero, a B1-type I-boat
 // with its aircraft hangar, a Daihatsu carrying a Ha-Go, and a small torpedo boat. UK: HMS
 // Warspite, a Tribal, a T-class submarine, the LCT carrying two Sherman Fireflies, and a Vosper MTB.
+// Soviet Union: only a Landing Craft, the Volga Flotilla's armored boat.
 // Carriers: the Essex class for the US, HMS Illustrious for the UK, the Shōkaku for Japan; Germany
 // has none. Ships carry no insignia (08-art-pipeline §12).
 //
@@ -840,6 +841,34 @@ export function daihatsu(T: TeamShades, beached: boolean): ShipModel {
     deck: null,
     at: {},
     troops: [[-6, -7, 8.6], [-12, -7, 8.6], [-18, -7, 8.6], [-24, -7, 8.6], [36, -7, 8.6]],
+    lift: liftFor(S) - (beached ? 2 : 0),
+  };
+}
+
+/**
+ * Project 1125 armored boat (bronekater), the Volga Flotilla's boat that carried troops across to
+ * Stalingrad: a short, beamy river hull with low armored walls, a tank turret on the foredeck, an
+ * armored wheelhouse amidships, and riflemen crouched on the open deck aft. No ramp: its troops
+ * jumped off over the bow, so beached it just sits lower.
+ */
+export function bronekater(T: TeamShades, beached: boolean): ShipModel {
+  const U = sup(T);
+  const S = [st(46, 7, 4, -2.6), st(30, 9, 4, -2.6), st(-34, 9, 4, -2.6), st(-42, 8, 4.4, -2), st(-46, 6, 4.4, 1)];
+  const back: Face[] = [...hull(S, { lower: T.lo, upper: T.mid, deck: shade(T.lo, 0.9), boot: 0.5 })];
+  back.push(...box(-40, 30, 8, 9, 4, 6.5, T.mid));
+  const front: Face[] = [...box(-40, 30, -9, -8, 4, 6.5, T.mid)];
+  // The tank turret forward, its gun over the bow.
+  front.push(...box(22, 34, -5, 5, 4, 9, U), ...box(24, 32, -4, 4, 9, 11, U));
+  front.push(...beam([33, 0, 9.6], [50, 0, 9.6], 0.7, 0.7, steelDark()));
+  // The armored wheelhouse with its vision slits, and a short mast.
+  front.push(...box(2, 14, -5, 5, 4, 12, U), ...windows(-5.05, 4, 12, 10, 0.7));
+  front.push(...beam([8, 0, 12], [8, 0, 19], 0.4, 0.4, steelDark()));
+  return {
+    layers: [back, front],
+    water: S,
+    deck: null,
+    at: {},
+    troops: [[-6, -7, 8.6], [-12, -7, 8.6], [-18, -7, 8.6], [-24, -7, 8.6], [-30, -7, 8.6]],
     lift: liftFor(S) - (beached ? 2 : 0),
   };
 }

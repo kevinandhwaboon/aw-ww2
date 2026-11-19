@@ -4,7 +4,7 @@
 
 import { BATTLE_VIEW, drawMesh, screenAngle, screenPoint, type V3 } from "./angled/mesh";
 import {
-  beamAt, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, illustrious, iowa, kagero, lct, mtb, oiler, ptBoat, sBoot, shokaku, tClass, tribal, typeVII,
+  beamAt, bronekater, daihatsu, essex, fletcher, gato, gyoraitei, iBoat, illustrious, iowa, kagero, lct, mtb, oiler, ptBoat, sBoot, shokaku, tClass, tribal, typeVII,
   warspite, waterline, yamato, zerstorer,
   type Launch, type Salvo, type ShipModel,
 } from "./angled/shipModels";
@@ -261,7 +261,7 @@ export const submarineRig: Rig = shipRig({
 
 function landingCraft(look: Look): ShipModel {
   const kit = kitOf(look);
-  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : lct(look.team, kit === "de" || kit === "uk" ? kit : "us", look.beached)));
+  return memo(`lc|${team(look)}|${look.beached}`, () => (kit === "jp" ? daihatsu(look.team, look.beached) : kit === "su" ? bronekater(look.team, look.beached) : lct(look.team, kit === "de" || kit === "uk" ? kit : "us", look.beached)));
 }
 
 export const landingCraftRig: Rig = shipRig({
