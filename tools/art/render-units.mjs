@@ -134,14 +134,14 @@ for (const { id, units, extra, teams: names } of big) {
 }
 
 // ---- 32x32 aircraft and ships. Rows: FT, BM, TA, DB, TR and BB, DD, SS, LC, TB, CV, SP; empty where a nation has none.
-const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir, ukAir, ukNaval, itAir } = await import("./air-naval32.mjs");
+const { usAir, usNaval, deAir, deNaval, jpAir, jpNaval, suAir, suNaval, ukAir, ukNaval, itAir } = await import("./air-naval32.mjs");
 const airRows = ["FT", "BM", "TA", "DB", "TR"];
 const navalRows = ["BB", "DD", "SS", "LC", "TB", "CV", "SP"];
 for (const { id, air, naval, teams: names } of [
   { id: "us", air: usAir, naval: usNaval, teams: ["olive", "red", "blue"] },
   { id: "de", air: deAir, naval: deNaval, teams: ["grey", "olive", "red", "blue"] },
   { id: "jp", air: jpAir, naval: jpNaval, teams: ["khaki", "olive", "red", "blue"] },
-  { id: "su", air: suAir, naval: [], teams: ["green4bo", "olive", "red", "blue"] },
+  { id: "su", air: suAir, naval: suNaval, teams: ["green4bo", "olive", "red", "blue"] },
   { id: "uk", air: ukAir, naval: ukNaval, teams: ["brown", "olive", "red", "blue"] },
   { id: "it", air: itAir, naval: [], teams: ["blue", "olive", "red"] },
 ]) {

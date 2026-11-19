@@ -239,4 +239,4 @@ All values pass through the modifier layer (master doc section 7).
 - Movement type list and terrain costs (02-terrain).
 - Damage chart, including vs. fortifications and obstacles (03-combat).
 - Can Heavy Tank fuel use or Rocket Artillery fragility be expressed through existing stats, or do they need special rules?
-- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor. Decided so far: the US has no Heavy Tank; Germany has no Battleship, Landing Craft, Carrier, Dive Bomber or Torpedo Bomber; Japan has no Heavy Tank; the Soviet Union has no naval units (none drawn yet), Dive Bomber or Torpedo Bomber (08-art-pipeline §17).
+- Which nations get art for which unit types (full matrix), especially Axis naval units and Allied heavy armor. Decided so far: the US has no Heavy Tank; Germany has no Battleship, Landing Craft, Carrier, Dive Bomber or Torpedo Bomber; Japan has no Heavy Tank; the Soviet Union has no seagoing ships, Dive Bomber or Torpedo Bomber, and only one boat, the Volga armored boat as its Landing Craft (since 2026-11-19, 08-art-pipeline §17).

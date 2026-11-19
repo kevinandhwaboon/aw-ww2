@@ -102,6 +102,11 @@ describe("terrain sketch", () => {
     expect(sketch(["....", "....", "~~~~", "...."], 1).cells).toEqual(["river"]);
   });
 
+  it("a narrow channel of water between two banks, like the Volga, stays water; a strip of coast doesn't", () => {
+    expect(sketch(["..S.", "..S.", ".S..", ".S.."], 1).cells).toEqual(["sea"]);
+    expect(sketch(["...S", "...S", "...S", "...S"], 1).cells).toEqual(["land"]);
+  });
+
   it("forest or hills covering two fifths of a block make it forest or hills", () => {
     expect(sketch(["FF..", "FF..", "....", "...."], 1).cells).toEqual(["land"]);
     expect(sketch(["FFFF", "FFF.", "....", "...."], 1).cells).toEqual(["forest"]);

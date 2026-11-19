@@ -75,8 +75,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Stalingrad, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "stalingrad", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
   });
 
   it("have unique ids", () => {
@@ -348,6 +348,162 @@ describe("built-in scenarios (00-master-design §8)", () => {
     it("both sides can build every land unit, Heavy Tank included, and Fighters, Bombers and Transport Aircraft, but nothing else", () => {
       const expected = [...(Object.keys(UNITS) as UnitTypeId[]).filter((t) => UNITS[t].category === "land"), "fighter", "bomber", "transportAircraft"].sort();
       for (const p of players) expect([...(p.buildable ?? [])].sort()).toEqual(expected);
+    });
+  });
+
+  describe("Stalingrad (15-scenarios-eastern-front §2)", () => {
+    const stalingrad = SCENARIOS.find((s) => s.id === "stalingrad");
+    if (!stalingrad) throw new Error("missing scenario");
+    const { map, units = [], players, victory, weather } = stalingrad.setup;
+    const kalach = P(27, 39);
+    const beketovka = P(50, 43);
+    const krasnayaSloboda = P(54, 37);
+    const sovetsky = P(31, 43);
+    const gumrak = P(47, 35);
+    const footholds = { rynok: P(53, 32), spartanovka: P(51, 33), redOctober: P(52, 36) };
+    const landings = { spartanovka: P(52, 33), redOctober: P(52, 37) };
+    const mamayev = P(51, 37);
+    const owners = stalingrad.setup.propertyOwners ?? [];
+    const ownerAt = (p: Point) => owners.find((o) => o.pos.x === p.x && o.pos.y === p.y)?.owner;
+    const tiles = (terrain: string) => map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []));
+    const unitAt = (p: Point) => units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+    const near = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+    const distance = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+    it("is a theater map of the city and the Don bend, 70 × 68 squares, with the Soviet Union against Germany", () => {
+      expect([map.width, map.height]).toEqual([70, 68]);
+      expect(players.map((p) => p.nation)).toEqual(["ussr", "germany"]);
+    });
+
+    it("the Soviet Union moves first: Operation Uranus opened with a dawn barrage", () => {
+      expect(players[0]?.nation).toBe("ussr");
+    });
+
+    it("Kalach is the German HQ, east of the Don, its bridge to the west a Major Bridge that Assault Infantry can blow", () => {
+      expect(properties(stalingrad, "hq", 1).map((p) => p.pos)).toEqual([kalach]);
+      expect(terrainAt(map, P(kalach.x - 1, kalach.y))).toBe("majorBridge");
+    });
+
+    it("the Don's other big bridge, at Rychkovsky by Nizhne-Chirskaya, is a Major Bridge too", () => {
+      expect(tiles("majorBridge")).toHaveLength(2);
+    });
+
+    it("Beketovka, just south of the city, is the Soviet HQ, and German tanks can reach it by land", () => {
+      expect(properties(stalingrad, "hq", 0).map((p) => p.pos)).toEqual([beketovka]);
+      const tank = units.find((u) => u.owner === 1 && u.type === "mediumTank");
+      if (!tank) throw new Error("no German tank");
+      expect(connected(map, "tracks", tank.pos, beketovka)).toBe(true);
+    });
+
+    it("the Volga has no bridge: nothing on foot or tracks can get from the east bank to the city", () => {
+      for (const type of ["foot", "heavyFoot", "wheels", "tracks"] as const) {
+        expect(connected(map, type, krasnayaSloboda, footholds.redOctober), type).toBe(false);
+      }
+    });
+
+    it("the Soviets hold three footholds in the city, Rynok, Spartanovka and Red October, each with riflemen in it", () => {
+      for (const [name, p] of Object.entries(footholds)) {
+        expect(terrainAt(map, p), name).toBe("city");
+        expect(ownerAt(p), name).toBe(0);
+        expect(unitAt(p)?.type, name).toBe("infantry");
+      }
+    });
+
+    it("every other city square in Stalingrad is German, and the ruins between them are rubble", () => {
+      const city = owners.filter((o) => terrainAt(map, o.pos) === "city" && o.pos.x >= 50 && o.pos.x <= 53 && o.pos.y >= 32 && o.pos.y <= 41);
+      const soviet = city.filter((o) => o.owner === 0).map((o) => o.pos);
+      expect(soviet).toEqual(expect.arrayContaining(Object.values(footholds)));
+      expect(soviet).toHaveLength(3);
+      expect(city.filter((o) => o.owner === 1).length).toBeGreaterThanOrEqual(5);
+      expect(tiles("rubble").length).toBeGreaterThanOrEqual(4);
+    });
+
+    it("Mamayev Kurgan is a hill in the middle of the city that nobody holds at the start", () => {
+      expect(terrainAt(map, mamayev)).toBe("hills");
+      expect(unitAt(mamayev)).toBeUndefined();
+    });
+
+    it("each Soviet strip in the city (Rynok–Spartanovka and Red October) has a landing beach on the river, and a Soviet Landing Craft from Krasnaya Sloboda can reach both", () => {
+      expect(terrainAt(map, krasnayaSloboda)).toBe("port");
+      expect(unitAt(krasnayaSloboda)).toEqual(expect.objectContaining({ type: "landingCraft", owner: 0 }));
+      const byBoat = reachable(map, ["landingCraft"], krasnayaSloboda);
+      expect(near(landings.spartanovka, footholds.spartanovka)).toBe(true);
+      expect(near(landings.redOctober, footholds.redOctober)).toBe(true);
+      for (const [name, beach] of Object.entries(landings)) {
+        expect(terrainAt(map, beach), name).toBe("beach");
+        expect(byBoat.has(`${beach.x},${beach.y}`), name).toBe(true);
+      }
+    });
+
+    it("Germany has no port and can't build ships, so it can never cross the Volga; the Soviets build Landing Craft and no other ship", () => {
+      expect(properties(stalingrad, "port", 1)).toEqual([]);
+      expect((players[1]?.buildable ?? []).filter((t) => UNITS[t].category === "naval")).toEqual([]);
+      expect((players[0]?.buildable ?? []).filter((t) => UNITS[t].category === "naval")).toEqual(["landingCraft"]);
+    });
+
+    it("Soviet guns on the east bank can shell the city across the river", () => {
+      const cityTiles = [...tiles("rubble"), ...Object.values(footholds), ...owners.filter((o) => o.owner === 1 && terrainAt(map, o.pos) === "city").map((o) => o.pos)];
+      const eastBank = units.filter((u) => u.owner === 0 && (u.type === "artillery" || u.type === "rocketArtillery") && connected(map, "tracks", u.pos, krasnayaSloboda));
+      expect(eastBank.length).toBeGreaterThanOrEqual(2);
+      for (const gun of eastBank) {
+        const range = UNITS[gun.type].range ?? { min: 1, max: 1 };
+        expect(cityTiles.some((p) => distance(p, gun.pos) >= range.min && distance(p, gun.pos) <= range.max), `${gun.type} at ${gun.pos.x},${gun.pos.y}`).toBe(true);
+      }
+    });
+
+    it("both Soviet pincers can drive to Kalach and to Sovetsky, where they met: the northern from the Don bridgeheads, the southern from below the city", () => {
+      const tanks = units.filter((u) => u.owner === 0 && ["mediumTank", "heavyTank", "lightTank"].includes(u.type));
+      const north = tanks.filter((u) => u.pos.x < 25 && u.pos.y < 25);
+      const south = tanks.filter((u) => u.pos.x > 45 && u.pos.y > 40);
+      expect(north.length).toBeGreaterThanOrEqual(5);
+      expect(south.length).toBeGreaterThanOrEqual(3);
+      for (const t of [...north, ...south]) {
+        expect(connected(map, "tracks", t.pos, kalach), `${t.type} at ${t.pos.x},${t.pos.y}`).toBe(true);
+        expect(connected(map, "tracks", t.pos, sovetsky), `${t.type} at ${t.pos.x},${t.pos.y}`).toBe(true);
+      }
+    });
+
+    it("Germany's factories are all outside the ring the Soviets will close: each is farther from the city than Kalach", () => {
+      const factories = properties(stalingrad, "factory", 1);
+      expect(factories.length).toBeGreaterThanOrEqual(3);
+      for (const f of factories) expect(distance(f.pos, gumrak)).toBeGreaterThan(distance(kalach, gumrak));
+    });
+
+    it("the land bridge north of the city is fortified, but the Romanian-held Don front facing the bridgeheads has only a few bunkers", () => {
+      const bunkers = tiles("bunker").filter((p) => ownerAt(p) === undefined);
+      const landBridge = bunkers.filter((p) => p.x >= 36 && p.y >= 26 && p.y <= 32);
+      const donFront = bunkers.filter((p) => p.x < 25 && p.y < 25);
+      expect(landBridge.length).toBeGreaterThanOrEqual(6);
+      expect(donFront.length).toBeGreaterThan(0);
+      expect(donFront.length).toBeLessThan(landBridge.length);
+    });
+
+    it("Germany fields no Heavy Tank, as the first Tigers reached this front only in January 1943; the Soviets have a KV-1", () => {
+      expect(players[1]?.buildable).not.toContain("heavyTank");
+      expect(units.filter((u) => u.owner === 1 && u.type === "heavyTank")).toEqual([]);
+      expect(players[0]?.buildable).toContain("heavyTank");
+      expect(units.some((u) => u.owner === 0 && u.type === "heavyTank")).toBe(true);
+    });
+
+    it("the Soviets have more units and the first move; Germany has more properties and a stronger army in the city", () => {
+      const count = (owner: number) => units.filter((u) => u.owner === owner).length;
+      expect(count(0)).toBeGreaterThan(count(1));
+      expect(owners.filter((o) => o.owner === 1).length).toBeGreaterThan(owners.filter((o) => o.owner === 0).length);
+      const inCity = (owner: number) => units.filter((u) => u.owner === owner && u.pos.x >= 49 && u.pos.x <= 53 && u.pos.y >= 32 && u.pos.y <= 41).length;
+      expect(inCity(1)).toBeGreaterThan(inCity(0));
+    });
+
+    it("the Soviets win by taking Kalach; Germany wins by taking Beketovka, or all three footholds in the city; rout is off", () => {
+      expect(victory).toEqual([
+        { type: "hqCapture" },
+        { type: "captureProperties", side: "axis", properties: [footholds.rynok, footholds.spartanovka, footholds.redOctober] },
+      ]);
+    });
+
+    it("it's winter: snow on the ground, snowfall on the opening days and again from day 12", () => {
+      expect(weather?.season).toBe("winter");
+      expect(weather?.forecast[0]).toEqual({ fromDay: 1, weather: "snow" });
+      expect(weather?.forecast.at(-1)).toEqual({ fromDay: 12, weather: "snow" });
     });
   });
 

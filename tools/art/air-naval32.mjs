@@ -2,7 +2,8 @@
 // (docs/08-art-pipeline.md §17). Aircraft bob and their propellers spin; ships rock and their
 // bow wave and wake shift. Germany only gets ships its navy fielded here (01-units §4). Japanese
 // aircraft carry the hinomaru, Soviet aircraft the white-edged red star; ships carry no marking.
-// The USSR gets aircraft only: no ships yet, and no carrier aircraft, as it had no carriers.
+// The USSR gets aircraft and one boat: the Volga Flotilla's armored boat as its Landing Craft, for
+// Stalingrad; no carrier aircraft, as it had no carriers.
 // Italian aircraft carry only the white fuselage band and the white rudder cross.
 // British aircraft carry the RAF roundel; the Swordfish is a biplane, the Lancaster has four engines
 // and twin fins.
@@ -324,6 +325,15 @@ const li2 = def("plane", {
   farEngine: [17], nearEngine: [17], bodyStar: [4],
 });
 
+// ---- Soviet boats ----
+// Project 1125 armored boat (bronekater) of the Volga Flotilla: a short, beamy river hull, a tank
+// turret on the foredeck, an armored wheelhouse, and an open deck aft where it carried troops across
+// to the city. The Soviet Landing Craft.
+const bronekater = def("ship", {
+  stern: 3, bow: 29, deck: 14, beam: 7, side: 4, wellDeck: [5, 14],
+  blocks: [[15, 11, 19, 19]], turrets: [[24, 17, 3, 2.2]], masts: [[17, 11, 4]],
+});
+
 // ---- British aircraft ----
 // Spitfire: slim, the elliptical wing, a long pointed nose and a bubble canopy.
 const spitfire = def("plane", {
@@ -448,7 +458,9 @@ export const suAir = [
   { code: "BM", name: "Bomber", real: "Il-2 Sturmovik", frames: frames(il2), views: views(il2) },
   { code: "TA", name: "Transport Aircraft", real: "Li-2", frames: frames(li2), views: views(li2) },
 ];
-export const suNaval = [];
+export const suNaval = [
+  { code: "LC", name: "Landing Craft", real: "Project 1125 armored boat", frames: frames(bronekater), views: views(bronekater) },
+];
 
 export const ukAir = [
   { code: "FT", name: "Fighter", real: "Spitfire", frames: frames(spitfire), views: views(spitfire) },
@@ -484,6 +496,6 @@ export const jpNaval = [
   { code: "SP", name: "Supply Ship", real: "Kazahaya (fleet oiler)", frames: frames(kazahaya), views: views(kazahaya) },
 ];
 
-for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...suAir, ...ukAir, ...ukNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {
+for (const u of [...usAir, ...usNaval, ...deAir, ...deNaval, ...suAir, ...suNaval, ...ukAir, ...ukNaval, ...jpAir, ...jpNaval]) for (const f of u.frames) {
   if (f.length !== 32 || f.some((r) => r.length !== 32)) throw new Error(`${u.code}: not 32x32`);
 }

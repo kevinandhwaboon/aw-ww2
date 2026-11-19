@@ -48,7 +48,8 @@ export interface TerrainSketch {
 export const SKETCH_CELLS = 22;
 
 /**
- * The sketch of `map`. A block that's half sea or more is sea. A river or bridge crossing a block
+ * The sketch of `map`. A block that's half sea or more is sea, and so is one a narrow channel of
+ * water runs through between two banks. A river or bridge crossing a block
  * keeps it a river, so rivers stay unbroken lines; otherwise the block is forest, hills or marsh if
  * that covers two fifths of it, and plain land if not.
  */
@@ -69,10 +70,42 @@ export function sketchMap(map: GameMap, cells = SKETCH_CELLS): TerrainSketch {
           total++;
         }
       }
-      out.push(featureOf(counts, total, cellSize));
+      out.push(channel(map, col * cellSize, row * cellSize, cellSize, counts.sea) ? "sea" : featureOf(counts, total, cellSize));
     }
   }
   return { columns, rows, cells: out, cellSize };
+}
+
+/**
+ * Whether a narrow channel of water runs through the block with land on both banks, like the Volga
+ * at Stalingrad: a whole row's worth of sea, and some row or column of the block that goes land,
+ * water, land (looking one square past the block). Shown as water even though it's under half the block, so the channel stays an
+ * unbroken line. A coast, with land on one side only, isn't a channel.
+ */
+function channel(map: GameMap, x0: number, y0: number, cellSize: number, sea: number): boolean {
+  if (sea < Math.max(1, Math.ceil(cellSize / 2))) return false;
+  /** "S" water, "L" land, "O" off the map (neither: a map's edge is never a bank). */
+  const at = (x: number, y: number) => (x < 0 || y < 0 || x >= map.width || y >= map.height ? "O" : map.terrain[y * map.width + x] === "sea" ? "S" : "L");
+  const x1 = Math.min(map.width, x0 + cellSize);
+  const y1 = Math.min(map.height, y0 + cellSize);
+  // Each line reaches one square past the block on both ends, so a channel along the block's edge
+  // still has its far bank.
+  const crosses = (cells: readonly string[]) => {
+    const first = cells.indexOf("S");
+    const last = cells.lastIndexOf("S");
+    return first >= 0 && cells.slice(0, first).includes("L") && cells.slice(last + 1).includes("L");
+  };
+  for (let y = y0; y < y1; y++) {
+    const line: string[] = [];
+    for (let x = x0 - 1; x <= x1; x++) line.push(at(x, y));
+    if (crosses(line)) return true;
+  }
+  for (let x = x0; x < x1; x++) {
+    const line: string[] = [];
+    for (let y = y0 - 1; y <= y1; y++) line.push(at(x, y));
+    if (crosses(line)) return true;
+  }
+  return false;
 }
 
 function featureOf(counts: Readonly<Record<SketchFeature, number>>, total: number, cellSize: number): SketchFeature {

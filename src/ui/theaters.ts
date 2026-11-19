@@ -147,6 +147,22 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [0, 136, 192, 80],
     },
   },
+  stalingrad: {
+    theater: "easternFront",
+    lon: 44.5,
+    lat: 48.7,
+    where: "Stalingrad, Soviet Union",
+    when: "November 1942",
+    feature: "Boats across the Volga",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "artillery", nation: "germany", terrain: "city" },
+      defender: { kind: "landingCraft", nation: "ussr", terrain: "beach" },
+      weapon: "primary",
+      counter: null,
+      crop: [192, 140, 192, 80],
+    },
+  },
   kursk: {
     theater: "easternFront",
     lon: 36.2,
