@@ -61,7 +61,7 @@ Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter a
 | Battleship | Shore bombardment | Long-range indirect fire vs. land and sea. Light AA that only fires back at aircraft that attack it (03-combat §5d) | HMS Warspite, USS Texas / (rare; scenario-dependent) |
 | Destroyer | Escort | Hunts submarines, anti-air, close bombardment | Fletcher, Tribal / Z-class |
 | Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
-| Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / (rare) |
+| Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / Sea Lion barge (Prahm, 1940) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
 | Supply Ship | Fleet supply at sea | Refuels and rearms every friendly unit next to it except aircraft, like a Halftrack, and repairs its own player's ships next to it 1 HP a day (05-supply-transport §3a). 5 supplies, one spent per resupply, refilled at a port (§3b). Unarmed | Cimarron-class oiler, Dale-class RFA oiler / Kazahaya (Japan); Germany none yet |
 | Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Its threat range is its aircraft's. Its only gun is light AA that fires back at aircraft that attack it (03-combat §5d), so it still needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |

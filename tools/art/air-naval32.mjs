@@ -275,6 +275,12 @@ const uBoat = def("ship", {
   stern: 2, bow: 31, deck: 17, beam: 4, side: 2,
   blocks: [[12, 12, 17, 19]], turrets: [[22, 18, 2, 1.2], [10, 16, 1, 1]], masts: [[14, 12, 5]],
 });
+// Sea Lion barge (Prahm): a Rhine barge converted for the invasion of England in 1940, long, low and
+// blunt, with a concrete floor in its open hold and a ramp cut into the bow. The German Landing Craft.
+const prahm = def("ship", {
+  stern: 1, bow: 30, deck: 14, beam: 7, side: 3, wellDeck: [7, 26],
+  blocks: [[2, 11, 6, 20]], masts: [[4, 11, 5]],
+});
 const eBoat = def("ship", {
   stern: 4, bow: 30, deck: 16, beam: 4, side: 3,
   blocks: [[18, 13, 22, 19]], turrets: [[9, 17, 2, 1.2], [25, 17, 2, 1.2]], camo: [[11, 17, 14, 18]], masts: [[20, 13, 5]],
@@ -444,6 +450,7 @@ export const deAir = [
 export const deNaval = [
   { code: "DD", name: "Destroyer", real: "Z-class", frames: frames(zClass), views: views(zClass) },
   { code: "SS", name: "Submarine", real: "Type VII U-boat", frames: frames(uBoat), views: views(uBoat) },
+  { code: "LC", name: "Landing Craft", real: "Sea Lion barge (Prahm)", frames: frames(prahm), views: views(prahm) },
   { code: "TB", name: "Torpedo Boat", real: "S-boot (E-boat)", frames: frames(eBoat), views: views(eBoat) },
 ];
 

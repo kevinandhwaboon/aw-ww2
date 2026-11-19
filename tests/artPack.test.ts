@@ -171,6 +171,11 @@ describe("the packs that ship with the game", () => {
     expect(drawn("germany").has("battleship")).toBe(false);
   });
 
+  it("Germany has a Landing Craft, the Sea Lion invasion barge, for the Battle of Britain (20-scenarios-battle-of-britain)", () => {
+    const pack = parseArtPack(defaultPack);
+    expect(pack.unitSheets.filter((s) => s.nation === "germany").some((s) => s.rows.includes("landingCraft"))).toBe(true);
+  });
+
   it("the US and Japan have Carrier art and Germany has none (01-units §4)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = (nation: string) => new Set(pack.unitSheets.filter((s) => s.nation === nation).flatMap((s) => s.rows));

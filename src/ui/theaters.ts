@@ -147,6 +147,23 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [0, 136, 192, 80],
     },
   },
+  "battle-of-britain": {
+    theater: "westernEurope",
+    lon: 0.6,
+    lat: 51.2,
+    where: "South-east England",
+    label: "left",
+    when: "August 1940",
+    feature: "Fighters against bombers",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "fighter", nation: "uk", terrain: "plains" },
+      defender: { kind: "bomber", nation: "germany", terrain: "plains" },
+      weapon: "primary",
+      counter: null,
+      crop: [0, 40, 384, 160],
+    },
+  },
   stalingrad: {
     theater: "easternFront",
     lon: 44.5,
