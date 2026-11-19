@@ -35,6 +35,7 @@ At the developer's request, for the Battle of Britain (20-scenarios-battle-of-br
 - **Rain doesn't blind it**: the weather's −1 applies to vision, not air vision (12-weather §3a). Radar saw through cloud.
 - Air vision is a stat (`airVision`), read through the modifier layer like vision.
 - **The enemy has to find a Radar Station** before attacking it, like any unit: it's hidden in the fog until one of their units has it in sight.
+- **Showing its reach** (added 2026-11-19, at the developer's request): holding X or the right mouse button on a Radar Station, yours or a seen enemy's, or clicking your own, shades every square where it sees aircraft in light green (the art pack's `rangeRadar` color, laid on more lightly than the other ranges), under its other ranges.
 
 ## 3. Hiding
 

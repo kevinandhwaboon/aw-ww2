@@ -49,7 +49,9 @@ export interface MapSceneOptions {
   readonly onCursorMove: (tile: Point) => void;
 }
 
-const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack" };
+const RANGE_COLORS: Record<RangeKind, ColorKey> = { move: "rangeMove", inspect: "rangeInspect", attack: "rangeAttack", radar: "rangeRadar" };
+/** A radar's sight covers a wide area, so it's laid on lighter to keep the map under it readable. */
+const RANGE_ALPHA: Record<RangeKind, number> = { move: 0.5, inspect: 0.5, attack: 0.5, radar: 0.3 };
 const MENU = { pad: 3, itemHeight: GLYPH_HEIGHT + 4 };
 const IDLE_FRAMES_PER_SECOND = 3;
 /** Moving units animate faster: soldiers step, treads and wheels roll, propellers spin (08-art-pipeline §22). */
@@ -626,7 +628,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     if (!g) return;
     g.clear();
     for (const { tiles, kind } of layers) {
-      g.fillStyle(packColorNumber(RANGE_COLORS[kind]), 0.5);
+      g.fillStyle(packColorNumber(RANGE_COLORS[kind]), RANGE_ALPHA[kind]);
       for (const t of tiles) g.fillRect(t.x * TILE_SIZE, t.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       // Thin grid lines inside the range keep individual tiles readable.
       g.lineStyle(1, packColorNumber("rangeGrid"), 0.35);

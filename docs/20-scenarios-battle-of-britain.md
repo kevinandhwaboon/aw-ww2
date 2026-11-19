@@ -75,6 +75,7 @@ The ratio follows August 1940: about 800 Bf 109s and 220 Bf 110s against about 7
 
 - **The Radar Stations are the RAF's eyes.** Each sees enemy aircraft 10 squares out (about 100 km, roughly Chain Home's reach against a raid forming up), so from the first day the RAF sees the Luftwaffe on its airfields round Wissant and over the invasion ports. It sees aircraft only: barges, troops and ships stay hidden until something else gets close (19-fog-of-war §2a). Rain doesn't blind them.
 - **Germany has to find them to destroy them.** They're hidden in the fog like any unit until a German unit has them in sight; then Bombers knock one out in two attacks (03-combat §5c). A station lost is gone for good: the UK can't build one. Each one down opens a blind patch of sky through which raids can come unseen, as the Luftwaffe tried on 12 August, when it bombed Dover, Rye, Pevensey, Dunkirk and Ventnor.
+- **To see a station's reach**, hold X or right-click on it, or click your own: every square where it sees aircraft is shaded green.
 - **Without radar the RAF is guessing.** Its Fighters see 2 squares. Over its own land its towns and airfields show their own squares, but that's all.
 
 ### How it plays

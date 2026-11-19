@@ -32,6 +32,8 @@ const BUILT_IN_COLORS = {
   rangeMove: "#7ec8ff",
   rangeInspect: "#ffc070",
   rangeAttack: "#ff4030",
+  // How far a Radar Station sees aircraft: the green of a radar screen (19-fog-of-war §2a)
+  rangeRadar: "#60f080",
   rangeGrid: "#ffffff",
   pathFill: "#f8f0d0",
   pathOutline: "#1a2438",

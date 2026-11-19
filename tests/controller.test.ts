@@ -391,6 +391,33 @@ describe("after the game ends", () => {
   });
 });
 
+describe("a Radar Station's sight (19-fog-of-war §2a)", () => {
+  // Player 0 has a Radar Station at the west end of a long row, which sees aircraft 10 squares away.
+  const row = ["..............."];
+  const radar: UnitSetup = { type: "radarStation", owner: 0, pos: P(0, 0) };
+
+  it("holding X or right-clicking it shows, in green under its other ranges, every square where it sees aircraft", () => {
+    const { controller, seen } = setup(row, [radar]);
+    controller.onPeekStart(P(0, 0));
+    expect(seen.ranges[0]?.kind).toBe("radar");
+    expect(seen.ranges[0]?.tiles).toEqual(Array.from({ length: 11 }, (_, x) => P(x, 0)));
+    controller.onPeekEnd();
+    expect(seen.ranges).toEqual([]);
+  });
+
+  it("clicking your own Radar Station shows it too", () => {
+    const { controller, seen } = setup(row, [radar]);
+    controller.onConfirm(P(0, 0));
+    expect(seen.ranges.map((r) => r.kind)).toEqual(["radar", "move"]);
+  });
+
+  it("other units show no radar layer", () => {
+    const { controller, seen } = setup(row, [{ type: "fighter", owner: 0, pos: P(0, 0) }]);
+    controller.onPeekStart(P(0, 0));
+    expect(seen.ranges.map((r) => r.kind)).not.toContain("radar");
+  });
+});
+
 describe("hold X or right-click", () => {
   const units: UnitSetup[] = [
     { type: "infantry", owner: 0, pos: P(0, 0) },
