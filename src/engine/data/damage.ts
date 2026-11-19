@@ -26,30 +26,30 @@ type ArmedUnitId = (typeof ARMED_UNIT_IDS)[number];
 // 03-combat §5a: vs. land units
 const VS_LAND_COLUMNS = [
   "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-  "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
+  "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "radarStation",
 ] as const satisfies readonly DamageTarget[];
 
-const NONE_VS_LAND = "— — — — — — — — — — — — —";
-//                     Inf  AInf  Mor  Rec  HT   LT   MT   HvT  TD   Art  Rkt  AA   Flak
+const NONE_VS_LAND = "— — — — — — — — — — — — — —";
+//                     Inf  AInf  Mor  Rec  HT   LT   MT   HvT  TD   Art  Rkt  AA   Flak Radar
 const VS_LAND: Record<ArmedUnitId, string> = {
-  infantry:        "55*  45*  60*  12*  14*  7*   5*   1*   6*   15*  25*  5*   25*",
-  assaultInfantry: "65*  55*  70*  85   75   70   55   15   60   70   85   65   85",
-  mortar:          "75   70   75   45   40   30   15   5    25   55   60   40   60",
-  recon:           "70*  65*  75*  35*  45*  10*  6*   1*   8*   45*  55*  4*   28*",
-  lightTank:       "70*  65*  75*  75   65   55   40   10   45   60   75   55   75",
-  mediumTank:      "75*  70*  80*  85   75   70   55   15   65   70   85   65   85",
-  heavyTank:       "105* 95*  105* 105  105  95   85   55   90   105  105  105  105",
-  tankDestroyer:   "—    —    —    95   90   95   85   65   75   80   90   85   90",
-  artillery:       "90   85   90   80   70   75   70   45   70   75   80   75   80",
-  rocketArtillery: "95   90   95   90   80   85   80   55   80   80   85   85   90",
-  mobileAA:        "105  105  105  60   50   35   25   10   30   50   45   45   55",
+  infantry:        "55*  45*  60*  12*  14*  7*   5*   1*   6*   15*  25*  5*   25*  15*",
+  assaultInfantry: "65*  55*  70*  85   75   70   55   15   60   70   85   65   85   70",
+  mortar:          "75   70   75   45   40   30   15   5    25   55   60   40   60   55",
+  recon:           "70*  65*  75*  35*  45*  10*  6*   1*   8*   45*  55*  4*   28*  30*",
+  lightTank:       "70*  65*  75*  75   65   55   40   10   45   60   75   55   75   60",
+  mediumTank:      "75*  70*  80*  85   75   70   55   15   65   70   85   65   85   70",
+  heavyTank:       "105* 95*  105* 105  105  95   85   55   90   105  105  105  105  105",
+  tankDestroyer:   "—    —    —    95   90   95   85   65   75   80   90   85   90   80",
+  artillery:       "90   85   90   80   70   75   70   45   70   75   80   75   80   75",
+  rocketArtillery: "95   90   95   90   80   85   80   55   80   80   85   85   90   80",
+  mobileAA:        "105  105  105  60   50   35   25   10   30   50   45   45   55   40",
   flakGun:         NONE_VS_LAND,
-  fighter:         "15   15   15   10   8    5    2    1    3    10   10   3    8",
-  bomber:          "110  110  110  105  105  105  105  95   105  105  105  95   105",
-  diveBomber:      "55   55   55   55   55   55   50   45   50   55   55   45   50",
+  fighter:         "15   15   15   10   8    5    2    1    3    10   10   3    8    10",
+  bomber:          "110  110  110  105  105  105  105  95   105  105  105  95   105  75",
+  diveBomber:      "55   55   55   55   55   55   50   45   50   55   55   45   50   40",
   torpedoBomber:   NONE_VS_LAND,
-  battleship:      "95   90   95   90   80   85   80   55   80   80   85   85   90",
-  destroyer:       "50   45   50   40   35   30   20   5    20   40   50   30   45",
+  battleship:      "95   90   95   90   80   85   80   55   80   80   85   85   90   80",
+  destroyer:       "50   45   50   40   35   30   20   5    20   40   50   30   45   40",
   submarine:       NONE_VS_LAND,
   torpedoBoat:     NONE_VS_LAND,
 };

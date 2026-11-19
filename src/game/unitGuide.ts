@@ -23,6 +23,7 @@ export const UNIT_GUIDE: Readonly<Record<UnitTypeId, UnitGuide>> = {
   rocketArtillery: { role: "Indirect fire at range 3-5. Fragile", strongVs: ["infantry", "mortar", "recon"], weakVs: ["lightTank", "mediumTank", "bomber"] },
   mobileAA: { role: "Air defense that also shreds infantry", strongVs: ["fighter", "bomber", "infantry"], weakVs: ["mediumTank", "heavyTank", "tankDestroyer"] },
   flakGun: { role: "Long-range air defense. Air targets only", strongVs: ["fighter", "bomber", "transportAircraft"], weakVs: ["lightTank", "mediumTank", "artillery"] },
+  radarStation: { role: "Sees enemy aircraft 10 squares away, other units only next to it. Can't move. Unarmed", strongVs: [], weakVs: ["bomber", "assaultInfantry", "heavyTank"] },
   fighter: { role: "Hunts aircraft. 2 rounds of ammo", strongVs: ["bomber", "transportAircraft"], weakVs: ["mobileAA", "flakGun"] },
   bomber: { role: "Heavy strikes on land and sea. 2 bomb loads", strongVs: ["mediumTank", "heavyTank", "battleship"], weakVs: ["fighter", "flakGun"] },
   transportAircraft: { role: "Unarmed. Flies foot units in", strongVs: [], weakVs: ["fighter", "flakGun"] },

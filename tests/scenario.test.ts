@@ -347,7 +347,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
 
     it("both sides can build every land unit, Heavy Tank included, and Fighters, Bombers and Transport Aircraft, but nothing else", () => {
-      const expected = [...(Object.keys(UNITS) as UnitTypeId[]).filter((t) => UNITS[t].category === "land"), "fighter", "bomber", "transportAircraft"].sort();
+      const expected = [...(Object.keys(UNITS) as UnitTypeId[]).filter((t) => UNITS[t].category === "land" && !UNITS[t].neverBuilt), "fighter", "bomber", "transportAircraft"].sort();
       for (const p of players) expect([...(p.buildable ?? [])].sort()).toEqual(expected);
     });
   });
@@ -522,7 +522,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
     const sheerness = P(10, 4);
     const portsmouth = P(0, 11);
     const invasionPorts = { boulogne: P(17, 13), calais: P(19, 10), dunkirk: P(23, 9) };
-    const sectorStations = { northolt: P(4, 4), northWeald: P(8, 2), hornchurch: P(8, 4), bigginHill: P(7, 6), kenley: P(6, 7), tangmere: P(2, 11) };
+    const sectorStations = { northWeald: P(8, 2), hornchurch: P(8, 4), bigginHill: P(7, 6), kenley: P(6, 7), tangmere: P(2, 11) };
     const owners = bob.setup.propertyOwners ?? [];
     const ownerAt = (p: Point) => owners.find((o) => o.pos.x === p.x && o.pos.y === p.y)?.owner;
     const unitAt = (p: Point) => units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
@@ -564,19 +564,38 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const type of ["foot", "heavyFoot", "wheels", "tracks"] as const) expect(connected(map, type, capBlancNez, london), type).toBe(false);
     });
 
-    it("RAF Fighter Command's sector stations ring London and Tangmere guards the south coast, each an airfield with a Fighter on it, as do the forward fields at Manston and Hawkinge", () => {
-      for (const [name, p] of Object.entries({ ...sectorStations, manston: P(15, 6), hawkinge })) {
+    it("the RAF has six airfields: four sector stations round London and Tangmere on the south coast, each with a Fighter, and Hawkinge, the empty forward field Germany must take", () => {
+      for (const [name, p] of Object.entries(sectorStations)) {
         expect(terrainAt(map, p), name).toBe("airfield");
         expect(ownerAt(p), name).toBe(UK);
         expect(unitAt(p), name).toEqual(expect.objectContaining({ type: "fighter", owner: UK }));
+        if (name !== "tangmere") expect(distance(p, london), name).toBeLessThanOrEqual(4);
       }
-      for (const [name, p] of Object.entries(sectorStations)) if (name !== "tangmere") expect(distance(p, london), name).toBeLessThanOrEqual(4);
+      expect(terrainAt(map, hawkinge)).toBe("airfield");
+      expect(unitAt(hawkinge)).toBeUndefined();
+      expect(properties(bob, "airfield", UK)).toHaveLength(6);
     });
 
-    it("the Luftwaffe starts with more aircraft than the RAF: more Fighters and many more Bombers", () => {
-      expect(count(GERMANY, "fighter")).toBeGreaterThan(count(UK, "fighter"));
-      expect(count(GERMANY, "bomber")).toBeGreaterThanOrEqual(3 * count(UK, "bomber"));
-      expect(count(GERMANY, "fighter") + count(GERMANY, "bomber")).toBeGreaterThanOrEqual(18);
+    it("the Luftwaffe outnumbers the RAF as in August 1940: two Fighters to every RAF Fighter, and four aircraft to every RAF aircraft", () => {
+      expect([count(UK, "fighter"), count(UK, "bomber")]).toEqual([5, 1]);
+      expect([count(GERMANY, "fighter"), count(GERMANY, "bomber")]).toEqual([10, 10]);
+    });
+
+    it("it's always played in fog of war, whatever the new-game box says (19-fog-of-war §1)", () => {
+      expect(bob.setup.settings?.fogOfWar).toBe(true);
+      expect(createGame({ ...bob.setup, seed: 1 }).settings.fogOfWar).toBe(true);
+    });
+
+    it("four Chain Home radar stations stand on the Kent and Sussex coast; together they watch the German coastal airfields and the invasion ports", () => {
+      const radars = units.filter((u) => u.type === "radarStation");
+      expect(radars).toHaveLength(4);
+      for (const r of radars) {
+        expect(r.owner).toBe(UK);
+        expect(englishSide(r.pos)).toBe(true);
+        expect(distance(r.pos, dover)).toBeLessThanOrEqual(8);
+      }
+      const watched = (p: Point) => radars.some((r) => distance(r.pos, p) <= UNITS.radarStation.airVision);
+      for (const p of [wissant, capBlancNez, ...Object.values(invasionPorts)]) expect(watched(p), `${p.x},${p.y}`).toBe(true);
     });
 
     it("London is at the very end of a Bf 109's reach: a Fighter from Wissant, the nearest German airfield, can just strike it and fly home, and from no other German airfield", () => {
@@ -618,6 +637,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
     it("pillboxes stand behind the invasion beaches, each with riflemen in it", () => {
       const pillboxes = tiles("bunker");
       expect(pillboxes.length).toBeGreaterThanOrEqual(2);
+      expect(units.filter((u) => u.type === "radarStation").every((r) => terrainAt(map, r.pos) !== "bunker" && terrainAt(map, r.pos) !== "beach")).toBe(true);
       for (const p of pillboxes) {
         expect(englishSide(p)).toBe(true);
         expect(unitAt(p), `${p.x},${p.y}`).toEqual(expect.objectContaining({ type: "infantry", owner: UK }));
@@ -640,6 +660,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
       const uk = players[UK]?.buildable ?? [];
       expect(uk).toEqual(expect.arrayContaining(["fighter", "bomber", "destroyer"]));
       expect(uk).not.toContain("landingCraft");
+      expect(uk).not.toContain("radarStation");
     });
 
     it("Germany wins by taking Dover and Hawkinge, a port and an airfield on English soil, or London; the UK wins by holding out until day 15", () => {

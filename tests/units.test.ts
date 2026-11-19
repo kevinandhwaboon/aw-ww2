@@ -4,9 +4,9 @@ import { UNITS, UNIT_TYPE_IDS } from "../src/engine/data/units";
 const phase1 = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 describe("unit roster (01-units)", () => {
-  it("has 13 land, 5 air and 7 naval unit types (01-units §2–4)", () => {
+  it("has 14 land, 5 air and 7 naval unit types, the Radar Station among the land units (01-units §2–4)", () => {
     const count = (category: string) => UNIT_TYPE_IDS.filter((id) => UNITS[id].category === category).length;
-    expect(count("land")).toBe(13);
+    expect(count("land")).toBe(14);
     expect(count("air")).toBe(5);
     expect(count("naval")).toBe(7);
   });
@@ -15,6 +15,16 @@ describe("unit roster (01-units)", () => {
     expect(phase1).toHaveLength(12);
     for (const id of phase1) expect(UNITS[id].category).toBe("land");
     expect(UNITS.flakGun.phase).toBe(2);
+  });
+
+  it("the Radar Station can't move, is unarmed, sees enemy aircraft 10 squares away and is never built (01-units §2a)", () => {
+    const radar = UNITS.radarStation;
+    expect(radar.movePoints).toBe(0);
+    expect(radar.range).toBeNull();
+    expect(radar.airVision).toBe(10);
+    expect(radar.vision).toBe(1);
+    expect(radar.neverBuilt).toBe(true);
+    expect(UNIT_TYPE_IDS.filter((id) => UNITS[id].neverBuilt)).toEqual(["radarStation"]);
   });
 
   it("matches the v0 stat table for a few units (01-units §8)", () => {

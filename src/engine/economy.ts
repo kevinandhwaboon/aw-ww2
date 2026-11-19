@@ -90,6 +90,7 @@ export function buildProblem(state: GameState, unitType: UnitTypeId, pos: Point)
   const builds = propertyDefAt(state, pos)?.builds;
   if (!builds) return "nothing can be built here";
   if (builds !== UNITS[unitType].category) return `this property builds ${builds} units`;
+  if (UNITS[unitType].neverBuilt) return "this unit is never built";
   if (!player.buildable.includes(unitType)) return "this unit isn't available to your nation here";
   if (unitAt(state, pos)) return "the tile is occupied";
   const cap = state.settings.unitCap;
@@ -105,7 +106,7 @@ export function buildOptions(state: GameState, pos: Point): BuildOption[] {
   const builds = propertyDefAt(state, pos)?.builds;
   if (!player || !builds || propertyAt(state, pos)?.owner !== player.id || unitAt(state, pos)) return [];
   return player.buildable
-    .filter((type) => UNITS[type].category === builds)
+    .filter((type) => UNITS[type].category === builds && !UNITS[type].neverBuilt)
     .map((type) => {
       const cost = stats.unitCost(state, player.id, type);
       return { type, cost, affordable: player.funds >= cost };

@@ -115,6 +115,11 @@ describe("tile info box (00-master-design §12)", () => {
     expect(tileInfo(empty, P(0, 0)).unit?.ammo?.low).toBe(true);
   });
 
+  it("a Radar Station has no fuel tank, so it's never flagged as low on fuel", () => {
+    const state = makeGame(["."], [{ type: "radarStation", owner: 0, pos: P(0, 0) }]);
+    expect(tileInfo(state, P(0, 0)).unit?.fuel).toEqual({ label: "Fuel", left: 0, max: 0, low: false });
+  });
+
   it("flags fuel as low for an aircraft within two turns of running dry, like the map's gas can (05-supply-transport §11)", () => {
     // A Bomber burning 10 a day (4 plus a test modifier), so two days' burn is more than a quarter tank.
     const modifiers = [{ source: "test", stat: "fuelPerDay", op: "add", value: 6 }] as const;

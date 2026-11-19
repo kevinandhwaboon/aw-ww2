@@ -10,7 +10,7 @@ export const UNIT_TYPE_IDS = [
   "lightTank", "mediumTank", "heavyTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA",
   // Land (phase 2)
-  "flakGun",
+  "flakGun", "radarStation",
   // Air (phase 2)
   "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
   // Naval (phase 2)
@@ -34,6 +34,11 @@ export interface UnitDef {
   readonly movePoints: number;
   readonly movementType: MovementType;
   readonly vision: number;
+  /**
+   * How far it sees enemy aircraft, beyond its ordinary vision (19-fog-of-war §2a). null = no
+   * further than its vision. Only the Radar Station has one.
+   */
+  readonly airVision: number | null;
   readonly maxFuel: number;
   /** Fuel burned at the start of each of the owner's turns (air and naval only). */
   readonly fuelPerDay: number;
@@ -65,6 +70,8 @@ export interface UnitDef {
   /** false for indirect-fire units: they can't move and attack in the same turn. */
   readonly canMoveAndFire: boolean;
   readonly canCapture: boolean;
+  /** Only ever placed by a scenario, never built at a property (the Radar Station). */
+  readonly neverBuilt: boolean;
   readonly transport: { readonly capacity: number; readonly carries: readonly UnitTypeId[] } | null;
   readonly specialActions: readonly SpecialAction[];
 }
@@ -93,6 +100,7 @@ const AIR_FUEL_PER_MOVE = 2;
 /** Defaults shared by most units; each entry overrides what differs. */
 const BASE = {
   phase: 1,
+  airVision: null,
   fuelPerDay: 0,
   fuelPerMove: 1,
   fuelPerDaySubmerged: null,
@@ -104,6 +112,7 @@ const BASE = {
   range: DIRECT,
   canMoveAndFire: true,
   canCapture: false,
+  neverBuilt: false,
   transport: null,
   specialActions: [],
 } as const;
@@ -169,6 +178,13 @@ export const UNITS = {
     ...BASE, phase: 2, name: "Flak Gun", category: "land", cost: 11000, movePoints: 3, movementType: "tracks",
     vision: 2, maxFuel: 40, primaryWeapon: { name: "Flak", maxAmmo: 6 }, range: { min: 3, max: 5 },
     canMoveAndFire: false,
+  },
+
+  // A Chain Home station (20-scenarios-battle-of-britain §1): can't move, unarmed, sees enemy
+  // aircraft far out but everything else only next to it (19-fog-of-war §2a). Never built.
+  radarStation: {
+    ...BASE, phase: 2, name: "Radar Station", category: "land", cost: 12000, movePoints: 0, movementType: "tracks",
+    vision: 1, airVision: 10, maxFuel: 0, range: null, neverBuilt: true,
   },
 
   // ---- Air, phase 2 ----

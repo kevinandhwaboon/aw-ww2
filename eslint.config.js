@@ -3,7 +3,8 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "tools"] },
+  // .claude holds other sessions' worktrees, each a full checkout with its own node_modules.
+  { ignores: ["dist", "node_modules", "tools", ".claude"] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {

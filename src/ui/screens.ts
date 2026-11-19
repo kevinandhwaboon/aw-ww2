@@ -303,13 +303,17 @@ export function showPlayerSelect(
   });
 
   const luck = checkbox("Luck in combat", defaults.luck);
-  const fog = checkbox("Fog of war", defaults.fog);
+  // A map that is always played in fog (19-fog-of-war §1) shows the box ticked and locked.
+  const fogForced = scenario.setup.settings?.fogOfWar === true;
+  const fog = checkbox(fogForced ? "Fog of war (always on for this map)" : "Fog of war", fogForced || defaults.fog);
+  fog.input.disabled = fogForced;
   const passDevice = checkbox("Pass-the-device screen between turns", defaults.passDevice);
   const battleScenes = checkbox("Battle scenes", defaults.battleScenes);
   const easy = checkbox("Easy computer opponent", defaults.level === "easy");
   const options = (): GameOptions => ({
     luck: luck.input.checked,
-    fog: fog.input.checked,
+    // A forced box doesn't change the player's own choice for other maps.
+    fog: fogForced ? defaults.fog : fog.input.checked,
     passDevice: passDevice.input.checked,
     battleScenes: battleScenes.input.checked,
     computer: computerBoxes.flatMap((box, id) => (box.checked ? [id] : [])),
@@ -343,7 +347,7 @@ export function showPlayerSelect(
       ...commanderPickers.flatMap((picker, id) => [picker.button, ...(computerBoxes[id] ? [computerBoxes[id]] : [])]),
       easy.input,
       luck.input,
-      fog.input,
+      ...(fogForced ? [] : [fog.input]),
       passDevice.input,
       battleScenes.input,
       start,

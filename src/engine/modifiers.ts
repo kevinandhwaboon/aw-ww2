@@ -11,7 +11,10 @@ import type { MovementType, TerrainId } from "./data/terrain";
 import type { UnitCategory, UnitTypeId } from "./data/units";
 
 export const MODIFIABLE_STATS = [
-  "movePoints", "vision", "cost", "maxFuel", "maxAmmo", "fuelPerDay",
+  "movePoints", "vision",
+  /** How far a unit sees enemy aircraft beyond its vision (19-fog-of-war §2a); 0 for most units. */
+  "airVision",
+  "cost", "maxFuel", "maxAmmo", "fuelPerDay",
   /** Fuel per movement point spent (05-supply-transport §1). */
   "fuelPerMove",
   /** Movement points to enter a tile; the context's terrain is the tile being entered. */

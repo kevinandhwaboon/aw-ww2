@@ -166,18 +166,14 @@ const UK = 0;
 const GERMANY = 1;
 // [name, lon, lat, kind, owner]  kind: Q hq, f factory, A airfield, P port, C city.
 const PLACES = [
-  // The United Kingdom. London, and RAF Fighter Command's 11 Group: the sector stations round
-  // London and the forward airfields on the coast.
+  // The United Kingdom. London, and RAF Fighter Command's 11 Group: four sector stations round
+  // London, Tangmere on the south coast, and Hawkinge, the forward field Germany must take.
   ["London", -0.12, 51.5, "Q", UK],
-  ["Northolt", -0.42, 51.55, "A", UK],
   ["North Weald", 0.15, 51.72, "A", UK],
   ["Hornchurch", 0.21, 51.54, "A", UK],
   ["Biggin Hill", 0.03, 51.32, "A", UK],
   ["Kenley", -0.09, 51.3, "A", UK],
   ["Tangmere", -0.71, 50.85, "A", UK],
-  ["Detling", 0.6, 51.3, "A", UK],
-  ["Rochford", 0.7, 51.57, "A", UK],
-  ["Manston", 1.35, 51.34, "A", UK],
   ["Hawkinge", 1.15, 51.11, "A", UK],
   // The Royal Navy's Channel ports.
   ["Dover", 1.31, 51.12, "P", UK],
@@ -386,17 +382,25 @@ const add = (type, owner, pos, extra = {}) => {
 const on = (type, owner, name, extra) => add(type, owner, placed.get(name), extra);
 const by = (type, owner, name, fits = ok.land) => add(type, owner, near(name, fits, owner));
 
-// RAF Fighter Command, 11 Group: Hurricanes and Spitfires (both the Fighter) on their airfields,
-// Blenheims (the Bomber) of Bomber and Coastal Command for the invasion barges.
-for (const field of ["Northolt", "North Weald", "Hornchurch", "Biggin Hill", "Kenley", "Tangmere", "Manston", "Hawkinge"]) on("fighter", UK, field);
-on("bomber", UK, "Detling");
-on("bomber", UK, "Rochford");
-// Anti-Aircraft Command: 3.7-inch guns (the Flak Gun) round London and Dover, Bofors (Mobile AA) on
-// the forward airfields' perimeters.
+// RAF Fighter Command, 11 Group, outnumbered about two to one in fighters: Hurricanes and Spitfires
+// (both the Fighter) on the sector stations; Hawkinge, the forward field, empty. Blenheims (the
+// Bomber) of Bomber Command for the invasion barges.
+for (const field of ["North Weald", "Hornchurch", "Biggin Hill", "Kenley", "Tangmere"]) on("fighter", UK, field);
+by("bomber", UK, "Hornchurch", ok.land);
+// Chain Home: four radar stations on the Kent and Sussex coast, which see aircraft far out over the
+// Channel (19-fog-of-war §2a). They can't move and are never rebuilt.
+for (const [name, lon, lat] of [["Dover radar", 1.33, 51.16], ["Dunkirk radar", 0.98, 51.29], ["Rye radar", 0.65, 50.9], ["Pevensey radar", 0.33, 50.84]]) {
+  placed.set(name, toGrid([lon, lat]));
+  const p = placed.get(name);
+  const fits = (ch) => ok.land(ch) && ch !== "X" && ch !== "_";
+  add("radarStation", UK, at(p.x, p.y) !== undefined && fits(at(p.x, p.y)) && !taken.has(`${p.x},${p.y}`) && !used.has(`${p.x},${p.y}`) ? p : near(name, fits, UK));
+}
+// Anti-Aircraft Command: 3.7-inch guns (the Flak Gun) round London and Dover, Bofors (Mobile AA) by
+// Hawkinge and Canterbury.
 by("flakGun", UK, "London");
 by("flakGun", UK, "Dover");
 by("mobileAA", UK, "Hawkinge");
-by("mobileAA", UK, "Manston");
+by("mobileAA", UK, "Canterbury");
 // The Royal Navy: destroyers at the Nore, in the Downs off Dover and at Portsmouth, ready to fall
 // on any invasion fleet; an MTB at Dover.
 on("destroyer", UK, "Sheerness");
@@ -414,13 +418,13 @@ by("artillery", UK, "Folkestone");
 by("lightTank", UK, "Ashford");
 on("infantry", UK, "London");
 
-// The Luftwaffe, Luftflotte 2, outnumbering the RAF: Bf 109s on the coastal fields of the
+// The Luftwaffe, Luftflotte 2, outnumbering the RAF two to one in fighters and four to one in all: Bf 109s on the coastal fields of the
 // Pas-de-Calais, Bf 110s (also the Fighter) further back; He 111s, Do 17s and Ju 88s (the Bomber)
 // inland.
 for (const field of ["Wissant", "Saint-Omer", "Le Touquet"]) on("fighter", GERMANY, field);
 for (const field of ["Wissant", "Wissant", "Saint-Omer", "Cap Blanc-Nez", "Le Touquet", "Abbeville", "Lille"]) by("fighter", GERMANY, field);
 for (const field of ["Abbeville", "Lille", "Arras"]) on("bomber", GERMANY, field);
-for (const field of ["Saint-Omer", "Arras", "Lille", "Abbeville", "Arras"]) by("bomber", GERMANY, field);
+for (const field of ["Saint-Omer", "Arras", "Lille", "Abbeville", "Arras", "Le Touquet", "Saint-Omer"]) by("bomber", GERMANY, field);
 by("flakGun", GERMANY, "Wissant");
 // Operation Sea Lion: the barges gathering in the Channel ports, and the first wave camped behind
 // them. The S-boats (Torpedo Boat) at sea off Boulogne and Calais.
@@ -442,9 +446,9 @@ on("infantry", GERMANY, "Cap Blanc-Nez");
 if (process.argv.includes("--reach")) {
   const d = (a, b) => Math.abs(placed.get(a).x - placed.get(b).x) + Math.abs(placed.get(a).y - placed.get(b).y);
   for (const from of ["Wissant", "Saint-Omer", "Le Touquet", "Abbeville", "Lille", "Arras"]) {
-    console.log(`${from}: ` + ["London", "Biggin Hill", "Kenley", "Hornchurch", "North Weald", "Northolt", "Hawkinge", "Manston", "Dover", "Sheerness", "Tangmere"].map((to) => `${to} ${d(from, to)}`).join(", "));
+    console.log(`${from}: ` + ["London", "Biggin Hill", "Kenley", "Hornchurch", "North Weald", "Hawkinge", "Dover", "Sheerness", "Tangmere"].map((to) => `${to} ${d(from, to)}`).join(", "));
   }
-  for (const from of ["Biggin Hill", "Hornchurch", "Hawkinge", "Manston", "Tangmere"]) {
+  for (const from of ["Biggin Hill", "Hornchurch", "Hawkinge", "Tangmere"]) {
     console.log(`${from}: ` + ["Cap Blanc-Nez", "Wissant", "Calais", "Boulogne", "Saint-Omer", "Lille"].map((to) => `${to} ${d(from, to)}`).join(", "));
   }
 }
@@ -457,7 +461,7 @@ const scenario = {
   id: "battle-of-britain",
   name: "Battle of Britain",
   description:
-    "August 1940. The Luftwaffe must win the skies over southern England before Operation Sea Lion can cross the Channel. Its fighters can only just reach London. The RAF's fighters rise to meet each raid, its bombers strike at the invasion barges, and the Royal Navy waits for the boats. Germany wins by taking Dover and Hawkinge, or London; the United Kingdom wins by holding out until day 15, when the autumn weather ends the invasion season.",
+    "August 1940. The Luftwaffe, two fighters to every one of the RAF's, must win the skies over southern England before Operation Sea Lion can cross the Channel. Always in fog of war: the RAF sees the raids coming only through its Chain Home radar stations on the coast, which spot aircraft far out over the Channel. Find and bomb them and the RAF is blind. Germany wins by taking Dover and Hawkinge, or London; the United Kingdom wins by holding out until day 15, when the autumn weather ends the invasion season.",
   map: grid.map((row) => row.join("")),
   players: [
     {
@@ -476,6 +480,8 @@ const scenario = {
   ],
   propertyOwners: owners,
   units,
+  // Always played in fog of war: the RAF sees raids coming only by radar (19-fog-of-war §1).
+  settings: { fogOfWar: true },
   victory: [
     { type: "hqCapture" },
     { type: "captureProperties", side: "axis", properties: [placed.get("Dover"), placed.get("Hawkinge")] },

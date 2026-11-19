@@ -1,6 +1,7 @@
 // Battle figures for the field fortifications (08-art-pipeline §18): a Minefield (02-terrain §4b) and
-// an Obstacle's dragon's teeth (02-terrain §4). Neither fires back. Like a unit's figures, how many
-// stand follows HP: each stretch of minefield goes up, and each tooth topples, as its figure falls.
+// an Obstacle's dragon's teeth (02-terrain §4), and the masts of a Radar Station unit
+// (20-scenarios-battle-of-britain). None fires back. Like a unit's figures, how many stand follows HP:
+// each stretch of minefield goes up, each tooth topples and each mast falls, as its figure falls.
 
 import { shade } from "./colors";
 import { C, mix, type Painter } from "./paint";
@@ -157,6 +158,88 @@ export const obstacleRig: Rig = {
   draw(p, pose) {
     if (pose.down === undefined) tooth(p, pose);
     else toothDown(p, pose);
+  },
+  muzzle: () => NO_MUZZLE,
+};
+
+// ---- Radar Station: Chain Home masts ----
+
+/** How tall a Chain Home mast stands in the scene. */
+const MAST = 92;
+
+/**
+ * A Chain Home transmitter mast: a tall steel lattice tower, tapering to the top, with three
+ * cantilever platforms and the aerial curtain hung from them on the near side. The front mast has
+ * the transmitter hut at its foot.
+ */
+function mast(p: Painter, pose: Pose): void {
+  const steel = C("battleSteel");
+  const dark = C("battleSteelDark");
+  const i = pose.index;
+  // Concrete footings.
+  p.rect(-9, -2, 6, 3, C("battleConcrete"));
+  p.rect(3, -2, 6, 3, C("battleConcrete"));
+  // The two legs we see, and the lattice between them.
+  const halfAt = (y: number) => 7 - (4 * y) / MAST;
+  p.line(-7, 0, -3, -MAST, steel, 2);
+  p.line(7, 0, 3, -MAST, dark, 2);
+  for (let y = 0; y < MAST - 6; y += 8) {
+    const a = halfAt(y);
+    const b = halfAt(y + 8);
+    p.line(-a, -y, b, -y - 8, dark);
+    p.line(a, -y, -b, -y - 8, dark);
+    p.line(-a, -y, a, -y, steel);
+  }
+  // Cantilever platforms, and the aerial wires hung between them.
+  for (const y of [MAST * 0.35, MAST * 0.65, MAST]) {
+    p.rect(-14, -Math.round(y), 28, 2, steel);
+    p.rect(-14, -Math.round(y) + 2, 28, 1, dark);
+  }
+  for (const x of [-12, -6, 6, 12]) p.line(x, -Math.round(MAST * 0.35) + 2, x, -MAST + 2, shade(dark, 1.25));
+  // A red warning light at the top that blinks.
+  if (Math.floor(pose.t / 400 + i) % 2 === 0) p.px(0, -MAST - 2, C("battleMineSign"));
+  if (i === 0) {
+    // The transmitter block: a low hut with blast walls of earth piled against it.
+    p.ellipse(-24, -1, 15, 4, shade(ground(), 1.1));
+    p.rect(-34, -12, 20, 11, C("battleConcrete"));
+    p.rect(-35, -14, 22, 2, shade(C("battleConcrete"), 0.7));
+    p.rect(-28, -8, 4, 7, dark);
+  }
+}
+
+/** A mast brought down: its stump, and the lattice lying broken across the ground. */
+function mastDown(p: Painter, pose: Pose): void {
+  const steel = C("battleSteel");
+  const dark = C("battleSteelDark");
+  const i = pose.index;
+  const side = i % 2 === 0 ? 1 : -1;
+  p.rect(-9, -2, 6, 3, C("battleConcrete"));
+  p.rect(3, -2, 6, 3, C("battleConcrete"));
+  p.line(-7, 0, -6, -14, steel, 2);
+  p.line(7, 0, 5, -10, dark, 2);
+  // The fallen tower, lying along the ground away from its stump, bent where it broke.
+  p.line(0, -10, side * 34, 2, steel, 2);
+  p.line(side * 34, 2, side * 62, 6, steel, 2);
+  for (let k = 0; k < 9; k++) {
+    const x = side * (6 + k * 6);
+    p.line(x, -6 + k, x + side * 4, 2 + k * 0.4, dark);
+  }
+  p.rect(side > 0 ? 50 : -64, 3, 14, 2, steel);
+  for (let k = 0; k < 6; k++) p.rect(-18 + hash(i, k, 37) * 36, 1 + hash(i, k, 41) * 5, 2, 1, dark);
+  if (i === 0) {
+    // The hut's roof caved in.
+    p.rect(-34, -6, 20, 6, shade(C("battleConcrete"), 0.8));
+    p.poly([[-35, -6], [-24, -11], [-13, -5]], shade(C("battleConcrete"), 0.6));
+  }
+}
+
+/** One mast of a Radar Station. Unarmed, so it never fires. */
+export const radarRig: Rig = {
+  body: "field",
+  hit: { x: 0, y: -40 },
+  draw(p, pose) {
+    if (pose.down === undefined) mast(p, pose);
+    else mastDown(p, pose);
   },
   muzzle: () => NO_MUZZLE,
 };

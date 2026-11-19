@@ -101,6 +101,8 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   rocketArtillery: 5,
   mobileAA: 5,
   flakGun: 5,
+  // Three Chain Home masts; one falls for each third of its HP lost.
+  radarStation: 3,
   fighter: 4,
   bomber: 3,
   transportAircraft: 3,
@@ -196,6 +198,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
     case "transportAircraft":
     case "landingCraft":
     case "supplyShip":
+    case "radarStation":
       return "mg";
     // Its only weapon: return-fire AA (03-combat §5d).
     case "carrier":
