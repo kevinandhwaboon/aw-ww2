@@ -150,6 +150,16 @@ const BUILT_IN_COLORS = {
   battleSmoke: "#c8c4bc",
   battleSmokeDark: "#56524c",
   battlePanel: "#101018",
+  worldSea: "#1e3a5c",
+  worldSeaShallow: "#2c5478",
+  worldGrid: "#2a4a70",
+  worldLand: "#c8b88a",
+  worldLandShade: "#a8976a",
+  worldCoast: "#5a4a30",
+  worldDot: "#f0d040",
+  worldDotOther: "#e8e0c8",
+  worldDotOutline: "#101018",
+  sketchGrid: "#2a2418",
 } as const;
 
 export type ColorKey = keyof typeof BUILT_IN_COLORS;

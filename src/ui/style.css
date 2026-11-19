@@ -545,6 +545,175 @@ body {
   font-size: 13px;
 }
 
+/* ---- Map select: a world map by theater, and a briefing for the battle picked (00-master-design §12) ---- */
+.map-select {
+  width: min(1120px, 100%);
+  text-align: left;
+}
+
+.theater-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.theater-tab {
+  font: inherit;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 4px 12px;
+  color: var(--panel-ink);
+  background: transparent;
+  border: 2px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.theater-tab.selected {
+  color: var(--panel-bg);
+  background: var(--panel-border);
+}
+
+.map-select-body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.world-map {
+  position: relative;
+  border: 2px solid var(--panel-border);
+  line-height: 0;
+  overflow: hidden;
+}
+
+.world-map-canvas {
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+.world-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* A battle's name sits just above and right of its dot on the map. */
+.world-label {
+  position: absolute;
+  transform: translate(8px, -50%);
+  pointer-events: auto;
+  font: inherit;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1.3;
+  white-space: nowrap;
+  padding: 0 4px;
+  color: var(--panel-bg);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.world-label.left {
+  transform: translate(calc(-100% - 8px), -50%);
+}
+
+.world-label.below {
+  transform: translate(-50%, 8px);
+}
+
+.world-label.selected {
+  color: var(--panel-ink);
+  background: var(--highlight);
+  border-color: var(--panel-border);
+  z-index: 1;
+}
+
+.map-select-left .map-list {
+  margin-top: 8px;
+}
+
+.map-brief {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-where {
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.8;
+  margin-top: -4px;
+}
+
+/* The featured unit's battle scene, letterboxed like a film still. */
+.feature-frame {
+  position: relative;
+  background: var(--pad-screen);
+  padding: 10px 0;
+  line-height: 0;
+  border: 2px solid var(--panel-border);
+}
+
+.feature-shot {
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+.feature-caption {
+  position: absolute;
+  left: 8px;
+  bottom: 0;
+  line-height: 10px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--highlight);
+}
+
+.sketch-frame {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.terrain-sketch {
+  width: 55%;
+  image-rendering: pixelated;
+  border: 2px solid var(--panel-border);
+}
+
+.sketch-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--panel-ink);
+}
+
+.map-next {
+  align-self: stretch;
+}
+
+@media (max-width: 760px) {
+  .map-select-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .option:focus-within {
   background: var(--highlight);
 }
