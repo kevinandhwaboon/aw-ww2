@@ -14,6 +14,7 @@ import { moveDestinations } from "../src/engine/movement";
 import { SCENARIOS } from "../src/scenarios";
 import { defaultComputerPlayers } from "../src/ui/computerPlayers";
 import { makeGame } from "./helpers";
+import * as stats from "../src/engine/stats";
 
 const P = (x: number, y: number): Point => ({ x, y });
 
@@ -76,7 +77,7 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 
 describe("built-in scenarios (00-master-design §8)", () => {
   it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Stalingrad, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "stalingrad", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
   });
 
   it("have unique ids", () => {
@@ -504,6 +505,161 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(weather?.season).toBe("winter");
       expect(weather?.forecast[0]).toEqual({ fromDay: 1, weather: "snow" });
       expect(weather?.forecast.at(-1)).toEqual({ fromDay: 12, weather: "snow" });
+    });
+  });
+
+  describe("Battle of Britain (20-scenarios-battle-of-britain)", () => {
+    const bob = SCENARIOS.find((s) => s.id === "battle-of-britain");
+    if (!bob) throw new Error("missing scenario");
+    const { map, units = [], players, victory, weather, modifiers = [] } = bob.setup;
+    const UK = 0;
+    const GERMANY = 1;
+    const london = P(6, 4);
+    const capBlancNez = P(19, 12);
+    const dover = P(15, 8);
+    const hawkinge = P(13, 8);
+    const wissant = P(18, 11);
+    const sheerness = P(10, 4);
+    const portsmouth = P(0, 11);
+    const invasionPorts = { boulogne: P(17, 13), calais: P(19, 10), dunkirk: P(23, 9) };
+    const sectorStations = { northolt: P(4, 4), northWeald: P(8, 2), hornchurch: P(8, 4), bigginHill: P(7, 6), kenley: P(6, 7), tangmere: P(2, 11) };
+    const owners = bob.setup.propertyOwners ?? [];
+    const ownerAt = (p: Point) => owners.find((o) => o.pos.x === p.x && o.pos.y === p.y)?.owner;
+    const unitAt = (p: Point) => units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+    const distance = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const count = (owner: number, type: UnitTypeId) => units.filter((u) => u.owner === owner && u.type === type).length;
+    const tiles = (terrain: string) => map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []));
+    const englishSide = (p: Point) => connected(map, "foot", p, london);
+
+    /**
+     * How far an aircraft of this side can strike from an airfield on a full tank and still fly home:
+     * it flies out over several days and back the same way, burning its daily fuel each morning it's
+     * in the air, and attacks the square next to where it stops. Read through the modifier layer, so
+     * the scenario's own rules count.
+     */
+    const strikeReach = (owner: number, type: UnitTypeId) => {
+      const game = createGame({ ...bob.setup, seed: 1 });
+      const unit = game.units.find((u) => u.owner === owner && u.type === type);
+      if (!unit) throw new Error(`no ${type}`);
+      const [move, tank, perDay, perSquare] = [stats.movePoints(game, unit), stats.maxFuel(game, unit), stats.fuelPerDay(game, unit), stats.fuelPerMove(game, unit)];
+      let out = 0;
+      for (let r = 1; r < 60; r++) {
+        const days = Math.ceil(r / move);
+        if (2 * r * perSquare + (2 * days - 1) * perDay <= tank) out = r;
+      }
+      return out + 1;
+    };
+
+    it("is a map of south-east England and the Pas-de-Calais, 27 × 21 squares of about 10 km, with the United Kingdom against Germany", () => {
+      expect([map.width, map.height]).toEqual([27, 21]);
+      expect(players.map((p) => p.nation)).toEqual(["uk", "germany"]);
+    });
+
+    it("London is the UK's HQ and Kesselring's command post at Cap Blanc-Nez is Germany's", () => {
+      expect(properties(bob, "hq", UK).map((p) => p.pos)).toEqual([london]);
+      expect(properties(bob, "hq", GERMANY).map((p) => p.pos)).toEqual([capBlancNez]);
+    });
+
+    it("the Channel has no land crossing: nothing on foot, wheels or tracks gets from France to England without a boat", () => {
+      for (const type of ["foot", "heavyFoot", "wheels", "tracks"] as const) expect(connected(map, type, capBlancNez, london), type).toBe(false);
+    });
+
+    it("RAF Fighter Command's sector stations ring London and Tangmere guards the south coast, each an airfield with a Fighter on it, as do the forward fields at Manston and Hawkinge", () => {
+      for (const [name, p] of Object.entries({ ...sectorStations, manston: P(15, 6), hawkinge })) {
+        expect(terrainAt(map, p), name).toBe("airfield");
+        expect(ownerAt(p), name).toBe(UK);
+        expect(unitAt(p), name).toEqual(expect.objectContaining({ type: "fighter", owner: UK }));
+      }
+      for (const [name, p] of Object.entries(sectorStations)) if (name !== "tangmere") expect(distance(p, london), name).toBeLessThanOrEqual(4);
+    });
+
+    it("the Luftwaffe starts with more aircraft than the RAF: more Fighters and many more Bombers", () => {
+      expect(count(GERMANY, "fighter")).toBeGreaterThan(count(UK, "fighter"));
+      expect(count(GERMANY, "bomber")).toBeGreaterThanOrEqual(3 * count(UK, "bomber"));
+      expect(count(GERMANY, "fighter") + count(GERMANY, "bomber")).toBeGreaterThanOrEqual(18);
+    });
+
+    it("London is at the very end of a Bf 109's reach: a Fighter from Wissant, the nearest German airfield, can just strike it and fly home, and from no other German airfield", () => {
+      const reach = strikeReach(GERMANY, "fighter");
+      expect(distance(wissant, london)).toBe(reach);
+      for (const field of properties(bob, "airfield", GERMANY)) {
+        if (field.pos.x !== wissant.x || field.pos.y !== wissant.y) expect(distance(field.pos, london), `${field.pos.x},${field.pos.y}`).toBeGreaterThan(reach);
+      }
+    });
+
+    it("Bombers burn 1 fuel a square here, not 2: the He 111 flew several times as far as the Bf 109, so bombers from the coastal fields can reach London", () => {
+      expect(modifiers).toEqual([{ source: "scenario:bomber-range", stat: "fuelPerMove", op: "set", value: 1, scope: { unitTypes: ["bomber"] } }]);
+      expect(strikeReach(GERMANY, "bomber")).toBeGreaterThanOrEqual(distance(wissant, london));
+      expect(strikeReach(GERMANY, "fighter")).toBe(distance(wissant, london));
+    });
+
+    it("the RAF's Fighters on the forward airfields can strike the German coastal fields and the invasion ports and get home", () => {
+      const reach = strikeReach(UK, "fighter");
+      for (const target of [wissant, capBlancNez, ...Object.values(invasionPorts)]) expect(distance(hawkinge, target)).toBeLessThanOrEqual(reach);
+    });
+
+    it("the invasion barges wait empty in Boulogne, Calais and Dunkirk, and each can sail to a landing beach on the English coast", () => {
+      const beaches = tiles("beach").filter(englishSide);
+      expect(beaches.length).toBeGreaterThanOrEqual(3);
+      for (const [name, port] of Object.entries(invasionPorts)) {
+        expect(terrainAt(map, port), name).toBe("port");
+        expect(unitAt(port), name).toEqual(expect.objectContaining({ type: "landingCraft", owner: GERMANY }));
+        expect(unitAt(port)?.cargo ?? [], name).toEqual([]);
+        const byBoat = reachable(map, ["landingCraft"], port);
+        expect(beaches.some((b) => byBoat.has(`${b.x},${b.y}`)), name).toBe(true);
+      }
+    });
+
+    it("German troops wait beside the invasion ports to go aboard", () => {
+      const troops = units.filter((u) => u.owner === GERMANY && ["infantry", "assaultInfantry"].includes(u.type) && Object.values(invasionPorts).some((p) => distance(p, u.pos) <= 2));
+      expect(troops.length).toBeGreaterThanOrEqual(6);
+    });
+
+    it("pillboxes stand behind the invasion beaches, each with riflemen in it", () => {
+      const pillboxes = tiles("bunker");
+      expect(pillboxes.length).toBeGreaterThanOrEqual(2);
+      for (const p of pillboxes) {
+        expect(englishSide(p)).toBe(true);
+        expect(unitAt(p), `${p.x},${p.y}`).toEqual(expect.objectContaining({ type: "infantry", owner: UK }));
+      }
+    });
+
+    it("the Royal Navy's destroyers at the Nore, off Dover and at Portsmouth can all sail into the Strait of Dover", () => {
+      const destroyers = units.filter((u) => u.owner === UK && u.type === "destroyer");
+      expect(destroyers.length).toBeGreaterThanOrEqual(4);
+      expect(unitAt(sheerness)?.type).toBe("destroyer");
+      expect(unitAt(portsmouth)?.type).toBe("destroyer");
+      for (const d of destroyers) expect(connected(map, "sea", d.pos, P(16, 9)), `${d.pos.x},${d.pos.y}`).toBe(true);
+    });
+
+    it("Germany builds aircraft, barges and troops, but no transport aircraft and no warships; the UK builds no landing craft", () => {
+      const germany = players[GERMANY]?.buildable ?? [];
+      expect(germany).toEqual(expect.arrayContaining(["fighter", "bomber", "landingCraft", "infantry"]));
+      expect(germany.filter((t) => UNITS[t].category === "naval")).toEqual(["landingCraft"]);
+      expect(germany).not.toContain("transportAircraft");
+      const uk = players[UK]?.buildable ?? [];
+      expect(uk).toEqual(expect.arrayContaining(["fighter", "bomber", "destroyer"]));
+      expect(uk).not.toContain("landingCraft");
+    });
+
+    it("Germany wins by taking Dover and Hawkinge, a port and an airfield on English soil, or London; the UK wins by holding out until day 15", () => {
+      expect(terrainAt(map, dover)).toBe("port");
+      expect(terrainAt(map, hawkinge)).toBe("airfield");
+      expect(victory).toEqual([
+        { type: "hqCapture" },
+        { type: "captureProperties", side: "axis", properties: [dover, hawkinge] },
+        { type: "surviveDays", side: "allies", days: 15 },
+      ]);
+    });
+
+    it("it's summer, clear but for two spells of rain, which bring fog for the day (12-weather §3a)", () => {
+      expect(weather?.season).toBe("summer");
+      expect(weather?.forecast.filter((f) => f.weather === "rain").map((f) => f.fromDay)).toEqual([5, 13]);
+      expect(weather?.forecast[0]).toEqual({ fromDay: 1, weather: "clear" });
+    });
+
+    it("the computer plays Germany by default (09-ai §5)", () => {
+      expect(defaultComputerPlayers(bob)).toEqual([GERMANY]);
     });
   });
 
