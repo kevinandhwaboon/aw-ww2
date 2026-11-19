@@ -40,7 +40,7 @@ describe("world map and theaters (00-master-design §12)", () => {
   });
 
   it("the camera's flight between two views starts on the first and ends on the second, keeping the map's shape", () => {
-    const from = THEATERS.europe.view;
+    const from = THEATERS.westernEurope.view;
     const to = THEATERS.pacific.view;
     expect(between(from, to, 0)).toEqual(expect.objectContaining({ west: from.west, width: from.width }));
     const end = between(from, to, 1);

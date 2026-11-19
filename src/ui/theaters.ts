@@ -7,7 +7,7 @@ import type { TerrainId } from "../engine/data/terrain";
 import type { UnitTypeId } from "../engine/data/units";
 import type { FigureKind } from "../game/battle/plan";
 
-export const THEATER_IDS = ["europe", "northAfrica", "pacific"] as const;
+export const THEATER_IDS = ["westernEurope", "easternFront", "northAfrica", "pacific"] as const;
 export type TheaterId = (typeof THEATER_IDS)[number];
 
 /**
@@ -48,7 +48,8 @@ export interface Theater {
 export const WORLD_VIEW: MapView = { west: -30, north: 80, width: 360 };
 
 export const THEATERS: Readonly<Record<TheaterId, Theater>> = {
-  europe: { id: "europe", name: "Europe", view: { west: -12, north: 62, width: 60 } },
+  westernEurope: { id: "westernEurope", name: "Western Europe", view: { west: -12, north: 57, width: 30 } },
+  easternFront: { id: "easternFront", name: "Eastern Front", view: { west: 14, north: 62, width: 48 } },
   northAfrica: { id: "northAfrica", name: "North Africa", view: { west: 4, north: 41.5, width: 36 } },
   pacific: { id: "pacific", name: "Pacific", view: { west: 110, north: 35, width: 120 } },
 };
@@ -104,7 +105,7 @@ export interface BattlePlace {
 /** Keyed by scenario id. Every built-in map has one (a test checks). */
 export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
   normandy: {
-    theater: "europe",
+    theater: "westernEurope",
     lon: -0.8,
     lat: 49.4,
     where: "Normandy, France",
@@ -121,7 +122,7 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
     },
   },
   "market-garden": {
-    theater: "europe",
+    theater: "westernEurope",
     lon: 5.9,
     lat: 52.0,
     where: "Arnhem, the Netherlands",
@@ -130,7 +131,7 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
     shot: { kind: "drop", nation: "uk", unit: "infantry", terrain: "plains", crop: [72, 24, 240, 100] },
   },
   bastogne: {
-    theater: "europe",
+    theater: "westernEurope",
     lon: 5.7,
     lat: 50.0,
     where: "Bastogne, Belgium",
@@ -147,7 +148,7 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
     },
   },
   kursk: {
-    theater: "europe",
+    theater: "easternFront",
     lon: 36.2,
     lat: 51.7,
     where: "Kursk, Soviet Union",

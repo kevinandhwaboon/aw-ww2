@@ -143,7 +143,7 @@ export function showMapSelect(
   panel.append(el("div", "panel-title", "Choose a battle"), el("div", "screen-hint", "← → theater · ↑ ↓ battle · Z choose · X back"), tabs, body);
   node.append(panel);
 
-  let theater: TheaterId = theaters[0] ?? "europe";
+  let theater: TheaterId = theaters[0] ?? "westernEurope";
   let chosen: Placed | undefined;
   let stopShot: () => void = () => {};
   /** The battle last picked in each theater, so coming back finds it again. */
