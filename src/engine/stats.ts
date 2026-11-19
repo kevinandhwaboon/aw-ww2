@@ -150,6 +150,11 @@ export function vision(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "vision", UNITS[unit.type].vision);
 }
 
+/** How far the unit sees enemy aircraft (19-fog-of-war §2a): 0 for a unit without radar. Rain doesn't touch it. */
+export function airVision(state: GameState, unit: Unit): number {
+  return unitStat(state, unit, "airVision", UNITS[unit.type].airVision ?? 0);
+}
+
 export function maxFuel(state: GameState, unit: Unit): number {
   return unitStat(state, unit, "maxFuel", UNITS[unit.type].maxFuel);
 }

@@ -36,7 +36,9 @@ export function createUnitPanel(root: HTMLElement): { show: (state: GameState, u
       const burn = stats.fuelPerDay(state, unit);
       const perMove = stats.fuelPerMove(state, unit);
       const costs = [...(burn > 0 ? [`−${burn} per turn`] : []), ...(perMove > 1 ? [`−${perMove} per tile moved`] : [])];
-      row("Fuel", `${unit.fuel} / ${stats.maxFuel(state, unit)}${costs.length > 0 ? `  (${costs.join(", ")})` : ""}`);
+      row("Fuel", stats.maxFuel(state, unit) > 0 ? `${unit.fuel} / ${stats.maxFuel(state, unit)}${costs.length > 0 ? `  (${costs.join(", ")})` : ""}` : "—");
+      const radar = stats.airVision(state, unit);
+      if (radar > 0) row("Radar", `sees aircraft ${radar} squares away`);
       row("Ammo", def.primaryWeapon ? `${unit.ammo} / ${ammo}  (${def.primaryWeapon.name})` : "—");
       // A Supply Ship's resupplies left before it has to go back to port (05-supply-transport §3b).
       if (def.supplyLoads !== null) row("Supplies", `${unit.ammo} / ${ammo}`);

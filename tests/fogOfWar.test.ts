@@ -322,3 +322,53 @@ describe("watching the enemy move in fog of war (19-fog-of-war §7)", () => {
     expect(revealsAnything(clear, must(clear, order(0, [P(1, 0)])).state, 0)).toBe(false);
   });
 });
+
+describe("radar (19-fog-of-war §2a)", () => {
+  // A Radar Station (UK) at the west end of a long row; German units further east. Player 0 is the UK.
+  const radarGame = (units: UnitSetup[], extra: Partial<Omit<GameSetup, "map" | "units">> = {}) =>
+    fog([".............."], [u("radarStation", 0, 0), ...units], {
+      players: [{ name: "UK", nation: "uk" }, { name: "Germany", nation: "germany" }],
+      ...extra,
+    });
+
+  it("a Radar Station sees enemy aircraft 10 squares away", () => {
+    const state = radarGame([u("bomber", 1, 10), u("fighter", 1, 11)]);
+    expect(seen(state, 1)).toBe(true);
+    expect(seen(state, 2)).toBe(false);
+  });
+
+  it("it sees ground units and ships only right next to it: radar tracked raids, not troops", () => {
+    const state = radarGame([u("infantry", 1, 1), u("infantry", 1, 3)]);
+    expect(seen(state, 1)).toBe(true);
+    expect(seen(state, 2)).toBe(false);
+  });
+
+  it("the squares it watches stay in the fog: an aircraft shows over them, the ground under it doesn't", () => {
+    const state = radarGame([u("bomber", 1, 6)]);
+    expect(seen(state, 1)).toBe(true);
+    expect(tileInSight(state, P(6, 0), 0)).toBe(false);
+  });
+
+  it("rain doesn't blind it: it still sees aircraft 10 squares away on a rainy day (12-weather §3a)", () => {
+    const state = radarGame([u("bomber", 1, 10)], { weather: { season: "summer", forecast: [{ fromDay: 1, weather: "rain" }] } });
+    expect(stats.vision(state, unit(state, 0))).toBe(0);
+    expect(seen(state, 1)).toBe(true);
+  });
+
+  it("the other side sees a Radar Station only once one of its units has it in sight", () => {
+    const far = radarGame([u("bomber", 1, 8)]);
+    expect(seen(far, 0, 1)).toBe(false);
+    const close = radarGame([u("bomber", 1, 2)]);
+    expect(seen(close, 0, 1)).toBe(true);
+  });
+
+  it("it can't move, and German Bombers knock it out in two attacks: 75% base damage, a little less on Plains (03-combat §5c)", () => {
+    const state = radarGame([u("bomber", 1, 1)]);
+    expect(moveDestinations(state, unit(state, 0)).filter((p) => p.x !== 0 || p.y !== 0)).toEqual([]);
+    const germanTurn = must(state, endTurn).state;
+    const raid = must(germanTurn, order(1, [], { type: "attack", target: 0 }));
+    expect(unit(raid.state, 0).hp).toBe(33);
+    const nextRaid = must(must(must(raid.state, endTurn).state, endTurn).state, order(1, [], { type: "attack", target: 0 }));
+    expect(nextRaid.state.units.some((x) => x.id === 0)).toBe(false);
+  });
+});

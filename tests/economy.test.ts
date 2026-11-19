@@ -271,6 +271,13 @@ describe("build (04-economy §4)", () => {
     expect(options).toHaveLength(13);
   });
 
+  it("a Radar Station is never built, even by a player with no build list: only a scenario places one", () => {
+    const state = factory(50_000);
+    expect(buildOptions(state, P(0, 0)).map((o) => o.type)).not.toContain("radarStation");
+    const result = apply(state, { type: "build", unitType: "radarStation", pos: P(0, 0) });
+    expect(result.ok).toBe(false);
+  });
+
   it("the build menu is empty where nothing can be built", () => {
     expect(buildOptions(factory(), P(1, 0))).toEqual([]);
     expect(buildOptions(factory(), P(3, 0))).toEqual([]);

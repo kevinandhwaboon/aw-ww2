@@ -1274,6 +1274,66 @@
       ]
     },
     {
+      "nation": "uk",
+      "team": "brown",
+      "path": "../../units/uk-radar-32-brown.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "radarStation"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "olive",
+      "path": "../../units/uk-radar-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "radarStation"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "red",
+      "path": "../../units/uk-radar-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "radarStation"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "blue",
+      "path": "../../units/uk-radar-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "radarStation"
+      ]
+    },
+    {
       "nation": "italy",
       "team": "blue",
       "path": "../../units/it-land-32-blue.png",

@@ -31,6 +31,11 @@
 | Rocket Artillery | Long-range indirect fire | Wheels | Indirect, range 3–5. Expensive, fragile. Mainly German and Soviet; limited Western Allied availability (see section 7a) | Calliope, Land Mattress / Nebelwerfer |
 | Mobile AA | Air defense | Tracks | Strong vs. aircraft and infantry, weak vs. tanks | M16 quad .50 / Flakvierling |
 | Flak Gun (phase 2) | Long-range air defense | Tracks (towed; slow) | Indirect, attacks air units only, long range. Cannot move and fire. Arrives with air units in phase 2 | 90mm AA / 88mm Flak |
+| Radar Station (phase 2, scenario only) | Early warning | None (can't move) | Sees enemy aircraft 10 squares away, everything else only next to it (19-fog-of-war §2a). Unarmed. Never built: only a scenario places one (§2a below) | Chain Home (UK) / — |
+
+### 2a. Radar Station (added 2026-11-19)
+
+Added at the developer's request for the Battle of Britain (20-scenarios-battle-of-britain), which is always played in fog of war. It's a **unit, not a building**, so fog hides it from the enemy until one of their units has it in sight, and it's destroyed by attacking it like any unit (03-combat §5c: Bombers do 75). It has 0 movement points, no weapon and no fuel tank (it never runs short, and shows no fuel line). Vision 1, plus **air vision 10** (a new modifiable stat, `airVision`): enemy aircraft within 10 squares are seen, though the squares under them stay in the fog (19-fog-of-war §2a). Rain doesn't reduce it. It's **never built** (`neverBuilt`): no property offers it, even to a player with no build list, so a destroyed station is gone for good. Only the UK has art for it (two Chain Home masts and the transmitter hut). Cost 12,000, which only sets how much the computer wants to destroy it.
 
 ### Mortar Team vs. Artillery
 
@@ -143,6 +148,7 @@ These are starting points for the first playable build, based on the original ga
 | Unit | Cost | Move | Vision | Fuel | Fuel/day | Primary (ammo) | Secondary | Range | Carries |
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
+| Radar Station (land, never built) | 12,000 | 0 | 1 (aircraft 10) | 0 | — | — | — | — | — |
 | Fighter | 20,000 | 9 | 2 | 90 | 5 | Guns (2) | — | 1 | — |
 | Bomber | 22,000 | 7 | 2 | 70 | 4 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |
@@ -219,7 +225,7 @@ Every unit type in the data files defines:
 - `id`, display name, category (land / air / naval)
 - `cost`
 - `movePoints`, `movementType` (foot, heavyFoot, wheels, tracks, air, sea, landingCraft; costs per terrain in 02-terrain)
-- `vision`
+- `vision`, and `airVision` (how far it sees enemy aircraft; only the Radar Station has one, 19-fog-of-war §2a)
 - `maxFuel`, `fuelPerDay` (air and naval), `fuelPerMove` (fuel per movement point; 2 for aircraft, else 1)
 - `primaryWeapon` + `maxAmmo` (may be none)
 - `supplyLoads`: resupplies a supply unit can hand out before refilling at a port, kept in its ammo count (the Supply Ship's 5; none = unlimited, the Halftrack; 05-supply-transport §3b)
@@ -227,6 +233,7 @@ Every unit type in the data files defines:
 - `attackRange` (min–max; direct = 1–1)
 - `canMoveAndFire` (false for all indirect units)
 - `canCapture`
+- `neverBuilt`: placed only by a scenario, never offered at a property (the Radar Station)
 - `transport`: capacity and allowed unit types (if any)
 - `specialActions`: e.g. resupply, airDrop, dive, unloadOnBeach
 - Per-nation art references (sprite keys), used to apply the availability rule

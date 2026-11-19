@@ -187,19 +187,19 @@ describe("the packs that ship with the game", () => {
   it("Japan has art for every land, air and naval unit it fielded, but no Heavy Tank (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "japan").flatMap((s) => s.rows));
-    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank");
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank" && type !== "radarStation");
   });
 
   it("the Soviet Union has art for every land unit, Heavy Tank included, plus Fighter, Bomber, Transport Aircraft and the Volga armored boat as its Landing Craft (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) {
-      const fielded = type === "landingCraft" || (UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber"].includes(type));
+      const fielded = type === "landingCraft" || (UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber", "radarStation"].includes(type));
       expect(drawn.has(type), type).toBe(fielded);
     }
   });
 
-  it("the United Kingdom has art for every unit type, Heavy Tank, ships and carrier aircraft included (01-units §1)", () => {
+  it("the United Kingdom has art for every unit type, Heavy Tank, ships, carrier aircraft and the Radar Station included (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "uk").flatMap((s) => s.rows));
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(true);

@@ -48,7 +48,8 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       objectiveLine.hidden = !info.objective;
       const unit = info.unit;
       supplyLine.hidden = !unit;
-      fuelText.textContent = unit ? `Fuel ${unit.fuel.left}/${unit.fuel.max}` : "";
+      // A unit with no fuel tank (a Radar Station) shows no fuel line.
+      fuelText.textContent = unit && unit.fuel.max > 0 ? `Fuel ${unit.fuel.left}/${unit.fuel.max}` : "";
       fuelText.classList.toggle("tile-low", unit?.fuel.low === true);
       ammoText.hidden = !unit?.ammo;
       ammoText.textContent = unit?.ammo ? `${unit.ammo.label} ${unit.ammo.left}/${unit.ammo.max}` : "";

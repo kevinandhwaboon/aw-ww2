@@ -1,14 +1,14 @@
 # Topic Doc 19: Fog of War
 
 **Status:** v0 decided 2026-11-17 at the developer's request: an option on the map select screen, following the original game's rules (default rule) except where marked **(differs)**. Rain brings fog for the day (12-weather §3a, since 2026-11-17).
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-19 (§1 maps always in fog, §2a radar)
 **Depends on:** 01-units §8 (vision stats), 02-terrain (hiding terrain), 05-supply-transport §9 (hidden submarines, ambush), 00-master-design §7 (modifier layer). **Feeds:** 09-ai (what the computer sees), 12-weather §3a (rain).
 
 ---
 
 ## 1. Principles
 
-1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. Scenario files don't set it. The choice is saved with the game (`settings.fogOfWar`). **Rain** brings fog for that day even when the option is off (12-weather §3a).
+1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. **A scenario can make fog permanent** (`settings.fogOfWar`, since 2026-11-19, for the Battle of Britain): the box then shows ticked and can't be unticked, labeled "always on for this map", and the game has fog whatever was chosen. No other map sets it. The choice is saved with the game (`settings.fogOfWar`). **Rain** brings fog for that day even when the option is off (12-weather §3a).
 2. **Each side sees only what its own units see.** Allies on the same side share what they see.
 3. **The engine knows everything; players and the computer don't.** The screen and the AI both work from the game as their side sees it (09-ai rule 3: no cheating), the same mechanism hidden submarines already use (05-supply-transport §9).
 4. **Original's rules by default.** Vision is a plain count of steps, with no line of sight, as in the original.
@@ -25,6 +25,16 @@ A tile is **in sight** of a side when any of these is true:
 **Units aboard a transport see nothing** until they're unloaded, as in the original.
 
 An enemy unit on a tile in sight is seen, unless it is hiding (§3).
+
+## 2a. Radar (decided and built 2026-11-19)
+
+At the developer's request, for the Battle of Britain (20-scenarios-battle-of-britain). The **Radar Station** (01-units §2a) has a second, longer sight just for aircraft:
+
+- **Enemy aircraft within its air vision (10 squares, counted in steps like vision) are seen**, wherever they fly. Ground units and ships there aren't: Chain Home tracked raids, not troops or boats. Its ordinary vision is 1.
+- **The squares it watches stay in the fog.** They're drawn dark and the tile info says Fog; only the aircraft over them show. So a radar shows where a raid is, not what's under it.
+- **Rain doesn't blind it**: the weather's −1 applies to vision, not air vision (12-weather §3a). Radar saw through cloud.
+- Air vision is a stat (`airVision`), read through the modifier layer like vision.
+- **The enemy has to find a Radar Station** before attacking it, like any unit: it's hidden in the fog until one of their units has it in sight.
 
 ## 3. Hiding
 

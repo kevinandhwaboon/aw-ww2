@@ -77,7 +77,8 @@ function newGame(scenario: Scenario, options: GameOptions): GameState {
     ...scenario.setup,
     players: withCommanders(withNations(scenario.setup.players, url.nations), options.commanders),
     seed: url.seed ?? Math.floor(Math.random() * 2 ** 32),
-    settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog },
+    // A map that always has fog (the Battle of Britain) keeps it whatever the box said (19-fog-of-war §1).
+    settings: { ...scenario.setup.settings, luck: options.luck, fogOfWar: options.fog || scenario.setup.settings?.fogOfWar === true },
     // ?weather= replaces the forecast for testing; the map keeps its season's art (12-weather).
     ...(url.weather === null
       ? {}

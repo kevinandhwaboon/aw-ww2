@@ -86,28 +86,28 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 
 ### 5a. Vs. land units
 
-| Attacker ↓ / Defender → | Inf | AInf | Mor | Rec | HT | LT | MT | HvT | TD | Art | Rkt | AA | Flak |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Inf | 55* | 45* | 60* | 12* | 14* | 7* | 5* | 1* | 6* | 15* | 25* | 5* | 25* |
-| AInf | 65* | 55* | 70* | 85 | 75 | 70 | 55 | 15 | 60 | 70 | 85 | 65 | 85 |
-| Mor | 75 | 70 | 75 | 45 | 40 | 30 | 15 | 5 | 25 | 55 | 60 | 40 | 60 |
-| Rec | 70* | 65* | 75* | 35* | 45* | 10* | 6* | 1* | 8* | 45* | 55* | 4* | 28* |
-| LT | 70* | 65* | 75* | 75 | 65 | 55 | 40 | 10 | 45 | 60 | 75 | 55 | 75 |
-| MT | 75* | 70* | 80* | 85 | 75 | 70 | 55 | 15 | 65 | 70 | 85 | 65 | 85 |
-| HvT | 105* | 95* | 105* | 105 | 105 | 95 | 85 | 55 | 90 | 105 | 105 | 105 | 105 |
-| TD | — | — | — | 95 | 90 | 95 | 85 | 65 | 75 | 80 | 90 | 85 | 90 |
-| Art | 90 | 85 | 90 | 80 | 70 | 75 | 70 | 45 | 70 | 75 | 80 | 75 | 80 |
-| Rkt | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 |
-| AA | 105 | 105 | 105 | 60 | 50 | 35 | 25 | 10 | 30 | 50 | 45 | 45 | 55 |
-| Flak | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| Ftr | 15 | 15 | 15 | 10 | 8 | 5 | 2 | 1 | 3 | 10 | 10 | 3 | 8 |
-| Bmr | 110 | 110 | 110 | 105 | 105 | 105 | 105 | 95 | 105 | 105 | 105 | 95 | 105 |
-| Dive | 55 | 55 | 55 | 55 | 55 | 55 | 50 | 45 | 50 | 55 | 55 | 45 | 50 |
-| TBmr | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| BB | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 |
-| DD | 50 | 45 | 50 | 40 | 35 | 30 | 20 | 5 | 20 | 40 | 50 | 30 | 45 |
-| Sub | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| TB | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Attacker ↓ / Defender → | Inf | AInf | Mor | Rec | HT | LT | MT | HvT | TD | Art | Rkt | AA | Flak | Radar |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Inf | 55* | 45* | 60* | 12* | 14* | 7* | 5* | 1* | 6* | 15* | 25* | 5* | 25* | 15* |
+| AInf | 65* | 55* | 70* | 85 | 75 | 70 | 55 | 15 | 60 | 70 | 85 | 65 | 85 | 70 |
+| Mor | 75 | 70 | 75 | 45 | 40 | 30 | 15 | 5 | 25 | 55 | 60 | 40 | 60 | 55 |
+| Rec | 70* | 65* | 75* | 35* | 45* | 10* | 6* | 1* | 8* | 45* | 55* | 4* | 28* | 30* |
+| LT | 70* | 65* | 75* | 75 | 65 | 55 | 40 | 10 | 45 | 60 | 75 | 55 | 75 | 60 |
+| MT | 75* | 70* | 80* | 85 | 75 | 70 | 55 | 15 | 65 | 70 | 85 | 65 | 85 | 70 |
+| HvT | 105* | 95* | 105* | 105 | 105 | 95 | 85 | 55 | 90 | 105 | 105 | 105 | 105 | 105 |
+| TD | — | — | — | 95 | 90 | 95 | 85 | 65 | 75 | 80 | 90 | 85 | 90 | 80 |
+| Art | 90 | 85 | 90 | 80 | 70 | 75 | 70 | 45 | 70 | 75 | 80 | 75 | 80 | 75 |
+| Rkt | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 |
+| AA | 105 | 105 | 105 | 60 | 50 | 35 | 25 | 10 | 30 | 50 | 45 | 45 | 55 | 40 |
+| Flak | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Ftr | 15 | 15 | 15 | 10 | 8 | 5 | 2 | 1 | 3 | 10 | 10 | 3 | 8 | 10 |
+| Bmr | 110 | 110 | 110 | 105 | 105 | 105 | 105 | 95 | 105 | 105 | 105 | 95 | 105 | 75 |
+| Dive | 55 | 55 | 55 | 55 | 55 | 55 | 50 | 45 | 50 | 55 | 55 | 45 | 50 | 40 |
+| TBmr | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| BB | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 |
+| DD | 50 | 45 | 50 | 40 | 35 | 30 | 20 | 5 | 20 | 40 | 50 | 30 | 45 | 40 |
+| Sub | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| TB | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 
 ### 5b. Vs. air, naval and fortifications
 
@@ -135,6 +135,8 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 | TB | — | — | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | 75 | — |
 
 ### 5c. Notes on the chart
+
+- **Radar Station** (added 2026-11-19, 20-scenarios-battle-of-britain): an unarmed installation of lattice masts and huts, so it has no row. Bombers hit it for 75, not their usual 105+: masts were hard to fell, and in 1940 most stations bombed were working again within hours. Two Bomber attacks destroy one; a Dive Bomber does 40, about half. Fighters' strafing does 10. On the ground it takes about what Artillery takes.
 
 - **Supply Ship** (added 2026-11-16) takes exactly the Landing Craft's damage from everything: an unarmored hull, easy to sink. It's unarmed, so it has no row.
 - **Tank Destroyer** beats tanks when it strikes first (vs. Heavy Tank 65 vs. Heavy Tank's 90 return fire) but has no weapon vs. infantry, so Assault Infantry (60) and artillery are its counters.

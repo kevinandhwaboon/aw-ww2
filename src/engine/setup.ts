@@ -28,8 +28,11 @@ import { weatherPlanProblem } from "./weather";
 import * as stats from "./stats";
 import { startTurn } from "./turn";
 
-/** What a player can build unless the scenario says otherwise: every unit (01-units availability rule). */
-const DEFAULT_BUILDABLE = UNIT_TYPE_IDS;
+/**
+ * What a player can build unless the scenario says otherwise: every unit (01-units availability rule)
+ * except those only a scenario places, like the Radar Station.
+ */
+const DEFAULT_BUILDABLE = UNIT_TYPE_IDS.filter((type) => !UNITS[type].neverBuilt);
 
 export interface PlayerSetup {
   readonly name: string;

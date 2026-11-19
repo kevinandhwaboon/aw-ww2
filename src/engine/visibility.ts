@@ -29,43 +29,57 @@ const STEPS: readonly Point[] = [
 
 // GameState is never changed in place, so what a side sees can be worked out once per state and side.
 // Moves and the AI ask about many tiles of the same state.
-const sightCache = new WeakMap<GameState, Map<Side | undefined, Uint8Array>>();
+interface Sight {
+  /** Each tile's sight level, in row-major order. */
+  readonly tiles: Uint8Array;
+  /** 1 where the side's radar sees aircraft (19-fog-of-war §2a), whatever the tile's sight level. */
+  readonly air: Uint8Array;
+}
+const sightCache = new WeakMap<GameState, Map<Side | undefined, Sight>>();
+
+/** Marks every tile within `range` steps of p. */
+function markDiamond(tiles: Uint8Array, width: number, height: number, p: Point, range: number, level: number): void {
+  for (let dy = -range; dy <= range; dy++) {
+    const y = p.y + dy;
+    if (y < 0 || y >= height) continue;
+    const across = range - Math.abs(dy);
+    for (let x = Math.max(0, p.x - across); x <= Math.min(width - 1, p.x + across); x++) {
+      const i = y * width + x;
+      if ((tiles[i] ?? 0) < level) tiles[i] = level;
+    }
+  }
+}
 
 /**
- * Each tile's sight level for this side, in row-major order (19-fog-of-war §2): in sight within each
- * of its units' vision, counted in steps, and on its own properties; close next to its units. Units
- * aboard a transport see nothing.
+ * What this side sees (19-fog-of-war §2): each tile is in sight within each of its units' vision,
+ * counted in steps, and on its own properties; close next to its units. Units aboard a transport see
+ * nothing. Separately, the tiles where its radar sees aircraft (§2a).
  */
-function sightOf(state: GameState, side: Side | undefined): Uint8Array {
+function sightOf(state: GameState, side: Side | undefined): Sight {
   let bySide = sightCache.get(state);
   const cached = bySide?.get(side);
   if (cached) return cached;
   const { width, height } = state.map;
   const tiles = new Uint8Array(width * height);
+  const air = new Uint8Array(width * height);
   for (const property of state.properties) {
     if (property.owner !== null && sideOf(state, property.owner) === side) tiles[property.pos.y * width + property.pos.x] = IN_SIGHT;
   }
   for (const unit of state.units) {
     if (sideOf(state, unit.owner) !== side) continue;
-    const range = stats.vision(state, unit);
-    for (let dy = -range; dy <= range; dy++) {
-      const y = unit.pos.y + dy;
-      if (y < 0 || y >= height) continue;
-      const across = range - Math.abs(dy);
-      for (let x = Math.max(0, unit.pos.x - across); x <= Math.min(width - 1, unit.pos.x + across); x++) {
-        const i = y * width + x;
-        if (tiles[i] === OUT_OF_SIGHT) tiles[i] = IN_SIGHT;
-      }
-    }
+    markDiamond(tiles, width, height, unit.pos, stats.vision(state, unit), IN_SIGHT);
+    const radar = stats.airVision(state, unit);
+    if (radar > 0) markDiamond(air, width, height, unit.pos, radar, 1);
     for (const step of STEPS) {
       const x = unit.pos.x + step.x;
       const y = unit.pos.y + step.y;
       if (x >= 0 && x < width && y >= 0 && y < height) tiles[y * width + x] = CLOSE;
     }
   }
-  if (!bySide) sightCache.set(state, (bySide = new Map<Side | undefined, Uint8Array>()));
-  bySide.set(side, tiles);
-  return tiles;
+  const sight = { tiles, air };
+  if (!bySide) sightCache.set(state, (bySide = new Map<Side | undefined, Sight>()));
+  bySide.set(side, sight);
+  return sight;
 }
 
 const isAir = (unit: Unit) => UNITS[unit.type].category === "air";
@@ -86,10 +100,12 @@ export function isHiddenFrom(state: GameState, unit: Unit, viewer: PlayerId): bo
   if (sideOf(state, unit.owner) === side) return false;
   if (!fogToday(state)) return unit.submerged === true && !sideIsNextTo(state, side, unit.pos);
   const i = unit.pos.y * state.map.width + unit.pos.x;
-  const level = sightOf(state, side)[i] ?? OUT_OF_SIGHT;
+  const sight = sightOf(state, side);
+  const level = sight.tiles[i] ?? OUT_OF_SIGHT;
   if (unit.submerged === true) return level < CLOSE;
+  // Radar sees aircraft out of sight, though not the tile they fly over (19-fog-of-war §2a).
+  if (isAir(unit)) return level === OUT_OF_SIGHT && sight.air[i] !== 1;
   if (level === OUT_OF_SIGHT) return true;
-  if (isAir(unit)) return false;
   const terrain = state.map.terrain[i];
   return terrain !== undefined && terrainDef(terrain).hidesUnits === true && level < CLOSE;
 }
@@ -100,7 +116,7 @@ export function isHiddenFrom(state: GameState, unit: Unit, viewer: PlayerId): bo
  */
 export function tilesInSight(state: GameState, viewer: PlayerId): ReadonlySet<number> | null {
   if (!fogToday(state)) return null;
-  const sight = sightOf(state, sideOf(state, viewer));
+  const sight = sightOf(state, sideOf(state, viewer)).tiles;
   const out = new Set<number>();
   sight.forEach((level, i) => {
     if (level !== OUT_OF_SIGHT) out.add(i);
@@ -111,7 +127,7 @@ export function tilesInSight(state: GameState, viewer: PlayerId): ReadonlySet<nu
 /** Whether the viewer's side has this tile in sight (always, without fog of war). */
 export function tileInSight(state: GameState, p: Point, viewer: PlayerId): boolean {
   if (!fogToday(state)) return true;
-  return (sightOf(state, sideOf(state, viewer))[p.y * state.map.width + p.x] ?? OUT_OF_SIGHT) !== OUT_OF_SIGHT;
+  return (sightOf(state, sideOf(state, viewer)).tiles[p.y * state.map.width + p.x] ?? OUT_OF_SIGHT) !== OUT_OF_SIGHT;
 }
 
 /**
@@ -120,8 +136,8 @@ export function tileInSight(state: GameState, p: Point, viewer: PlayerId): boole
  */
 export function revealsAnything(before: GameState, after: GameState, viewer: PlayerId): boolean {
   if (fogToday(before)) {
-    const was = sightOf(before, sideOf(before, viewer));
-    const now = sightOf(after, sideOf(after, viewer));
+    const was = sightOf(before, sideOf(before, viewer)).tiles;
+    const now = sightOf(after, sideOf(after, viewer)).tiles;
     if (now.some((level, i) => level !== OUT_OF_SIGHT && was[i] === OUT_OF_SIGHT)) return true;
   }
   const hidden = hiddenUnitIds(before, viewer);

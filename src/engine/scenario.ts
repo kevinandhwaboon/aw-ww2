@@ -133,8 +133,11 @@ function parseModifier(raw: unknown, index: number): Modifier {
 function parseSettings(raw: unknown): Partial<Settings> {
   if (!isObject(raw)) return fail(`"settings" must be an object`);
   if (raw.luck !== undefined && typeof raw.luck !== "boolean") return fail(`settings: "luck" must be true or false`);
+  if (raw.fogOfWar !== undefined && typeof raw.fogOfWar !== "boolean") return fail(`settings: "fogOfWar" must be true or false`);
   return {
     ...(raw.luck === undefined ? {} : { luck: raw.luck }),
+    // A map that is always played in fog (19-fog-of-war §1): the new-game box is ticked and locked.
+    ...(raw.fogOfWar === undefined ? {} : { fogOfWar: raw.fogOfWar }),
     ...optionalCounts(raw, ["incomePerProperty", "unitCap"], "settings"),
   };
 }

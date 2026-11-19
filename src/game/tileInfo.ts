@@ -41,7 +41,8 @@ export interface Passenger {
 export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: boolean; readonly ammo: boolean } {
   const maxFuel = stats.maxFuel(state, unit);
   const burn = stats.fuelPerDay(state, unit);
-  const fuel = unit.fuel === 0 || unit.fuel <= Math.floor(maxFuel / 4) || (burn > 0 && unit.fuel <= burn * 2) || tooFarFromHome(state, unit);
+  // A unit with no fuel tank (a Radar Station) never runs short.
+  const fuel = maxFuel > 0 && (unit.fuel === 0 || unit.fuel <= Math.floor(maxFuel / 4) || (burn > 0 && unit.fuel <= burn * 2) || tooFarFromHome(state, unit));
   const maxAmmo = stats.maxAmmo(state, unit);
   const armed = stats.baseMaxAmmo(unit.type) > 0;
   const ammo = armed && (unit.ammo === 0 || (unit.ammo < maxAmmo && unit.ammo <= Math.ceil(maxAmmo / 4)));
