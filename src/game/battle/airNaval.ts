@@ -1,6 +1,7 @@
 // Battle figures for aircraft (08-art-pipeline §18), seen side-on with the near wing below the
 // fuselage. US: P-51, B-26, C-47, SBD Dauntless, TBF Avenger. Germany: Bf 109, Ju 88, Ju 52.
-// Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate). Soviet Union: Yak-9, Il-2 Sturmovik (its
+// Germany's carry the Balkenkreuz on the fuselage and wing, never the swastika on the fin.
+// Japan: A6M Zero, G4M, Ki-57, D3A (Val), B5N (Kate), each with the hinomaru on body and wing. Soviet Union: Yak-9, Il-2 Sturmovik (its
 // Bomber), Li-2. UK (and Canada): Spitfire, Lancaster, Dakota, Fairey Barracuda, Fairey Swordfish.
 // Italy: Macchi C.202, SM.79, SM.82, with the white fuselage band and the plain white rudder cross,
 // never the fasces or the Savoy crest. Germany, the Soviet Union and Italy have no carrier aircraft.
@@ -56,7 +57,19 @@ function prop(p: Painter, x: number, y: number, r: number, t: number): void {
   p.rect(x - 1, y - 1, 2, 3, C("battleSteelDark"));
 }
 
-/** Mottle for German aircraft and ships, in place of insignia. */
+/**
+ * The Balkenkreuz, Germany's military marking (08-art-pipeline §12): black arms `2 * half + 1` thick
+ * running out to the ends of a white cross two pixels thicker, each arm `arm` long. As on the HUD flag.
+ */
+function balkenkreuz(p: Painter, cx: number, cy: number, arm: number, half: number): void {
+  const w = half + 1;
+  p.rect(cx - arm, cy - w, arm * 2 + 1, w * 2 + 1, C("battleStar"));
+  p.rect(cx - w, cy - arm, w * 2 + 1, arm * 2 + 1, C("battleStar"));
+  p.rect(cx - arm, cy - half, arm * 2 + 1, half * 2 + 1, C("battleInk"));
+  p.rect(cx - half, cy - arm, half * 2 + 1, arm * 2 + 1, C("battleInk"));
+}
+
+/** Mottle for German aircraft and ships, painted under the cross on aircraft. */
 function mottle(p: Painter, x: number, y: number, w: number, look: Look): void {
   const blot = mix(look.team.lo, C("battleFieldGrey"), 0.5);
   for (let i = 0; i < w; i += 9) p.rect(x + i, y + ((i / 9) % 2), 5, 2, blot);
@@ -165,8 +178,10 @@ export const fighterRig: Rig = {
       for (const fx of [5, 8, 11]) p.line(fx, -8, fx, -4, T.deep);
       p.rect(-30, -1, 9, 2, T.lo);
       mottle(p, -16, -2, 26, look);
+      balkenkreuz(p, -12, -1, 3, 0);
       p.poly([[-6, 2], [12, 2], [9, 8], [-8, 7]], T.mid);
       p.line(-6, 2, 12, 2, T.hi);
+      balkenkreuz(p, 1, 5, 2, 0);
       // Radiator under the wing, the supercharger intake on the cowling, tailplane strut.
       p.rect(-2, 7, 6, 2, T.lo);
       p.rect(12, -2, 3, 2, C("battleSteelDark"));
@@ -325,6 +340,7 @@ export const bomberRig: Rig = {
       for (const gx of [34, 37, 40]) p.line(gx, -5, gx, 5, T.deep);
       p.rect(18, 6, 14, 4, T.lo);
       mottle(p, -28, -4, 50, look);
+      balkenkreuz(p, -22, -1, 4, 1);
     } else {
       // B-26: a glass nose, a top turret with twin .50s, invasion stripes and a white star.
       p.poly([[36, -6], [44, -2], [44, 3], [36, 6]], C("battleSkyLow"));
@@ -345,6 +361,7 @@ export const bomberRig: Rig = {
     p.poly([[4, 2], [26, 2], [28, 6], [26, 10], [4, 10]], T.lo);
     if (de(look) || jp(look)) p.disc(27, 6, 4, C("battleSteelDark"));
     if (jp(look)) sun(p, 0, 9, 2);
+    if (de(look)) balkenkreuz(p, -6, 8, 3, 0);
     p.poly([[26, 3], [30, 6], [26, 9]], C("battleSteel"));
     prop(p, 30, 6, 12, pose.t);
     p.ctx.restore();
@@ -376,6 +393,8 @@ export const transportRig: Rig = {
       p.line(8, 8, 6, 18, C("battleSteelDark"), 2);
       p.disc(6, 19, 3, C("battleRubber"));
       mottle(p, -30, -6, 50, look);
+      balkenkreuz(p, -30, -1, 4, 1);
+      balkenkreuz(p, -6, 8, 3, 0);
     } else if (it(look)) {
       // SM.82 Marsupiale: a deep fuselage with a row of cabin windows, three engines (the nose one
       // here), fixed undercarriage, the white band and rudder cross.
@@ -405,6 +424,7 @@ export const transportRig: Rig = {
       // Ki-57: a row of cabin windows, radial engines, the hinomaru.
       for (let x = -18; x < 16; x += 6) p.rect(x, -5, 3, 2, C("battleSkyLow"));
       sun(p, -30, 0, 3);
+      sun(p, -4, 8, 2);
       p.disc(25, 6, 4, C("battleSteelDark"));
     } else {
       // C-47: rounded nose, a row of cabin windows, the cargo door, invasion stripes, a white star.

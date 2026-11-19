@@ -4,13 +4,13 @@
 // a Tiger's interleaved wheels and Zimmerit, a Willys jeep's flat hood and upright windshield, a
 // Chi-Ha's bellcranks and handrail antenna, a T-34's big road wheels and hexagonal turret. Japan's
 // other machines (recon, halftrack, AA, guns, rockets) take the German shapes, which their real
-// counterparts resembled, with Japanese crews. The Soviet Union's take the US shapes, which the Red
+// counterparts resembled, with Japanese crews and without Germany's Balkenkreuz. The Soviet Union's take the US shapes, which the Red
 // Army received under Lend-Lease, with the red star and Soviet crews, except its rockets: the
 // Katyusha. The UK's (and Canada's) are their own: a Daimler armoured car, a Universal Carrier, a
 // Crusader AA, a Bofors, a 25-pounder and a Land Mattress, with the RAF roundel and crews in Brodie
 // helmets or the tank arm's black beret. Italy's tanks are its own (L6/40, M13/40, Semovente 75/18),
 // its recon an unmarked armoured car like the Daimler (the AB 41), and its other machines take the
-// German shapes, as Japan's do, with Italian crews.
+// German shapes, as Japan's do, with Italian crews and no cross. Germany's own carry the cross.
 // Stats never differ; only the look does. Every machine is a 3D model turned 5° toward the viewer
 // (angled/models.ts, angled/vehicleModels.ts); crews are sprites drawn between the model's parts.
 
@@ -32,6 +32,8 @@ const de = (look: Look) => kitOf(look) === "de" || kitOf(look) === "jp" || kitOf
 const uk = (look: Look) => kitOf(look) === "uk";
 /** Recon in an armoured car: the UK's Daimler, or Italy's AB 41 (drawn as an unmarked Daimler). */
 const armouredCar = (look: Look) => uk(look) || kitOf(look) === "it";
+/** Germany's own machines carry the Balkenkreuz; Japan and Italy drive the same shapes unmarked. */
+const crossed = (look: Look) => kitOf(look) === "de";
 /** The star on the US shapes: white, or red when the Soviet Union drives them. */
 const markOf = (look: Look) => (kitOf(look) === "su" ? C("battleSun") : C("battleStar"));
 
@@ -206,7 +208,7 @@ const reconModel = (look: Look, shake: number): Built<"muzzle"> =>
   armouredCar(look)
     ? daimlerModel(look)
     : de(look)
-      ? memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake))
+      ? memo(`r75|${crossed(look)}|${look.team.mid}|${shake}`, () => r75(look.team, shake, crossed(look)))
       : memo(`willys|${look.nation ?? ""}|${look.team.mid}|${shake}`, () => willys(look.team, shake, markOf(look)));
 const daimlerModel = (look: Look) => memo(`daimler|${uk(look)}|${look.team.mid}`, () => daimler(look.team, uk(look)));
 
@@ -226,7 +228,7 @@ export const reconRig: Rig = {
       return;
     }
     if (de(look)) {
-      const m = memo(`r75|${look.team.mid}|${shake}`, () => r75(look.team, shake));
+      const m = memo(`r75|${crossed(look)}|${look.team.mid}|${shake}`, () => r75(look.team, shake, crossed(look)));
       mesh(p, m.far, oy);
       // The rider in his long rubberized coat, goggles on his helmet.
       const seat = at(m.at.rider, oy);
@@ -275,7 +277,7 @@ const halftrackModel = (look: Look) =>
   uk(look)
     ? memo(`carrier|${look.team.mid}`, () => universalCarrier(look.team))
     : de(look)
-      ? memo(`251|${look.team.mid}`, () => sdkfz251(look.team))
+      ? memo(`251|${crossed(look)}|${look.team.mid}`, () => sdkfz251(look.team, 0, crossed(look)))
       : memo(`m3|${look.nation ?? ""}|${look.team.mid}`, () => m3(look.team, 0, markOf(look)));
 const halftrackBob = (pose: Pose) => Math.floor(pose.t / 170 + pose.index) % 2;
 
@@ -302,7 +304,7 @@ const aaElevation = (atAir: boolean) => (atAir ? 1.05 : 0.13);
 /** The quad mounts on halftracks, or the UK's Crusader AA with its twin Oerlikons. */
 const aaModel = (look: Look, elevation: number, kicked: number) =>
   memo(`aa|${look.nation ?? ""}|${look.team.mid}|${elevation}|${kicked}`, () =>
-    uk(look) ? crusaderAA(look.team, elevation, kicked) : quadAA(look.team, de(look), elevation, kicked, markOf(look)),
+    uk(look) ? crusaderAA(look.team, elevation, kicked) : quadAA(look.team, de(look), elevation, kicked, markOf(look), crossed(look)),
   );
 
 export const mobileAARig: Rig = {

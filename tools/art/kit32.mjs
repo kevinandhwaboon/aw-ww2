@@ -264,6 +264,20 @@ export function hinomaru(s, cx, cy, r = 2.5) {
   }
 }
 
+/**
+ * The Balkenkreuz, Germany's military marking (08-art-pipeline §12): black arms running out to the
+ * ends of a white cross, so the white edges each arm along its sides, as on the HUD flag. Painted
+ * into the current shape; (x, y) is the top left of its n x n box (7, 5, or 3 for the thinnest
+ * wings). Never the swastika.
+ */
+export function balkenkreuz(s, x, y, n = 7) {
+  const mid = (n - 1) / 2;
+  for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) {
+    if (dx === mid || dy === mid) s.dot(x + dx, y + dy, "ink", 0);
+    else if (Math.abs(dx - mid) <= 1 || Math.abs(dy - mid) <= 1) s.dot(x + dx, y + dy, "star", 0);
+  }
+}
+
 /** Engine grilles on a rear deck: dark slats every other row. */
 export function grille(s, x0, x1, y0, y1) {
   for (let y = y0; y <= y1; y += 2) s.line(x0, y, x1, y, "team", 3);
