@@ -1,4 +1,4 @@
-# WW2 Tactics (working title)
+# WW2
 
 A turn-based, grid-based WW2 strategy game for the browser, inspired by the mechanics of the GBA-era Advance Wars games, with original art and names.
 
