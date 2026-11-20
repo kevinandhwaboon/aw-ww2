@@ -80,6 +80,13 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
       return `${unitName(e.unitId)} dived`;
     case "unitSurfaced":
       return `${unitName(e.unitId)} surfaced`;
+    case "unitsArrived": {
+      const what = e.units.map((u) => unitTypeName(u.unitType)).join(", ");
+      const title = [e.wave === undefined ? "" : `Wave ${e.wave}`, e.name ?? ""].filter(Boolean).join(": ");
+      return `${title ? `${title}: ` : ""}${name(e.player)} ${what} arrived`;
+    }
+    case "unitLeft":
+      return `${name(e.owner)} ${unitTypeName(e.unitType)} went home`;
     case "playerDefeated":
       return `${name(e.player)} is out (${OUT_TEXT[e.reason]})`;
     case "gameOver":

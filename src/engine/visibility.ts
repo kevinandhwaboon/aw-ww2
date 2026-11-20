@@ -195,6 +195,7 @@ function soleSubject(event: GameEvent): UnitId | null {
     case "unitOutOfFuel":
     case "unitStranded":
     case "unitDived":
+    case "unitLeft":
     case "captureProgress":
     case "propertyCaptured":
     case "bridgeRebuildProgress":
@@ -294,6 +295,15 @@ export function eventsSeenBy(
       case "unitBuilt": {
         const built = afterUnit(event.unitId);
         if (built && !isHiddenFrom(after, built, viewer)) shown.push(event);
+        continue;
+      }
+      case "unitsArrived": {
+        // The banner always shows, since the forecast is public (23-survival §4); only units in sight are named.
+        const seen = event.units.filter((u) => {
+          const unit = afterUnit(u.unitId);
+          return unit !== undefined && !isHiddenFrom(after, unit, viewer);
+        });
+        shown.push({ ...event, units: seen });
         continue;
       }
       case "unitLoaded":

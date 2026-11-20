@@ -168,6 +168,20 @@ export type GameEvent =
    * submerged submarine also surfaces, with its own unitSurfaced event first (05-supply-transport §7).
    */
   | { readonly type: "unitStranded"; readonly unitId: UnitId; readonly pos: Point }
+  /**
+   * Units came onto the map at the start of `player`'s turn (23-survival §5a). `wave` and `name` are
+   * the arrival's, when it has them.
+   */
+  | {
+      readonly type: "unitsArrived";
+      readonly player: PlayerId;
+      readonly day: number;
+      readonly wave?: number;
+      readonly name?: string;
+      readonly units: readonly { readonly unitId: UnitId; readonly unitType: UnitTypeId; readonly pos: Point }[];
+    }
+  /** A raider went home at the start of its owner's turn (23-survival §5c). Not a loss. */
+  | { readonly type: "unitLeft"; readonly unitId: UnitId; readonly unitType: UnitTypeId; readonly owner: PlayerId; readonly pos: Point }
   | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
   | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }

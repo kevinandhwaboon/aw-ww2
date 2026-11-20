@@ -135,7 +135,7 @@ Decided at the developer's request for Dunkirk (21-scenarios-dunkirk §1, which 
 - Any HP counts as one unit. A unit built on a zone square doesn't count. Allies add to the same count.
 - The count is kept per side in `GameState`. A file is refused if `count` is under 1, the zone is empty, or a listed unit type doesn't exist.
 
-### `rout` limited to one side (decided 2026-11-20, not built)
+### `rout` limited to one side (decided and built 2026-11-20)
 
 Decided for Survival (23-survival §5b): `{ "type": "rout", "side": "allies" }` would check only that side's players, so an attacker whose units all arrive in waves isn't defeated between them. Without `side`, rout works as now.
 
