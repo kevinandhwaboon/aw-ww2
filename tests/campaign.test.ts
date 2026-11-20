@@ -151,6 +151,25 @@ describe("the computer's advantage (22-campaign §4)", () => {
     );
   });
 
+  it("the briefing counts units in plain English: 6 Infantry and 2 Artillery, but 2 Medium Tanks", () => {
+    const mission: CampaignMission = {
+      map: "midway",
+      commanders: {},
+      advantage: {
+        units: [
+          { type: "infantry", owner: 1, pos: { x: 0, y: 0 } },
+          { type: "infantry", owner: 1, pos: { x: 1, y: 0 } },
+          { type: "artillery", owner: 1, pos: { x: 2, y: 0 } },
+          { type: "artillery", owner: 1, pos: { x: 3, y: 0 } },
+          { type: "mediumTank", owner: 1, pos: { x: 4, y: 0 } },
+          { type: "mediumTank", owner: 1, pos: { x: 5, y: 0 } },
+        ],
+      },
+    };
+    const names = { unit: (t: string) => ({ infantry: "Infantry", artillery: "Artillery", mediumTank: "Medium Tank" })[t] ?? t, commander: () => "" };
+    expect(advantageLines(scenarioOf("midway"), mission, names)[0]).toContain("2 Infantry, 2 Artillery and 2 Medium Tanks more");
+  });
+
   it("the briefing says what the computer has been given, player by player", () => {
     const mission: CampaignMission = {
       map: "gazala",

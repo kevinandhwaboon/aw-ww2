@@ -34,6 +34,17 @@ export function missionStatus(missions: readonly CampaignMission[], progress: Ca
   return !before || progress.won.includes(before.map) ? "open" : "locked";
 }
 
+/** The campaign is complete once its last mission is won (22-campaign §7a): then the ending can be watched again. */
+export function campaignComplete(missions: readonly CampaignMission[], progress: CampaignProgress): boolean {
+  const last = missions[missions.length - 1];
+  return last !== undefined && progress.won.includes(last.map);
+}
+
+/** How many of these missions have been won. */
+export function missionsWon(missions: readonly CampaignMission[], progress: CampaignProgress): number {
+  return missions.filter((m) => progress.won.includes(m.map)).length;
+}
+
 /** Whether this finished game wins the mission: the Allies are among the winners (22-campaign §2). */
 export function alliesWon(state: GameState): boolean {
   return state.result?.winningSide === "allies";

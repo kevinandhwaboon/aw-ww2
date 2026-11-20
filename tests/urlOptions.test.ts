@@ -29,6 +29,7 @@ describe("URL options (11-tech-setup §7)", () => {
       passDevice: true,
       battleScenes: true,
       battleDemo: false,
+      ending: false,
       polish: true,
       pack: "default",
       debug: false,
@@ -39,6 +40,11 @@ describe("URL options (11-tech-setup §7)", () => {
       nations: [],
       commanders: [],
     });
+  });
+
+  it("?ending=on plays the campaign's ending, the surrender on the Missouri (22-campaign §7a)", () => {
+    expect(options("ending=on").ending).toBe(true);
+    expect(options("ending=off").ending).toBe(false);
   });
 
   it("?fog=on starts with fog of war on; anything else leaves it off (19-fog-of-war §1)", () => {
