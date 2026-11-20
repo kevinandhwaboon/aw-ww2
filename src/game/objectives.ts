@@ -6,6 +6,7 @@ import type { Side } from "../engine/data/nations";
 import type { Point } from "../engine/map";
 import type { GameState, PlayerId, VictoryCondition } from "../engine/state";
 import { sideOwnsAll } from "../engine/victory";
+import { nextWave } from "../engine/waves";
 
 export interface ObjectiveLine {
   /** The first player on the side the objective is for, to color the line. */
@@ -53,4 +54,28 @@ export function objectiveLines(state: GameState): ObjectiveLine[] {
 export function objectiveTiles(state: GameState): Point[] {
   const tiles = state.victoryConditions.flatMap((c) => ("properties" in c ? c.properties : []));
   return tiles.filter((p, i) => tiles.findIndex((q) => q.x === p.x && q.y === p.y) === i);
+}
+
+/** "south", "south and west", "south, west and north". */
+function listed(words: readonly string[]): string {
+  const last = words[words.length - 1] ?? "";
+  return words.length <= 1 ? last : `${words.slice(0, -1).join(", ")} and ${last}`;
+}
+
+/**
+ * On a map with waves (23-survival §4): the wave reached and the forecast for the next one, e.g.
+ * "Wave 4 · Next: day 7, Air raid from the south". Empty on maps without waves.
+ */
+export function waveLines(state: GameState): ObjectiveLine[] {
+  const next = nextWave(state);
+  const first = next[0];
+  if (state.wave === 0 && !first) return [];
+  const parts: string[] = [];
+  if (state.wave > 0) parts.push(`Wave ${state.wave}`);
+  if (first) {
+    const edges = next.flatMap((a) => (a.from === undefined ? [] : [a.from])).filter((e, i, all) => all.indexOf(e) === i);
+    const what = first.name ?? `wave ${first.wave ?? ""}`;
+    parts.push(`Next: day ${first.day}, ${what}${edges.length > 0 ? ` from the ${listed(edges)}` : ""}`);
+  }
+  return [{ player: first?.player ?? null, text: parts.join(" · ") }];
 }

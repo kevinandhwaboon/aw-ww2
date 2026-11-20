@@ -26,7 +26,8 @@ export function arrivalProblem(arrival: Arrival, map: GameMap, playerCount: numb
   return null;
 }
 
-function unitProblem(unit: ArrivingUnit): string | null {
+/** Why this arriving unit can't be in a scenario, or null if it can. */
+export function unitProblem(unit: ArrivingUnit): string | null {
   const transport: UnitDef["transport"] = UNITS[unit.type].transport;
   const hp = unit.hp ?? MAX_HP;
   if (!Number.isInteger(hp) || hp < 1 || hp > MAX_HP) return `${unit.type} has invalid HP ${hp}`;
@@ -99,7 +100,9 @@ export function arriveUnits(state: GameState, events: GameEvent[]): GameState {
     const waiting: ArrivingUnit[] = [];
     const placed: Unit[] = [];
     for (const setup of arrival.units) {
-      const cap = current.settings.unitCap;
+      // The game's unit cap, and the arrival's own if it has one (23-survival §4).
+      const caps = [current.settings.unitCap, arrival.unitCap ?? null].filter((c) => c !== null);
+      const cap = caps.length > 0 ? Math.min(...caps) : null;
       const pos = arrival.zone.find((p) => canArriveOn(current, setup, p, player));
       if (!pos || (cap !== null && fielded(current, player) + size(setup) > cap)) {
         waiting.push(setup);

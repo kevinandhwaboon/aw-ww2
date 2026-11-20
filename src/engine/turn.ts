@@ -1,6 +1,7 @@
 // The start-of-turn sequence (04-economy §2), in the doc's order.
 
 import { arriveUnits, sendRaidersHome } from "./arrivals";
+import { generateWaves } from "./waves";
 import type { GameEvent } from "./commands";
 import { unitDef } from "./data/units";
 import { clearAbandonedCaptures, servicesUnit } from "./economy";
@@ -38,7 +39,8 @@ export function startTurn(state: GameState): { state: GameState; events: GameEve
   const player = state.currentPlayer;
   const ready = { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player ? readyUp(u) : u)) };
   // Arrivals come last, so they aren't ready to act until this player's next turn (23-survival §5a).
-  return { state: arriveUnits(ready, events), events };
+  // Then the next endless wave is generated, if it isn't known yet (23-survival §4).
+  return { state: generateWaves(arriveUnits(ready, events)), events };
 }
 
 /** Whether a unit stands on its own or an ally's property that repairs and resupplies its category (04-economy §5). */

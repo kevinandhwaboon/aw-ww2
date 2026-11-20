@@ -2,6 +2,7 @@
 // scenario-authoring mistakes, so they throw instead of returning a rejection.
 
 import { arrivalProblem } from "./arrivals";
+import { generatorProblem } from "./waves";
 import { commanderDef, type CommanderId } from "./data/commanders";
 import { NATIONS, type NationId } from "./data/nations";
 import { terrainDef } from "./data/terrain";
@@ -17,6 +18,7 @@ import {
   MAX_HP,
   type Arrival,
   type Facing,
+  type WaveGenerator,
   type FortificationState,
   type GameState,
   type PlayerId,
@@ -81,6 +83,8 @@ export interface GameSetup {
   readonly weather?: WeatherPlan;
   /** Units that come onto the map during the game (23-survival §5a). */
   readonly arrivals?: readonly Arrival[];
+  /** A survival map's endless waves (23-survival §4). */
+  readonly waveGenerator?: WaveGenerator;
 }
 
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
@@ -178,6 +182,11 @@ export function createGame(setup: GameSetup): GameState {
     if (problem) throw new Error(`arrival ${i}: ${problem}`);
   }
 
+  if (setup.waveGenerator) {
+    const problem = generatorProblem(setup.waveGenerator, map, setup.players.length);
+    if (problem) throw new Error(`waves: ${problem}`);
+  }
+
   const victory = setup.victory ?? DEFAULT_VICTORY;
   checkVictory(victory, properties, setup.players);
 
@@ -219,6 +228,7 @@ export function createGame(setup: GameSetup): GameState {
     holdStreaks: victory.map(() => 0),
     arrivals,
     wave: 0,
+    ...(setup.waveGenerator ? { waveGenerator: setup.waveGenerator } : {}),
     result: null,
   };
   // A unit that starts full starts with what it can carry under its commander, which may be less
