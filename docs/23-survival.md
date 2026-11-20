@@ -1,6 +1,6 @@
 # Topic Doc 23: Survival
 
-**Status:** Draft, 2026-11-20, at the developer's request. **Nothing here is decided or built until the developer approves it.** The open choices are in §10, each with a recommendation.
+**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Not built. Wave numbers are a first guess, to be tuned (§8).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
@@ -12,7 +12,7 @@ A third way to play, beside Campaign and Skirmish (22-campaign §1): **hold your
 
 - **One player, always the defender.** The computer brings the waves; the player builds, repairs and resupplies between them.
 - **Built on a real siege.** The first waves follow history day by day. Once history's attacks run out, the waves keep coming, generated and growing (§4).
-- **The same rules as every other game.** Waves are units arriving on the map. They then fight, capture, burn fuel and get resupplied under the normal rules. The only new rules are how units arrive, and that the attacker can't be routed (§5).
+- **The same rules as every other game.** Waves are units arriving on the map. They then fight, capture, burn fuel and get resupplied under the normal rules. The new rules are how units arrive, how raiders go home, that the attacker can't be routed, and that the attacker gets nothing from what it captures (§5).
 - **The first map is Wake Island, December 1941** (§2). The mode is written so other sieges can follow (Corregidor, Crete, Sevastopol; §11).
 
 ## 2. Wake Island (`wake-island`)
@@ -40,7 +40,7 @@ Wake is a coral atoll in the central Pacific, three low islands round a shallow 
 | Wilkes | **Port** (the new boat channel the contractors were dredging) | |
 | Peale | Pan American station (City: the Clipper hotel and seaplane base) | |
 
-- 6 properties, all the US's, at the usual 1,000 a day. Japan starts with none (§5).
+- 6 properties, all the US's, at the usual 1,000 a day. Japan starts with none, and earns nothing from those it captures (§5d).
 - **Terrain:** the islands are scrub (Forest) and open coral (Plains), with a road round Wake and across to Peale. Gun positions are Bunkers. A Reef ring surrounds the atoll, with Beaches on the south shores of Wake and Wilkes, where Japan landed both times. The lagoon is Reef: too shallow for ships, as it was.
 
 ### Starting forces (8 December, morning)
@@ -56,11 +56,11 @@ Wake is a coral atoll in the central Pacific, three low islands round a shallow 
 ### Build lists
 
 - **US:** every unit the US has art for, except the never-built ones (Radar Station, Railway Gun) and the Heavy Tank, which the US has no art for (01-units §1). It's the player's shop: what to buy is the game.
-- **Japan:** the same as Guadalcanal (every unit but the Heavy Tank), but only from properties it captures (§5).
+- **Japan:** nothing. Every Japanese unit comes in a wave (§5d).
 
 ### Weather and fog
 
-- Clear all game. Fog of war is the player's choice (§10, Q5).
+- Clear all game. Fog of war is the player's choice, off by default (§10, Q5).
 
 ## 3. The waves of the siege (8–23 December)
 
@@ -78,7 +78,7 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 | 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; 2 Destroyers | West |
 | 9 | Day 15 | Day 16 (23 Dec) | The second landing | 2 Battleships, 4 Destroyers; 4 Landing Craft with 6 Infantry and 2 Assault Infantry | South |
 
-- **The relief force** (§10, Q4): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. It's two days' sailing from the atoll, so it arrives in time for the second landing only if the player brings it in fast.
+- **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. It's two days' sailing from the atoll, so it arrives in time for the second landing only if the player brings it in fast.
 - **Raiders go home.** Bombers and Fighters that come from land bases off the map fly for **2 turns** after they arrive, then return to base at the start of their third turn. They are removed, counted neither as Japanese losses nor as kills (§5c). Aircraft from a Carrier, and any that land at an airfield Japan has captured, stay, as usual.
 - **History's mark:** the HUD and the results screen show "Wake fell on day 16". Holding the HQ to the start of day 17 is "**Held longer than history**".
 - **Numbers are a first guess**, to be tuned by self-play (§8).
@@ -128,9 +128,14 @@ Everything else is the standard game. These are the new pieces, all in the engin
 - A unit that lands on a Carrier or an airfield of its own side loses its `sortieTurns` and stays as usual.
 - **Event:** `unitLeft`, so the screen can show it flying off the edge.
 
-### 5d. Captured ground works for Japan
+### 5d. Japan gets nothing from what it captures (decided 2026-11-20)
 
-No new rule, written down because it matters here: a property Japan captures is Japan's, under the normal rules. It pays Japan income and builds for Japan (from its build list), so losing the airfield or the factory makes the next waves stronger. Japan starts with no funds.
+The developer's choice (§10, Q3), so the waves stay exactly as scripted and can be tuned.
+
+- A property Japan captures becomes Japan's, so the US loses its income, its repairs and its building, and capturing the US HQ still ends the game.
+- But **Japan's income is 0** (its `income` stat at -100% through the modifier layer, as the Campaign raises income, 22-campaign §4) and **its build list is empty**, so it never builds. It starts with no funds.
+- Its units still get the free fuel and ammo on a property it holds (04-economy §5), but no repairs, since it can't pay for them. Its aircraft can land and refuel at a captured airfield.
+- The US can take a property back by capturing it, as usual.
 
 ### 5e. The record
 
@@ -149,7 +154,7 @@ No new rule, written down because it matters here: a property Japan captures is 
 ## 7. Screens
 
 - **Title:** Campaign, Skirmish, **Survival**, and Continue when there's a game to carry on.
-- **Survival screen:** the survival maps (Wake Island for now), each with its best record and history's mark ("Best: wave 11, 20 days · History: 16 days"). Picking one shows the briefing (§2's history, shortened), the US commander choice, Luck, Battle scenes and Fog of war, and Start.
+- **Survival screen:** the survival maps (Wake Island for now), each with its best record and history's mark ("Best: wave 11, 20 days · History: 16 days"). Picking one shows the briefing (§2's history, shortened), the US commander choice, Luck, Battle scenes and Fog of war (off by default), and Start.
 - **In the game:** a wave counter and the next-wave forecast in the HUD ("Wave 4 · Next: day 7, a raid from the south"). When a wave arrives, a banner with its number and name ("Wave 3: The first landing"), then the camera pans to it. Arrived units are drawn and played like any other.
 - **Results:** "Wake has fallen", the record (§5e), "New best" when it is one, history's mark, and the kills. Buttons: **Try again** and **Survival**.
 
@@ -182,21 +187,22 @@ Proposed as milestones, each one playable:
 - "each endless wave's budget is 12% more than the one before (23-survival §4)"
 - "Japan's waves never enter from the east edge before wave 15 (23-survival §4)"
 - "Wake Island: the US loses when Japan captures the HQ, and Japan never loses (23-survival §2)"
+- "Wake Island: Japan earns no income and builds nothing from a property it captures (23-survival §5d)"
 - "Wake Island: Japan's first landing comes ashore on the south beaches (23-survival §3)"
 
-## 10. Open choices (for the developer)
+## 10. Decisions (the developer, 2026-11-20)
 
-| # | Question | Recommendation | Why |
+| # | Question | Decided | Notes |
 |---|---|---|---|
-| Q1 | **When do waves come?** On a fixed calendar, or when the last wave is wiped out (as in the shooters)? | **A fixed calendar** (§3, §4) | History gives the dates; the player always knows when the next wave is due and can plan for it; easy to test and tune. Wiping out a wave fast would otherwise only bring the next one sooner |
-| Q2 | **Salvage:** should destroying an enemy unit pay the player a share of its cost (the shooters' points for kills)? | **Yes, 20%**, as a modifier-layer stat so a commander could change it | It makes fighting well pay for the next wave's defences. Without it the player's income is flat while the waves grow, so the end comes from economics more than from play |
-| Q3 | **Captured ground works for Japan** (§5d)? | **Yes** | It's the normal rule, and it makes losing ground hurt |
-| Q4 | **Task Force 14:** arrives (a what-if), or is recalled as in history (seen on the map turning back on day 15)? | **Arrives** | It's the "resupply from the sea" moment, and holding the island until it comes is a goal in itself. The recall could be a harder "Historical" setting later |
-| Q5 | **Fog of war:** the player's choice, or always on? | **The player's choice, off by default** | The forecast already tells the player what's coming, so fog adds less here than on Midway |
-| Q6 | **Japan's commander:** none, or fixed? | **None at first**, then decided by tuning | Fewer things to tune at once |
+| Q1 | When do waves come? | **On fixed days** (§3, §4) | Not when the last wave is wiped out, as in the shooters. History gives the dates, and the player always knows when the next wave is due |
+| Q2 | Should destroying an enemy unit pay the player a share of its cost (the shooters' points for kills)? | **No** | The player's money comes only from properties, as in every other game. A salvage stat was considered (20% or 50% of a kill's cost) |
+| Q3 | What does Japan get from properties it captures? | **Nothing** (§5d) | No income and no building, so the waves stay as scripted. The US still loses what it held |
+| Q4 | Task Force 14: arrive, or be recalled as in history? | **It arrives** on day 15 (§3) | The one what-if, and the mode's relief from the sea |
+| Q5 | Fog of war? | **The player's choice, off by default** (§7) | The forecast already says what's coming |
+| Q6 | Japan's commander? | **None**, at least at first | Tuning may add one later (§8) |
 
 ## 11. Later
 
 - **More survival maps**, each a real siege: **Corregidor** (1942, five months, supplied by submarine), **Crete** (1941, airborne waves landing on the airfields you lose), **Sevastopol** (1941–42, the existing map, supplied by the Black Sea Fleet).
-- A **Historical** setting: the relief recalled, no salvage.
+- A **Historical** setting: Task Force 14 recalled, as it was.
 - A record of the best runs by commander.
