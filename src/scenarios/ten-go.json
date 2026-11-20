@@ -1,0 +1,243 @@
+{
+  "id": "ten-go",
+  "name": "Ten-Go",
+  "description": "April 1945. The US has landed on Okinawa and taken the Yontan and Kadena airfields. Japan sends the battleship Yamato and its last destroyers, with no air cover and fuel for one way, to shell the beachhead while the 32nd Army counter-attacks. Always in fog of war: US carrier aircraft must find the fleet before it arrives. Japan wins by retaking both airfields; the US wins by holding them to the start of day 12.",
+  "map": [
+    "SSSSSSSSSS_FHFfQSS_FHH",
+    "SSSSSSSSSS_HFFCPSS_HHF",
+    "SSSSSSSSSS_FHHF_SSS_F_",
+    "SSSSSSSSSS_.HFF_SSSS_S",
+    "SSSSSSSSSS_.FHF_SSSSSS",
+    "SSSSSSSSSS_.=HF_SSSSSS",
+    "SSSSSSSSSS__S.A_SSSSSS",
+    "SSSSSSSSSSS_S_._SSSSSS",
+    "SSSSSSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSSSSS_SSSSSSS",
+    "SSSSSSSSSSS_HSFSSSSSSS",
+    "SSSSSSSSSSS__S_SSSSSSS",
+    "SSSSSSSSSSrSSSSSSSSSSS",
+    "SSSSSSSSSSSrSSSSSSSSSS",
+    "SSSSSSSSSSS__SSSSSSSSS",
+    "SSSSSSSSSS_FH_SSSSSSSS",
+    "SSSSSSSSSSS__SSSSSSSSS",
+    "SSSSSSSSS_SSSSSSSSSSSS",
+    "SSSSSSSSrSSSSSSSSSSSSS",
+    "SSSSSSS___SSSSSSSSSSSS",
+    "SSSSSS_HHF_SSSSSSSSSSS",
+    "SSSSS_FHHF_SSSSSSSSSSS",
+    "SS__FCHFF_SSSSSSSSSSSS",
+    "S_FHF.FF_SSSSSSSSSSSSS",
+    "SS__..F_SSSSSSSSSSSSSS",
+    "SSS_A..F_SSSSSSSSSSSSS",
+    "SSS_..=.F_SSSSSSSSSSSS",
+    "SSS_A=..F_SSSSSSSSS___",
+    "SSS_...FF_SSSSSSSS_P.f",
+    "SSS_.=.F_SSSSSSSSS_.Q.",
+    "SS_XXXXH_SSSSSSSSSS_C.",
+    "SSPHC..F_SSSSSSSSSSS__"
+  ],
+  "players": [
+    {
+      "name": "US",
+      "nation": "us",
+      "funds": 2000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun",
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber",
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier",
+        "supplyShip"
+      ],
+      "facing": "left"
+    },
+    {
+      "name": "Japan",
+      "nation": "japan",
+      "funds": 2000,
+      "buildable": [
+        "infantry",
+        "assaultInfantry",
+        "mortar",
+        "recon",
+        "halftrack",
+        "lightTank",
+        "mediumTank",
+        "tankDestroyer",
+        "artillery",
+        "rocketArtillery",
+        "mobileAA",
+        "flakGun",
+        "fighter",
+        "bomber",
+        "transportAircraft",
+        "diveBomber",
+        "torpedoBomber",
+        "battleship",
+        "destroyer",
+        "submarine",
+        "landingCraft",
+        "torpedoBoat",
+        "carrier",
+        "supplyShip"
+      ]
+    }
+  ],
+  "propertyOwners": [
+    { "pos": { "x": 15, "y": 0 }, "owner": 1 },
+    { "pos": { "x": 14, "y": 0 }, "owner": 1 },
+    { "pos": { "x": 15, "y": 1 }, "owner": 1 },
+    { "pos": { "x": 14, "y": 1 }, "owner": 1 },
+    { "pos": { "x": 14, "y": 6 }, "owner": 1 },
+    { "pos": { "x": 4, "y": 31 }, "owner": 1 },
+    { "pos": { "x": 2, "y": 31 }, "owner": 1 },
+    { "pos": { "x": 20, "y": 29 }, "owner": 0 },
+    { "pos": { "x": 21, "y": 28 }, "owner": 0 },
+    { "pos": { "x": 19, "y": 28 }, "owner": 0 },
+    { "pos": { "x": 20, "y": 30 }, "owner": 0 },
+    { "pos": { "x": 4, "y": 25 }, "owner": 0 },
+    { "pos": { "x": 4, "y": 27 }, "owner": 0 }
+  ],
+  "units": [
+    {
+      "type": "battleship",
+      "owner": 1,
+      "pos": { "x": 16, "y": 2 },
+      "fuel": 45
+    },
+    {
+      "type": "destroyer",
+      "owner": 1,
+      "pos": { "x": 17, "y": 2 },
+      "fuel": 50
+    },
+    {
+      "type": "destroyer",
+      "owner": 1,
+      "pos": { "x": 16, "y": 3 },
+      "fuel": 50
+    },
+    {
+      "type": "destroyer",
+      "owner": 1,
+      "pos": { "x": 17, "y": 1 },
+      "fuel": 50
+    },
+    {
+      "type": "destroyer",
+      "owner": 1,
+      "pos": { "x": 16, "y": 1 },
+      "fuel": 50
+    },
+    { "type": "fighter", "owner": 1, "pos": { "x": 14, "y": 6 } },
+    { "type": "fighter", "owner": 1, "pos": { "x": 14, "y": 5 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 3, "y": 30 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 4, "y": 30 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 5, "y": 30 } },
+    { "type": "assaultInfantry", "owner": 1, "pos": { "x": 6, "y": 30 } },
+    { "type": "mortar", "owner": 1, "pos": { "x": 3, "y": 31 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 4, "y": 31 } },
+    { "type": "artillery", "owner": 1, "pos": { "x": 6, "y": 31 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 5, "y": 31 } },
+    { "type": "infantry", "owner": 1, "pos": { "x": 14, "y": 1 } },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 17, "y": 14 },
+      "cargo": [
+        { "type": "diveBomber" },
+        { "type": "torpedoBomber" }
+      ]
+    },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 18, "y": 15 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "torpedoBomber" }
+      ]
+    },
+    {
+      "type": "carrier",
+      "owner": 0,
+      "pos": { "x": 16, "y": 16 },
+      "cargo": [
+        { "type": "fighter" },
+        { "type": "diveBomber" }
+      ]
+    },
+    { "type": "battleship", "owner": 0, "pos": { "x": 18, "y": 13 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 16, "y": 14 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 19, "y": 15 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 17, "y": 17 } },
+    { "type": "battleship", "owner": 0, "pos": { "x": 1, "y": 25 } },
+    { "type": "destroyer", "owner": 0, "pos": { "x": 1, "y": 27 } },
+    {
+      "type": "landingCraft",
+      "owner": 0,
+      "pos": { "x": 2, "y": 26 },
+      "cargo": [
+        { "type": "infantry" }
+      ]
+    },
+    { "type": "supplyShip", "owner": 0, "pos": { "x": 2, "y": 27 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 4, "y": 25 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 4, "y": 27 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 5, "y": 27 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 5, "y": 26 } },
+    { "type": "mediumTank", "owner": 0, "pos": { "x": 6, "y": 27 } },
+    { "type": "artillery", "owner": 0, "pos": { "x": 5, "y": 25 } },
+    { "type": "flakGun", "owner": 0, "pos": { "x": 6, "y": 26 } },
+    { "type": "submarine", "owner": 0, "pos": { "x": 17, "y": 10 } },
+    { "type": "submarine", "owner": 0, "pos": { "x": 20, "y": 7 } },
+    { "type": "infantry", "owner": 0, "pos": { "x": 21, "y": 29 } }
+  ],
+  "victory": [
+    { "type": "hqCapture" },
+    { "type": "rout" },
+    {
+      "type": "captureProperties",
+      "side": "axis",
+      "properties": [
+        { "x": 4, "y": 25 },
+        { "x": 4, "y": 27 }
+      ]
+    },
+    {
+      "type": "surviveDays",
+      "side": "allies",
+      "days": 12
+    }
+  ],
+  "settings": {
+    "incomePerProperty": 500,
+    "fogOfWar": true
+  },
+  "weather": {
+    "season": "summer",
+    "forecast": [
+      { "fromDay": 1, "weather": "clear" },
+      { "fromDay": 4, "weather": "rain" },
+      { "fromDay": 5, "weather": "clear" }
+    ]
+  }
+}

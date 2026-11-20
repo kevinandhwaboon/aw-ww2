@@ -277,6 +277,22 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [0, 140, 192, 80],
     },
   },
+  "ten-go": {
+    theater: "pacific",
+    lon: 128.1,
+    lat: 30.4,
+    where: "South of Kyushu, Japan",
+    when: "April 1945",
+    feature: "Carrier aircraft against a battleship",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "torpedoBomber", nation: "us", terrain: "sea" },
+      defender: { kind: "battleship", nation: "japan", terrain: "sea" },
+      weapon: "primary",
+      counter: "secondary",
+      crop: [0, 140, 192, 80],
+    },
+  },
   "the-slot": {
     theater: "pacific",
     lon: 157.3,
