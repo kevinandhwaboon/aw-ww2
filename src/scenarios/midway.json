@@ -1,7 +1,7 @@
 {
   "id": "midway",
   "name": "Midway",
-  "description": "June 1942. Japan's four carriers close on Midway to strike it at dawn and clear the way for an invasion, but three US carriers are waiting to the north-east. Japan wins by taking Midway's command post and airfield; the US wins by holding Midway to the start of day 12. Whichever carriers move into striking range first are the ones exposed.",
+  "description": "June 1942. Japan's four carriers close on Midway to strike it at dawn and clear the way for an invasion. US codebreakers have read the plan, and three US carriers are waiting somewhere to the north-east. Always in fog of war: each side has to find the other's carriers before it can strike them, and a carrier whose aircraft are away striking Midway is the one caught. Japan wins by taking Midway's command post and airfield; the US wins by holding Midway to the start of day 12.",
   "map": [
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
     "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
@@ -186,6 +186,8 @@
     { "type": "destroyer", "owner": 1, "pos": { "x": 10, "y": 19 } },
     { "type": "destroyer", "owner": 1, "pos": { "x": 10, "y": 21 } },
     { "type": "submarine", "owner": 1, "pos": { "x": 30, "y": 22 } },
+    { "type": "submarine", "owner": 1, "pos": { "x": 37, "y": 13 } },
+    { "type": "submarine", "owner": 1, "pos": { "x": 35, "y": 15 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 2, "y": 23 } },
     {
       "type": "carrier",
@@ -249,6 +251,7 @@
     }
   ],
   "settings": {
-    "incomePerProperty": 500
+    "incomePerProperty": 500,
+    "fogOfWar": true
   }
 }

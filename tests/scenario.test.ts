@@ -11,6 +11,7 @@ import { parseScenario, type Scenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { moveDestinations } from "../src/engine/movement";
+import { isHiddenFrom } from "../src/engine/visibility";
 import { SCENARIOS } from "../src/scenarios";
 import { defaultComputerPlayers } from "../src/ui/computerPlayers";
 import { makeGame } from "./helpers";
@@ -1014,7 +1015,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
   describe("Midway (14-scenarios-pacific §3)", () => {
     const midway = SCENARIOS.find((s) => s.id === "midway");
     if (!midway) throw new Error("missing scenario");
-    const { map, units, victory, players, propertyOwners } = midway.setup;
+    const { map, units, victory, players, propertyOwners, settings } = midway.setup;
     const US = 0;
     const JAPAN = 1;
     const objectives = victory?.find((v) => v.type === "captureProperties")?.properties ?? [];
@@ -1125,6 +1126,45 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const lc of craft) {
         expect(lc.cargo).toHaveLength(2);
         expect(dist(lc.pos, commandPost)).toBeGreaterThan(2 * UNITS.landingCraft.movePoints);
+      }
+    });
+
+    it("the map is always played in fog of war: the battle was decided by who found whom first (19-fog-of-war §1)", () => {
+      expect(settings?.fogOfWar).toBe(true);
+      expect(createGame({ ...midway.setup, seed: 1 }).settings.fogOfWar).toBe(true);
+    });
+
+    it("at the start neither side can see a single enemy unit: both have to search", () => {
+      const game = createGame({ ...midway.setup, seed: 1 });
+      for (const viewer of [US, JAPAN]) {
+        for (const enemy of game.units.filter((u) => u.owner !== viewer)) {
+          expect(isHiddenFrom(game, enemy, viewer), `${enemy.type} at ${enemy.pos.x},${enemy.pos.y} seen by player ${viewer}`).toBe(true);
+        }
+      }
+    });
+
+    it("no Japanese ship or aircraft can find a US Carrier on day 1: Point Luck is beyond every one's move plus its vision, as Japan didn't know the US carriers were there", () => {
+      for (const target of carriers(US)) {
+        for (const a of attackers(JAPAN)) {
+          expect(dist(a.pos, target.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs carrier at ${target.pos.x},${target.pos.y}`)
+            .toBeGreaterThan(UNITS[a.type].movePoints + UNITS[a.type].vision);
+        }
+      }
+    });
+
+    it("the US can find the Kido Butai on day 1, as its scouts did at dawn: the submarine Nautilus is within a move plus its vision of a Japanese Carrier", () => {
+      const subs = (units ?? []).filter((u) => u.owner === US && u.type === "submarine");
+      const finds = subs.some((s) => carriers(JAPAN).some((c) => dist(s.pos, c.pos) <= UNITS.submarine.movePoints + UNITS.submarine.vision));
+      expect(finds).toBe(true);
+    });
+
+    it("Japan's submarine cordon between Pearl Harbor and Midway is on station south of Point Luck, after the US carriers have passed it", () => {
+      const pearl = propertyOwners?.find((p) => p.owner === US && terrainAt(map, p.pos) === "hq")?.pos;
+      if (!pearl) throw new Error("no US HQ");
+      const cordon = (units ?? []).filter((u) => u.owner === JAPAN && u.type === "submarine" && u.pos.x > airfield.x && u.pos.y < pearl.y - 5);
+      expect(cordon).toHaveLength(2);
+      for (const s of cordon) {
+        for (const c of carriers(US)) expect(s.pos.y, `submarine at ${s.pos.x},${s.pos.y}`).toBeGreaterThan(c.pos.y);
       }
     });
 

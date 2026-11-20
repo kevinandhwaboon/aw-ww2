@@ -11,6 +11,11 @@
 // wait north-east of the atoll ("Point Luck"), one move from striking range. Nothing can reach either
 // side's carriers from where the units start, and Midway's aircraft can't reach the Japanese ones.
 //
+// Always in fog of war: Midway was decided by who found whom first. Neither side sees any enemy unit
+// at the start. The US, which had read Japan's plan, can find the Kido Butai on day 1 (Nautilus and
+// Midway's aircraft stand for the dawn PBY sightings); no Japanese unit can find the US carriers on
+// day 1, and Japan's submarine cordon arrives between Pearl Harbor and Point Luck after they've passed.
+//
 // Run: node tools/maps/midway.mjs        then: node tools/maps/overview.mjs midway
 
 import { writeFileSync } from "node:fs";
@@ -131,6 +136,10 @@ const units = [
   jp("battleship", 7, 20), jp("destroyer", 10, 19), jp("destroyer", 10, 21),
   // I-168, on the way between Pearl Harbor and Midway. It later sank the Yorktown.
   jp("submarine", 30, 22),
+  // The submarine cordon between Pearl Harbor and Midway, meant to catch the US carriers sailing
+  // out. It reached its line on 3 June, after they had passed: it starts south of Point Luck, out of
+  // sight of the US carriers, watching a route they no longer need.
+  jp("submarine", 37, 13), jp("submarine", 35, 15),
   // The home garrison.
   jp("infantry", 2, 23),
 
@@ -181,7 +190,7 @@ const buildable = (extra) => [
 const scenario = {
   id: "midway",
   name: "Midway",
-  description: "June 1942. Japan's four carriers close on Midway to strike it at dawn and clear the way for an invasion, but three US carriers are waiting to the north-east. Japan wins by taking Midway's command post and airfield; the US wins by holding Midway to the start of day 12. Whichever carriers move into striking range first are the ones exposed.",
+  description: "June 1942. Japan's four carriers close on Midway to strike it at dawn and clear the way for an invasion. US codebreakers have read the plan, and three US carriers are waiting somewhere to the north-east. Always in fog of war: each side has to find the other's carriers before it can strike them, and a carrier whose aircraft are away striking Midway is the one caught. Japan wins by taking Midway's command post and airfield; the US wins by holding Midway to the start of day 12.",
   map: rows,
   players: [
     { name: "US", nation: "us", funds: 2000, buildable: buildable(["heavyTank"]), facing: "left" },
@@ -195,7 +204,8 @@ const scenario = {
     { type: "captureProperties", side: "axis", properties: [P.sandCity, P.airfield].map(([x, y]) => ({ x, y })) },
     { type: "surviveDays", side: "allies", days: 12 },
   ],
-  settings: { incomePerProperty: 500 },
+  // Always in fog of war (19-fog-of-war §1): the battle was decided by who found whom first.
+  settings: { incomePerProperty: 500, fogOfWar: true },
 };
 
 const out = new URL("../../src/scenarios/midway.json", import.meta.url);
