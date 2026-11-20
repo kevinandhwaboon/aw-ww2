@@ -231,7 +231,7 @@ export const UNITS = {
   },
   submarine: {
     ...BASE, phase: 2, name: "Submarine", category: "naval", cost: 20000, movePoints: 5, movementType: "sea",
-    vision: 5, maxFuel: 90, fuelPerDay: 1, fuelPerDaySubmerged: 5, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
+    vision: 5, maxFuel: 45, fuelPerDay: 1, fuelPerDaySubmerged: 10, primaryWeapon: { name: "Torpedoes", maxAmmo: 6 },
     attacksSubmerged: true, specialActions: ["dive"],
   },
   landingCraft: {

@@ -13,7 +13,7 @@
 - A unit can't plan a path costing more fuel than it has left.
 - **The daily burn comes on top of movement.** A Fighter (5 a day) that stays put burns 5; one that flies 6 tiles burns 5 + 2 × 6 = 17.
 - **Land units** use no fuel per day. A land unit with 0 fuel can't move but can still attack (if it has ammo or a secondary weapon), capture and be resupplied.
-- **Air and naval units (phase 2)** also burn `fuelPerDay` at the start of their owner's turn. A submerged submarine burns 5 per day instead of 1. An **aircraft** that reaches 0 fuel at turn start crashes. This isn't a kill for veterancy.
+- **Air and naval units (phase 2)** also burn `fuelPerDay` at the start of their owner's turn. A submerged submarine burns 10 per day instead of 1 (5 until 2026-11-20). An **aircraft** that reaches 0 fuel at turn start crashes. This isn't a kill for veterancy.
 - **Ships at 0 fuel are stranded, not sunk** (since 2026-11-16, at the developer's request; a departure from the original, where they sank). They follow the land unit rule above: a ship with 0 fuel can't move, but it can still attack with the ammo it has, launch and take on aircraft (a Carrier), resupply and repair (a Supply Ship), and be refuelled. A submerged submarine that runs dry surfaces (§9). Details in §7.
 
 ## 2. Ammo
@@ -109,7 +109,7 @@ Added at the developer's request, so that two Supply Ships can't keep each other
 ## 9. Submarines (phase 2)
 
 - **`Dive` and `Surface`** are end actions, so a submarine can move and then change state. It starts surfaced.
-- **Submerged:** burns 5 fuel per day instead of 1, and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
+- **Submerged:** burns 10 fuel per day instead of 1 (5 until 2026-11-20, when the developer also halved the Submarine's tank to 45, 01-units §8a), and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
 - **Out of fuel (since 2026-11-16):** a submerged submarine whose tank runs dry at the start of its owner's turn surfaces, in view of everyone, and a submarine with 0 fuel can't dive until it's refuelled. Otherwise a stranded submarine (§7) would sit hidden forever, where only Destroyers and Submarines could ever hit it.
 - **Hidden (since 2026-11-14, D5):** as in the original, a submerged submarine is hidden from the other side unless one of that side's units, of any kind (aircraft too), is on a tile next to it (not diagonally). Its own side always sees it, drawn with a marker: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5). Without fog of war this is the one exception; with it (19-fog-of-war), the same rules cover every unit the player can't see, and this one still applies.
   - **On a shared screen** the map is drawn for the human whose turn it is (during the computer's turn, for the last human who played; with only computers playing, and once the game is over, everything shows). The enemy doesn't see a hidden submarine's moves, waits or repairs play out, and the cursor doesn't follow it. If it attacks or surfaces it appears where it ended its move.
