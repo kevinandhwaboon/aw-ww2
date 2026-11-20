@@ -19,7 +19,8 @@ export const MAX_HP = 100;
 /** Something a scenario can be won by (00-master-design §8, 04-economy §8). Rules are in engine/victory.ts. */
 export type VictoryCondition =
   | { readonly type: "hqCapture" }
-  | { readonly type: "rout" }
+  /** No units left loses; with `side`, only that side's players can lose this way (23-survival §5b). */
+  | { readonly type: "rout"; readonly side?: Side }
   /** `side` wins as soon as it owns every listed property. */
   | { readonly type: "captureProperties"; readonly side: Side; readonly properties: readonly Point[] }
   /** `side` wins once it has owned every listed property at the start of `days` days in a row. */
@@ -92,6 +93,45 @@ export interface Unit {
    * Cleared at the start of its owner's turn.
    */
   readonly launched?: true;
+  /**
+   * A raider from a base off the map: how many more of its owner's turns it stays before it goes home
+   * at the start of the next one (23-survival §5c). Missing for every other unit, and dropped once it
+   * reaches a Carrier or a property of its side that services it.
+   */
+  readonly sortie?: number;
+}
+
+/** A unit that arrives during the game, described like a starting unit (23-survival §5a). */
+export interface ArrivingUnit {
+  readonly type: UnitTypeId;
+  /** Internal HP, default 100. */
+  readonly hp?: number;
+  /** Default: a full tank or full ammo, as the unit's commander allows. */
+  readonly fuel?: number;
+  readonly ammo?: number;
+  readonly kills?: number;
+  /** Passengers, arriving aboard. */
+  readonly cargo?: readonly ArrivingUnit[];
+  /** A raider: turns it stays on the map after it arrives before going home (23-survival §5c). */
+  readonly sortieTurns?: number;
+}
+
+/**
+ * Units due to arrive at the start of `player`'s turn on `day`, each on the first free square of
+ * `zone` it can stand on (23-survival §5a). Units that find no room wait, and the arrival stays in
+ * the list until all of them are on the map.
+ */
+export interface Arrival {
+  readonly day: number;
+  readonly player: PlayerId;
+  /** Survival's wave number, for the record (23-survival §5e). */
+  readonly wave?: number;
+  /** Shown in the banner, e.g. "The first landing". */
+  readonly name?: string;
+  /** Entry squares, in the order they fill. */
+  readonly zone: readonly Point[];
+  /** Units still to arrive. */
+  readonly units: readonly ArrivingUnit[];
 }
 
 export interface PropertyState {
@@ -181,6 +221,10 @@ export interface GameState {
    * owned all its properties at the start of the day. Always 0 for other conditions.
    */
   readonly holdStreaks: readonly number[];
+  /** Units still to arrive, in the scenario's order (23-survival §5a). */
+  readonly arrivals: readonly Arrival[];
+  /** The highest wave number that has arrived, 0 before any (23-survival §5e). */
+  readonly wave: number;
   /** Set once the game is over; no more commands are accepted after that. */
   readonly result: GameResult | null;
 }

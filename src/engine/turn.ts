@@ -1,5 +1,6 @@
 // The start-of-turn sequence (04-economy §2), in the doc's order.
 
+import { arriveUnits, sendRaidersHome } from "./arrivals";
 import type { GameEvent } from "./commands";
 import { unitDef } from "./data/units";
 import { clearAbandonedCaptures, servicesUnit } from "./economy";
@@ -23,18 +24,21 @@ function readyUp(unit: Unit): Unit {
   return ready;
 }
 
-/** Runs the start of state.currentPlayer's turn. */
+/**
+ * Runs the start of state.currentPlayer's turn: raiders due home leave first (23-survival §5c), then
+ * the doc's sequence, then any units due to arrive (23-survival §5a).
+ */
 export function startTurn(state: GameState): { state: GameState; events: GameEvent[] } {
   const events: GameEvent[] = [{ type: "turnStarted", player: state.currentPlayer, day: state.day }];
-  const afterFuel = burnFuel(state, events);
+  const afterRaids = sendRaidersHome(state, events);
+  const afterFuel = burnFuel(afterRaids, events);
   const afterIncome = collectIncome(afterFuel, events);
   const afterRepairs = repairAndResupply(afterIncome, events);
   const afterSupply = supplyRound(afterRepairs, events);
   const player = state.currentPlayer;
-  return {
-    state: { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player ? readyUp(u) : u)) },
-    events,
-  };
+  const ready = { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player ? readyUp(u) : u)) };
+  // Arrivals come last, so they aren't ready to act until this player's next turn (23-survival §5a).
+  return { state: arriveUnits(ready, events), events };
 }
 
 /** Whether a unit stands on its own or an ally's property that repairs and resupplies its category (04-economy §5). */

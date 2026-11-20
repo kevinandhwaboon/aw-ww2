@@ -1,6 +1,7 @@
 // Building the initial GameState from a scenario-style setup. Setup errors are programming or
 // scenario-authoring mistakes, so they throw instead of returning a rejection.
 
+import { arrivalProblem } from "./arrivals";
 import { commanderDef, type CommanderId } from "./data/commanders";
 import { NATIONS, type NationId } from "./data/nations";
 import { terrainDef } from "./data/terrain";
@@ -14,6 +15,7 @@ import {
   DEFAULT_VICTORY,
   DEFAULT_WEATHER,
   MAX_HP,
+  type Arrival,
   type Facing,
   type FortificationState,
   type GameState,
@@ -77,6 +79,8 @@ export interface GameSetup {
   readonly victory?: readonly VictoryCondition[];
   /** Clear all game and summer art unless the scenario says otherwise (12-weather §1). */
   readonly weather?: WeatherPlan;
+  /** Units that come onto the map during the game (23-survival §5a). */
+  readonly arrivals?: readonly Arrival[];
 }
 
 const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
@@ -84,7 +88,12 @@ const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 /** Objectives must be properties, and the side they're for must have someone playing it (04-economy §8). */
 function checkVictory(victory: readonly VictoryCondition[], properties: readonly PropertyState[], players: readonly PlayerSetup[]): void {
   for (const condition of victory) {
-    if (condition.type === "hqCapture" || condition.type === "rout") continue;
+    if (condition.type === "hqCapture") continue;
+    if (condition.type === "rout") {
+      const { side } = condition;
+      if (side !== undefined && !players.some((p) => NATIONS[p.nation].side === side)) throw new Error(`rout: there's no player on the ${side} side`);
+      continue;
+    }
     const { type, side } = condition;
     if (!players.some((p) => NATIONS[p.nation].side === side)) throw new Error(`${type}: there's no player on the ${side} side`);
     if (type === "surviveDays") {
@@ -163,6 +172,12 @@ export function createGame(setup: GameSetup): GameState {
   const weatherProblem = weatherPlanProblem(weather);
   if (weatherProblem) throw new Error(`weather: ${weatherProblem}`);
 
+  const arrivals = setup.arrivals ?? [];
+  for (const [i, arrival] of arrivals.entries()) {
+    const problem = arrivalProblem(arrival, map, setup.players.length);
+    if (problem) throw new Error(`arrival ${i}: ${problem}`);
+  }
+
   const victory = setup.victory ?? DEFAULT_VICTORY;
   checkVictory(victory, properties, setup.players);
 
@@ -202,6 +217,8 @@ export function createGame(setup: GameSetup): GameState {
     weather,
     victoryConditions: victory,
     holdStreaks: victory.map(() => 0),
+    arrivals,
+    wave: 0,
     result: null,
   };
   // A unit that starts full starts with what it can carry under its commander, which may be less

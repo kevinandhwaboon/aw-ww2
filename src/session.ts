@@ -66,6 +66,12 @@ export interface Session {
   end(): void;
 }
 
+/** "Wave 3 · The first landing", or "Reinforcements" for an arrival with neither (23-survival §5a). */
+export function arrivalBanner(arrival: { readonly wave?: number; readonly name?: string }): string {
+  const parts = [arrival.wave === undefined ? null : `Wave ${arrival.wave}`, arrival.name ?? null].filter((p) => p !== null);
+  return parts.length > 0 ? parts.join(" · ") : "Reinforcements";
+}
+
 /** What the banner says when the weather changes (12-weather §5). */
 const WEATHER_BANNER: Record<WeatherId, string> = { clear: "The skies clear", snow: "Snow is falling", rain: "Rain is falling" };
 
@@ -276,6 +282,13 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
       if ((passDevice || fogInGame(state)) && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
       await playService(service, turnStartTile(state, player.id));
+      // Units arriving on this turn: a banner for each wave, over the first of them (23-survival §5a).
+      for (const arrival of shown.events) {
+        if (arrival.type !== "unitsArrived" || arrival.player !== player.id) continue;
+        const first = arrival.units[0];
+        if (first) scene.setCursor(first.pos);
+        await banner.show(arrivalBanner(arrival), color);
+      }
     }
     servicing = null;
     render();

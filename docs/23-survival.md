@@ -1,6 +1,6 @@
 # Topic Doc 23: Survival
 
-**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Not built. Wave numbers are a first guess, to be tuned (§8).
+**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Milestone S1 built 2026-11-20 (§5a–§5c, §9): the engine rules for arrivals, raiders and the one-sided rout. The map, the generator and the screens are still to build. Wave numbers are a first guess, to be tuned (§8).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
@@ -108,7 +108,7 @@ After the second landing, history ends and the waves keep coming, **a new wave e
 
 Everything else is the standard game. These are the new pieces, all in the engine.
 
-### 5a. Arrivals (scheduled units)
+### 5a. Arrivals (scheduled units) (built 2026-11-20)
 
 - A scenario can list **arrivals**: on a given day, at the start of a given player's turn, these units appear in this **entry zone** (a named list of squares). Each unit is listed like a starting unit: type, HP, fuel, ammo and cargo (a Landing Craft arrives loaded, a Carrier with its aircraft).
 - **Placement:** each unit takes the first free square of the zone that it can stand on, in the zone's listed order. If none is free, it waits and tries again at the start of that player's next turn.
@@ -116,17 +116,25 @@ Everything else is the standard game. These are the new pieces, all in the engin
 - **The wave generator** (§4) adds the endless waves to the same list, a wave at a time, when the day before the wave starts, so the save always holds what is coming next.
 - Arrivals are a general rule, not a Survival one: any scenario can use them for reinforcements, which several maps lack (Kursk's Steppe Front, Stalingrad's Winter Storm: 15-scenarios-eastern-front §1, §2).
 - **Event:** `unitsArrived` (the wave's number and name, and the units), so the screen can show a banner and pan to them.
+- **As built** (`src/engine/arrivals.ts`):
+  - Arrivals come after the turn-start sequence (04-economy §2), so they don't burn fuel, earn or get repaired that turn. An arrival on the first player's day 1 is on the map from the start.
+  - A unit stands only where its movement type can enter (aircraft anywhere, ships on sea), on an empty square. The unit cap counts passengers, as building does.
+  - Fuel and ammo are full unless the arrival gives less, and never more than a full load under the player's commander.
+  - A player whose first units arrive in a wave counts as having fielded units from then on, so the ordinary rout applies to them after that (04-economy §8).
+  - In fog of war the banner always shows, since the forecast is public, but only the arriving units the viewer can see are named or shown (19-fog-of-war §7).
+  - The record keeps the highest wave number that has arrived (`GameState.wave`). Units still to come are in `GameState.arrivals`, so a save keeps them; saves from before arrivals have none.
 
-### 5b. Victory: the attacker can't be routed
+### 5b. Victory: the attacker can't be routed (built 2026-11-20)
 
 - **`rout` can name a side.** `{ "type": "rout", "side": "allies" }` checks only that side's players. On Wake, Japan often has no units on the map between waves, and must not lose for it.
 - **The US loses** when Japan captures the HQ or when the US has no units left (the rout, for the US only), or by resigning. **Japan never loses**, and there's no win for the US.
 
-### 5c. Raiders go home
+### 5c. Raiders go home (built 2026-11-20)
 
 - A unit arrival can carry **`sortieTurns`**: after that many of its owner's turns on the map, at the start of the next one, the unit leaves the map. It's removed, not destroyed: not in the losses tally (04-economy §8a), not a kill. If it is carrying units, they go with it.
 - A unit that lands on a Carrier or an airfield of its own side loses its `sortieTurns` and stays as usual.
-- **Event:** `unitLeft`, so the screen can show it flying off the edge.
+- **Event:** `unitLeft`, so the screen can show it flying off the edge (it fades with a "HEADING HOME" label).
+- **As built:** the unit counts down `sortie` at the start of each of its owner's turns, before fuel is burned, so it never crashes on the turn it leaves; with `sortieTurns: 2` it arrives (and can't act), acts on its next two turns, and leaves at the start of the third. "A property of its side that services it" is checked then: an airfield for an aircraft (a port, for a ship given a sortie). Loading onto a Carrier drops the sortie at once.
 
 ### 5d. Japan gets nothing from what it captures (decided 2026-11-20)
 
@@ -169,7 +177,7 @@ Proposed as milestones, each one playable:
 
 | # | Engine | Presentation |
 |---|---|---|
-| S1 | Arrivals with entry zones; `rout` by side; `sortieTurns`; the record in `GameState`. Tests | Arriving and leaving units shown; a wave banner |
+| S1 (**built 2026-11-20**) | Arrivals with entry zones; `rout` by side; `sortieTurns`; the record in `GameState`. Tests (`tests/arrivals.test.ts`) | Arriving and leaving units shown; a wave banner |
 | S2 | The wave generator (§4), seeded. Tests | The HUD's wave counter and forecast |
 | S3 | The Wake Island map (`tools/maps/wake-island.mjs`, its picture) and its scripted waves | The title item, the Survival screen, the results screen and the best record |
 | S4 | — | Japan's survival plan (§6); `selfplay --survival`; tuning to §8 |

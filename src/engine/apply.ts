@@ -1,6 +1,7 @@
 // The single entry point for changing the game: apply(state, command) → new state + events,
 // or a rejection. Pure and deterministic: never mutates its input, uses only state.rng for luck.
 
+import { withoutSortie } from "./arrivals";
 import { weatherOn } from "./weather";
 import { applyBlow, applyRebuild, blowProblem, rebuildProblem } from "./bridges";
 import { fortTargetProblem, resolveCombat, resolveFortAttack, targetProblem } from "./combat";
@@ -130,7 +131,8 @@ function move(state: GameState, command: Extract<Command, { type: "move" }>): Ap
     if (!host) return reject(code, "move onto the unit first");
     const problem = action.type === "load" ? loadProblem(state, moved, host) : joinProblem(moved, host);
     if (problem) return reject(code, problem);
-    const result = action.type === "load" ? applyLoad(state, moved, host) : applyJoin(state, moved, host);
+    // A raider that lands on a Carrier has found a base, and stays (23-survival §5c).
+    const result = action.type === "load" ? applyLoad(state, withoutSortie(moved), host) : applyJoin(state, moved, host);
     return { ok: true, state: clearAbandonedCaptures(result.state), events: [...events, result.event] };
   }
 

@@ -21,8 +21,11 @@ export function loadGame(text: string): GameState {
   if (typeof saved.state !== "object" || saved.state === null) throw new Error("This save file has no game in it");
   // Saves from before weather existed are clear all game (12-weather §1); saves from before Major
   // Bridges have no bridge being rebuilt (02-terrain §4a); saves from before fog of war have none (19-fog-of-war).
-  // Saves from before the loss tally have nothing lost yet (04-economy §8a).
-  const state = saved.state as Omit<GameState, "weather" | "bridgeWorks" | "settings" | "players"> & {
+  // Saves from before the loss tally have nothing lost yet (04-economy §8a). Saves from before
+  // arrivals have none coming and no wave yet (23-survival §5a).
+  const state = saved.state as Omit<GameState, "weather" | "bridgeWorks" | "settings" | "players" | "arrivals" | "wave"> & {
+    arrivals?: GameState["arrivals"];
+    wave?: number;
     players: (Omit<Player, "unitsLost"> & { unitsLost?: Player["unitsLost"] })[];
     weather?: GameState["weather"];
     bridgeWorks?: GameState["bridgeWorks"];
@@ -33,6 +36,8 @@ export function loadGame(text: string): GameState {
     players: state.players.map((p) => ({ ...p, unitsLost: p.unitsLost ?? {} })),
     weather: state.weather ?? DEFAULT_WEATHER,
     bridgeWorks: state.bridgeWorks ?? [],
+    arrivals: state.arrivals ?? [],
+    wave: state.wave ?? 0,
     settings: { ...state.settings, fogOfWar: state.settings.fogOfWar ?? false },
   };
 }

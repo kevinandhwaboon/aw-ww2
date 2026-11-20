@@ -8,7 +8,7 @@ import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { parseAsciiMap, terrainAt, type Point } from "./map";
 import { MODIFIABLE_STATS, type Modifier, type ModifiableStat } from "./modifiers";
 import { createGame, type CargoSetup, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
-import type { Settings, VictoryCondition, WeatherPlan } from "./state";
+import type { Arrival, ArrivingUnit, Settings, VictoryCondition, WeatherPlan } from "./state";
 
 export interface Scenario {
   readonly id: string;
@@ -105,8 +105,9 @@ function parseVictory(raw: unknown, index: number): VictoryCondition {
   const properties = () => list(raw, "properties", where).map((p) => point(p, where));
   switch (raw.type) {
     case "hqCapture":
-    case "rout":
       return { type: raw.type };
+    case "rout":
+      return raw.side === undefined ? { type: raw.type } : { type: raw.type, side: side(raw, where) };
     case "captureProperties":
       return { type: raw.type, side: side(raw, where), properties: properties() };
     case "holdProperties":
@@ -116,6 +117,30 @@ function parseVictory(raw: unknown, index: number): VictoryCondition {
     default:
       return fail(`${where}: unknown victory condition ${String(raw.type)}`);
   }
+}
+
+function parseArrivingUnit(raw: unknown, where: string): ArrivingUnit {
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  if (!isUnitType(raw.type)) return fail(`${where}: unknown unit type ${String(raw.type)}`);
+  return {
+    type: raw.type,
+    ...optionalCounts(raw, ["hp", "fuel", "ammo", "kills", "sortieTurns"], where),
+    ...(raw.cargo === undefined ? {} : { cargo: list(raw, "cargo", where).map((c, i) => parseArrivingUnit(c, `${where} cargo ${i}`)) }),
+  };
+}
+
+/** Units that come onto the map during the game (23-survival §5a). */
+function parseArrival(raw: unknown, index: number): Arrival {
+  const where = `arrival ${index}`;
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  return {
+    day: count(raw, "day", where),
+    player: count(raw, "player", where),
+    ...optionalCounts(raw, ["wave"], where),
+    ...(raw.name === undefined ? {} : { name: text(raw, "name", where) }),
+    zone: list(raw, "zone", where).map((p) => point(p, where)),
+    units: list(raw, "units", where).map((u, i) => parseArrivingUnit(u, `${where} unit ${i}`)),
+  };
 }
 
 function parseModifier(raw: unknown, index: number): Modifier {
@@ -172,6 +197,7 @@ function parseSetup(raw: Json): Omit<GameSetup, "seed"> {
     ...(raw.modifiers === undefined ? {} : { modifiers: list(raw, "modifiers", "scenario").map(parseModifier) }),
     ...(raw.settings === undefined ? {} : { settings: parseSettings(raw.settings) }),
     ...(raw.weather === undefined ? {} : { weather: parseWeather(raw.weather) }),
+    ...(raw.arrivals === undefined ? {} : { arrivals: list(raw, "arrivals", "scenario").map(parseArrival) }),
   };
 }
 

@@ -153,6 +153,14 @@ export class MapPlayback {
       }
       // A ship that runs dry stays afloat, stuck until it's refuelled (05-supply-transport §7).
       if (event.type === "unitStranded") await this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"));
+      // A raider flies home off the map (23-survival §5c): not a loss, so no explosion.
+      if (event.type === "unitLeft") {
+        const sprite = this.unitSprites.get(event.unitId);
+        await Promise.all([
+          this.floatLabel(event.pos, "HEADING HOME", packColor("labelText")),
+          ...(sprite ? [this.tween(sprite, { alpha: 0 }, COMBAT_MS.float)] : []),
+        ]);
+      }
       if (event.type === "unitJoined") {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
@@ -198,6 +206,7 @@ export class MapPlayback {
       case "bridgeRebuilt":
       case "unitOutOfFuel":
       case "unitStranded":
+      case "unitLeft":
       case "unitLaunched":
       case "unitAmbushed":
         return [event.pos];

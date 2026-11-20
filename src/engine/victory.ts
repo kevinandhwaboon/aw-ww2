@@ -43,13 +43,14 @@ const RULES: Rules = {
   },
   /**
    * No units left at the end of any turn loses, but only for a player who has had some, so
-   * empty-start maps still work (04-economy §8). Passengers ride inside their transport, so a
+   * empty-start maps still work (04-economy §8). A scenario can limit it to one side, so an attacker
+   * whose units all arrive in waves isn't out between them (23-survival §5b). Passengers ride inside their transport, so a
    * player's last units can't be hiding in one that was destroyed.
    */
   rout: {
-    atTurnEnd(state) {
+    atTurnEnd(state, { side }) {
       return state.players
-        .filter((p) => !p.defeated && p.hasFielded && !state.units.some((u) => u.owner === p.id))
+        .filter((p) => !p.defeated && p.hasFielded && (side === undefined || p.side === side) && !state.units.some((u) => u.owner === p.id))
         .map((p) => p.id);
     },
   },
