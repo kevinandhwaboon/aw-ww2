@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import { attackTargets } from "../src/engine/combat";
 import type { Command, GameEvent, UnitAction } from "../src/engine/commands";
+import { UNITS } from "../src/engine/data/units";
 import { buildOptions, buildProblem } from "../src/engine/economy";
 import type { Point } from "../src/engine/map";
 import { moveDestinations } from "../src/engine/movement";
@@ -200,10 +201,15 @@ describe("submarines (05-supply-transport §9)", () => {
     expect(rejection(nextRound(run(state, dive(0))).state, dive(0))).toBe("cannotDive");
   });
 
-  it("a submerged submarine burns 5 fuel a day instead of 1", () => {
-    const state = makeGame(["S"], [u("submarine", 0, 0, { fuel: 50 })]);
-    expect(byId(nextRound(state).state, 0)?.fuel).toBe(49);
-    expect(byId(nextRound(run(state, dive(0))).state, 0)?.fuel).toBe(45);
+  it("a submerged submarine burns 10 fuel a day instead of 1 (05-supply-transport §9)", () => {
+    const state = makeGame(["S"], [u("submarine", 0, 0, { fuel: 40 })]);
+    expect(byId(nextRound(state).state, 0)?.fuel).toBe(39);
+    expect(byId(nextRound(run(state, dive(0))).state, 0)?.fuel).toBe(30);
+  });
+
+  it("a submarine's tank holds 45 fuel, 4 days dived without moving (01-units §8a)", () => {
+    expect(UNITS.submarine.maxFuel).toBe(45);
+    expect(Math.floor(UNITS.submarine.maxFuel / UNITS.submarine.fuelPerDaySubmerged)).toBe(4);
   });
 
   it("a submerged submarine that runs out of fuel surfaces instead of sinking, so it can't lurk unseen forever (05-supply-transport §7)", () => {
@@ -219,10 +225,10 @@ describe("submarines (05-supply-transport §9)", () => {
   });
 
   it("submerged fuel burn goes through the modifier layer", () => {
-    const state = makeGame(["S"], [u("submarine", 0, 0, { fuel: 50 })], {
+    const state = makeGame(["S"], [u("submarine", 0, 0, { fuel: 40 })], {
       modifiers: [{ source: "test", stat: "fuelPerDay", op: "add", value: 1 }],
     });
-    expect(byId(nextRound(run(state, dive(0))).state, 0)?.fuel).toBe(44);
+    expect(byId(nextRound(run(state, dive(0))).state, 0)?.fuel).toBe(29);
   });
 
   describe("who can hit a submerged submarine (03-combat §5c)", () => {

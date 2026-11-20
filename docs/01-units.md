@@ -1,7 +1,7 @@
 # Topic Doc 01: Units
 
 **Status:** Roster and roles decided. Provisional v0 stats set (section 8); expect them to change after playtesting. Damage values live in 03-combat.
-**Last updated:** 2026-11-16
+**Last updated:** 2026-11-20 (Submarine fuel halved, dived burn doubled)
 **Depends on:** 00-master-design.md. **Feeds:** 02-terrain (movement types, fortifications), 03-combat (damage chart), 05-supply-transport (transport and resupply rules).
 
 ---
@@ -173,7 +173,7 @@ These are starting points for the first playable build, based on the original ga
 | Torpedo Bomber | 16,000 | 6 | 2 | 70 | 5 | Torpedo (1) | — | 1 | — |
 | Battleship | 28,000 | 5 | 2 | 80 | 1 | Main guns (9) | AA guns (return fire only) | 2–6 | — |
 | Destroyer | 16,000 | 6 | 3 | 65 | 2 | Guns/depth charges (9) | AA guns | 1 | — |
-| Submarine | 20,000 | 5 | 5 | 90 | 1 (5 dived) | Torpedoes (6) | — | 1 | — |
+| Submarine | 20,000 | 5 | 5 | 45 | 1 (10 dived) | Torpedoes (6) | — | 1 | — |
 | Landing Craft | 12,000 | 6 | 1 | 35 | 1 | — | — | — | 2 land |
 | Torpedo Boat | 8,000 | 7 | 3 | 20 | 2 | Torpedoes (4) | MG | 1 | — |
 | Carrier | 40,000 | 5 | 2 | 85 | 1 | — | AA guns (return fire only) | its aircraft's | 2 air (Fighter, Dive Bomber, Torpedo Bomber) |
@@ -188,7 +188,7 @@ At the developer's request, fuel was rescaled so each unit's tank reflects the m
 | Ship | Real endurance at cruising speed | Real days | Days at full speed in the game | Fuel |
 |---|---|---|---|---|
 | Supply Ship | Cimarron-class oiler, about 18,000 nautical miles | ~50 | 16.5 | 99 |
-| Submarine | Gato 11,000 nmi at 10 knots, Type VII 8,500 at 10 | ~40 | 15 | 90 |
+| Submarine | Gato 11,000 nmi at 10 knots, Type VII 8,500 at 10 | ~40 | 7.5 | 45 (the formula gives 90; halved 2026-11-20 at the developer's request) |
 | Carrier | Essex 20,000 nmi at 15 knots, Shōkaku 9,700 at 18, Illustrious 11,000 at 14 | ~37 | 14 | 85 |
 | Battleship | Iowa 15,000 nmi at 15 knots, Yamato 7,200 at 16, Warspite 8,600 at 10 | ~32 | 13 | 80 |
 | Destroyer | Fletcher 6,500 nmi at 15 knots, Kagero 5,000 at 18, Tribal 5,700 at 15, Z-class 1936A about 2,900 at 19 | ~13 | 8 | 65 |
@@ -214,7 +214,7 @@ Daily burns are unchanged: 2 for Destroyers and Torpedo Boats, 1 for the rest (5
 | Transport Aircraft | 99 | 3 | C-47 and Ju 52: economical, about 8 hours aloft |
 | Dive Bomber, Torpedo Bomber | 70 | 5 | SBD, TBF, D3A, B5N: about 1,600–1,800 km |
 | Supply Ship | 99 | 1 | Fleet oilers carried fuel for a whole task force. It doesn't refuel itself: two side by side refuel each other |
-| Submarine | 90 | 1 (5 dived) | Long-ranged on the surface; batteries only last a day or two dived |
+| Submarine | 45 | 1 (10 dived) | Long-ranged on the surface; batteries only last a day or two dived. Since 2026-11-20, at the developer's request, the tank is halved from 90 and the dived burn doubled from 5: a full tank lasts 4 days dived without moving, about 3 if it moves its full 5 each day, so a submarine has to surface, and be seen, to stay out |
 | Carrier | 85 | 1 | See the naval table above |
 | Battleship | 80 | 1 | See the naval table above |
 | Destroyer | 65 | 2 | Notoriously thirsty: refuelled at sea every few days |
