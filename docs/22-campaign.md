@@ -12,6 +12,7 @@ The title screen offers **Campaign**, **Skirmish** and, when a game was left unf
 
 - **Skirmish** is the game as it was before this doc: pick any map on the world map, choose who the computer plays (or play a friend on one device), commanders and options. Skirmish maps are balanced by AI vs AI play, so the two sides are roughly even for two equal players. Nothing about Skirmish changed except its name and where it sits in the menu.
 - **Campaign** is the player against the computer, always as the **Allies**, on the same maps, in history's order. Because no computer opponent is as good as a careful human, **the computer starts with a numerical advantage** on every mission (§4), and a mission can have an AI written for that map alone (§6).
+- A third way, **Survival**, is drafted in 23-survival (not approved or built).
 
 ## 2. The missions and their order
 
