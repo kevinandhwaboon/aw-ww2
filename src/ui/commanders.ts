@@ -1,7 +1,7 @@
 // Commanders on screen (06-commanders §5): their portraits, the choice on the map select and the
 // Commanders screen. Words come from the engine's commander data, names and art from the art pack.
 
-import { COMMANDER_IDS, COMMANDERS, type CommanderId } from "../engine/data/commanders";
+import { type Branch, COMMANDER_IDS, COMMANDERS, type CommanderId } from "../engine/data/commanders";
 import { NATIONS, type NationId } from "../engine/data/nations";
 import type { GameState, PlayerId } from "../engine/state";
 import { commanderName } from "../game/artPack";
@@ -11,10 +11,14 @@ import { drawFlag } from "./flag";
 import { menuKeys } from "./menuKeys";
 
 const SIDE_NAMES = { allies: "Allies", axis: "Axis" } as const;
+const BRANCH_NAMES: Record<Branch, string> = { tanks: "Tanks", infantry: "Infantry", naval: "Naval", air: "Air" };
+
+/** "Naval · United States": the branch and nation a commander comes from. */
+export const commanderOrigin = (id: CommanderId): string => `${BRANCH_NAMES[COMMANDERS[id].branch]} · ${NATIONS[COMMANDERS[id].nation].name}`;
 const sideOf = (id: CommanderId) => NATIONS[COMMANDERS[id].nation].side;
 
 /** A commander's portrait from the art pack, or nothing if the pack has none. */
-export function commanderPortrait(id: CommanderId, crop: "full" | "head"): HTMLImageElement | null {
+export function commanderPortrait(id: CommanderId, crop: "full" | "bust"): HTMLImageElement | null {
   const url = commanderPortraitUrl(id, crop);
   if (url === null) return null;
   const image = el("img", `commander-${crop}`);
@@ -49,12 +53,14 @@ export function commanderPicker(playerName: string, allowed: readonly CommanderI
   const chosen = () => choices[index] ?? null;
   const show = () => {
     const id = chosen();
-    const portrait = id === null ? null : commanderPortrait(id, "head");
-    const label = el("span", undefined, id === null ? "No commander" : `Commander: ${commanderName(id)}`);
+    const portrait = id === null ? null : commanderPortrait(id, "bust");
+    const label = el("span", "commander-pick-label");
+    label.append(el("span", undefined, id === null ? "No commander" : `Commander: ${commanderName(id)}`));
+    if (id !== null) label.append(el("span", "commander-pick-origin", commanderOrigin(id)));
     button.title = `Change ${playerName}'s commander`;
     button.replaceChildren(
       el("span", "commander-pick-arrow", "◂"),
-      ...(portrait ? [portrait] : [el("span", "commander-head commander-none")]),
+      ...(portrait ? [portrait] : [el("span", "commander-bust commander-none")]),
       label,
       el("span", "commander-pick-arrow commander-pick-next", "▸"),
     );
@@ -125,10 +131,12 @@ export function createCommandersScreen(root: HTMLElement): CommandersScreen {
         list.append(el("div", "panel-subtitle", SIDE_NAMES[side]));
         for (const id of COMMANDER_IDS.filter((c) => sideOf(c) === side)) {
           const row = el("button", "list-row commander-row");
-          const portrait = commanderPortrait(id, "head");
+          const portrait = commanderPortrait(id, "bust");
           const flags = el("span", "commander-flags");
           flags.append(...flagsOf(id).map(drawFlag));
-          row.append(...(portrait ? [portrait] : []), el("span", "commander-row-name", commanderName(id)), flags);
+          const name = el("span", "commander-row-name");
+          name.append(el("span", undefined, commanderName(id)), el("span", "commander-row-origin", commanderOrigin(id)));
+          row.append(...(portrait ? [portrait] : []), name, flags);
           row.addEventListener("focus", () => select(id));
           row.addEventListener("click", () => select(id));
           rows.set(id, row);
@@ -171,7 +179,7 @@ function detailLines(id: CommanderId, state: GameState): HTMLElement[] {
   const holders = state.players.filter((p) => p.commander === id).map((p) => p.name);
   text.append(
     el("div", "commander-name", commanderName(id)),
-    el("div", "commander-origin", `${NATIONS[def.nation].name} · ${SIDE_NAMES[sideOf(id)]}`),
+    el("div", "commander-origin", `${commanderOrigin(id)} · ${SIDE_NAMES[sideOf(id)]}`),
     ...(holders.length > 0 ? [el("div", "commander-holders", `In this battle: commands ${holders.join(" and ")}`)] : []),
     el("div", "commander-style", def.style),
     el("div", "panel-subtitle", "Bonuses"),

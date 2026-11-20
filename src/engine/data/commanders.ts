@@ -6,11 +6,19 @@ import type { Modifier, ModifierScope } from "../modifiers";
 import type { NationId } from "./nations";
 import type { UnitTypeId } from "./units";
 
+// Roster order, which the screens follow: Allies then Axis, each by branch (tanks, infantry, naval, air).
 export const COMMANDER_IDS = [
-  "harlan", "calloway", "ashdown", "tremblay", "morozov",
-  "falk", "ferrante", "arakawa",
+  "harlan", "tremblay", "ashdown", "morozov", "calloway", "penhallow",
+  "falk", "wendt", "ferrante", "kuramochi", "arakawa",
 ] as const;
 export type CommanderId = (typeof COMMANDER_IDS)[number];
+
+/**
+ * The branch a commander comes from, shown by their uniform and named on the screens. Each side has
+ * at least one commander of every branch (06-commanders §2).
+ */
+export const BRANCHES = ["tanks", "infantry", "naval", "air"] as const;
+export type Branch = (typeof BRANCHES)[number];
 
 /** A modifier without its source or its players: both come from who has the commander. */
 export interface CommanderEffect extends Omit<Modifier, "source" | "scope"> {
@@ -21,6 +29,7 @@ export interface CommanderDef {
   readonly name: string;
   /** The nation the commander comes from. They serve any nation on that nation's side (06-commanders §2). */
   readonly nation: NationId;
+  readonly branch: Branch;
   readonly style: string;
   /** The bonuses and the drawback in words, as 06-commanders §3 gives them. */
   readonly bonuses: readonly string[];
@@ -33,12 +42,14 @@ const TANKS = ["lightTank", "mediumTank", "heavyTank"] as const satisfies readon
 const FOOT_SOLDIERS = ["infantry", "assaultInfantry"] as const satisfies readonly UnitTypeId[];
 const INDIRECT_FIRE = ["mortar", "artillery", "rocketArtillery"] as const satisfies readonly UnitTypeId[];
 const BOMBERS = ["bomber", "diveBomber", "torpedoBomber"] as const satisfies readonly UnitTypeId[];
+const SMALL_WARSHIPS = ["submarine", "torpedoBoat"] as const satisfies readonly UnitTypeId[];
 const CARRIER_BOMBERS = ["diveBomber", "torpedoBomber"] as const satisfies readonly UnitTypeId[];
 
 export const COMMANDERS = {
   harlan: {
     name: "Walt Harlan",
     nation: "us",
+    branch: "tanks",
     style: "Never stops moving, and keeps his machines running. Would sooner attack again than wait for the guns.",
     bonuses: ["Tanks +1 move", "Every unit repairs 1 extra HP per turn on a property that repairs it"],
     drawback: "Indirect fire −10% attack",
@@ -51,6 +62,7 @@ export const COMMANDERS = {
   calloway: {
     name: "Dale Calloway",
     nation: "us",
+    branch: "naval",
     style: "A patient admiral. Keeps his ships moving and brings them home.",
     bonuses: ["Ships +1 move and +10% defense"],
     drawback: "Tanks −10% attack",
@@ -63,6 +75,7 @@ export const COMMANDERS = {
   ashdown: {
     name: "Hugh Ashdown",
     nation: "uk",
+    branch: "infantry",
     style: "Methodical. Attacks only after the guns have done their work, and then with infantry.",
     bonuses: ["Indirect fire +15% attack", "Foot soldiers +10% attack"],
     drawback: "Tanks −1 move",
@@ -75,6 +88,7 @@ export const COMMANDERS = {
   tremblay: {
     name: "Luc Tremblay",
     nation: "canada",
+    branch: "tanks",
     style: "An inventor who carries his infantry forward under armor. His troops learn fast.",
     bonuses: ["Halftracks +1 move", "Units reach Veteran at 2 kills and Elite at 5"],
     drawback: "Air units −10% attack",
@@ -88,6 +102,7 @@ export const COMMANDERS = {
   morozov: {
     name: "Stepan Morozov",
     nation: "ussr",
+    branch: "infantry",
     style: "Wins by weight of numbers, and fights for a city street by street.",
     bonuses: ["All units cost 10% less", "Foot soldiers +20% attack in Cities"],
     drawback: "All units −10% defense",
@@ -97,9 +112,24 @@ export const COMMANDERS = {
       { stat: "defense", op: "add", value: -10 },
     ],
   },
+  penhallow: {
+    name: "Rhys Penhallow",
+    nation: "uk",
+    branch: "air",
+    style: "Wins the sky first, then lets the army walk in under it.",
+    bonuses: ["Air units +10% attack and +10% defense", "Fighters +1 move"],
+    drawback: "Ships −10% attack",
+    effects: [
+      { stat: "attack", op: "add", value: 10, scope: { categories: ["air"] } },
+      { stat: "defense", op: "add", value: 10, scope: { categories: ["air"] } },
+      { stat: "movePoints", op: "add", value: 1, scope: { unitTypes: ["fighter"] } },
+      { stat: "attack", op: "add", value: -10, scope: { categories: ["naval"] } },
+    ],
+  },
   falk: {
     name: "Konrad Falk",
     nation: "germany",
+    branch: "tanks",
     style: "Bold, fast strikes that outrun his supply columns.",
     bonuses: ["Tanks and Tank Destroyers +15% attack when they start the fight", "Recon +1 move"],
     drawback: "All units carry 20% less fuel and ammo",
@@ -113,6 +143,7 @@ export const COMMANDERS = {
   ferrante: {
     name: "Aldo Ferrante",
     nation: "italy",
+    branch: "infantry",
     style: "A patient defender. Lets the ground do the work and makes an attacker pay for every step.",
     bonuses: ["All units +15% defense on Hills, Ridges and Cities", "All units +20% attack on counterattacks"],
     drawback: "All units −10% attack when they start the fight",
@@ -122,9 +153,37 @@ export const COMMANDERS = {
       { stat: "attack", op: "add", value: -10, scope: { fight: ["started"] } },
     ],
   },
+  wendt: {
+    name: "Jakob Wendt",
+    nation: "germany",
+    branch: "infantry",
+    style: "Trusts the rifleman. Digs in, holds on, and gives ground a step at a time.",
+    bonuses: ["Foot soldiers +15% attack and +15% defense", "Mortar Teams +1 move"],
+    drawback: "Air units cost 10% more",
+    effects: [
+      { stat: "attack", op: "add", value: 15, scope: { unitTypes: FOOT_SOLDIERS } },
+      { stat: "defense", op: "add", value: 15, scope: { unitTypes: FOOT_SOLDIERS } },
+      { stat: "movePoints", op: "add", value: 1, scope: { unitTypes: ["mortar"] } },
+      { stat: "cost", op: "multiply", value: 1.1, scope: { categories: ["air"] } },
+    ],
+  },
+  kuramochi: {
+    name: "Isao Kuramochi",
+    nation: "japan",
+    branch: "naval",
+    style: "A night-fighting admiral. Closes fast and fires first.",
+    bonuses: ["Ships +20% attack when they start the fight", "Submarines and Torpedo Boats +1 move"],
+    drawback: "Foot soldiers −10% attack",
+    effects: [
+      { stat: "attack", op: "add", value: 20, scope: { categories: ["naval"], fight: ["started"] } },
+      { stat: "movePoints", op: "add", value: 1, scope: { unitTypes: SMALL_WARSHIPS } },
+      { stat: "attack", op: "add", value: -10, scope: { unitTypes: FOOT_SOLDIERS } },
+    ],
+  },
   arakawa: {
     name: "Kenji Arakawa",
     nation: "japan",
+    branch: "air",
     style: "Strikes first from the air, and digs in deep on the ground.",
     bonuses: [
       "Dive Bombers and Torpedo Bombers +1 move and +10% attack",

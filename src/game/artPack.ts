@@ -311,7 +311,7 @@ export interface ArtPack {
   readonly terrainNames: Readonly<Partial<Record<TerrainId, string>>>;
   /**
    * The folder of commander portraits, relative to the pack's folder: `<id>.png` from the waist up
-   * and `<id>-head.png` for the turn bar (06-commanders §4). Null: commanders show by name alone.
+   * and `<id>-bust.png`, head, shoulders and chest, for lists (06-commanders §4). Null: commanders show by name alone.
    */
   readonly commanderPortraits: string | null;
   readonly commanderNames: Readonly<Partial<Record<CommanderId, string>>>;

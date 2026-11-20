@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { apply } from "../src/engine/apply";
 import { damageFormula, forecast } from "../src/engine/combat";
 import type { GameEvent } from "../src/engine/commands";
-import { COMMANDER_IDS, COMMANDERS, type CommanderId } from "../src/engine/data/commanders";
+import { BRANCHES, COMMANDER_IDS, COMMANDERS, type CommanderId } from "../src/engine/data/commanders";
 import { NATIONS, type NationId } from "../src/engine/data/nations";
 import type { Point } from "../src/engine/map";
 import type { GameSetup, UnitSetup } from "../src/engine/setup";
@@ -93,13 +93,20 @@ describe("commanders: who may have one (06-commanders §2)", () => {
     expect(stats.movePoints(state, unit(state, 1))).toBe(6);
   });
 
-  it("there are five Allied commanders and three Axis, each with bonuses and one drawback (06-commanders §3)", () => {
+  it("there are six Allied commanders and five Axis, each with bonuses and one drawback (06-commanders §3)", () => {
     const sides = COMMANDER_IDS.map((id) => NATIONS[COMMANDERS[id].nation].side);
-    expect(sides.filter((s) => s === "allies")).toHaveLength(5);
-    expect(sides.filter((s) => s === "axis")).toHaveLength(3);
+    expect(sides.filter((s) => s === "allies")).toHaveLength(6);
+    expect(sides.filter((s) => s === "axis")).toHaveLength(5);
     for (const id of COMMANDER_IDS) {
       expect(COMMANDERS[id].bonuses.length).toBeGreaterThan(0);
       expect(COMMANDERS[id].drawback).not.toBe("");
+    }
+  });
+
+  it("each side has a tanks, an infantry, a naval and an air commander (06-commanders §2)", () => {
+    for (const side of ["allies", "axis"] as const) {
+      const branches = new Set(COMMANDER_IDS.filter((id) => NATIONS[COMMANDERS[id].nation].side === side).map((id) => COMMANDERS[id].branch));
+      expect([...branches].sort()).toEqual([...BRANCHES].sort());
     }
   });
 });
@@ -419,5 +426,119 @@ describe("Kenji Arakawa (06-commanders §3)", () => {
   it("his tanks move 1 less", () => {
     const state = game(["..."], [{ type: "lightTank", owner: 1, pos: P(0, 0) }], { axis: "arakawa" });
     expect(stats.movePoints(state, unit(state, 0))).toBe(6);
+  });
+});
+
+describe("Rhys Penhallow (06-commanders §3)", () => {
+  it("his air units attack and defend at +10%, his land units as usual", () => {
+    const state = game(
+      ["..."],
+      [
+        { type: "fighter", owner: 0, pos: P(0, 0) },
+        { type: "bomber", owner: 0, pos: P(1, 0) },
+        { type: "mediumTank", owner: 0, pos: P(2, 0) },
+      ],
+      { allies: "penhallow" },
+    );
+    expect([0, 1, 2].map((id) => stats.attackMod(state, unit(state, id)))).toEqual([110, 110, 100]);
+    expect([0, 1, 2].map((id) => stats.defenseMod(state, unit(state, id)))).toEqual([110, 110, 100]);
+  });
+
+  it("his Fighters move 1 further, his Bombers as usual", () => {
+    const state = game(
+      [".."],
+      [
+        { type: "fighter", owner: 0, pos: P(0, 0) },
+        { type: "bomber", owner: 0, pos: P(1, 0) },
+      ],
+      { allies: "penhallow" },
+    );
+    expect([0, 1].map((id) => stats.movePoints(state, unit(state, id)))).toEqual([10, 7]);
+  });
+
+  it("his ships attack at −10%", () => {
+    const state = game(["S"], [{ type: "destroyer", owner: 0, pos: P(0, 0) }], { allies: "penhallow" });
+    expect(stats.attackMod(state, unit(state, 0))).toBe(90);
+  });
+});
+
+describe("Jakob Wendt (06-commanders §3)", () => {
+  it("his foot soldiers attack and defend at +15%, his tanks as usual", () => {
+    const state = game(
+      ["..."],
+      [
+        { type: "infantry", owner: 1, pos: P(0, 0) },
+        { type: "assaultInfantry", owner: 1, pos: P(1, 0) },
+        { type: "mediumTank", owner: 1, pos: P(2, 0) },
+      ],
+      { axis: "wendt" },
+    );
+    expect([0, 1, 2].map((id) => stats.attackMod(state, unit(state, id)))).toEqual([115, 115, 100]);
+    expect([0, 1, 2].map((id) => stats.defenseMod(state, unit(state, id)))).toEqual([115, 115, 100]);
+  });
+
+  it("an attack on his infantry does less damage", () => {
+    const fight = (axis?: CommanderId) =>
+      game(
+        [".."],
+        [
+          { type: "mediumTank", owner: 0, pos: P(0, 0) },
+          { type: "infantry", owner: 1, pos: P(1, 0) },
+        ],
+        axis ? { axis } : {},
+      );
+    expect(attackDamage(fight("wendt"))).toBeLessThan(attackDamage(fight()));
+  });
+
+  it("his Mortar Teams move 1 further", () => {
+    const state = game(["..."], [{ type: "mortar", owner: 1, pos: P(0, 0) }], { axis: "wendt" });
+    expect(stats.movePoints(state, unit(state, 0))).toBe(3);
+  });
+
+  it("his air units cost 10% more, everything else as usual", () => {
+    const state = game(["..."], [], { axis: "wendt" });
+    expect(stats.unitCost(state, 1, "fighter")).toBe(22000);
+    expect(stats.unitCost(state, 1, "infantry")).toBe(1000);
+    expect(stats.unitCost(state, 0, "fighter")).toBe(20000);
+  });
+});
+
+describe("Isao Kuramochi (06-commanders §3)", () => {
+  const ships = (axis?: CommanderId) =>
+    game(
+      ["SS"],
+      [
+        { type: "destroyer", owner: 0, pos: P(0, 0) },
+        { type: "destroyer", owner: 1, pos: P(1, 0) },
+      ],
+      axis ? { axis } : {},
+    );
+
+  it("his ships attack at +20% when they start the fight", () => {
+    const state = ships("kuramochi");
+    expect(stats.attackMod(state, unit(state, 1), { role: "started", opponent: unit(state, 0) })).toBe(120);
+    expect(attackDamage(state, 1, 0)).toBeGreaterThan(attackDamage(ships(), 1, 0));
+  });
+
+  it("his ships get nothing extra on a counterattack", () => {
+    expect(counterDamage(ships("kuramochi"), 0, 1)).toBe(counterDamage(ships(), 0, 1));
+  });
+
+  it("his Submarines and Torpedo Boats move 1 further, his Battleships as usual", () => {
+    const state = game(
+      ["SSS"],
+      [
+        { type: "submarine", owner: 1, pos: P(0, 0) },
+        { type: "torpedoBoat", owner: 1, pos: P(1, 0) },
+        { type: "battleship", owner: 1, pos: P(2, 0) },
+      ],
+      { axis: "kuramochi", axisNation: "japan" },
+    );
+    expect([0, 1, 2].map((id) => stats.movePoints(state, unit(state, id)))).toEqual([6, 8, 5]);
+  });
+
+  it("his foot soldiers attack at −10%", () => {
+    const state = game(["..."], [{ type: "infantry", owner: 1, pos: P(0, 0) }], { axis: "kuramochi" });
+    expect(stats.attackMod(state, unit(state, 0))).toBe(90);
   });
 });

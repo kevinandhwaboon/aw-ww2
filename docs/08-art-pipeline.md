@@ -274,7 +274,7 @@ Only `name` is required. Anything else you leave out keeps the built-in look, so
 | `unitNames` | Display names by unit id, such as `"mediumTank": "Sherman"` |
 | `properties` | Buildings for properties: `path`, `columns` and `rows` (section 15) |
 | `terrainNames` | Display names by terrain id |
-| `commanderPortraits` | The folder of commander portraits, ending in `/`: `<id>.png` (48 × 64) and `<id>-head.png` (32 × 32) for each commander (06-commanders §4). Without it commanders show by name alone |
+| `commanderPortraits` | The folder of commander portraits, ending in `/`: `<id>.png` (48 × 64) and `<id>-bust.png` (48 × 48, the head, shoulders and chest) for each commander (06-commanders §4). Without it commanders show by name alone |
 | `commanderNames` | Display names by commander id |
 | `sounds` | Sound files by sound id, one file or a list to pick from (16-sound §7) |
 
