@@ -26,6 +26,8 @@ export interface Autosave {
   /** Who the computer plays and how well, the pass-the-device screen and battle scenes: none of it is in the game state. */
   readonly options: GameOptions;
   readonly state: GameState;
+  /** True for a campaign mission on this map (22-campaign §2), so a win carried on still counts. Missing for Skirmish. */
+  readonly campaign?: true;
 }
 
 /**
@@ -63,8 +65,8 @@ export function clearAutosave(store: SaveStore | null): void {
   }
 }
 
-export function encodeAutosave({ scenarioId, options, state }: Autosave): string {
-  return JSON.stringify({ version: AUTOSAVE_VERSION, scenarioId, options, game: saveGame(state) });
+export function encodeAutosave({ scenarioId, options, state, campaign }: Autosave): string {
+  return JSON.stringify({ version: AUTOSAVE_VERSION, scenarioId, options, game: saveGame(state), ...(campaign ? { campaign } : {}) });
 }
 
 /**
@@ -80,7 +82,7 @@ export function decodeAutosave(text: string | null, scenarioIds: readonly string
     return null;
   }
   if (!isRecord(saved) || saved.version !== AUTOSAVE_VERSION) return null;
-  const { scenarioId, options, game } = saved;
+  const { scenarioId, options, game, campaign } = saved;
   if (typeof scenarioId !== "string" || !scenarioIds.includes(scenarioId)) return null;
   if (!isGameOptions(options) || typeof game !== "string") return null;
   let state: GameState;
@@ -90,7 +92,7 @@ export function decodeAutosave(text: string | null, scenarioIds: readonly string
     return null;
   }
   if (state.result) return null;
-  return { scenarioId, options, state };
+  return { scenarioId, options, state, ...(campaign === true ? { campaign } : {}) };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

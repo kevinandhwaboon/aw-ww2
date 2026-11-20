@@ -31,16 +31,30 @@ export interface ResumeChoice {
   readonly go: () => void;
 }
 
-export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, resume: ResumeChoice | null = null): void {
+/** What the title screen offers besides Skirmish (22-campaign §1), passed along so every screen can go back to it. */
+export interface TitleChoices {
+  /** Opens the campaign screen. */
+  readonly campaign: () => void;
+  /** The game to carry on, if there is one. */
+  readonly resume: ResumeChoice | null;
+}
+
+export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, title: TitleChoices): void {
+  const { resume } = title;
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel title-panel");
-  const play = el("button", "btn btn-big", "New Game");
+  const campaign = el("button", "btn btn-big", "Campaign");
+  campaign.addEventListener("click", () => {
+    close();
+    title.campaign();
+  });
+  const play = el("button", "btn btn-big", "Skirmish");
   play.addEventListener("click", () => {
     close();
-    showMapSelect(root, scenarios, defaults, onStart, undefined, resume);
+    showMapSelect(root, scenarios, defaults, onStart, title);
   });
-  panel.append(el("h1", "title-name", "WW2"), el("div", "title-sub", "Play the computer, or a friend on one device"));
-  const buttons = [play];
+  panel.append(el("h1", "title-name", "WW2"));
+  const buttons = [campaign, play];
   if (resume) {
     // Continue comes first, so Z on the title screen carries the game on.
     const carryOn = el("button", "btn btn-big", "Continue");
@@ -51,7 +65,12 @@ export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[
     panel.append(carryOn, el("div", "title-sub", resume.label));
     buttons.unshift(carryOn);
   }
-  panel.append(play);
+  panel.append(
+    campaign,
+    el("div", "title-sub", "Lead the Allies through the war against a stronger computer"),
+    play,
+    el("div", "title-sub", "Any battle, either side: play the computer, or a friend on one device"),
+  );
   node.append(panel);
   buttons[0]?.focus();
   menuKeys(panel, buttons);
@@ -87,8 +106,8 @@ export function showMapSelect(
   scenarios: readonly Scenario[],
   defaults: GameOptions,
   onStart: OnStart,
+  title: TitleChoices,
   initial?: Scenario,
-  resume: ResumeChoice | null = null,
 ): void {
   const { node, close: closeScreen } = screen(root);
   const placed: Placed[] = scenarios.flatMap((scenario) => {
@@ -160,7 +179,7 @@ export function showMapSelect(
     if (!chosen) return;
     const { scenario } = chosen;
     close();
-    showPlayerSelect(root, scenarios, scenario, defaults, onStart, resume);
+    showPlayerSelect(root, scenarios, scenario, defaults, onStart, title);
   };
   next.addEventListener("click", confirm);
 
@@ -263,7 +282,7 @@ export function showMapSelect(
       event.preventDefault();
       if (!event.repeat) {
         close();
-        showTitleScreen(root, scenarios, defaults, onStart, resume);
+        showTitleScreen(root, scenarios, defaults, onStart, title);
       }
     }
   };
@@ -283,7 +302,7 @@ export function showPlayerSelect(
   scenario: Scenario,
   defaults: GameOptions,
   onStart: OnStart,
-  resume: ResumeChoice | null = null,
+  title: TitleChoices,
 ): void {
   const { node, close } = screen(root);
   const panel = el("div", "panel screen-panel map-panel");
@@ -354,7 +373,7 @@ export function showPlayerSelect(
     ],
     () => {
       close();
-      showMapSelect(root, scenarios, options(), onStart, scenario, resume);
+      showMapSelect(root, scenarios, options(), onStart, title, scenario);
     },
   );
 }

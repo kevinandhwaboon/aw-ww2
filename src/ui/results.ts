@@ -16,7 +16,9 @@ const DEFEAT_TEXT: Record<DefeatReason, string> = {
 };
 
 /** The end-of-game screen: who won, why, and how each player finished. */
-export function createResultsScreen(root: HTMLElement): { show: (state: GameState, onNewGame: () => void) => void } {
+export function createResultsScreen(root: HTMLElement): {
+  show: (state: GameState, onNewGame: () => void, newGameLabel?: string, note?: string | null) => void;
+} {
   const panel = el("div", "panel results");
   panel.hidden = true;
   // While viewing the final map, this is the way back to the results and New Game.
@@ -26,13 +28,16 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
   root.append(panel, back);
 
   return {
-    show(state, onNewGame) {
+    show(state, onNewGame, newGameLabel = "New Game", note = null) {
       const { result } = state;
       if (!result) return;
       const winners = result.winners.flatMap((id) => state.players[id]?.name ?? []).join(" and ");
       const title = el("div", "results-title", `Victory: ${winners}`);
       title.style.color = playerColors(result.winners[0] ?? 0)[0];
       const reason = el("div", "results-reason", `${DEFEAT_TEXT[result.reason]} on day ${state.day}.`);
+      // What the game won beyond itself, such as the next campaign mission (22-campaign §7).
+      const won = el("div", "results-reason", note ?? "");
+      won.hidden = note === null;
       const lines = objectiveLines(state);
       const objectives = el("div", "results-objectives");
       objectives.hidden = lines.length === 0;
@@ -72,7 +77,7 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
         receipts.append(receipt);
       }
 
-      const newGame = el("button", "btn", "New Game");
+      const newGame = el("button", "btn", newGameLabel);
       newGame.addEventListener("click", onNewGame);
       const viewMap = el("button", "btn", "View Map");
       viewMap.addEventListener("click", () => {
@@ -87,7 +92,7 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       };
       const buttons = el("div", "results-buttons");
       buttons.append(newGame, viewMap);
-      panel.replaceChildren(title, reason, objectives, table, el("div", "panel-subtitle", "Losses"), receipts, buttons);
+      panel.replaceChildren(title, reason, won, objectives, table, el("div", "panel-subtitle", "Losses"), receipts, buttons);
       panel.hidden = false;
       newGame.focus();
       menuKeys(panel, [newGame, viewMap]);

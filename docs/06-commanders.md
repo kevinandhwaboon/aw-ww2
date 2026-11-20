@@ -175,7 +175,7 @@ Rulings made while building:
 ## 7. Open questions
 
 - **Commander powers.** The original's commanders also have a power that charges up and is set off by the player. Not designed; this doc covers the always-on effects only.
-- **Whether a scenario can fix or forbid commanders.**
+- **Whether a scenario can fix or forbid commanders.** Answered for the Campaign (22-campaign §3, 2026-11-20): each mission fixes the computer's commanders and leaves the player's choice open. Skirmish still leaves every choice to the players.
 - **Whether a commander changes how the computer plays** (00-master-design §15).
 - **Balance.** Nothing here has been played. `npm run selfplay` with each commander against each other, and against no commander, is the first check once built.
 - **Final names.** The names in §3 are placeholders that pass the rules in §1.

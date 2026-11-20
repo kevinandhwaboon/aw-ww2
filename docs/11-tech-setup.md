@@ -35,6 +35,8 @@
 │  ├─ game/                  Phaser scenes: map rendering, input → commands, event playback
 │  │  └─ sound/              sound effects: which play when (pure), and the player (16-sound)
 │  ├─ ui/                    HTML/CSS overlay: HUD, menus, screens
+│  ├─ ai/                    computer players (09-ai); maps/ holds the map-specific plans (22-campaign §6)
+│  ├─ campaign/              PURE campaign missions, their setup and progress (22-campaign)
 │  └─ main.ts                wires engine, Phaser and UI together
 ├─ tests/                    engine tests (*.test.ts), mirroring src/engine
 ├─ public/assets/            sprite sheets, sounds, art packs

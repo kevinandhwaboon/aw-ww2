@@ -41,22 +41,28 @@ import {
 } from "./greedyBase";
 import { ProductionBrain } from "./greedyProduction";
 import { EnemyMemory } from "./memory";
+import type { MapPlan } from "./mapPlan";
 import type { AiPlayer } from "./player";
 import { EASY_WEIGHTS, GREEDY_WEIGHTS, type GreedyWeights } from "./weights";
 
-export function greedyAi(weights: GreedyWeights = GREEDY_WEIGHTS): AiPlayer {
+export function greedyAi(weights: GreedyWeights = GREEDY_WEIGHTS, mapPlan: MapPlan | null = null): AiPlayer {
   // Each Greedy player remembers the enemies it has seen in fog of war (09-ai §4g).
   const memory = new EnemyMemory(weights.memoryDays);
+  const level = weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy";
   return {
-    name: weights === EASY_WEIGHTS ? "Greedy (Easy)" : "Greedy",
-    chooseCommand: (view) => chooseCommand(memory.believe(view.state, view.me), weights),
+    name: mapPlan ? `${level}, ${mapPlan.name}` : level,
+    chooseCommand: (view) => {
+      const believed = memory.believe(view.state, view.me);
+      mapPlan?.observe?.(believed);
+      return chooseCommand(believed, weights, mapPlan);
+    },
   };
 }
 
-/** The Greedy AI's next command for the current player. */
-export function chooseCommand(state: GameState, weights: GreedyWeights = GREEDY_WEIGHTS): Command {
-  const brain = new Brain(state, weights);
-  const launch = brain.launch();
+/** The Greedy AI's next command for the current player, following a map plan if it has one (22-campaign §6). */
+export function chooseCommand(state: GameState, weights: GreedyWeights = GREEDY_WEIGHTS, mapPlan: MapPlan | null = null): Command {
+  const brain = new Brain(state, weights, mapPlan);
+  const launch = brain.launch() ?? brain.scoutLaunch();
   if (launch) return launch;
   const next = brain.nextUnit();
   if (next) return brain.bestCommand(next).command;
@@ -124,7 +130,7 @@ class Brain extends ProductionBrain {
         const out = launchState(this.state, carrier.id, aircraft.id);
         const flying = out?.units.find((u) => u.id === aircraft.id);
         if (!out || !flying) continue;
-        const { command, score } = new Brain(out, this.w).bestCommand(flying);
+        const { command, score } = new Brain(out, this.w, this.mapPlan).bestCommand(flying);
         if (command.action.type !== "attack" || command.path.length === 0 || score <= 0) continue;
         if (!best || score > best.score) {
           best = { command: { type: "launch", carrierId: carrier.id, unitId: aircraft.id, path: command.path, action: command.action }, score };
@@ -132,6 +138,30 @@ class Brain extends ProductionBrain {
       }
     }
     return best?.command ?? null;
+  }
+
+  /**
+   * A map plan's scout (22-campaign §6): an aircraft aboard a Carrier that the plan gives somewhere
+   * to go takes off toward it, though there's nothing to attack. Only once no attack launch is left,
+   * and only when the flight makes progress and doesn't leave it short of fuel to get back.
+   */
+  scoutLaunch(): LaunchCommand | null {
+    const plan = this.mapPlan;
+    if (!plan?.goals) return null;
+    for (const carrier of this.state.units) {
+      if (carrier.owner !== this.me || !isCarrier(carrier.type)) continue;
+      for (const aircraft of launchable(carrier)) {
+        if (launchProblem(this.state, carrier, aircraft.id) !== null) continue;
+        const out = launchState(this.state, carrier.id, aircraft.id);
+        const flying = out?.units.find((u) => u.id === aircraft.id);
+        if (!out || !flying || !plan.goals(out, flying)) continue;
+        const { command, score } = new Brain(out, this.w, this.mapPlan).bestCommand(flying);
+        const end = command.path[command.path.length - 1];
+        if (!end || samePoint(end, carrier.pos) || score <= 0 || command.action.type === "load") continue;
+        return { type: "launch", carrierId: carrier.id, unitId: aircraft.id, path: command.path, action: command.action };
+      }
+    }
+    return null;
   }
 
   /** A transport unloading one passenger unloads the other in the same action when it can (D3). */
@@ -195,6 +225,10 @@ class Brain extends ProductionBrain {
     }
     const homeward = this.headingHome(unit, home);
     if (homeward) return { kind: "retreat", dist: homeward };
+
+    // A map plan's orders come next (22-campaign §6).
+    const ordered = this.mapPlan?.goals?.(this.state, unit);
+    if (ordered) return this.advance(unit, ordered, `plan${unit.id}:${ordered.map((p) => this.index(p)).join(",")}`);
 
     if (isLandingCraft(unit.type) || isAirTransport(unit.type)) {
       // An empty transport under half a tank refuels before it goes to collect anyone (09-ai §4d).
@@ -371,6 +405,6 @@ class Brain extends ProductionBrain {
 }
 
 /** For tests: every candidate for this unit with its score, best first. */
-export function scoreUnitCommands(state: GameState, unit: Unit, weights: GreedyWeights = GREEDY_WEIGHTS): Scored[] {
-  return new Brain(state, weights).scoredCommands(unit);
+export function scoreUnitCommands(state: GameState, unit: Unit, weights: GreedyWeights = GREEDY_WEIGHTS, mapPlan: MapPlan | null = null): Scored[] {
+  return new Brain(state, weights, mapPlan).scoredCommands(unit);
 }

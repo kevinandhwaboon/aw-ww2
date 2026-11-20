@@ -2,7 +2,12 @@ import type { Scenario } from "./engine/scenario";
 import { loadArtPack } from "./game/loadArtPack";
 import { SCENARIOS } from "./scenarios";
 import { startSession } from "./session";
-import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions } from "./ui/screens";
+import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
+import { campaignAi } from "./ai/maps";
+import { MISSIONS } from "./campaign/missions";
+import { alliesWon, missionStatus, readProgress, withWin, writeProgress } from "./campaign/progress";
+import { missionScenario } from "./campaign/setup";
+import { showCampaign, type CampaignEntry } from "./ui/campaign";
 import { greedyAi } from "./ai/greedy";
 import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
@@ -46,28 +51,75 @@ const scenarioIds = SCENARIOS.map((s) => s.id);
 /** A failed autosave is logged once, not after every move. */
 let autosaveWarned = false;
 
-/** Starts a new game on this map, or, given the autosave, carries that one on. */
-function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions, saved?: Autosave): void {
+/** Every campaign mission with its own scenario, advantage included (22-campaign §2, §4). */
+const campaign: readonly CampaignEntry[] = MISSIONS.flatMap((mission) => {
+  const scenario = SCENARIOS.find((s) => s.id === mission.map);
+  return scenario ? [{ mission, scenario: missionScenario(scenario, mission) }] : [];
+});
+
+/** What the results screen says after a campaign mission (22-campaign §7). */
+function missionNote(entry: CampaignEntry, state: GameState): string {
+  if (!alliesWon(state)) return "Mission lost. Try it again from the Campaign.";
+  const next = campaign[campaign.indexOf(entry) + 1];
+  return next ? `Mission won. ${next.scenario.name} is open.` : "Mission won. The campaign is complete.";
+}
+
+/** The title screen's choices besides Skirmish, with this game to carry on, if any. */
+function titleChoices(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null): TitleChoices {
+  return { campaign: () => openCampaign(game, ui, resume), resume };
+}
+
+/** The campaign screen; X goes back to the title. `at` picks the mission it opens on. */
+function openCampaign(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null, at?: string): void {
+  showCampaign(
+    ui,
+    campaign,
+    readProgress(store),
+    defaults,
+    (entry, options) => start(game, ui, entry.scenario, options, undefined, entry),
+    () => showTitleScreen(ui, SCENARIOS, defaults, (scenario, options) => start(game, ui, scenario, options), titleChoices(game, ui, resume)),
+    at,
+  );
+}
+
+/**
+ * Starts a new game on this map, or, given the autosave, carries that one on. A campaign mission
+ * (`mission`) has the campaign's computer, counts a win, and goes back to the campaign afterwards.
+ */
+function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions, saved?: Autosave, mission?: CampaignEntry): void {
+  const computer = options.computer ?? defaultComputerPlayers(scenario);
   const session = startSession({
     gameRoot: game,
     uiRoot: ui,
     game: saved?.state ?? newGame(scenario, options),
     resumed: saved !== undefined,
     onChange: (state) => {
-      if (!writeAutosave(store, { scenarioId: scenario.id, options, state }) && !autosaveWarned) {
+      if (!writeAutosave(store, { scenarioId: scenario.id, options, state, ...(mission ? { campaign: true as const } : {}) }) && !autosaveWarned) {
         autosaveWarned = true;
         console.warn("Couldn't autosave the game: browser storage is blocked or full");
       }
+      if (mission && alliesWon(state)) writeProgress(store, withWin(readProgress(store), mission.mission.map));
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,
-    ais: scenario.setup.players.map((_, id) => ((options.computer ?? defaultComputerPlayers(scenario)).includes(id) ? greedyAi(weightsFor(options.level)) : null)),
+    ais: scenario.setup.players.map((_, id) => {
+      if (!computer.includes(id)) return null;
+      return mission ? campaignAi(scenario.id) : greedyAi(weightsFor(options.level));
+    }),
     debug: url.debug,
     pad: padLayout,
-    // Back to the map select, keeping the options just played with.
+    ...(mission ? { afterGame: { label: "Campaign", note: (state: GameState) => missionNote(mission, state) } } : {}),
+    // Back to the campaign or the map select, keeping the options just played with.
     onNewGame: () => {
       session.end();
-      showMapSelect(ui, SCENARIOS, options, (next, nextOptions) => start(game, ui, next, nextOptions));
+      if (mission) {
+        // Opens on the next mission when this one was just won.
+        const progress = readProgress(store);
+        const i = campaign.indexOf(mission);
+        const next = campaign[i + 1];
+        const at = next && missionStatus(campaign.map((e) => e.mission), progress, i + 1) !== "locked" ? next : mission;
+        openCampaign(game, ui, null, at.mission.map);
+      } else showMapSelect(ui, SCENARIOS, options, (next, nextOptions) => start(game, ui, next, nextOptions), titleChoices(game, ui, null));
     },
   });
 }
@@ -97,6 +149,13 @@ else {
   // The title screen offers Continue when a game was left unfinished on this device.
   const saved = readAutosave(store, scenarioIds);
   const savedScenario = saved && SCENARIOS.find((s) => s.id === saved.scenarioId);
-  const resume = saved && savedScenario ? { label: `${savedScenario.name} · Day ${saved.state.day}`, go: () => start(gameRoot, uiRoot, savedScenario, saved.options, saved) } : null;
-  showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), resume);
+  const savedMission = saved?.campaign ? campaign.find((e) => e.mission.map === saved.scenarioId) : undefined;
+  const resume =
+    saved && savedScenario
+      ? {
+          label: `${savedMission ? "Campaign: " : ""}${savedScenario.name} · Day ${saved.state.day}`,
+          go: () => start(gameRoot, uiRoot, savedMission?.scenario ?? savedScenario, saved.options, saved, savedMission),
+        }
+      : null;
+  showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), titleChoices(gameRoot, uiRoot, resume));
 }

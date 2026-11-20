@@ -747,9 +747,51 @@ body {
   align-self: stretch;
 }
 
+/* ---- The campaign screen: the missions in order, and the briefing of the one picked (22-campaign §7) ---- */
+/* The missions in two columns under the world map, in order down each column. */
+.campaign-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: repeat(var(--rows, 7), auto);
+  grid-auto-flow: column;
+  column-gap: 8px;
+}
+
+.world-label.campaign-label.locked:not(.selected) {
+  opacity: 0.6;
+}
+
+.campaign-mark {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.campaign-row.won .campaign-mark {
+  font-weight: bold;
+  opacity: 1;
+}
+
+.campaign-row.locked {
+  opacity: 0.55;
+}
+
+.campaign-enemy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
 @media (max-width: 760px) {
   .map-select-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .campaign-list {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row;
+    grid-template-rows: none;
   }
 }
 
