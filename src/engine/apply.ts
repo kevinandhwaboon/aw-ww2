@@ -7,6 +7,7 @@ import { fortTargetProblem, resolveCombat, resolveFortAttack, targetProblem } fr
 import type { ApplyResult, Command, GameEvent, RejectionCode, UnitAction } from "./commands";
 import { UNIT_TYPE_IDS } from "./data/units";
 import { applyBuild, applyCapture, buildProblem, captureProblem, clearAbandonedCaptures } from "./economy";
+import { recordLosses } from "./losses";
 import { inBounds, type Point } from "./map";
 import { ambushOnPath, checkPath } from "./movement";
 import { unitAt, type GameState, type PlayerId, type Unit } from "./state";
@@ -33,6 +34,11 @@ import { checkAfterCapture, checkAtDayStart, checkAtTurnEnd, defeatPlayers } fro
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
 export function apply(state: GameState, command: Command): ApplyResult {
+  const result = dispatch(state, command);
+  return result.ok ? { ...result, state: recordLosses(state, result.state, result.events) } : result;
+}
+
+function dispatch(state: GameState, command: Command): ApplyResult {
   if (state.result) return reject("gameOver", "The game is over");
   // Commands may come from untyped JavaScript (custom AIs), so check the shape at runtime too.
   const type = (command as { type?: unknown } | null)?.type;

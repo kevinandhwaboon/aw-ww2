@@ -60,6 +60,8 @@ export interface Player {
   readonly facing: Facing;
   /** The commander this player fights under, from their own side; missing = none (06-commanders §2). */
   readonly commander?: CommanderId;
+  /** Units this player has lost, by type, for the results screen (04-economy §8a). */
+  readonly unitsLost: Readonly<Partial<Record<UnitTypeId, number>>>;
 }
 
 export interface Unit {

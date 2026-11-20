@@ -1,4 +1,5 @@
 import type { DefeatReason, GameState } from "../engine/state";
+import { lossLines } from "../game/losses";
 import { objectiveLines } from "../game/objectives";
 import { playerColors } from "../game/placeholderUnits";
 import { el } from "./dom";
@@ -51,6 +52,26 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
         table.append(tr);
       }
 
+      // Each player's losses, itemized like a bill (04-economy §8a).
+      const receipts = el("div", "results-losses");
+      for (const player of state.players) {
+        const lines = lossLines(state, player.id);
+        const receipt = el("div", "receipt");
+        const name = el("div", "receipt-name", player.name);
+        name.style.color = playerColors(player.id)[0];
+        receipt.append(name);
+        for (const line of lines) {
+          const row = el("div", "receipt-line");
+          row.append(el("span", undefined, line.name), el("span", undefined, `×${line.count}`));
+          receipt.append(row);
+        }
+        if (lines.length === 0) receipt.append(el("div", "receipt-none", "No units lost"));
+        const total = el("div", "receipt-line receipt-total");
+        total.append(el("span", undefined, "Units lost"), el("span", undefined, String(lines.reduce((n, l) => n + l.count, 0))));
+        receipt.append(total);
+        receipts.append(receipt);
+      }
+
       const newGame = el("button", "btn", "New Game");
       newGame.addEventListener("click", onNewGame);
       const viewMap = el("button", "btn", "View Map");
@@ -66,7 +87,7 @@ export function createResultsScreen(root: HTMLElement): { show: (state: GameStat
       };
       const buttons = el("div", "results-buttons");
       buttons.append(newGame, viewMap);
-      panel.replaceChildren(title, reason, objectives, table, buttons);
+      panel.replaceChildren(title, reason, objectives, table, el("div", "panel-subtitle", "Losses"), receipts, buttons);
       panel.hidden = false;
       newGame.focus();
       menuKeys(panel, [newGame, viewMap]);
