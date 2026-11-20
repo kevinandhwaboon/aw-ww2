@@ -1,14 +1,14 @@
 # Topic Doc 19: Fog of War
 
 **Status:** v0 decided 2026-11-17 at the developer's request: an option on the map select screen, following the original game's rules (default rule) except where marked **(differs)**. Rain brings fog for the day (12-weather §3a, since 2026-11-17).
-**Last updated:** 2026-11-19 (§1 maps always in fog, §2a radar)
+**Last updated:** 2026-11-20 (§1 Midway always in fog)
 **Depends on:** 01-units §8 (vision stats), 02-terrain (hiding terrain), 05-supply-transport §9 (hidden submarines, ambush), 00-master-design §7 (modifier layer). **Feeds:** 09-ai (what the computer sees), 12-weather §3a (rain).
 
 ---
 
 ## 1. Principles
 
-1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. **A scenario can make fog permanent** (`settings.fogOfWar`, since 2026-11-19, for the Battle of Britain): the box then shows ticked and can't be unticked, labeled "always on for this map", and the game has fog whatever was chosen. No other map sets it. The choice is saved with the game (`settings.fogOfWar`). **Rain** brings fog for that day even when the option is off (12-weather §3a).
+1. **Optional, per game.** "Fog of war" is a checkbox on the players screen of a new game, off by default, like "Luck in combat". `?fog=on` in the URL turns it on too. **A scenario can make fog permanent** (`settings.fogOfWar`, since 2026-11-19, for the Battle of Britain): the box then shows ticked and can't be unticked, labeled "always on for this map", and the game has fog whatever was chosen. Ten-Go (2026-11-19) and Midway (2026-11-20, 14-scenarios-pacific §3) set it too; no other map does. The choice is saved with the game (`settings.fogOfWar`). **Rain** brings fog for that day even when the option is off (12-weather §3a).
 2. **Each side sees only what its own units see.** Allies on the same side share what they see.
 3. **The engine knows everything; players and the computer don't.** The screen and the AI both work from the game as their side sees it (09-ai rule 3: no cheating), the same mechanism hidden submarines already use (05-supply-transport §9).
 4. **Original's rules by default.** Vision is a plain count of steps, with no line of sight, as in the original.

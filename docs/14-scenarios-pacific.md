@@ -1,7 +1,7 @@
 # Topic Doc 14: Pacific Scenarios
 
 **Status:** five Pacific maps built (v0): Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go. Balance untested.
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-20 (§3 Midway always in fog)
 **Depends on:** 00-master-design.md §6 and §8, 01-units.md, 04-economy-production.md §8 (victory conditions), 05-supply-transport.md (landings), 08-art-pipeline.md (Japanese art).
 
 ---
@@ -170,8 +170,19 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 - **Japan, the Kido Butai**, north-west of Midway: four Carriers, Akagi (Fighter, Torpedo Bomber), Kaga (Dive Bomber, Torpedo Bomber), Sōryū (Fighter, Dive Bomber) and Hiryū (Dive Bomber, Torpedo Bomber); two Battleships (Haruna, Kirishima) and three Destroyers (the cruisers Tone and Chikuma and the screen; the game has no Cruiser, as in The Slot). Every Carrier can strike Sand Island on its first turn without moving. Torpedo Bombers can't hit land, so they are the reserve kept for ships, as Nagumo's was.
 - **Japan, the Main Body**: Yamamoto's battleships, two Battleships and a Destroyer, far to the north-west, two days behind.
 - **Japan, the invasion force**, south-west of Midway, more than two days' sailing away: three Landing Craft carrying four Infantry and two Assault Infantry, a Battleship and two Destroyers. The submarine **I-168** waits between Pearl Harbor and Midway. One Infantry holds the home base.
+- **Japan, the submarine cordon** (added 2026-11-20 with fog): two Submarines on the line between Pearl Harbor and Midway, south of Point Luck. The real cordon was meant to catch the US carriers sailing out from Pearl Harbor and reached its line on 3 June, after they had passed. Here it starts out of sight of the US carriers and can't find them on day 1, but it watches the route from Pearl Harbor and can go looking.
 - **The US carriers** at Point Luck, north-east of Midway: Enterprise (two Dive Bombers: its dive bombers sank Akagi and Kaga), Hornet (Fighter, Torpedo Bomber: Torpedo 8 found the enemy first and was cut down) and Yorktown (Dive Bomber, Torpedo Bomber), with three Destroyers for their cruisers and destroyers.
 - **Midway**: its own air group on Eastern Island, a Fighter, a Bomber (the B-17s), a Dive Bomber and a Torpedo Bomber (the new Avengers); the 6th Marine Defense Battalion, three Infantry in the bunkers and the command post, an Artillery (the coastal guns) and a Flak Gun; a Torpedo Boat (the PT boats) in the harbor. Two Submarines on picket: Nautilus north-east of the Japanese carriers, another on the invasion's way in. One Infantry holds Pearl Harbor.
+
+### Fog of war (since 2026-11-20)
+
+At the developer's request, **the map is always played in fog of war** (`settings.fogOfWar`, 19-fog-of-war §1, as on the Battle of Britain and Ten-Go), because the real battle was decided by who found whom first. Nothing else about fog is special here; the setup is arranged so the rules give the history:
+
+- **At the start neither side sees a single enemy unit** (a test checks).
+- **The US knows where to look.** Its codebreakers had read the plan, so the briefing says the Kido Butai comes from the north-west, and on day 1 the submarine Nautilus (and Midway's aircraft, standing for the PBY Catalinas that sighted the carriers at dawn) can reach sight of a Japanese Carrier (a test checks).
+- **Japan doesn't know the US carriers are there.** No Japanese ship or aircraft can get a US Carrier into its sight on day 1, whatever it does (a test checks). It has to search, with Fighters (move 9, vision 2), Destroyers and its submarine cordon, as Nagumo's cruiser floatplanes did, late.
+- **The dawn strike needs a spotter.** A unit can only attack an enemy it can see (19-fog-of-war §5), and from where they start Japan's ships can't see Midway's defenders. Bunkers are terrain and can be bombed blind, but to hit the guns and aircraft on the islands, fly a Fighter over first (or send a Destroyer in), then strike with the bombers.
+- **The dilemma is Nagumo's.** Every aircraft Japan sends at Midway isn't searching for the US carriers or guarding its own, and a Carrier that launched can't move that turn (05-supply-transport §10). A US Carrier can close to striking range unseen and launch the next turn at a Carrier it found on day 1, which, if it launched, is still there.
 
 ### How the opening works
 
@@ -191,17 +202,17 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 
 ### Weather
 
-- Clear all game. The real Kido Butai approached under a weather front, but there's no fog of war or cloud in the game yet (12-weather).
+- Clear all game. Fog of war is always on (above). The real Kido Butai approached under a weather front on 2 and 3 June, before the game starts; the morning of 4 June was clear, so there's no rain.
 
 ### How it's made
 
 - `tools/maps/midway.mjs` builds the scenario file; `node tools/maps/midway.mjs --reach` also lists every unit an enemy could attack on its first turn, for tuning. `tools/maps/overview.mjs midway` redraws the picture above. The overview now colors properties and units by side (Allies green, Axis red) instead of by player order.
-- Tests (`tests/scenario.test.ts`, "Midway") check the nations and order, the objectives and their owner, the day-12 rule, the atoll's two islands inside the reef, Japan's four Carriers north-west of Midway each able to strike Sand Island, the three US Carriers north-east with two aircraft each, that nothing can attack an enemy Carrier from where it starts, that each US Carrier is one move from striking range, Midway's air group, the invasion force's distance, that Japan has no airfield, and the build lists. The AI tests play it AI vs AI to a finish: every game ends by day 12.
+- Tests (`tests/scenario.test.ts`, "Midway") check the nations and order, the objectives and their owner, the day-12 rule, the atoll's two islands inside the reef, Japan's four Carriers north-west of Midway each able to strike Sand Island, the three US Carriers north-east with two aircraft each, that nothing can attack an enemy Carrier from where it starts, that each US Carrier is one move from striking range, Midway's air group, the invasion force's distance, that Japan has no airfield, and the build lists. Since 2026-11-20 also: fog always on; no enemy unit in sight of either side at the start; no Japanese unit can find a US Carrier on day 1; Nautilus can find a Japanese Carrier on day 1; the submarine cordon south of Point Luck. The AI tests play it AI vs AI to a finish: every game ends by day 12.
 
 ### Known gaps
 
-- **No fog of war.** Midway was decided by who found whom first; here both sides see everything from the start, and the US code-breaking advantage is gone. The move-or-launch timing carries the tension instead. Fog stays under "later / maybe" (00-master-design §4); this is the map that most wants it.
-- **Balance is a first guess**, especially the day-12 limit, half income, and the strength of Midway's air group. In AI vs AI games (10 seeds) Japan wins every time, by day 7 to 9, but mostly because of the AI (next point), not the map.
+- **Balance is a first guess**, especially the day-12 limit, half income, and the strength of Midway's air group. AI vs AI (2026-11-20, seeds 1 to 30): without fog the two sides were even (5 and 5 in seeds 1 to 10); with fog alone the US won 9 of 10, since it moves first and knows where to look while Japan searches blind, as in the real battle. With the submarine cordon the US wins 25 of 30 and Japan 5 (days 8 to 12). Playing Japan yourself is the real test: a human who scouts before striking does better than the Greedy AI.
+- **No search aircraft.** The PBY Catalinas and the cruiser floatplanes that did most of the real searching have no unit; Fighters, Submarines and Destroyers search instead. Midway's radar, which saw the Japanese strike coming, isn't shown either: the Radar Station (01-units §2a) has only British art.
 - **The Greedy AI doesn't hold objectives it must defend.** It garrisons only its HQ island (09-ai §4c), so as the US it ships Midway's Marines away in a Landing Craft and Japan walks in. Playing Japan against the computer is easy for now; playing the US against the computer, or hot-seat, is the better test.
 - Carriers carry 2 aircraft, so each stands for a whole air group, and there's no combat air patrol: Fighters only shoot down aircraft that end their move nearby.
 
