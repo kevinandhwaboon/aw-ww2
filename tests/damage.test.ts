@@ -42,10 +42,22 @@ describe("damage chart (03-combat §5)", () => {
     }
   });
 
-  it("Assault Infantry is the best ground unit against fortifications (03-combat §5c)", () => {
-    const ground = ARMED_UNIT_IDS.filter((id) => UNITS[id].category === "land" && id !== "assaultInfantry");
+  it("Assault Infantry is the best ground unit against fortifications, after the Railway Gun (03-combat §5c)", () => {
+    const ground = ARMED_UNIT_IDS.filter((id) => UNITS[id].category === "land" && id !== "assaultInfantry" && id !== "railwayGun");
     for (const id of ground) expect(baseDamage(id, "fort")?.base ?? 0, id).toBeLessThan(65);
     expect(baseDamage("assaultInfantry", "fort")).toEqual({ weapon: "primary", base: 65 });
+  });
+
+  it("the Railway Gun does 130 to every land unit and 110 to fortifications, and can't hit aircraft (03-combat §5c)", () => {
+    for (const target of UNIT_TYPE_IDS.filter((id) => UNITS[id].category === "land")) {
+      expect(baseDamage("railwayGun", target), target).toEqual({ weapon: "primary", base: 130 });
+    }
+    expect(baseDamage("railwayGun", "fort")).toEqual({ weapon: "primary", base: 110 });
+    for (const target of UNIT_TYPE_IDS.filter((id) => UNITS[id].category === "air")) expect(baseDamage("railwayGun", target), target).toBeNull();
+  });
+
+  it("everything hits the Railway Gun as hard as it hits Artillery (03-combat §5c)", () => {
+    for (const attacker of ARMED_UNIT_IDS) expect(baseDamage(attacker, "railwayGun"), attacker).toEqual(baseDamage(attacker, "artillery"));
   });
 
   it("Fighter strafing is at most 15 against any ground unit (03-combat §5c)", () => {

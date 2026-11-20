@@ -19,6 +19,7 @@ import { assaultRig, infantryRig, mortarRig } from "./soldiers";
 import { battleCues, type SoundCue } from "../sound/sounds";
 import { buildTimeline, deathTimes, figureTiming, hash, hpAt, SCENE_MS, torpedoRun, type Shot, type Timeline } from "./timeline";
 import { minefieldRig, obstacleRig, radarRig } from "./fieldWorks";
+import { railwayGunRig } from "./railwayGun";
 import { artilleryRig, bunkerRig, flakRig, halftrackRig, mobileAARig, reconRig, rocketRig, tankRig } from "./vehicles";
 
 const RIGS: Record<FigureKind, Rig> = {
@@ -36,6 +37,7 @@ const RIGS: Record<FigureKind, Rig> = {
   mobileAA: mobileAARig,
   flakGun: flakRig,
   radarStation: radarRig,
+  railwayGun: railwayGunRig,
   fighter: fighterRig,
   bomber: bomberRig,
   transportAircraft: transportRig,
@@ -78,6 +80,8 @@ const SLOTS: Record<FigureKind, readonly Pt[]> = {
   flakGun: [pt(44, 218), pt(132, 208), pt(54, 195), pt(126, 182), pt(48, 169)],
   // Three masts in a row, as the transmitter masts stood, the front one with its hut.
   radarStation: [pt(108, 214), pt(150, 196), pt(66, 190)],
+  // One gun, the length of a train, in the middle of its half.
+  railwayGun: [pt(96, 212)],
   fighter: [pt(100, 118), pt(146, 76), pt(58, 160), pt(56, 58)],
   bomber: [pt(100, 104), pt(118, 172), pt(76, 52)],
   transportAircraft: [pt(100, 104), pt(118, 172), pt(76, 52)],
@@ -102,7 +106,7 @@ const SUBMERGED_SLOTS: readonly Pt[] = [pt(96, 182)];
 /** Half-width of the shadow a figure casts on the ground; 0 for aircraft and ships. */
 const SHADOW: Record<FigureKind, number> = {
   infantry: 11, assaultInfantry: 26, mortar: 24, recon: 26, halftrack: 34, lightTank: 28, mediumTank: 34,
-  heavyTank: 42, tankDestroyer: 34, artillery: 30, rocketArtillery: 32, mobileAA: 34, flakGun: 34, radarStation: 12,
+  heavyTank: 42, tankDestroyer: 34, artillery: 30, rocketArtillery: 32, mobileAA: 34, flakGun: 34, radarStation: 12, railwayGun: 80,
   fighter: 0, bomber: 0, transportAircraft: 0, diveBomber: 0, torpedoBomber: 0, battleship: 0, destroyer: 0, submarine: 0, landingCraft: 0, torpedoBoat: 0, carrier: 0, supplyShip: 0,
   bunker: 40,
   minefield: 0,

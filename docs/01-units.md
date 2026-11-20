@@ -32,10 +32,26 @@
 | Mobile AA | Air defense | Tracks | Strong vs. aircraft and infantry, weak vs. tanks | M16 quad .50 / Flakvierling |
 | Flak Gun (phase 2) | Long-range air defense | Tracks (towed; slow) | Indirect, attacks air units only, long range. Cannot move and fire. Arrives with air units in phase 2 | 90mm AA / 88mm Flak |
 | Radar Station (phase 2, scenario only) | Early warning | None (can't move) | Sees enemy aircraft 10 squares away, everything else only next to it (19-fog-of-war §2a). Unarmed. Never built: only a scenario places one (§2a below) | Chain Home (UK) / — |
+| Railway Gun (phase 2, scenario only) | Siege gun | Rail (Railway squares only) | Indirect, range 3–20, one huge shot a turn, 3 shells. Moves 1 square, on track only. Rearmed by a Halftrack next to it. Never built: only a scenario places one (§2b below) | — / Schwerer Gustav (80 cm Krupp gun) |
 
 ### 2a. Radar Station (added 2026-11-19)
 
 Added at the developer's request for the Battle of Britain (20-scenarios-battle-of-britain), which is always played in fog of war. It's a **unit, not a building**, so fog hides it from the enemy until one of their units has it in sight, and it's destroyed by attacking it like any unit (03-combat §5c: Bombers do 75). It has 0 movement points, no weapon and no fuel tank (it never runs short, and shows no fuel line). Vision 1, plus **air vision 10** (a new modifiable stat, `airVision`): enemy aircraft within 10 squares are seen, though the squares under them stay in the fog (19-fog-of-war §2a). Rain doesn't reduce it. It's **never built** (`neverBuilt`): no property offers it, even to a player with no build list, so a destroyed station is gone for good. Only the UK has art for it (two Chain Home masts and the transmitter hut). Cost 12,000, which only sets how much the computer wants to destroy it.
+
+### 2b. Railway Gun (added 2026-11-19)
+
+Added at the developer's request for Sevastopol (15-scenarios-eastern-front §3), where Germany's 80 cm gun *Schwerer Gustav* shelled the Soviet forts in June 1942. The rules, as the developer chose them:
+
+- **Moves only on track.** Its movement type is `rail` (02-terrain §4c): it can enter Railway squares and nothing else, so the map decides where it can go. **1 movement point**, so at most one square of track a turn. The real gun couldn't move at all once assembled; one square a turn lets it creep up the line behind an advance.
+- **Huge range: 3–20.** Indirect fire, like Artillery: it can't move and fire in the same turn and is never countered, and it can't hit anything within 2 squares, so it needs other units to guard it. The real gun reached about 47 km; at Sevastopol's scale (about 1.5 km a square) 20 squares covers the northern forts from its firing spur near Bakhchisaray, but not the city, so it has to creep forward to reach the city.
+- **One huge shot a turn, no splash.** It can fire every turn. Its damage chart row (03-combat §5) is the biggest in the game: 130 against every land unit, so a full-strength shot destroys almost anything on open ground, and 110 against fortifications, so one shot breaks a full bunker and kills its garrison (03-combat §4). Splash damage was considered and left out at the developer's request: the real shells were made to go through concrete, not to blast an area.
+- **3 shells.** Then it has to be rearmed, like any unit, by a **Halftrack** next to it (05-supply-transport §3): automatically at the start of its owner's turn, or with the Halftrack's Supply action. A Halftrack parked beside it keeps it firing every turn, so the way to silence it is to destroy or drive off that Halftrack, or the gun itself. It can't stand on a property, so a property never rearms it.
+- **Fuel 50**, one per square moved, refilled with its ammo. It has no secondary weapon and no AA, and can't hit aircraft.
+- **Defends like Artillery**: its damage chart column copies Artillery's (Bombers do 105, Infantry 15). It's big and unarmored.
+- **Can't be carried** by any transport, and can't capture.
+- **Never built** (`neverBuilt`), like the Radar Station (§2a): no property offers it. Cost 30,000, which only sets how much the computer wants to destroy it.
+- Vision 1: it needs spotters, in fog of war as in the real siege, where artillery observers and aircraft called its targets.
+- Only Germany has art for it.
 
 ### Mortar Team vs. Artillery
 
@@ -149,6 +165,7 @@ These are starting points for the first playable build, based on the original ga
 |---|---|---|---|---|---|---|---|---|---|
 | Flak Gun (land) | 11,000 | 3 (tracks) | 2 | 40 | — | Flak (6) | — | 3–5 | — |
 | Radar Station (land, never built) | 12,000 | 0 | 1 (aircraft 10) | 0 | — | — | — | — | — |
+| Railway Gun (land, never built) | 30,000 | 1 (rail) | 1 | 50 | — | 80 cm gun (3) | — | 3–20 | — |
 | Fighter | 20,000 | 9 | 2 | 90 | 5 | Guns (2) | — | 1 | — |
 | Bomber | 22,000 | 7 | 2 | 70 | 4 | Bombs (2) | — | 1 | — |
 | Transport Aircraft | 10,000 | 8 | 2 | 99 | 3 | — | — | — | 2 foot |

@@ -76,8 +76,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, Stalingrad, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
   });
 
   it("have unique ids", () => {
@@ -254,6 +254,105 @@ describe("built-in scenarios (00-master-design §8)", () => {
       const tank = units?.find((u) => u.owner === 1 && u.type === "mediumTank");
       if (!tank) throw new Error("no tank");
       expect(connected(map, "tracks", tank.pos, town)).toBe(true);
+    });
+  });
+
+  describe("Sevastopol (15-scenarios-eastern-front §3)", () => {
+    const sevastopol = SCENARIOS.find((s) => s.id === "sevastopol");
+    if (!sevastopol) throw new Error("missing scenario");
+    const { map, units = [], players, victory, weather } = sevastopol.setup;
+    const city = P(8, 14);
+    const station = P(9, 14);
+    const bakhchisaray = P(27, 2);
+    const maximGorkyI = P(11, 9);
+    const distance = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const near = (a: Point, b: Point) => distance(a, b) === 1;
+    const tiles = (terrain: string) => map.terrain.flatMap((t, i) => (t === terrain ? [P(i % map.width, Math.floor(i / map.width))] : []));
+    const unitAt = (p: Point) => units.find((u) => u.pos.x === p.x && u.pos.y === p.y);
+    const gustav = units.find((u) => u.type === "railwayGun");
+    if (!gustav) throw new Error("no Railway Gun");
+    const range = UNITS.railwayGun.range;
+
+    it("is a siege map of the fortress, 30 × 24 squares of about 1.5 km, with the Soviet Union against Germany", () => {
+      expect([map.width, map.height]).toEqual([30, 24]);
+      expect(players.map((p) => p.nation)).toEqual(["ussr", "germany"]);
+    });
+
+    it("the Soviet Union moves first, as the Allies do on every built-in map, and Germany faces left", () => {
+      expect(players[0]?.nation).toBe("ussr");
+      expect(players[1]?.facing).toBe("left");
+    });
+
+    it("Sevastopol is the Soviet HQ and Bakhchisaray, where the Gustav fired from, the German HQ", () => {
+      expect(properties(sevastopol, "hq", 0).map((p) => p.pos)).toEqual([city]);
+      expect(properties(sevastopol, "hq", 1).map((p) => p.pos)).toEqual([bakhchisaray]);
+    });
+
+    it("the railway runs unbroken from the north-east edge to Sevastopol station, beside the city", () => {
+      expect(terrainAt(map, P(29, 0))).toBe("railway");
+      expect(terrainAt(map, station)).toBe("railway");
+      expect(near(station, city)).toBe(true);
+      expect(connected(map, "rail", P(29, 0), station)).toBe(true);
+    });
+
+    it("the railway crosses the Kacha, the Belbek and the Chernaya, each square-on, with water on two opposite sides", () => {
+      const water = (p: Point) => p.x >= 0 && p.y >= 0 && p.x < map.width && p.y < map.height && ["river", "sea"].includes(terrainAt(map, p));
+      const crossings = tiles("railway").filter((p) => [P(p.x, p.y - 1), P(p.x + 1, p.y), P(p.x, p.y + 1), P(p.x - 1, p.y)].some(water));
+      const clean = crossings.filter((p) => (water(P(p.x, p.y - 1)) && water(P(p.x, p.y + 1))) || (water(P(p.x - 1, p.y)) && water(P(p.x + 1, p.y))));
+      expect(clean.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("there is one Railway Gun, German, on its own spur off the main line, with a Halftrack beside it and a Flak Gun guarding it", () => {
+      expect(units.filter((u) => u.type === "railwayGun").map((u) => u.owner)).toEqual([1]);
+      expect(terrainAt(map, gustav.pos)).toBe("railway");
+      const railNeighbors = (p: Point) => [P(p.x, p.y - 1), P(p.x + 1, p.y), P(p.x, p.y + 1), P(p.x - 1, p.y)].filter((q) => q.x >= 0 && q.y >= 0 && q.x < map.width && q.y < map.height && terrainAt(map, q) === "railway");
+      expect(railNeighbors(gustav.pos)).toHaveLength(1); // the end of a dead-end spur
+      expect(units.some((u) => u.type === "halftrack" && u.owner === 1 && near(u.pos, gustav.pos))).toBe(true);
+      expect(units.some((u) => u.type === "flakGun" && u.owner === 1 && distance(u.pos, gustav.pos) <= 2)).toBe(true);
+    });
+
+    it("from its spur the Gustav reaches Maxim Gorky I but not the city; down the line it can get within range of the city", () => {
+      expect(distance(gustav.pos, maximGorkyI)).toBeLessThanOrEqual(range.max);
+      expect(distance(gustav.pos, city)).toBeGreaterThan(range.max);
+      expect(tiles("railway").some((p) => distance(p, city) <= (range.max) && distance(p, city) >= (range.min) && connected(map, "rail", gustav.pos, p))).toBe(true);
+    });
+
+    it("Maxim Gorky I is a bunker with a coastal battery (Artillery) in it", () => {
+      expect(terrainAt(map, maximGorkyI)).toBe("bunker");
+      expect(unitAt(maximGorkyI)).toMatchObject({ type: "artillery", owner: 0 });
+    });
+
+    it("the named forts are bunkers in the north sector, between the Belbek and the bay, and Maxim Gorky II near Cape Khersones", () => {
+      const north = tiles("bunker").filter((p) => p.y >= 7 && p.y <= 12 && p.x >= 9 && p.x <= 17);
+      expect(north.length).toBeGreaterThanOrEqual(9);
+      expect(tiles("bunker").some((p) => p.x <= 2 && p.y >= 14 && p.y <= 16)).toBe(true);
+    });
+
+    it("Severnaya Bay is a row of water with no bridge: the north side reaches the city only round its head at Inkerman", () => {
+      for (let x = 9; x <= 14; x++) expect(terrainAt(map, P(x, 13))).toBe("sea");
+      const tank = units.find((u) => u.owner === 1 && u.type === "tankDestroyer");
+      if (!tank) throw new Error("no German tank destroyer");
+      expect(connected(map, "tracks", tank.pos, city)).toBe(true);
+    });
+
+    it("no starting unit stands where it couldn't move", () => {
+      for (const u of units) expect(TERRAIN[terrainAt(map, u.pos)].moveCost[UNITS[u.type].movementType], `${u.type} at ${u.pos.x},${u.pos.y}`).not.toBeNull();
+    });
+
+    it("Germany wins by taking Sevastopol; the Soviet Union by taking Bakhchisaray or holding out to day 20", () => {
+      expect(victory).toEqual([{ type: "hqCapture" }, { type: "surviveDays", side: "allies", days: 20 }]);
+    });
+
+    it("is summer, clear every day", () => {
+      expect(weather).toEqual({ season: "summer", forecast: [{ fromDay: 1, weather: "clear" }] });
+    });
+
+    it("neither side can build a Heavy Tank or the Railway Gun, nor any ship", () => {
+      for (const p of players) {
+        expect(p.buildable).not.toContain("heavyTank");
+        expect(p.buildable).not.toContain("railwayGun");
+        expect((p.buildable ?? []).some((t) => UNITS[t].category === "naval")).toBe(false);
+      }
     });
   });
 

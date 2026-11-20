@@ -100,7 +100,7 @@ describe("art pack files (08-art-pipeline §13)", () => {
     ["a view listed twice", { unitSheets: [sheet({ facings: ["side", "up", "up"] })] }, /once each/],
     ["an unknown terrain", { terrain: { path: "t.png", tiles: { lava: 0 } } }, /unknown terrain/],
     ["an empty variant list", { terrain: { path: "t.png", tiles: { plains: [] } } }, /list of them/],
-    ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road and river/],
+    ["a connected terrain that can't join", { terrain: { path: "t.png", tiles: {}, connected: { forest: 0 } } }, /only road, river and railway/],
     ["a bridge without both directions", { terrain: { path: "t.png", tiles: {}, bridges: { horizontal: 1 } } }, /horizontal and vertical/],
     ["a Major Bridge without both directions", { terrain: { path: "t.png", tiles: {}, majorBridges: { vertical: 1 } } }, /"majorBridges" needs/],
     ["zero terrain frames", { terrain: { path: "t.png", tiles: {}, frames: 0 } }, /whole number/],
@@ -187,22 +187,35 @@ describe("the packs that ship with the game", () => {
   it("Japan has art for every land, air and naval unit it fielded, but no Heavy Tank (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "japan").flatMap((s) => s.rows));
-    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank" && type !== "radarStation");
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "heavyTank" && type !== "radarStation" && type !== "railwayGun");
   });
 
   it("the Soviet Union has art for every land unit, Heavy Tank included, plus Fighter, Bomber, Transport Aircraft and the Volga armored boat as its Landing Craft (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "ussr").flatMap((s) => s.rows));
     for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) {
-      const fielded = type === "landingCraft" || (UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber", "radarStation"].includes(type));
+      const fielded = type === "landingCraft" || (UNITS[type].category !== "naval" && !["diveBomber", "torpedoBomber", "radarStation", "railwayGun"].includes(type));
       expect(drawn.has(type), type).toBe(fielded);
     }
   });
 
-  it("the United Kingdom has art for every unit type, Heavy Tank, ships, carrier aircraft and the Radar Station included (01-units §1)", () => {
+  it("the United Kingdom has art for every unit type but the Railway Gun, Heavy Tank, ships, carrier aircraft and the Radar Station included (01-units §1)", () => {
     const pack = parseArtPack(defaultPack);
     const drawn = new Set(pack.unitSheets.filter((s) => s.nation === "uk").flatMap((s) => s.rows));
-    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(true);
+    for (const type of Object.keys(UNITS) as (keyof typeof UNITS)[]) expect(drawn.has(type), type).toBe(type !== "railwayGun");
+  });
+
+  it("only Germany has art for the Railway Gun, in every German team color (01-units §2b)", () => {
+    const pack = parseArtPack(defaultPack);
+    const sheets = pack.unitSheets.filter((s) => s.rows.includes("railwayGun"));
+    expect(new Set(sheets.map((s) => s.nation))).toEqual(new Set(["germany"]));
+    expect(sheets.map((s) => s.team).sort()).toEqual(["blue", "grey", "olive", "red"]);
+  });
+
+  it("the default pack draws railway track that joins up, and a rail bridge where a line crosses a river (02-terrain §4c)", () => {
+    const pack = parseArtPack(defaultPack);
+    expect(pack.terrain?.connected.railway).toBeTypeOf("number");
+    expect(pack.terrain?.railBridges).toBeDefined();
   });
 
   it("the Soviet Union has no seagoing ships and no carrier aircraft, as it fielded no carriers; its only boat is the Landing Craft (01-units §1)", () => {

@@ -1,8 +1,8 @@
 # Topic Doc 15: Eastern Front Scenarios
 
-**Status:** two Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union, and Stalingrad (§2), the first city fight and the first Soviet boat. Balance untested.
+**Status:** three Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union; Stalingrad (§2), the first city fight and the first Soviet boat; and Sevastopol (§3), the first railway and the Railway Gun. Balance untested.
 **Last updated:** 2026-11-19
-**Depends on:** 00-master-design.md §8 and §9, 01-units.md (availability rule), 02-terrain.md §4 (bunkers and obstacles), 04-economy-production.md §8 (victory conditions), 08-art-pipeline.md §12 (Soviet art and insignia).
+**Depends on:** 00-master-design.md §8 and §9, 01-units.md (availability rule; §2b Railway Gun), 02-terrain.md §4 (bunkers and obstacles) and §4c (Railway), 04-economy-production.md §8 (victory conditions), 08-art-pipeline.md §12 (Soviet art and insignia).
 
 ---
 
@@ -231,7 +231,102 @@ The Soviet Union moves first, as the Allies do on every built-in map, and it fit
 
 As at Kursk: `tools/maps/stalingrad.mjs` generates the scenario (weather included) from real longitude/latitude points for the front line, towns, rivers, the Volga and the lakes, and lays the city out along the Volga's west bank, placing its named squares by latitude. Rerun it after editing; `tools/maps/overview.mjs stalingrad` redraws the picture above. Tests in `tests/scenario.test.ts`, "Stalingrad", check the size and nations, who moves first, the HQs, that the Volga has no land crossing, that the Soviet Landing Craft can reach each city beach from Krasnaya Sloboda, that both pincers' tanks can drive to Kalach and Sovetsky, that every German factory is outside the ring, that the land bridge is fortified and the Don front only lightly, that east-bank guns reach the city, that Germany has no Heavy Tank, the city footholds and both victory conditions, and the weather.
 
-## 3. Known gaps
+## 3. Sevastopol (`sevastopol`)
+
+![Overview](maps/sevastopol.png)
+
+Colors as for Kursk above; brown lines are the railway.
+
+**Status:** built (v0), 2026-11-19, at the developer's request, to try the Railway Gun (01-units §2b). Balance untested: funds and unit counts are first guesses.
+
+### The history it follows
+
+Sevastopol, the Black Sea Fleet's base at the south-west tip of the Crimea, was the most heavily fortified port in the world in 1941. Manstein's 11th Army overran the rest of the Crimea that autumn but failed to take the city in two assaults, in November and December. In June 1942 it tried again with **Operation Störfang** ("Sturgeon Catch"): five days of bombardment from 2 June by the heaviest siege artillery Germany had, including **Schwerer Gustav**, the 80 cm railway gun, and two 60 cm Karl mortars, with the Luftwaffe's VIII Air Corps bombing round the clock. The infantry attacked on 7 June.
+
+The Soviet Coastal Army held three belts of field works round the city, anchored on concrete forts and turreted coastal batteries the Germans named Stalin, Molotov, Lenin, Siberia, GPU, Cheka, Volga and Ural, and **Maxim Gorky I** (Coastal Battery 30), whose 305 mm turrets the Gustav and the Karl mortars pounded. The main attack (LIV Corps) came from the north, across the Belbek valley toward the forts and **Severnaya Bay**; XXX Corps attacked in the south-east toward the **Sapun Ridge**, with the Romanian Mountain Corps between them. The Gustav's 48 shells broke concrete forts and, most famously, an ammunition store dug deep under Severnaya Bay.
+
+The north side fell by 17 June. On 29 June the Germans crossed Severnaya Bay in assault boats by night and stormed the Sapun Ridge the same day. The city fell on **4 July 1942**; the last defenders were cornered on the Khersones peninsula.
+
+### Why this map
+
+A siege: the attacker has the guns and the air force, the defender the forts. It's the first map with a railway, and the first with the Railway Gun: a German player who keeps it fed with shells can break a fort a turn, so the Soviet game is to hold on, hunt the gun's Halftrack, and make every fort cost Germany days.
+
+### Area and scale
+
+- **30 × 24 squares**, from Cape Khersones in the west to Bakhchisaray in the east, and from the Kacha in the north to Balaklava in the south. 33.36–33.92° E, 44.47–44.80° N.
+- About **1.5 km a square**, smaller than any other land theater map so the forts, the bay and the ridges each get their own squares. Severnaya Bay is a single row of water about five squares long; the city is a few squares on its south shore.
+- The Gustav's firing spur near Bakhchisaray is within its range (20) of the northern forts and Maxim Gorky I, but not of the city: to shell Sevastopol it has to creep down the railway line, one square a turn, as the front moves.
+
+### The front, 7 June 1942
+
+Traced as a polygon of real points, as at Kursk and Stalingrad. Germany holds everything east and north-east of an arc from the coast just north of the Belbek's mouth, east along the north side of the Belbek valley, south across the Mekenzie heights, down to the Chernaya valley near Chorgun, and south-west to the coast just east of Balaklava. The Soviet Union holds everything inside the arc: the north side, the city, the Sapun Ridge, Balaklava and the Khersones peninsula.
+
+### The railway
+
+The single line from Simferopol, laid in straight stretches so it crosses each river square-on: in along the north edge past **Bakhchisaray**, south over the Kacha, west toward the Belbek valley, south over the Belbek at **Duvankoi** and down the Mekenzie heights past **Mekenzievy Gory**, then west along the south shore of Severnaya Bay, over the Chernaya at **Inkerman**, to **Sevastopol** station beside the city. Where it crosses a river, the Railway square is the bridge.
+
+The **Gustav's firing spur** is a two-square dead end off the line just south-west of Bakhchisaray, where the gun starts. Historically the gun stood on its own curved track near there.
+
+From the spur the gun reaches almost every fort of the north sector (Maxim Gorky I is 19 squares away) but not the city (27). To shell the city it has to creep down the line, one square a turn, about a dozen turns to get within 20 squares. Only units block it: any unit on the track ahead stops it, and nothing else does, so it can roll on past the front if the track is clear, out in front of its escorts. The Soviet side of the line is track too, but the Soviets have no railway gun (their armored train *Zheleznyakov* isn't in the game).
+
+### Places
+
+| | Soviet Union | Germany |
+|---|---|---|
+| HQ | Sevastopol | Bakhchisaray |
+| Factories | Korabelnaya (the naval dockyard), Inkerman (the cliff galleries, which held workshops and ammunition) | Duvankoi, Baydary |
+| Airfields | Khersones, Kulikovo Pole | Kacha |
+| Cities | Severnaya (the north side), Lyubimovka, Mekenzievy Gory, Balaklava | Mamashai, Aranchi, Kamyshly, Chorgun, Shuli |
+
+Factories and HQs are our choice, not history, as on the other maps. **Bakhchisaray is the German HQ** because the Gustav fired from beside it and Manstein's headquarters was close by.
+
+### Terrain
+
+- **The Mekenzie heights**, between the Belbek and the head of Severnaya Bay: wooded hills, forest and hills squares. The ground the main attack had to cross.
+- **The Sapun Ridge** east of the city: a line of Hills, the last natural wall. The **Fedyukhin heights** in front of it over the Chernaya.
+- **The mountains** in the south-east, behind Balaklava and the Baydar valley: hills and forest.
+- **The Khersones plateau** west of the city: open plains to the cape.
+- **North of the Belbek**: orchards and open ground (plains, some forest), rising to the Kacha.
+- **Rivers:** the **Kacha** and the **Belbek** across the north, the **Chernaya** from the Baydar valley north into the head of Severnaya Bay at Inkerman. Roads cross on bridges.
+- **Severnaya Bay**: one row of sea from the open sea east to Inkerman, splitting the north side from the city. **No bridge**: Germany crossed it in assault boats. Here Germany can't cross it at all (no ships), so it has to go round by Inkerman, as the real attack mostly did.
+- **The sea** along the west and south coasts. No ports: neither side has ships here.
+
+### Fortifications
+
+- **The named forts** as Bunkers in the north sector, between the Belbek and the bay: Maxim Gorky I near Lyubimovka, Stalin, Molotov, Lenin, Siberia, GPU, Cheka, Volga and Ural, placed approximately.
+- **Maxim Gorky II** (Coastal Battery 35) as a Bunker near Cape Khersones.
+- **Field works** in belts, as at Kursk: a few more bunkers along the Soviet side of the front. Few in the north, where the forts already make the belt; more on the Chernaya before the Sapun Ridge. Never on a road, railway, river or town.
+
+### Starting forces
+
+- **Soviet Union** (Coastal Army and the fleet's naval infantry): rifle units dug into the forts and field works, more Infantry, Assault Infantry and Mortar Teams behind them, Artillery for the coastal batteries (one inside Maxim Gorky I), a few T-26 light tanks, a Flak Gun in the city, a Halftrack, and a Fighter at Khersones and an Il-2 (Bomber) at Kulikovo Pole.
+- **Germany** (11th Army, with the Romanian Mountain Corps fielded as German units, as at Stalingrad): **the Railway Gun on its spur with a Halftrack beside it** (the ammunition train) and a Flak Gun guarding it; in the north (LIV Corps) Infantry, pioneers (Assault Infantry), StuGs (Tank Destroyer), Artillery and Nebelwerfers; a thinner centre; XXX Corps in the south-east; and the VIII Air Corps (Bombers and Fighters) round Kacha.
+- Germany has more of everything except fortifications.
+
+### Turn order
+
+The Soviet Union moves first, as the Allies do on every built-in map; Germany faces left (its armies start east of the Soviets).
+
+### Weather
+
+Summer, clear every day: June 1942 was hot and dry, and the bombing went on from dawn to dusk.
+
+### Build lists
+
+- **Soviet Union:** every land unit except Heavy Tank; Fighter and Bomber. No ships.
+- **Germany:** every land unit except Heavy Tank; Fighter, Bomber, Transport Aircraft. No ships. The Railway Gun is never built (01-units §2b): if it's destroyed, it's gone.
+
+### Victory
+
+- **Germany:** capture **Sevastopol**, the Soviet HQ.
+- **Soviet Union:** capture **Bakhchisaray**, the German HQ, **or survive to day 20** (`surviveDays`, 04-economy §8): the city held about four weeks after the assault began.
+- Rout is off. Resign is always available.
+
+### How it's made
+
+`tools/maps/sevastopol.mjs` generates the scenario from real longitude/latitude points for the coast, the bay, the front, the rivers, the railway, towns and forts, as for Stalingrad. Rerun it after editing; `tools/maps/overview.mjs sevastopol` redraws the picture above. Tests in `tests/scenario.test.ts`, "Sevastopol", check the size and nations, who moves first, the HQs, that the railway runs unbroken from the north-east edge to the city, that the Gustav starts on its spur with a Halftrack beside it, that it reaches Maxim Gorky I but not the city from the start, that it can get within range of the city down the line, that the railway's river crossings are clean, that Severnaya Bay has no bridge, the forts, that no starting unit stands where it couldn't move, the weather, the build lists and both victory conditions.
+
+## 4. Known gaps
 
 **Kursk**
 
@@ -251,6 +346,14 @@ As at Kursk: `tools/maps/stalingrad.mjs` generates the scenario (weather include
 - **The armored boat can't fire**: it's a Landing Craft, unarmed in the rules, though the real boats shelled the city; the east-bank artillery stands in for that.
 - **Coordinates are approximate**: places within a square or two of where they were; a few small towns are on the wrong bank of the Don.
 - **No reinforcement schedule**, as at Kursk: Operation Winter Storm, Manstein's relief attack from Kotelnikovo in December, starts off the south edge and isn't in the scenario. A later Winter Storm map could use the same generator.
+
+**Sevastopol**
+
+- Balance is a first guess, and the Railway Gun is new: a Halftrack parked beside it rearms it every turn, so it can fire every turn for as long as the Halftrack lives.
+- **No assault boats**: Germany can't cross Severnaya Bay, as it did on 29 June.
+- **No Karl mortars**: the two 60 cm self-propelled mortars are left out; Germany's other heavy guns are Artillery and Rocket Artillery.
+- **The fleet isn't there**: the Soviet supply runs by cruiser, destroyer and submarine from Novorossiysk, and the coastal batteries' fire at sea, have no part in it.
+- **Fort positions are approximate**, within a square or two.
 
 **Future scenarios**
 

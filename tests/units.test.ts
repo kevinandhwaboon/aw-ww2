@@ -4,9 +4,9 @@ import { UNITS, UNIT_TYPE_IDS } from "../src/engine/data/units";
 const phase1 = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 describe("unit roster (01-units)", () => {
-  it("has 14 land, 5 air and 7 naval unit types, the Radar Station among the land units (01-units §2–4)", () => {
+  it("has 15 land, 5 air and 7 naval unit types, the Radar Station and Railway Gun among the land units (01-units §2–4)", () => {
     const count = (category: string) => UNIT_TYPE_IDS.filter((id) => UNITS[id].category === category).length;
-    expect(count("land")).toBe(14);
+    expect(count("land")).toBe(15);
     expect(count("air")).toBe(5);
     expect(count("naval")).toBe(7);
   });
@@ -24,7 +24,16 @@ describe("unit roster (01-units)", () => {
     expect(radar.airVision).toBe(10);
     expect(radar.vision).toBe(1);
     expect(radar.neverBuilt).toBe(true);
-    expect(UNIT_TYPE_IDS.filter((id) => UNITS[id].neverBuilt)).toEqual(["radarStation"]);
+  });
+
+  it("only the Radar Station and the Railway Gun are never built: a scenario places them (01-units §2a, §2b)", () => {
+    expect(UNIT_TYPE_IDS.filter((id) => UNITS[id].neverBuilt)).toEqual(["radarStation", "railwayGun"]);
+  });
+
+  it("the Railway Gun moves 1 square on rail, fires at range 3–20 and can't move and fire, with 3 shells (01-units §2b)", () => {
+    expect(UNITS.railwayGun).toMatchObject({ category: "land", movePoints: 1, movementType: "rail", range: { min: 3, max: 20 }, canMoveAndFire: false, maxFuel: 50 });
+    expect(UNITS.railwayGun.primaryWeapon.maxAmmo).toBe(3);
+    expect(UNITS.railwayGun.secondaryWeapon).toBeNull();
   });
 
   it("matches the v0 stat table for a few units (01-units §8)", () => {

@@ -180,6 +180,23 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [192, 140, 192, 80],
     },
   },
+  sevastopol: {
+    theater: "easternFront",
+    lon: 33.52,
+    lat: 44.6,
+    where: "Sevastopol, Crimea",
+    label: "below",
+    when: "June 1942",
+    feature: "The Gustav railway gun",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "railwayGun", nation: "germany", terrain: "railway" },
+      defender: { kind: "infantry", nation: "ussr", terrain: "bunker" },
+      weapon: "primary",
+      counter: null,
+      crop: [0, 84, 336, 140],
+    },
+  },
   kursk: {
     theater: "easternFront",
     lon: 36.2,

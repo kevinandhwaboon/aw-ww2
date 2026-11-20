@@ -1334,6 +1334,66 @@
       ]
     },
     {
+      "nation": "germany",
+      "team": "olive",
+      "path": "../../units/de-railgun-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "railwayGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "red",
+      "path": "../../units/de-railgun-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "railwayGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-railgun-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "railwayGun"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "grey",
+      "path": "../../units/de-railgun-32-grey.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "railwayGun"
+      ]
+    },
+    {
       "nation": "italy",
       "team": "blue",
       "path": "../../units/it-land-32-blue.png",
@@ -1524,7 +1584,8 @@
     },
     "connected": {
       "road": 16,
-      "river": 32
+      "river": 32,
+      "railway": 119
     },
     "bridges": {
       "horizontal": 48,
@@ -1533,6 +1594,10 @@
     "majorBridges": {
       "horizontal": 78,
       "vertical": 79
+    },
+    "railBridges": {
+      "horizontal": 135,
+      "vertical": 136
     },
     "blownBridges": {
       "horizontal": 80,

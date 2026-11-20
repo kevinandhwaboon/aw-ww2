@@ -347,6 +347,8 @@ A road or river that dead-ends at the map's edge runs straight on past it. One t
 | `beach` | The first of the 20 beach pieces: 16 by sea mask, then 4 inner corners. Without it, beaches are all sand from `tiles` and sea foams against them |
 | `beachFlares` | Optional. The first of the 32 beach flare pieces. Without it, a beach's waterline meets full land halfway along its side |
 
+**Railway (added 2026-11-19, 02-terrain §4c):** 16 joined pieces like roads (`connected.railway` in the pack): gravel ballast, dark sleepers across it and two steel rails along it. Where a Railway square has river on two opposite sides, it's drawn as the river piece with a girder span carrying the track over it (`railBridges`), and the river joins into it from both banks. Packs without them draw the placeholder.
+
 ## 15. Buildings
 
 Properties are pixel grids in `tools/art/buildings.mjs`, rendered by `npm run art` to `public/assets/terrain/buildings.png`. The style is a Normandy village: cream stone walls with a roof, banner or trim in the owner's color.
@@ -431,6 +433,8 @@ In a pack, a sheet's `paratroopers` lists the rows for an air-dropped Infantry (
 - **Terrain and buildings** (`tools/art/terrain32.mjs`, `buildings32.mjs`, `depth32.mjs`): tiles are 32 wide by 64 tall, the bottom 32 rows being the map cell and the top 32 room to rise. They use the same sheet layouts as sections 14–15, so tile numbers don't change. Grass has tufts and flowers, roads have wheel ruts, rivers have sandy banks, and buildings have stone courses and tiled roofs. Sheets: `public/assets/terrain/terrain-32.png` and `buildings-32.png`.
 - **Pack fields:** terrain and building sheets take `tileWidth` (16 or 32). `tileHeight` is the width, or twice it for art that rises into the tile behind.
 
+
+**The Railway Gun (added 2026-11-19, 01-units §2b):** Germany only, `de-railgun-32-*.png` from `tools/art/railgun32.mjs`. Seen from the side, a girder carriage on two bogie groups with the Balkenkreuz, the cradle amidships and the barrel cocked up to the right; the down and up views show it end-on, muzzle toward or away from the viewer. The second idle frame puts a wisp of smoke at the muzzle. In battle scenes it's one figure the length of its half: double track, four bogie groups, the girder carriage, the ammunition hoist with a shell coming up while it loads, and the barrel sliding back in its cradle when it fires; two crew stand by, one covering his ears.
 
 ## 18. Battle scenes
 

@@ -16,6 +16,7 @@ const TERRAIN = {
   S: "#1565c0", _: "#fff59d", r: "#5d4037", X: "#616161", x: "#9e9e9e", o: "#000000",
   "%": "#ff6f00", "!": "#263238", // Major Bridge (bright, so the ones that matter stand out), Blown Bridge
   m: "#6d4c41", d: "#c8a26a", z: "#f5f5f0", // Minefield, Ridge, Salt Marsh (02-terrain §4b)
+  R: "#4e342e", // Railway (02-terrain §4c)
 };
 // A desert map draws its open ground as sand.
 if (scenario.weather?.season === "desert") TERRAIN["."] = "#e6cf98";

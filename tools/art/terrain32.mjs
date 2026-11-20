@@ -457,6 +457,53 @@ function saltMarsh(salt) {
   return toRows(g);
 }
 
+// A railway line (02-terrain §4c): a gravel ballast bed, dark wooden sleepers across it and two
+// steel rails along it, joining the neighbors like a road. Where arms meet, the rails of each arm
+// run into the middle, so a bend reads as track that turns.
+const RAIL_A = 12;
+const RAIL_B = 19;
+function railway(mask) {
+  const g = grass(140 + mask);
+  const on = channel(mask, 8, 23);
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    if (!on[y][x]) continue;
+    g[y][x] = touches(on, x, y, false) ? "r" : hash(x, y, 150 + mask) % 5 === 0 ? "p" : hash(x, y, 151) % 4 === 0 ? "r" : "R";
+  }
+  // With no neighbor at all, a short stretch of track lying across the tile.
+  const arms = mask === 0 ? 10 : mask;
+  const vertical = (y0, y1) => {
+    for (let y = y0; y <= y1; y++) {
+      if (y % 4 === 1) for (let x = 9; x <= 22; x++) g[y][x] = x === 9 || x === 22 ? "x" : "B";
+    }
+    for (let y = y0; y <= y1; y++) for (const x of [RAIL_A, RAIL_B]) { g[y][x] = "K"; g[y][x + 1] = "j"; }
+  };
+  const horizontal = (x0, x1) => {
+    for (let x = x0; x <= x1; x++) {
+      if (x % 4 === 1) for (let y = 9; y <= 22; y++) g[y][x] = y === 9 || y === 22 ? "x" : "B";
+    }
+    for (let x = x0; x <= x1; x++) for (const y of [RAIL_A, RAIL_B]) { g[y][x] = "j"; g[y + 1][x] = "K"; }
+  };
+  const north = arms & 1, east = arms & 2, south = arms & 4, west = arms & 8;
+  if (north || south) vertical(north ? 0 : 9, south ? SIZE - 1 : 22);
+  if (east || west) horizontal(west ? 0 : 9, east ? SIZE - 1 : 22);
+  return toRows(g);
+}
+
+// A railway bridge over a river (02-terrain §4c): a steel girder span like the Major Bridge's,
+// carrying sleepers and rails instead of a paved deck. Drawn over the river piece.
+function railBridge(horizontal) {
+  const g = fill(".");
+  for (let a = 0; a < SIZE; a++) for (let b = 3; b <= 28; b++) {
+    const [x, y] = horizontal ? [a, b] : [b, a];
+    if (b <= 6 || b >= 25) g[y][x] = girderSide(b, a);
+    else if (b === RAIL_A || b === RAIL_B) g[y][x] = horizontal ? "j" : "K";
+    else if (b === RAIL_A + 1 || b === RAIL_B + 1) g[y][x] = horizontal ? "K" : "j";
+    else if (a % 4 === 1) g[y][x] = b === 7 || b === 24 ? "x" : "B";
+    else g[y][x] = b === 7 || b === 24 ? "k" : ".";
+  }
+  return toRows(g);
+}
+
 const still = (rows) => [rows, rows];
 const moving = (draw) => [draw(0), draw(1)];
 
@@ -492,6 +539,9 @@ export const layout = [
   // Added 2026-11-16: beach flares, 8 for each corner NE, SE, SW, NW.
   ...[0, 1, 2, 3].flatMap((c) => [0, 1].flatMap((across) => [0, 1, 2, 3].map((opp) =>
     [`beach-flare-${["NE", "SE", "SW", "NW"][c]}-${across}-${opp}`, moving((f) => beachFlare(c, across === 1, opp, f))]))),
+  // Added 2026-11-19: railway track, joined like roads, and its bridge over a river (02-terrain §4c).
+  ...Array.from({ length: 16 }, (_, mask) => [`railway-${mask}`, still(railway(mask))]),
+  ["railBridge-horizontal", still(railBridge(true))], ["railBridge-vertical", still(railBridge(false))],
 ];
 
 for (const entry of layout) entry[1] = entry[1].map((rows) => (rows.length === SIZE ? flat(rows) : rows));

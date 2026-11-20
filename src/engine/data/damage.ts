@@ -20,38 +20,40 @@ export const ARMED_UNIT_IDS = [
   "infantry", "assaultInfantry", "mortar", "recon", "lightTank", "mediumTank", "heavyTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
   "fighter", "bomber", "diveBomber", "torpedoBomber", "battleship", "destroyer", "submarine", "torpedoBoat",
+  "railwayGun",
 ] as const satisfies readonly UnitTypeId[];
 type ArmedUnitId = (typeof ARMED_UNIT_IDS)[number];
 
 // 03-combat §5a: vs. land units
 const VS_LAND_COLUMNS = [
   "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
-  "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "radarStation",
+  "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "radarStation", "railwayGun",
 ] as const satisfies readonly DamageTarget[];
 
-const NONE_VS_LAND = "— — — — — — — — — — — — — —";
-//                     Inf  AInf  Mor  Rec  HT   LT   MT   HvT  TD   Art  Rkt  AA   Flak Radar
+const NONE_VS_LAND = "— — — — — — — — — — — — — — —";
+//                     Inf  AInf  Mor  Rec  HT   LT   MT   HvT  TD   Art  Rkt  AA   Flak Radar RGun
 const VS_LAND: Record<ArmedUnitId, string> = {
-  infantry:        "55*  45*  60*  12*  14*  7*   5*   1*   6*   15*  25*  5*   25*  15*",
-  assaultInfantry: "65*  55*  70*  85   75   70   55   15   60   70   85   65   85   70",
-  mortar:          "75   70   75   45   40   30   15   5    25   55   60   40   60   55",
-  recon:           "70*  65*  75*  35*  45*  10*  6*   1*   8*   45*  55*  4*   28*  30*",
-  lightTank:       "70*  65*  75*  75   65   55   40   10   45   60   75   55   75   60",
-  mediumTank:      "75*  70*  80*  85   75   70   55   15   65   70   85   65   85   70",
-  heavyTank:       "105* 95*  105* 105  105  95   85   55   90   105  105  105  105  105",
-  tankDestroyer:   "—    —    —    95   90   95   85   65   75   80   90   85   90   80",
-  artillery:       "90   85   90   80   70   75   70   45   70   75   80   75   80   75",
-  rocketArtillery: "95   90   95   90   80   85   80   55   80   80   85   85   90   80",
-  mobileAA:        "105  105  105  60   50   35   25   10   30   50   45   45   55   40",
+  infantry:        "55*  45*  60*  12*  14*  7*   5*   1*   6*   15*  25*  5*   25*  15*  15*",
+  assaultInfantry: "65*  55*  70*  85   75   70   55   15   60   70   85   65   85   70  70",
+  mortar:          "75   70   75   45   40   30   15   5    25   55   60   40   60   55  55",
+  recon:           "70*  65*  75*  35*  45*  10*  6*   1*   8*   45*  55*  4*   28*  30*  45*",
+  lightTank:       "70*  65*  75*  75   65   55   40   10   45   60   75   55   75   60  60",
+  mediumTank:      "75*  70*  80*  85   75   70   55   15   65   70   85   65   85   70  70",
+  heavyTank:       "105* 95*  105* 105  105  95   85   55   90   105  105  105  105  105  105",
+  tankDestroyer:   "—    —    —    95   90   95   85   65   75   80   90   85   90   80  80",
+  artillery:       "90   85   90   80   70   75   70   45   70   75   80   75   80   75  75",
+  rocketArtillery: "95   90   95   90   80   85   80   55   80   80   85   85   90   80  80",
+  mobileAA:        "105  105  105  60   50   35   25   10   30   50   45   45   55   40  50",
   flakGun:         NONE_VS_LAND,
-  fighter:         "15   15   15   10   8    5    2    1    3    10   10   3    8    10",
-  bomber:          "110  110  110  105  105  105  105  95   105  105  105  95   105  75",
-  diveBomber:      "55   55   55   55   55   55   50   45   50   55   55   45   50   40",
+  fighter:         "15   15   15   10   8    5    2    1    3    10   10   3    8    10  10",
+  bomber:          "110  110  110  105  105  105  105  95   105  105  105  95   105  75  105",
+  diveBomber:      "55   55   55   55   55   55   50   45   50   55   55   45   50   40  55",
   torpedoBomber:   NONE_VS_LAND,
-  battleship:      "95   90   95   90   80   85   80   55   80   80   85   85   90   80",
-  destroyer:       "50   45   50   40   35   30   20   5    20   40   50   30   45   40",
+  battleship:      "95   90   95   90   80   85   80   55   80   80   85   85   90   80  80",
+  destroyer:       "50   45   50   40   35   30   20   5    20   40   50   30   45   40  40",
   submarine:       NONE_VS_LAND,
   torpedoBoat:     NONE_VS_LAND,
+  railwayGun:      "130  130  130  130  130  130  130  130  130  130  130  130  130  130  130",
 };
 
 // 03-combat §5b: vs. air, naval and fortifications
@@ -82,6 +84,7 @@ const VS_OTHER: Record<ArmedUnitId, string> = {
   destroyer:       "55*  65*  105* 65*  65*  10   40   90   50   85   10   50   20",
   submarine:       "—    —    —    —    —    55   25   55   95   75   75   95   —",
   torpedoBoat:     "—    —    —    —    —    35   30   40   75   55   45   75   —",
+  railwayGun:      "—    —    —    —    —    70   95   95   100  100  80   100  110",
 };
 
 // 03-combat §5d: return-fire AA. Battleships and Carriers fire these back at an aircraft that

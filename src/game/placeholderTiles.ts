@@ -27,6 +27,7 @@ const STYLE: Record<TerrainId, { base: string; detail: string; motif: Motif }> =
   minefield: { base: "#d8c48c", detail: "#5a5a5a", motif: "speckle" },
   ridge: { base: "#c8b078", detail: "#8a7448", motif: "hill" },
   saltMarsh: { base: "#e8e4d8", detail: "#a8a090", motif: "speckle" },
+  railway: { base: "#b8a888", detail: "#5a4a3a", motif: "planks" },
 };
 
 type Motif =

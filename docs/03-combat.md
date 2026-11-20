@@ -1,7 +1,7 @@
 # Topic Doc 03: Combat
 
 **Status:** Rules decided. Provisional v0 damage chart and veterancy values set; expect tuning after playtesting.
-**Last updated:** 2026-11-16
+**Last updated:** 2026-11-19 (Railway Gun row and column)
 **Depends on:** 00-master-design.md, 01-units.md. **Feeds:** 02-terrain (defense stars, fortification HP), 06-commanders (modifiers).
 
 **Guiding rule:** when a design choice is open, follow the original game's mechanism unless there's a clear reason not to.
@@ -82,32 +82,33 @@ Values come from the original game where a unit maps cleanly (Infantry, Assault 
 
 Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows. The Carrier's return-fire AA is in §5d, not the main chart, since it never attacks.
 
-**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Sup = Supply Ship, Fort = fortification/obstacle.
+**Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Radar = Radar Station, RGun = Railway Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Sup = Supply Ship, Fort = fortification/obstacle.
 
 ### 5a. Vs. land units
 
-| Attacker ↓ / Defender → | Inf | AInf | Mor | Rec | HT | LT | MT | HvT | TD | Art | Rkt | AA | Flak | Radar |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Inf | 55* | 45* | 60* | 12* | 14* | 7* | 5* | 1* | 6* | 15* | 25* | 5* | 25* | 15* |
-| AInf | 65* | 55* | 70* | 85 | 75 | 70 | 55 | 15 | 60 | 70 | 85 | 65 | 85 | 70 |
-| Mor | 75 | 70 | 75 | 45 | 40 | 30 | 15 | 5 | 25 | 55 | 60 | 40 | 60 | 55 |
-| Rec | 70* | 65* | 75* | 35* | 45* | 10* | 6* | 1* | 8* | 45* | 55* | 4* | 28* | 30* |
-| LT | 70* | 65* | 75* | 75 | 65 | 55 | 40 | 10 | 45 | 60 | 75 | 55 | 75 | 60 |
-| MT | 75* | 70* | 80* | 85 | 75 | 70 | 55 | 15 | 65 | 70 | 85 | 65 | 85 | 70 |
-| HvT | 105* | 95* | 105* | 105 | 105 | 95 | 85 | 55 | 90 | 105 | 105 | 105 | 105 | 105 |
-| TD | — | — | — | 95 | 90 | 95 | 85 | 65 | 75 | 80 | 90 | 85 | 90 | 80 |
-| Art | 90 | 85 | 90 | 80 | 70 | 75 | 70 | 45 | 70 | 75 | 80 | 75 | 80 | 75 |
-| Rkt | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 |
-| AA | 105 | 105 | 105 | 60 | 50 | 35 | 25 | 10 | 30 | 50 | 45 | 45 | 55 | 40 |
-| Flak | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| Ftr | 15 | 15 | 15 | 10 | 8 | 5 | 2 | 1 | 3 | 10 | 10 | 3 | 8 | 10 |
-| Bmr | 110 | 110 | 110 | 105 | 105 | 105 | 105 | 95 | 105 | 105 | 105 | 95 | 105 | 75 |
-| Dive | 55 | 55 | 55 | 55 | 55 | 55 | 50 | 45 | 50 | 55 | 55 | 45 | 50 | 40 |
-| TBmr | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| BB | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 |
-| DD | 50 | 45 | 50 | 40 | 35 | 30 | 20 | 5 | 20 | 40 | 50 | 30 | 45 | 40 |
-| Sub | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| TB | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Attacker ↓ / Defender → | Inf | AInf | Mor | Rec | HT | LT | MT | HvT | TD | Art | Rkt | AA | Flak | Radar | RGun |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Inf | 55* | 45* | 60* | 12* | 14* | 7* | 5* | 1* | 6* | 15* | 25* | 5* | 25* | 15* | 15* |
+| AInf | 65* | 55* | 70* | 85 | 75 | 70 | 55 | 15 | 60 | 70 | 85 | 65 | 85 | 70 | 70 |
+| Mor | 75 | 70 | 75 | 45 | 40 | 30 | 15 | 5 | 25 | 55 | 60 | 40 | 60 | 55 | 55 |
+| Rec | 70* | 65* | 75* | 35* | 45* | 10* | 6* | 1* | 8* | 45* | 55* | 4* | 28* | 30* | 45* |
+| LT | 70* | 65* | 75* | 75 | 65 | 55 | 40 | 10 | 45 | 60 | 75 | 55 | 75 | 60 | 60 |
+| MT | 75* | 70* | 80* | 85 | 75 | 70 | 55 | 15 | 65 | 70 | 85 | 65 | 85 | 70 | 70 |
+| HvT | 105* | 95* | 105* | 105 | 105 | 95 | 85 | 55 | 90 | 105 | 105 | 105 | 105 | 105 | 105 |
+| TD | — | — | — | 95 | 90 | 95 | 85 | 65 | 75 | 80 | 90 | 85 | 90 | 80 | 80 |
+| Art | 90 | 85 | 90 | 80 | 70 | 75 | 70 | 45 | 70 | 75 | 80 | 75 | 80 | 75 | 75 |
+| Rkt | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 | 80 |
+| AA | 105 | 105 | 105 | 60 | 50 | 35 | 25 | 10 | 30 | 50 | 45 | 45 | 55 | 40 | 50 |
+| Flak | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Ftr | 15 | 15 | 15 | 10 | 8 | 5 | 2 | 1 | 3 | 10 | 10 | 3 | 8 | 10 | 10 |
+| Bmr | 110 | 110 | 110 | 105 | 105 | 105 | 105 | 95 | 105 | 105 | 105 | 95 | 105 | 75 | 105 |
+| Dive | 55 | 55 | 55 | 55 | 55 | 55 | 50 | 45 | 50 | 55 | 55 | 45 | 50 | 40 | 55 |
+| TBmr | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| BB | 95 | 90 | 95 | 90 | 80 | 85 | 80 | 55 | 80 | 80 | 85 | 85 | 90 | 80 | 80 |
+| DD | 50 | 45 | 50 | 40 | 35 | 30 | 20 | 5 | 20 | 40 | 50 | 30 | 45 | 40 | 40 |
+| Sub | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| TB | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| RGun | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 | 130 |
 
 ### 5b. Vs. air, naval and fortifications
 
@@ -133,11 +134,13 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 | DD | 55* | 65* | 105* | 65* | 65* | 10 | 40 | 90 | 50 | 85 | 10 | 50 | 20 |
 | Sub | — | — | — | — | — | 55 | 25 | 55 | 95 | 75 | 75 | 95 | — |
 | TB | — | — | — | — | — | 35 | 30 | 40 | 75 | 55 | 45 | 75 | — |
+| RGun | — | — | — | — | — | 70 | 95 | 95 | 100 | 100 | 80 | 100 | 110 |
 
 ### 5c. Notes on the chart
 
 - **Radar Station** (added 2026-11-19, 20-scenarios-battle-of-britain): an unarmed installation of lattice masts and huts, so it has no row. Bombers hit it for 75, not their usual 105+: masts were hard to fell, and in 1940 most stations bombed were working again within hours. Two Bomber attacks destroy one; a Dive Bomber does 40, about half. Fighters' strafing does 10. On the ground it takes about what Artillery takes.
 
+- **Railway Gun** (added 2026-11-19, 01-units §2b): one 80 cm shell a turn. 130 against every land unit, so a full-strength shot destroys almost anything on open ground and leaves a unit on Hills (4 stars) on 2–3 HP; 110 against fortifications, so one shot breaks a full bunker and its garrison with it (§4). Against ships 70–100, and nothing against aircraft. It defends like Artillery (its column copies Artillery's).
 - **Supply Ship** (added 2026-11-16) takes exactly the Landing Craft's damage from everything: an unarmored hull, easy to sink. It's unarmed, so it has no row.
 - **Tank Destroyer** beats tanks when it strikes first (vs. Heavy Tank 65 vs. Heavy Tank's 90 return fire) but has no weapon vs. infantry, so Assault Infantry (60) and artillery are its counters.
 - **Heavy Tank** wins most fights but is slow and expensive; its answers are Tank Destroyers, Bombers, Battleships and massed indirect fire.

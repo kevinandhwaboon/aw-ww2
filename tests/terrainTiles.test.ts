@@ -417,3 +417,50 @@ describe("terrain tiles: variants and fallbacks (08-art-pipeline §14)", () => {
     expect(terrainLayers(map, 0, 0, simple)).toEqual([{ kind: "sheet", tile: 1 }]);
   });
 });
+
+describe("terrain tiles: railways (02-terrain §4c, 08-art-pipeline §14)", () => {
+  const withRail: TerrainSheet = { ...sheet, connected: { ...sheet.connected, railway: 119 }, railBridges: { horizontal: 135, vertical: 136 } };
+
+  it("track joins the track beside it, and only track: a road next to it isn't joined", () => {
+    const map = parseAsciiMap([
+      ".R.",
+      "=RR",
+      "...",
+    ]);
+    expect(terrainLayers(map, 1, 1, withRail)).toEqual([{ kind: "sheet", tile: 119 + (N | E) }]);
+  });
+
+  it("where the line crosses a river, the square is drawn as river with a girder span across it", () => {
+    const map = parseAsciiMap([
+      ".~.",
+      "RRR",
+      ".~.",
+    ]);
+    expect(terrainLayers(map, 1, 1, withRail)).toEqual([
+      { kind: "sheet", tile: 32 + (N | S) },
+      { kind: "sheet", tile: 135 },
+    ]);
+  });
+
+  it("the river runs into the crossing from both banks, so it doesn't stop at the track", () => {
+    const map = parseAsciiMap([
+      ".~.",
+      "RRR",
+      ".~.",
+    ]);
+    expect(terrainLayers(map, 1, 0, withRail)).toEqual([{ kind: "sheet", tile: 32 + (N | S) }]);
+  });
+
+  it("track beside a river, not across it, is plain track", () => {
+    const map = parseAsciiMap([
+      "~~~",
+      "RRR",
+      "...",
+    ]);
+    expect(terrainLayers(map, 1, 1, withRail)).toEqual([{ kind: "sheet", tile: 119 + (E | W) }]);
+  });
+
+  it("a pack without railway art draws the placeholder", () => {
+    expect(terrainLayers(parseAsciiMap(["R"]), 0, 0, sheet)).toEqual([{ kind: "placeholder", terrain: "railway" }]);
+  });
+});
