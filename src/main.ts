@@ -5,9 +5,11 @@ import { startSession } from "./session";
 import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
 import { campaignAi } from "./ai/maps";
 import { MISSIONS } from "./campaign/missions";
-import { alliesWon, missionStatus, readProgress, withWin, writeProgress } from "./campaign/progress";
+import { alliesWon, campaignComplete, missionStatus, missionsWon, readProgress, withWin, writeProgress } from "./campaign/progress";
 import { missionScenario } from "./campaign/setup";
 import { showCampaign, type CampaignEntry } from "./ui/campaign";
+import { showEnding } from "./ui/ending";
+import { summaryLine } from "./game/ending/plan";
 import { greedyAi } from "./ai/greedy";
 import { weightsFor } from "./ai/weights";
 import { setPolish } from "./game/battle/angled/mesh";
@@ -71,16 +73,30 @@ function titleChoices(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice |
 
 /** The campaign screen; X goes back to the title. `at` picks the mission it opens on. */
 function openCampaign(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null, at?: string): void {
+  const progress = readProgress(store);
+  const missions = campaign.map((e) => e.mission);
   showCampaign(
     ui,
     campaign,
-    readProgress(store),
+    progress,
     defaults,
     (entry, options) => start(game, ui, entry.scenario, options, undefined, entry),
     () => showTitleScreen(ui, SCENARIOS, defaults, (scenario, options) => start(game, ui, scenario, options), titleChoices(game, ui, resume)),
     at,
+    // Once the campaign is complete its ending can be watched again (22-campaign §7a).
+    campaignComplete(missions, progress) ? () => playEnding(ui, () => openCampaign(game, ui, resume, at)) : null,
   );
 }
+
+/** The campaign's ending, the surrender on the Missouri (22-campaign §7a), then `then`. */
+function playEnding(ui: HTMLElement, then: () => void): void {
+  const missions = campaign.map((e) => e.mission);
+  showEnding(ui, summaryLine(missionsWon(missions, readProgress(store)), missions.length), then);
+}
+
+/** Whether this game is the campaign's last mission, won. */
+const wonTheWar = (mission: CampaignEntry | undefined, state: GameState | null): boolean =>
+  mission !== undefined && mission === campaign[campaign.length - 1] && state !== null && alliesWon(state);
 
 /**
  * Starts a new game on this map, or, given the autosave, carries that one on. A campaign mission
@@ -88,12 +104,15 @@ function openCampaign(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice |
  */
 function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions, saved?: Autosave, mission?: CampaignEntry): void {
   const computer = options.computer ?? defaultComputerPlayers(scenario);
+  /** The game as it last stood, so what comes after it can depend on how it ended. */
+  let latest: GameState | null = saved?.state ?? null;
   const session = startSession({
     gameRoot: game,
     uiRoot: ui,
     game: saved?.state ?? newGame(scenario, options),
     resumed: saved !== undefined,
     onChange: (state) => {
+      latest = state;
       if (!writeAutosave(store, { scenarioId: scenario.id, options, state, ...(mission ? { campaign: true as const } : {}) }) && !autosaveWarned) {
         autosaveWarned = true;
         console.warn("Couldn't autosave the game: browser storage is blocked or full");
@@ -108,11 +127,21 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     }),
     debug: url.debug,
     pad: padLayout,
-    ...(mission ? { afterGame: { label: "Campaign", note: (state: GameState) => missionNote(mission, state) } } : {}),
+    ...(mission
+      ? {
+          afterGame: {
+            // Winning the last mission goes on to the ending (22-campaign §7a).
+            label: (state: GameState) => (wonTheWar(mission, state) ? "Continue" : "Campaign"),
+            note: (state: GameState) => missionNote(mission, state),
+          },
+        }
+      : {}),
     // Back to the campaign or the map select, keeping the options just played with.
     onNewGame: () => {
       session.end();
-      if (mission) {
+      if (mission && wonTheWar(mission, latest)) {
+        playEnding(ui, () => openCampaign(game, ui, null, mission.mission.map));
+      } else if (mission) {
         // Opens on the next mission when this one was just won.
         const progress = readProgress(store);
         const i = campaign.indexOf(mission);
@@ -145,7 +174,10 @@ if (url.battleDemo) {
   const { startBattlePreview } = await import("./game/battle/preview");
   startBattlePreview(gameRoot, new URLSearchParams(window.location.search));
 } else if (direct) start(gameRoot, uiRoot, direct, defaults);
-else {
+else if (url.ending) {
+  // ?ending=on: the campaign's ending on its own, for checking it (11-tech-setup §7).
+  playEnding(uiRoot, () => showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), titleChoices(gameRoot, uiRoot, null)));
+} else {
   // The title screen offers Continue when a game was left unfinished on this device.
   const saved = readAutosave(store, scenarioIds);
   const savedScenario = saved && SCENARIOS.find((s) => s.id === saved.scenarioId);

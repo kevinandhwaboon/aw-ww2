@@ -9,6 +9,7 @@
 //   ?handoff=off         skips the pass-the-device screen
 //   ?battle=off          plays attacks on the map instead of as battle scenes
 //   ?battle=demo         the battle preview page (src/game/battle/preview.ts)
+//   ?ending=on           plays the campaign's ending, the surrender on the Missouri (22-campaign §7a)
 //   ?polish=off          battle machines drawn without the polish pass (08-art-pipeline §18)
 //   ?pack=night-ops      uses that art pack (08-art-pipeline §13)
 //   ?debug=on            shows the unit and debug panels
@@ -46,6 +47,8 @@ export interface UrlOptions {
   readonly battleScenes: boolean;
   /** Show the battle preview page instead of a game. */
   readonly battleDemo: boolean;
+  /** Play the campaign's ending straight away (22-campaign §7a). */
+  readonly ending: boolean;
   readonly polish: boolean;
   readonly pack: string;
   readonly debug: boolean;
@@ -75,6 +78,7 @@ export function parseUrlOptions(params: UrlParams): UrlOptions {
     passDevice: params.get("handoff") !== "off",
     battleScenes: params.get("battle") !== "off",
     battleDemo: params.get("battle") === "demo",
+    ending: params.get("ending") === "on",
     polish: params.get("polish") !== "off",
     pack: params.get("pack") ?? "default",
     debug: params.get("debug") === "on",
