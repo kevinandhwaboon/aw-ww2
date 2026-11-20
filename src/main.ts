@@ -1,6 +1,9 @@
 import type { Scenario } from "./engine/scenario";
 import { loadArtPack } from "./game/loadArtPack";
-import { SCENARIOS } from "./scenarios";
+import { SCENARIOS, SURVIVAL_SCENARIOS } from "./scenarios";
+import { SURVIVAL_MAPS } from "./survival/maps";
+import { beatHistory, describeRun, isBetter, readRecords, runOf, withRun, writeRecords } from "./survival/record";
+import { showSurvival, type SurvivalEntry } from "./ui/survival";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
 import { campaignAi } from "./ai/maps";
@@ -49,7 +52,7 @@ const store = (() => {
     return null;
   }
 })();
-const scenarioIds = SCENARIOS.map((s) => s.id);
+const scenarioIds = [...SCENARIOS, ...SURVIVAL_SCENARIOS].map((s) => s.id);
 /** A failed autosave is logged once, not after every move. */
 let autosaveWarned = false;
 
@@ -57,6 +60,12 @@ let autosaveWarned = false;
 const campaign: readonly CampaignEntry[] = MISSIONS.flatMap((mission) => {
   const scenario = SCENARIOS.find((s) => s.id === mission.map);
   return scenario ? [{ mission, scenario: missionScenario(scenario, mission) }] : [];
+});
+
+/** Every survival map with its scenario (23-survival §2). */
+const survivalMaps: readonly SurvivalEntry[] = SURVIVAL_MAPS.flatMap((survival) => {
+  const scenario = SURVIVAL_SCENARIOS.find((s) => s.id === survival.map);
+  return scenario ? [{ survival, scenario }] : [];
 });
 
 /** What the results screen says after a campaign mission (22-campaign §7). */
@@ -68,7 +77,35 @@ function missionNote(entry: CampaignEntry, state: GameState): string {
 
 /** The title screen's choices besides Skirmish, with this game to carry on, if any. */
 function titleChoices(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null): TitleChoices {
-  return { campaign: () => openCampaign(game, ui, resume), resume };
+  return { campaign: () => openCampaign(game, ui, resume), survival: () => openSurvival(game, ui, resume), resume };
+}
+
+const backToTitle = (game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null) => () =>
+  showTitleScreen(ui, SCENARIOS, defaults, (scenario, options) => start(game, ui, scenario, options), titleChoices(game, ui, resume));
+
+/** The Survival screen (23-survival §7); X goes back to the title. */
+function openSurvival(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null, at?: string): void {
+  showSurvival(
+    ui,
+    survivalMaps,
+    readRecords(store),
+    defaults,
+    (entry, options) => start(game, ui, entry.scenario, options, undefined, undefined, entry),
+    backToTitle(game, ui, resume),
+    at,
+  );
+}
+
+/** The best run before this game, kept so the results can say whether it's a new best. */
+let bestBefore: ReturnType<typeof readRecords> = {};
+
+/** What the results screen says after a survival game (23-survival §5e, §7). */
+function survivalNote(entry: SurvivalEntry, state: GameState): string {
+  const run = runOf(state);
+  const lines = [describeRun(run)];
+  if (isBetter(run, bestBefore[entry.scenario.id])) lines.push("New best");
+  lines.push(beatHistory(entry.survival, run) ? `Held longer than history: ${entry.survival.historyLine}` : `History: ${entry.survival.historyLine}`);
+  return lines.join(" · ");
 }
 
 /** The campaign screen; X goes back to the title. `at` picks the mission it opens on. */
@@ -102,7 +139,16 @@ const wonTheWar = (mission: CampaignEntry | undefined, state: GameState | null):
  * Starts a new game on this map, or, given the autosave, carries that one on. A campaign mission
  * (`mission`) has the campaign's computer, counts a win, and goes back to the campaign afterwards.
  */
-function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: GameOptions, saved?: Autosave, mission?: CampaignEntry): void {
+function start(
+  game: HTMLElement,
+  ui: HTMLElement,
+  scenario: Scenario,
+  options: GameOptions,
+  saved?: Autosave,
+  mission?: CampaignEntry,
+  survival?: SurvivalEntry,
+): void {
+  if (survival) bestBefore = readRecords(store);
   const computer = options.computer ?? defaultComputerPlayers(scenario);
   /** The game as it last stood, so what comes after it can depend on how it ended. */
   let latest: GameState | null = saved?.state ?? null;
@@ -113,11 +159,14 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
     resumed: saved !== undefined,
     onChange: (state) => {
       latest = state;
-      if (!writeAutosave(store, { scenarioId: scenario.id, options, state, ...(mission ? { campaign: true as const } : {}) }) && !autosaveWarned) {
+      const mode = mission ? { campaign: true as const } : survival ? { survival: true as const } : {};
+      if (!writeAutosave(store, { scenarioId: scenario.id, options, state, ...mode }) && !autosaveWarned) {
         autosaveWarned = true;
         console.warn("Couldn't autosave the game: browser storage is blocked or full");
       }
       if (mission && alliesWon(state)) writeProgress(store, withWin(readProgress(store), mission.mission.map));
+      // The best run is kept once the game is over (23-survival §5e).
+      if (survival && state.result) writeRecords(store, withRun(readRecords(store), scenario.id, runOf(state)));
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,
@@ -135,8 +184,16 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
             note: (state: GameState) => missionNote(mission, state),
           },
         }
-      : {}),
-    // Back to the campaign or the map select, keeping the options just played with.
+      : survival
+        ? {
+            afterGame: {
+              label: () => "Survival",
+              note: (state: GameState) => survivalNote(survival, state),
+              heading: () => survival.survival.fallen,
+            },
+          }
+        : {}),
+    // Back to the campaign, the Survival screen or the map select, keeping the options just played with.
     onNewGame: () => {
       session.end();
       if (mission && wonTheWar(mission, latest)) {
@@ -148,6 +205,8 @@ function start(game: HTMLElement, ui: HTMLElement, scenario: Scenario, options: 
         const next = campaign[i + 1];
         const at = next && missionStatus(campaign.map((e) => e.mission), progress, i + 1) !== "locked" ? next : mission;
         openCampaign(game, ui, null, at.mission.map);
+      } else if (survival) {
+        openSurvival(game, ui, null, scenario.id);
       } else showMapSelect(ui, SCENARIOS, options, (next, nextOptions) => start(game, ui, next, nextOptions), titleChoices(game, ui, null));
     },
   });
@@ -170,23 +229,27 @@ function newGame(scenario: Scenario, options: GameOptions): GameState {
 await loadArtPack(url.pack);
 
 const direct = SCENARIOS.find((s) => s.id === url.map);
+// ?map= also opens a survival map, as a survival game (23-survival §7).
+const directSurvival = survivalMaps.find((e) => e.scenario.id === url.map);
 if (url.battleDemo) {
   const { startBattlePreview } = await import("./game/battle/preview");
   startBattlePreview(gameRoot, new URLSearchParams(window.location.search));
 } else if (direct) start(gameRoot, uiRoot, direct, defaults);
+else if (directSurvival) start(gameRoot, uiRoot, directSurvival.scenario, defaults, undefined, undefined, directSurvival);
 else if (url.ending) {
   // ?ending=on: the campaign's ending on its own, for checking it (11-tech-setup §7).
   playEnding(uiRoot, () => showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), titleChoices(gameRoot, uiRoot, null)));
 } else {
   // The title screen offers Continue when a game was left unfinished on this device.
   const saved = readAutosave(store, scenarioIds);
-  const savedScenario = saved && SCENARIOS.find((s) => s.id === saved.scenarioId);
+  const savedScenario = saved && [...SCENARIOS, ...SURVIVAL_SCENARIOS].find((s) => s.id === saved.scenarioId);
+  const savedSurvival = saved?.survival ? survivalMaps.find((e) => e.scenario.id === saved.scenarioId) : undefined;
   const savedMission = saved?.campaign ? campaign.find((e) => e.mission.map === saved.scenarioId) : undefined;
   const resume =
     saved && savedScenario
       ? {
-          label: `${savedMission ? "Campaign: " : ""}${savedScenario.name} · Day ${saved.state.day}`,
-          go: () => start(gameRoot, uiRoot, savedMission?.scenario ?? savedScenario, saved.options, saved, savedMission),
+          label: `${savedMission ? "Campaign: " : savedSurvival ? "Survival: " : ""}${savedScenario.name} · Day ${saved.state.day}`,
+          go: () => start(gameRoot, uiRoot, savedMission?.scenario ?? savedScenario, saved.options, saved, savedMission, savedSurvival),
         }
       : null;
   showTitleScreen(uiRoot, SCENARIOS, defaults, (scenario, options) => start(gameRoot, uiRoot, scenario, options), titleChoices(gameRoot, uiRoot, resume));

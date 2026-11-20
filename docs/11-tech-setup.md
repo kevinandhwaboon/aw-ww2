@@ -37,6 +37,7 @@
 │  ├─ ui/                    HTML/CSS overlay: HUD, menus, screens
 │  ├─ ai/                    computer players (09-ai); maps/ holds the map-specific plans (22-campaign §6)
 │  ├─ campaign/              PURE campaign missions, their setup and progress (22-campaign)
+│  ├─ survival/              PURE survival maps' history and the best-run record (23-survival)
 │  └─ main.ts                wires engine, Phaser and UI together
 ├─ tests/                    engine tests (*.test.ts), mirroring src/engine
 ├─ public/assets/            sprite sheets, sounds, art packs

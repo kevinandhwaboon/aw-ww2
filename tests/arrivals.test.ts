@@ -230,11 +230,13 @@ describe("Arrivals in scenario files and saves (23-survival §5a)", () => {
     const parsed = parseScenario(
       scenario({
         victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
-        arrivals: [{ day: 2, player: 1, wave: 1, name: "Raid", zone: [{ x: 5, y: 0 }], units: [{ type: "bomber", sortieTurns: 2, fuel: 30 }] }],
+        arrivals: [{ day: 2, player: 1, wave: 1, name: "Raid", from: "south", unitCap: 30, zone: [{ x: 5, y: 0 }], units: [{ type: "bomber", sortieTurns: 2, fuel: 30 }] }],
       }),
     );
     expect(parsed.setup.victory).toEqual([{ type: "hqCapture" }, { type: "rout", side: "allies" }]);
-    expect(parsed.setup.arrivals).toEqual([{ day: 2, player: 1, wave: 1, name: "Raid", zone: [P(5, 0)], units: [{ type: "bomber", sortieTurns: 2, fuel: 30 }] }]);
+    expect(parsed.setup.arrivals).toEqual([
+      { day: 2, player: 1, wave: 1, unitCap: 30, name: "Raid", from: "south", zone: [P(5, 0)], units: [{ type: "bomber", sortieTurns: 2, fuel: 30 }] },
+    ]);
   });
 
   it("a scenario file is refused if an arrival has an empty zone, a square off the map or a sortie of 0 (23-survival §5a)", () => {

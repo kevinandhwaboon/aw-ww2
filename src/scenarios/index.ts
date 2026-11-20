@@ -16,5 +16,9 @@ import sevastopol from "./sevastopol.json";
 import stalingrad from "./stalingrad.json";
 import tenGo from "./ten-go.json";
 import theSlot from "./the-slot.json";
+import wakeIsland from "./wake-island.json";
 
 export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, gazala, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal, tenGo].map(parseScenario);
+
+/** The survival maps (23-survival §2): played only from the Survival screen, not in Skirmish. */
+export const SURVIVAL_SCENARIOS: readonly Scenario[] = [wakeIsland].map(parseScenario);

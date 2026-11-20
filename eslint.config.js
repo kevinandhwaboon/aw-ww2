@@ -27,7 +27,7 @@ export default tseslint.config(
   {
     // The rules engine stays pure: no rendering, no DOM, no hidden randomness or clock
     // (00-master-design §11, CLAUDE.md). AIs follow the same rules so AI games replay exactly (09-ai §3).
-    files: ["src/engine/**/*.ts", "src/ai/**/*.ts", "src/campaign/**/*.ts"],
+    files: ["src/engine/**/*.ts", "src/ai/**/*.ts", "src/campaign/**/*.ts", "src/survival/**/*.ts"],
     languageOptions: { globals: {} },
     rules: {
       "no-restricted-imports": [

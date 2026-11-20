@@ -6,7 +6,7 @@
     "lib": ["ES2023"],
     "types": []
   },
-  "include": ["src/engine", "src/ai", "src/campaign", "tests"],
+  "include": ["src/engine", "src/ai", "src/campaign", "src/survival", "tests"],
   // These read files through Vite (ui/style.css as text, unit sheet images, the sound files, the commander portraits), which needs Vite's types
   // and the DOM; checked by tsconfig.json instead.
   "exclude": ["tests/pageColors.test.ts", "tests/unitSheetImages.test.ts", "tests/soundFiles.test.ts", "tests/commanderPortraits.test.ts"]

@@ -35,6 +35,8 @@ export interface ResumeChoice {
 export interface TitleChoices {
   /** Opens the campaign screen. */
   readonly campaign: () => void;
+  /** Opens the Survival screen (23-survival §7). */
+  readonly survival: () => void;
   /** The game to carry on, if there is one. */
   readonly resume: ResumeChoice | null;
 }
@@ -48,13 +50,18 @@ export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[
     close();
     title.campaign();
   });
+  const survival = el("button", "btn btn-big", "Survival");
+  survival.addEventListener("click", () => {
+    close();
+    title.survival();
+  });
   const play = el("button", "btn btn-big", "Skirmish");
   play.addEventListener("click", () => {
     close();
     showMapSelect(root, scenarios, defaults, onStart, title);
   });
   panel.append(el("h1", "title-name", "WW2"));
-  const buttons = [campaign, play];
+  const buttons = [campaign, play, survival];
   if (resume) {
     // Continue comes first, so Z on the title screen carries the game on.
     const carryOn = el("button", "btn btn-big", "Continue");
@@ -70,6 +77,8 @@ export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[
     el("div", "title-sub", "Lead the Allies through the war against a stronger computer"),
     play,
     el("div", "title-sub", "Any battle, either side: play the computer, or a friend on one device"),
+    survival,
+    el("div", "title-sub", "Hold out against waves that grow until you fall"),
   );
   node.append(panel);
   buttons[0]?.focus();

@@ -1,6 +1,6 @@
 # Topic Doc 23: Survival
 
-**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Milestones S1 and S2 built 2026-11-20 (§4, §5a–§5c, §9): the engine rules for arrivals, raiders and the one-sided rout, then the wave generator and the HUD forecast. The Wake Island map and its screens are still to build. Wave numbers are a first guess, to be tuned (§8).
+**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Milestones S1–S3 built 2026-11-20 (§9): the engine rules, the wave generator, and the Wake Island map with the Survival screens, so the mode is playable. Japan's own plan and the tuning (S4) are still to do. Wave numbers are a first guess (§8).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
@@ -16,6 +16,10 @@ A third way to play, beside Campaign and Skirmish (22-campaign §1): **hold your
 - **The first map is Wake Island, December 1941** (§2). The mode is written so other sieges can follow (Corregidor, Crete, Sevastopol; §11).
 
 ## 2. Wake Island (`wake-island`)
+
+![Overview](maps/wake-island.png)
+
+Green properties are the US's; brown is the reef and the lagoon; the dark marks are the starting units.
 
 ### The history it follows
 
@@ -41,7 +45,7 @@ Wake is a coral atoll in the central Pacific, three low islands round a shallow 
 | Peale | Pan American station (City: the Clipper hotel and seaplane base) | |
 
 - 6 properties, all the US's, at the usual 1,000 a day. Japan starts with none, and earns nothing from those it captures (§5d).
-- **Terrain:** the islands are scrub (Forest) and open coral (Plains), with a road round Wake and across to Peale. Gun positions are Bunkers. A Reef ring surrounds the atoll, with Beaches on the south shores of Wake and Wilkes, where Japan landed both times. The lagoon is Reef: too shallow for ships, as it was.
+- **Terrain:** the islands are scrub (Forest) and open coral (Plains), with a road round Wake and across to Peale. Gun positions are Bunkers. A Reef ring surrounds the atoll, with Beaches on the south shores of Wake and Wilkes, where Japan landed both times. The lagoon is Reef, which ships cross only slowly (2 movement a square), as it was too shallow for them; the lagoon opens to the sea at the west, between Wilkes and Peale.
 
 ### Starting forces (8 December, morning)
 
@@ -68,7 +72,7 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 
 | Wave | Arrives | Strikes | Name | Units | From |
 |---|---|---|---|---|---|
-| 1 | At the start | Day 1 (8 Dec) | The noon raid | 3 Bombers | South |
+| 1 | Day 1 | Day 2 | The noon raid | 3 Bombers | South |
 | 2 | Day 2 | Day 3 | Daily raid | 3 Bombers | South |
 | 3 | Day 3 | Day 4 (11 Dec) | The first landing | 4 Destroyers; 2 Landing Craft with 2 Infantry each | South |
 | 4 | Day 5 | Day 6 | Raid and submarines | 3 Bombers, 2 Submarines | South |
@@ -78,9 +82,10 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 | 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; 2 Destroyers | West |
 | 9 | Day 15 | Day 16 (23 Dec) | The second landing | 2 Battleships, 4 Destroyers; 4 Landing Craft with 6 Infantry and 2 Assault Infantry | South |
 
-- **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. It's two days' sailing from the atoll, so it arrives in time for the second landing only if the player brings it in fast.
+- **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. As built, the east edge is only a few squares from Peacock Point, so it can join the fight against the second landing the next day.
 - **Raiders go home.** Bombers and Fighters that come from land bases off the map fly for **2 turns** after they arrive, then return to base at the start of their third turn. They are removed, counted neither as Japanese losses nor as kills (§5c). Aircraft from a Carrier, and any that land at an airfield Japan has captured, stay, as usual.
-- **History's mark:** the HUD and the results screen show "Wake fell on day 16". Holding the HQ to the start of day 17 is "**Held longer than history**".
+- **History's mark:** the Survival screen and the results screen show "Wake fell on 23 December 1941, day 16". Holding the HQ to the start of day 17 is "**Held longer than history**".
+- **As built (S3):** the noon raid arrives on day 1, at the start of Japan's turn, and strikes on day 2, like every other wave: starting units can't carry a sortie, and every wave giving one turn's warning keeps the rule simple. The raids from the south edge are 7 squares from the south shore, one Bomber's move, so each strikes on the turn after it arrives.
 - **Numbers are a first guess**, to be tuned by self-play (§8).
 
 ## 4. Endless waves (day 17 onwards) (built 2026-11-20)
@@ -173,14 +178,15 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 ## 7. Screens
 
 - **Title:** Campaign, Skirmish, **Survival**, and Continue when there's a game to carry on.
-- **Survival screen:** the survival maps (Wake Island for now), each with its best record and history's mark ("Best: wave 11, 20 days · History: 16 days"). Picking one shows the briefing (§2's history, shortened), the US commander choice, Luck, Battle scenes and Fog of war (off by default), and Start.
+- **Survival screen:** the survival maps (Wake Island for now), each with its best wave. Picking one shows the best run and history's mark ("Best: Reached wave 11, held 20 days · History: Wake fell on 23 December 1941, day 16"), the terrain sketch, the briefing, the US commander choice, Luck, Battle scenes and Fog of war (off by default), and Start. X goes back to the title.
 - **In the game:** a wave counter and the next-wave forecast in the HUD ("Wave 4 · Next: day 7, a raid from the south"). When a wave arrives, a banner with its number and name ("Wave 3: The first landing"), then the camera pans to it. Arrived units are drawn and played like any other.
-- **Results:** "Wake has fallen", the record (§5e), "New best" when it is one, history's mark, and the kills. Buttons: **Try again** and **Survival**.
+- **Results:** "Wake has fallen", then "Reached wave 11, held 20 days · New best · Held longer than history: …" (or "History: …"), the table and the losses bill (Japan's losses are the kills). Buttons: **Survival** (back to the Survival screen, where Start plays again) and View Map.
+- **As built (S3):** survival maps are in their own list (`SURVIVAL_SCENARIOS` in `src/scenarios/index.ts`), not on the Skirmish map select; what the screens say about each map's history is data in `src/survival/maps.ts`. The best run per map is kept in `localStorage` under `ww2-tactics.survival` (`src/survival/record.ts`), written when the game ends. The autosave remembers a survival game, so Continue carries it on as one ("Survival: Wake Island · Day 9"). `?map=wake-island` starts it straight away, as a survival game. Japan plays the standard Greedy AI at Normal until its own plan (S4).
 
 ## 8. Tuning
 
 - **Target:** the standard AI playing the US **falls by wave 9 (the second landing) in about three games in four**. A careful human plays far better than the standard AI (22-campaign §5), so a good player should outlast history most of the time and fall a few waves later.
-- Measured with `npm run selfplay -- --survival`, which reports the wave reached and the day for each seed. Tuning is a data edit: the scripted waves, the budget and growth, the pattern weights.
+- Measured with `npm run selfplay -- --maps wake-island`, which reports the waves reached. **First measurement (S3, 2026-11-20, seeds 1–4, 40 days):** the standard AI as the US falls in every game, on days 20–24, at waves 11–13: a little past history, so the waves are a little weak for the target. Tuning is a data edit: the scripted waves, the budget and growth, the pattern weights.
 
 ## 9. Build plan
 
@@ -190,7 +196,7 @@ Proposed as milestones, each one playable:
 |---|---|---|
 | S1 (**built 2026-11-20**) | Arrivals with entry zones; `rout` by side; `sortieTurns`; the record in `GameState`. Tests (`tests/arrivals.test.ts`) | Arriving and leaving units shown; a wave banner |
 | S2 (**built 2026-11-20**) | The wave generator (§4), seeded. Tests (`tests/waves.test.ts`) | The HUD's wave counter and forecast |
-| S3 | The Wake Island map (`tools/maps/wake-island.mjs`, its picture) and its scripted waves | The title item, the Survival screen, the results screen and the best record |
+| S3 (**built 2026-11-20**) | The Wake Island map (`tools/maps/wake-island.mjs`, its picture) and its scripted waves. Tests (`tests/wakeIsland.test.ts`, `tests/survival.test.ts`) | The title item, the Survival screen, the results screen and the best record |
 | S4 | — | Japan's survival plan (§6); `selfplay --survival`; tuning to §8 |
 
 ### Tests (proposed names)

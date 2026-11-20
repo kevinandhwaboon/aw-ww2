@@ -17,7 +17,7 @@ const DEFEAT_TEXT: Record<DefeatReason, string> = {
 
 /** The end-of-game screen: who won, why, and how each player finished. */
 export function createResultsScreen(root: HTMLElement): {
-  show: (state: GameState, onNewGame: () => void, newGameLabel?: string, note?: string | null) => void;
+  show: (state: GameState, onNewGame: () => void, newGameLabel?: string, note?: string | null, heading?: string | null) => void;
 } {
   const panel = el("div", "panel results");
   panel.hidden = true;
@@ -28,13 +28,15 @@ export function createResultsScreen(root: HTMLElement): {
   root.append(panel, back);
 
   return {
-    show(state, onNewGame, newGameLabel = "New Game", note = null) {
+    show(state, onNewGame, newGameLabel = "New Game", note = null, heading = null) {
       const { result } = state;
       if (!result) return;
       const winners = result.winners.flatMap((id) => state.players[id]?.name ?? []).join(" and ");
-      const title = el("div", "results-title", `Victory: ${winners}`);
+      const title = el("div", "results-title", heading ?? `Victory: ${winners}`);
       title.style.color = playerColors(result.winners[0] ?? 0)[0];
+      // A survival game has no victory to explain: the note says how far it got (23-survival §7).
       const reason = el("div", "results-reason", `${DEFEAT_TEXT[result.reason]} on day ${state.day}.`);
+      reason.hidden = heading !== null;
       // What the game won beyond itself, such as the next campaign mission (22-campaign §7).
       const won = el("div", "results-reason", note ?? "");
       won.hidden = note === null;
