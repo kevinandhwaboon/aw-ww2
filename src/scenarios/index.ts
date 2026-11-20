@@ -13,6 +13,7 @@ import midway from "./midway.json";
 import normandy from "./normandy.json";
 import sevastopol from "./sevastopol.json";
 import stalingrad from "./stalingrad.json";
+import tenGo from "./ten-go.json";
 import theSlot from "./the-slot.json";
 
-export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal, tenGo].map(parseScenario);
