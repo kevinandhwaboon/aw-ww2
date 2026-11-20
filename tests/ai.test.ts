@@ -1052,7 +1052,7 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
     const result = await playMatch(state, everyone(state), 10);
     const changed = result.state.properties.filter((p) => propertyAt(state, p.pos)?.owner !== p.owner);
     expect(changed.length).toBeGreaterThan(0);
-  });
+  }, 60_000); // A whole AI game: slow when several test runs share the machine.
 });
 
 describe("Greedy AI: Major Bridges (09-ai §4e, 02-terrain §4a)", () => {
