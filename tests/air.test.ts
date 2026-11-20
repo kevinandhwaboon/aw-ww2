@@ -272,6 +272,11 @@ describe("air combat (03-combat §5)", () => {
     expect(attackTargets(state, { ...(state.units[1] as Unit) }, false)).toEqual([]);
   });
 
+  it("a Fighter doesn't down a full-strength Bomber in one attack: it leaves it on half strength, so it takes both its rounds (03-combat §5c)", () => {
+    const state = makeGame(["=="], [u("fighter", 0, 0), u("bomber", 1, 1)], luckless);
+    expect(byId(run(state, attack(0, 1)), 1)?.hp).toBe(50);
+  });
+
   it("Bombers hit ground units hard", () => {
     const state = makeGame(["=="], [u("bomber", 0, 0), u("mediumTank", 1, 1)], luckless);
     expect(must(state, attack(0, 1)).state.units.map((x) => x.id)).toEqual([0]); // 105 on 0 stars
@@ -324,8 +329,8 @@ describe("Flak Gun (01-units §2)", () => {
     for (const x of [1, 2, 6]) expect(apply(flak(x), attack(0, 1)).ok, `range ${x}`).toBe(false);
   });
 
-  it("destroys a full-strength Fighter in one hit", () => {
-    expect(byId(run(flak(4), attack(0, 1)), 1)).toBeUndefined();
+  it("leaves a full-strength Fighter on about a third of its strength: one battery doesn't destroy it (03-combat §5c)", () => {
+    expect(byId(run(flak(4), attack(0, 1)), 1)?.hp).toBe(33);
   });
 
   it("can't attack ground units", () => {

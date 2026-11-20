@@ -124,8 +124,8 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 | Art | — | — | — | — | — | 40 | 50 | 60 | 55 | 60 | 45 | 55 | 50 |
 | Rkt | — | — | — | — | — | 55 | 65 | 85 | 60 | 75 | 60 | 60 | 55 |
 | AA | 65 | 75 | 90 | 75 | 75 | — | — | — | — | — | — | — | — |
-| Flak | 100 | 100 | 110 | 100 | 100 | — | — | — | — | — | — | — | — |
-| Ftr | 55 | 100 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | 5 | — |
+| Flak | 67 | 67 | 73 | 67 | 67 | — | — | — | — | — | — | — | — |
+| Ftr | 55 | 50 | 100 | 100 | 100 | — | — | — | 5 | 10 | — | 5 | — |
 | Bmr | — | — | — | — | — | 75 | 85 | 95 | 95 | 95 | 85 | 95 | 55 |
 | Dive | — | — | — | — | — | 40 | 45 | 50 | 50 | 50 | 45 | 50 | 30 |
 | TBmr | — | — | — | — | — | 60 | 60 | — | 60 | 60 | 60 | 60 | — |
@@ -142,10 +142,12 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 - **Tank Destroyer** beats tanks when it strikes first (vs. Heavy Tank 65 vs. Heavy Tank's 90 return fire) but has no weapon vs. infantry, so Assault Infantry (60) and artillery are its counters.
 - **Heavy Tank** wins most fights but is slow and expensive; its answers are Tank Destroyers, Bombers, Battleships and massed indirect fire.
 - **Fighter** strafing is deliberately weak (≤15) and uses the same ammo as its air-to-air guns.
+- **Fighter vs. Bomber is 50** (halved from 100 on 2026-11-19 at the developer's request): a full-strength Fighter leaves a Bomber on about half strength, so it takes two attacks, both of a Fighter's two rounds, to bring one down, not one. Bombers were big, rugged aircraft that often got home badly shot up. Fighters still hit Transport Aircraft and Dive and Torpedo Bombers for 100.
+- **Flak Gun** values were cut by a third on 2026-11-19 at the developer's request (100 to 67, and 110 to 73 against Transport Aircraft): one battery no longer nearly destroys an aircraft with each shot. Heavy AA guns brought down far fewer aircraft than they fired at.
 - **Assault Infantry** is the best ground unit vs. fortifications (65).
 - **Submerged submarines** can only be attacked by Destroyers and Submarines (dive rules in 05-supply-transport §9). That includes counters: a unit that can't attack one can't counter it either.
 - **Ships in port** get the Port's 3 stars. Ships at sea get 0, and on Reef 1 (02-terrain §3).
-- **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 60 against every surface ship and nothing else (decided 2026-11-09 at 120; halved on 2026-11-14 at the developer's request, because one torpedo sank a full-strength Carrier. Now a full-strength Torpedo Bomber leaves a ship at sea on about 4 HP, and two sink it). Air defenses hit both as hard as they hit a Bomber.
+- **Dive Bomber** values are about half the Bomber's, and **Torpedo Bomber** values are 60 against every surface ship and nothing else (decided 2026-11-09 at 120; halved on 2026-11-14 at the developer's request, because one torpedo sank a full-strength Carrier. Now a full-strength Torpedo Bomber leaves a ship at sea on about 4 HP, and two sink it). Air defenses hit both as hard as they hit a Bomber, except Fighters, which hit them for 100 and a Bomber for 50 (since 2026-11-19).
 - **Carrier** values are a first guess, from memory of the original's carrier (Battleship 60, Bomber 85, Submarine 75; not confirmed) and intuition elsewhere: thin armor, so torpedoes and bombs hurt it most. It can't attack, and only counters aircraft, weakly (§5d).
 - Land units can attack ships only when adjacent (coastal tiles); indirect units use their normal range.
 

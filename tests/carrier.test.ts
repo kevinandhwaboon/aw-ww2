@@ -310,11 +310,14 @@ describe("carrier aircraft (05-supply-transport §10, 01-units §3)", () => {
     expect(apply(state, order(0, [P(1, 0)], { type: "attack", target: 1 }))).toMatchObject({ ok: false });
   });
 
-  it("Fighters, Mobile AA, Flak and Destroyers hit carrier aircraft as hard as they hit Bombers", () => {
-    for (const attacker of ["fighter", "mobileAA", "flakGun", "destroyer"] as Attacker[]) {
+  it("Mobile AA, Flak and Destroyers hit carrier aircraft as hard as they hit Bombers; Fighters hit them twice as hard, a Bomber being bigger and tougher (03-combat §5c)", () => {
+    for (const attacker of ["mobileAA", "flakGun", "destroyer"] as Attacker[]) {
       for (const plane of ["diveBomber", "torpedoBomber"] as const) {
         expect(baseDamage(attacker, plane), `${attacker} vs ${plane}`).toEqual(baseDamage(attacker, "bomber"));
       }
+    }
+    for (const plane of ["diveBomber", "torpedoBomber"] as const) {
+      expect(baseDamage("fighter", plane)?.base, plane).toBe(2 * (baseDamage("fighter", "bomber")?.base ?? 0));
     }
   });
 });
