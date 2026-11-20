@@ -54,7 +54,7 @@ export interface SessionOptions {
    * What the results screen offers after the game (22-campaign §7): the button's label in place of
    * New Game, and a line on what the game won, such as the next campaign mission. New Game without it.
    */
-  readonly afterGame?: { readonly label: string; readonly note: (state: GameState) => string | null };
+  readonly afterGame?: { readonly label: (state: GameState) => string; readonly note: (state: GameState) => string | null };
 }
 
 /** A game in progress, as seen from outside. */
@@ -295,7 +295,7 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
     if (state.result) {
       sounds.play("gameOver");
       controller.finish();
-      results.show(state, onNewGame, afterGame?.label, afterGame?.note(state) ?? null);
+      results.show(state, onNewGame, afterGame?.label(state), afterGame?.note(state) ?? null);
     }
     if (aiTurn()) void runAi();
     return true;

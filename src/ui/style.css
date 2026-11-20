@@ -776,6 +776,19 @@ body {
   opacity: 0.55;
 }
 
+.campaign-saved {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.campaign-ending {
+  margin-top: 6px;
+  justify-content: center;
+  font-weight: bold;
+  border-color: var(--panel-border);
+}
+
 .campaign-enemy {
   display: flex;
   flex-direction: column;
@@ -1216,4 +1229,43 @@ body.pad-layout {
     width: 96px;
     height: 128px;
   }
+}
+
+/* ---- The campaign's ending: the surrender on the Missouri (22-campaign §7a) ---- */
+.ending {
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.ending-canvas {
+  width: min(960px, 100%, calc((100vh - 160px) * 1.6));
+  image-rendering: pixelated;
+}
+
+.ending-caption {
+  max-width: min(760px, 100%);
+  min-height: 3em;
+  color: var(--panel-bg);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ending-caption.ending-title {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.ending-summary {
+  color: var(--highlight);
+  font-size: 14px;
+  min-height: 1.5em;
+}
+
+.ending-hint {
+  color: var(--panel-bg);
+  opacity: 0.6;
 }

@@ -12,7 +12,8 @@ export interface Names {
   readonly commander: (id: CommanderId) => string;
 }
 
-const plural = (n: number, name: string) => (n === 1 ? `1 ${name}` : `${n} ${name}s`);
+/** "2 Medium Tanks", but "6 Infantry" and "2 Artillery": unit names ending in y are already collective. */
+const plural = (n: number, name: string) => (n === 1 || name.endsWith("y") ? `${n} ${name}` : `${n} ${name}s`);
 const funds = (n: number) => n.toLocaleString("en-US");
 
 function list(parts: readonly string[]): string {
