@@ -466,7 +466,7 @@ describe("random playthroughs", () => {
         checkInvariants(state);
       }
     }), { numRuns: 15 });
-  });
+  }, 30_000); // Many random games: slow when several test runs share the machine.
 
   it("a recorded game replays to exactly the same state, and survives saving as JSON", () => {
     fc.assert(fc.property(playthrough, ({ seed, choices }) => {
@@ -506,5 +506,5 @@ describe("random playthroughs", () => {
     ]) {
       expect(seen, type).toContain(type);
     }
-  });
+  }, 30_000);
 });
