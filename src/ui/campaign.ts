@@ -63,6 +63,7 @@ export function showCampaign(
   onStart: (entry: CampaignEntry, options: GameOptions) => void,
   onBack: () => void,
   initial?: string,
+  onEnding: (() => void) | null = null,
 ): void {
   const node = el("div", "screen");
   root.append(node);
@@ -79,8 +80,20 @@ export function showCampaign(
   mapFrame.append(world.canvas, labels);
   const list = el("div", "map-list campaign-list");
   list.style.setProperty("--rows", String(Math.ceil(entries.length / 2)));
+  // Progress is kept on this device after every win (22-campaign §2); say so, and how far it goes.
+  const wonCount = entries.filter((e) => progress.won.includes(e.mission.map)).length;
+  const saved = el("div", "campaign-saved", `${wonCount} of ${entries.length} missions won · progress is saved on this device`);
   const left = el("div", "map-select-left");
-  left.append(mapFrame, list);
+  left.append(mapFrame, list, saved);
+  // Once the last mission is won, the ending can be watched again (22-campaign §7a).
+  const ending = onEnding ? el("button", "list-row campaign-ending", "Watch the ending: Tokyo Bay, 2 September 1945") : null;
+  if (ending && onEnding) {
+    ending.addEventListener("click", () => {
+      close();
+      onEnding();
+    });
+    left.append(ending);
+  }
   const brief = el("div", "map-brief campaign-brief");
   const body = el("div", "map-select-body");
   body.append(left, brief);
@@ -208,6 +221,30 @@ export function showCampaign(
   });
 
   placeLabels();
+  // The ending button is walked with the missions, after the last one.
+  if (ending) ending.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      event.stopPropagation();
+      rows[rows.length - 1]?.focus();
+    } else if (["x", "X", "Escape", "Backspace"].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+      onBack();
+    } else if (["z", "Z", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      ending.click();
+    }
+  });
+  rows[rows.length - 1]?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" && ending) {
+      event.preventDefault();
+      event.stopPropagation();
+      ending.focus();
+    }
+  });
   menuKeys(list, rows, () => {
     close();
     onBack();

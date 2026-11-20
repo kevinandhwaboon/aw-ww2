@@ -36,7 +36,7 @@ One chain in date order, across every theater (decided 2026-11-20). Winning a mi
 
 Dunkirk (21-scenarios-dunkirk) goes first once it's built. A new map joins the chain at its date.
 
-- **Progress** is kept on the device (`localStorage`, `ww2-tactics.campaign`): the missions won. It's separate from the autosave, so starting a Skirmish never loses campaign progress, and Continue on a campaign game still counts the win.
+- **Progress** is kept on the device (`localStorage`, `ww2-tactics.campaign`): the missions won, saved the moment a mission is won. It's separate from the autosave, so starting a Skirmish never loses campaign progress, and Continue on a campaign game still counts the win. A mission part-played is kept by the autosave (11-tech-setup §3j), and Continue on the title screen carries it on. The campaign screen says how many missions are won and that progress is saved on this device (since 2026-11-20, at the developer's request).
 - A mission counts as won when the game ends with the Allies among the winners.
 
 ## 3. Who plays what
@@ -145,8 +145,22 @@ With the sweep alone (and the old forward force), the armour reached Tobruk on d
 
 - **Title:** Campaign, Skirmish, and Continue when there's a game to carry on. Continue works for either kind of game; a campaign game carried on still unlocks the next mission when won.
 - **Campaign screen:** the map select's world map (00-master-design §12) with a numbered label on every mission's dot (locked ones dimmed), and under it the missions in order in two columns, each with a mark for won, open or locked (the date for the open one). Picking a mission flies the camera to its theater, pulling back to the whole world on the way between distant ones, so walking the chain hops round the world in the order of the war (added 2026-11-20 at the developer's request). Picking an open mission shows its briefing (the scenario's description, then a line on what the computer has been given), the Allied commander choice for each Allied player, Luck and Battle scenes, and Start. Up and Down walk the missions, Z picks, X goes back to the title.
-- **Results:** after a campaign mission, the results screen names the mission won and the one unlocked, with **Campaign** (back to the campaign screen) in place of New Game.
+- **Results:** after a campaign mission, the results screen names the mission won and the one unlocked, with **Campaign** (back to the campaign screen) in place of New Game; after the last mission, won, **Continue** plays the ending (§7a).
 - **Skirmish** is the map select and players screens unchanged (06-commanders §5, 09-ai §5).
+
+### 7a. The ending: the surrender on the Missouri (built 2026-11-20)
+
+At the developer's request, winning the last mission ends the campaign with a short film of **the surrender aboard USS Missouri in Tokyo Bay, 2 September 1945**, about 40 seconds, code-drawn in the battle scenes' pixel style and art-pack colors (08-art-pipeline §18). The script is `src/game/ending/plan.ts`, the drawing `src/game/ending/renderer.ts`.
+
+1. **The date:** "2 September 1945 · Tokyo Bay", over the bay at first light.
+2. **Tokyo Bay:** the Allied fleet at anchor under Mount Fuji, ships along the horizon and a destroyer standing by; the Missouri (the Iowa-class model the battle scenes use, in haze grey) at anchor; a launch carries the Japanese delegation out to her.
+3. **The signing:** on the Missouri's teak deck under her turret and great guns, her crew lining the turret top, ranks of Allied officers, the table with its green cloth and two copies of the Instrument of Surrender. Two of the Japanese delegation (one in morning coat and top hat, one in uniform) walk to the table in turn and sign; then an Allied officer signs for the Allied Powers.
+4. **The flyover:** wave after wave of aircraft in V formations, heavy bombers among them, cross the sky over the fleet.
+5. **The end:** "The war is over.", and under it how much of the campaign was won.
+
+- **No real person is named or portrayed**, as for the commanders (06-commanders §1): the figures are the delegation, Allied officers and the crew, never anyone in particular (a test checks the words). No flags are drawn.
+- **When it plays:** after the results of the last mission, won (the results button says Continue); then the campaign screen. Once the campaign is complete, **Watch the ending** under the missions plays it again. `?ending=on` plays it on its own (11-tech-setup §7).
+- **Controls:** Z or a click moves on to the next shot, X skips to the last; on the last, Z (or X) carries on.
 
 ## 8. Known gaps and later
 
