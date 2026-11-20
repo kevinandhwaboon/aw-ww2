@@ -8,7 +8,8 @@ import { UNIT_TYPE_IDS, UNITS, type UnitTypeId } from "./data/units";
 import { parseAsciiMap, terrainAt, type Point } from "./map";
 import { MODIFIABLE_STATS, type Modifier, type ModifiableStat } from "./modifiers";
 import { createGame, type CargoSetup, type GameSetup, type PlayerSetup, type UnitSetup } from "./setup";
-import type { Arrival, ArrivingUnit, Settings, VictoryCondition, WeatherPlan } from "./state";
+import { WAVE_PATTERN_SET_IDS, type WavePatternSetId } from "./data/waves";
+import type { Arrival, ArrivingUnit, ConvoyPlan, Settings, VictoryCondition, WaveEdge, WaveGenerator, WeatherPlan } from "./state";
 
 export interface Scenario {
   readonly id: string;
@@ -143,6 +144,54 @@ function parseArrival(raw: unknown, index: number): Arrival {
   };
 }
 
+function number(raw: Json, key: string, where: string): number {
+  const value = raw[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : fail(`${where}: "${key}" must be a number`);
+}
+
+function parseEdge(raw: unknown, index: number): WaveEdge {
+  const where = `waves edge ${index}`;
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  return {
+    name: text(raw, "name", where),
+    zone: list(raw, "zone", where).map((p) => point(p, where)),
+    ...optionalCounts(raw, ["fromWave"], where),
+  };
+}
+
+function parseConvoy(raw: unknown): ConvoyPlan {
+  const where = "waves convoy";
+  if (!isObject(raw)) return fail(`${where}: must be an object`);
+  return {
+    player: count(raw, "player", where),
+    fromWave: count(raw, "fromWave", where),
+    every: count(raw, "every", where),
+    edge: text(raw, "edge", where),
+    ...(raw.name === undefined ? {} : { name: text(raw, "name", where) }),
+    units: list(raw, "units", where).map((u, i) => parseArrivingUnit(u, `${where} unit ${i}`)),
+  };
+}
+
+/** A survival map's endless waves (23-survival §4). */
+function parseWaves(raw: unknown): WaveGenerator {
+  const where = "waves";
+  if (!isObject(raw)) return fail(`"waves" must be an object`);
+  const patterns = raw.patterns as WavePatternSetId;
+  if (!WAVE_PATTERN_SET_IDS.includes(patterns)) return fail(`${where}: unknown pattern set ${String(raw.patterns)}`);
+  return {
+    player: count(raw, "player", where),
+    patterns,
+    firstWave: count(raw, "firstWave", where),
+    firstDay: count(raw, "firstDay", where),
+    everyDays: count(raw, "everyDays", where),
+    budget: number(raw, "budget", where),
+    growth: number(raw, "growth", where),
+    edges: list(raw, "edges", where).map(parseEdge),
+    ...optionalCounts(raw, ["unitCap"], where),
+    ...(raw.convoy === undefined ? {} : { convoy: parseConvoy(raw.convoy) }),
+  };
+}
+
 function parseModifier(raw: unknown, index: number): Modifier {
   const where = `modifier ${index}`;
   if (!isObject(raw)) return fail(`${where}: must be an object`);
@@ -198,6 +247,7 @@ function parseSetup(raw: Json): Omit<GameSetup, "seed"> {
     ...(raw.settings === undefined ? {} : { settings: parseSettings(raw.settings) }),
     ...(raw.weather === undefined ? {} : { weather: parseWeather(raw.weather) }),
     ...(raw.arrivals === undefined ? {} : { arrivals: list(raw, "arrivals", "scenario").map(parseArrival) }),
+    ...(raw.waves === undefined ? {} : { waveGenerator: parseWaves(raw.waves) }),
   };
 }
 

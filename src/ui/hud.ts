@@ -6,7 +6,7 @@ import { weatherName } from "../game/artPack";
 import type { WeatherId } from "../engine/data/weather";
 
 const WEATHER_ICON: Record<WeatherId, string> = { clear: "☀", snow: "❄", rain: "☂" };
-import { objectiveLines, type ObjectiveLine } from "../game/objectives";
+import { objectiveLines, waveLines, type ObjectiveLine } from "../game/objectives";
 import { playerColors } from "../game/placeholderUnits";
 import type { SoundLevel } from "../game/sound/settings";
 import { commanderPortrait } from "./commanders";
@@ -95,7 +95,7 @@ export function createHud(root: HTMLElement, sound: SoundControl, onCommanders: 
       weather.textContent = `${WEATHER_ICON[today]} ${weatherName(today)}`;
       weather.dataset.weather = today;
       funds.textContent = `Funds ${current.funds.toLocaleString("en-US")}`;
-      const lines = objectiveLines(state);
+      const lines = [...objectiveLines(state), ...waveLines(state)];
       objectives.hidden = lines.length === 0;
       objectives.replaceChildren(...lines.map(objectiveElement));
       hud.classList.toggle("hud-right", cursorOnLeft);
