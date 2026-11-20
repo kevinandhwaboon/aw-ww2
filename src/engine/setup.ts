@@ -186,6 +186,7 @@ export function createGame(setup: GameSetup): GameState {
       hasFielded: units.some((u) => u.owner === id),
       buildable: p.buildable ?? DEFAULT_BUILDABLE,
       facing: p.facing ?? "right",
+      unitsLost: {},
       ...(p.commander === undefined ? {} : { commander: p.commander }),
     })),
     units,

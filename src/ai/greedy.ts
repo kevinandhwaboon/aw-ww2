@@ -218,6 +218,20 @@ class Brain extends ProductionBrain {
       if (rides.length > 0) return { kind: "advance", goals: rides, dist: this.distances(unit, rides, `rides${unit.id}`), embark: true };
     }
 
+    // A Halftrack posted to a unit that can't get to a property to rearm stays beside it (09-ai §4j),
+    // off the track where it can, so it doesn't stand in a Railway Gun's way.
+    const charge = def.specialActions.includes("resupply") && def.category === "land" ? this.supplyPosts().get(unit.id) : undefined;
+    if (charge) {
+      if (distance(unit.pos, charge.pos) === 1) return HOLD;
+      const free = this.neighbors(charge.pos).filter((p) => {
+        const occupant = unitAt(this.state, p);
+        return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
+      });
+      const offTrack = free.filter((p) => terrainAt(this.state.map, p) !== "railway");
+      const goals = offTrack.length > 0 ? offTrack : free;
+      if (goals.length > 0) return this.advance(unit, goals, `post${unit.id}`);
+    }
+
     const carries = def.transport?.carries ?? [];
     if (def.transport) {
       // A Halftrack carries passengers toward properties, and otherwise stays with the foot units.

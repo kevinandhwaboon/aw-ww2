@@ -461,6 +461,10 @@ outside("lightTank", SOVIET, "Severnaya");
 outside("lightTank", SOVIET, "Korabelnaya");
 outside("mortar", SOVIET, "Balaklava");
 inTown("infantry", SOVIET, "Sevastopol");
+// The naval infantry holding the dockyard and the Inkerman galleries, the way round the head of the bay.
+inTown("infantry", SOVIET, "Korabelnaya");
+inTown("assaultInfantry", SOVIET, "Inkerman");
+outside("artillery", SOVIET, "Korabelnaya");
 inTown("infantry", SOVIET, "Balaklava");
 inTown("infantry", SOVIET, "Lyubimovka");
 outside("flakGun", SOVIET, "Sevastopol");

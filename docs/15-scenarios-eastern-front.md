@@ -299,7 +299,7 @@ Factories and HQs are our choice, not history, as on the other maps. **Bakhchisa
 
 ### Starting forces
 
-- **Soviet Union** (Coastal Army and the fleet's naval infantry): rifle units dug into the forts and field works, more Infantry, Assault Infantry and Mortar Teams behind them, Artillery for the coastal batteries (one inside Maxim Gorky I), a few T-26 light tanks, a Flak Gun in the city, a Halftrack, and a Fighter at Khersones and an Il-2 (Bomber) at Kulikovo Pole.
+- **Soviet Union** (Coastal Army and the fleet's naval infantry): rifle units dug into the forts and field works, more Infantry, Assault Infantry and Mortar Teams behind them, Artillery for the coastal batteries (one inside Maxim Gorky I), a few T-26 light tanks, a Flak Gun in the city, a Halftrack, and a Fighter at Khersones and an Il-2 (Bomber) at Kulikovo Pole. Naval infantry hold the Korabelnaya dockyard (Infantry and Artillery) and the Inkerman galleries (Assault Infantry), the way round the head of the bay (added 2026-11-19, below).
 - **Germany** (11th Army, with the Romanian Mountain Corps fielded as German units, as at Stalingrad): **the Railway Gun on its spur with a Halftrack beside it** (the ammunition train) and a Flak Gun guarding it; in the north (LIV Corps) Infantry, pioneers (Assault Infantry), StuGs (Tank Destroyer), Artillery and Nebelwerfers; a thinner centre; XXX Corps in the south-east; and the VIII Air Corps (Bombers and Fighters) round Kacha.
 - Germany has more of everything except fortifications.
 
@@ -350,6 +350,7 @@ Summer, clear every day: June 1942 was hot and dry, and the bombing went on from
 **Sevastopol**
 
 - Balance is a first guess, and the Railway Gun is new: a Halftrack parked beside it rearms it every turn, so it can fire every turn for as long as the Halftrack lives.
+- **Balance, 2026-11-19:** once the computer kept its Railway Gun rearmed (09-ai §4j), Germany won 6 of 8 AI-vs-AI games (seeds 1 to 8, to day 20), as early as day 10. Garrisoning the dockyard and Inkerman, with funds unchanged, brought it to 4 to 4, Germany's wins on days 11 to 17. More Soviet funds alone (4,000 to 8,000) made the result noisier, not fairer.
 - **No assault boats**: Germany can't cross Severnaya Bay, as it did on 29 June.
 - **No Karl mortars**: the two 60 cm self-propelled mortars are left out; Germany's other heavy guns are Artillery and Rocket Artillery.
 - **The fleet isn't there**: the Soviet supply runs by cruiser, destroyer and submarine from Novorossiysk, and the coastal batteries' fire at sea, have no part in it.
