@@ -124,6 +124,14 @@ A file is refused if an objective isn't a property, the side has no players, or 
 
 - **On screen:** objective properties have gold corner marks (corners, not a full box, so they never look like the cursor or a selection), and the tile info box says "★ Objective" on them. The HUD lists each objective with its progress, such as "Axis: hold both marked objectives for 8 days (3/8)". The results screen shows the same list with how each one ended.
 
+### 8a. Losses on the results screen
+
+Added 2026-11-19 at the developer's request. Each player keeps a tally of the units they have lost, by type, and the results screen lists it like a restaurant bill: one line per type, such as "Medium Tank ×2", the most expensive type first (by what that player would pay to build it), then a "Units lost" total. Costs aren't shown.
+
+- **Counted as lost:** a unit destroyed in combat, on either side of the fight; an aircraft that crashes for lack of fuel (05-supply-transport §5); and the passengers of a transport destroyed either way (05-supply-transport §4).
+- **Not counted:** units removed because their player was defeated (§8) weren't destroyed, and a unit merged into another by joining (§6) wasn't either.
+- Saves from before this have an empty tally.
+
 ## 9. Open questions
 
 - Tuning income vs. unit costs for small test maps.

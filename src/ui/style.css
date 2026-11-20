@@ -474,6 +474,45 @@ body {
   opacity: 1;
 }
 
+.results-losses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  text-align: left;
+}
+
+/* A player's losses, itemized like a restaurant bill. */
+.receipt {
+  flex: 1 1 130px;
+  border-top: 2px dashed currentColor;
+  border-bottom: 2px dashed currentColor;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.receipt-name {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.receipt-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.receipt-none {
+  opacity: 0.7;
+}
+
+.receipt-total {
+  margin-top: 4px;
+  padding-top: 2px;
+  border-top: 1px dotted currentColor;
+  font-weight: bold;
+}
+
 .results-buttons {
   margin-top: 12px;
   display: flex;
