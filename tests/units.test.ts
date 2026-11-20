@@ -111,8 +111,8 @@ describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
   const daysAtSea = (id: "battleship" | "destroyer" | "submarine" | "landingCraft" | "torpedoBoat" | "carrier" | "supplyShip") =>
     UNITS[id].maxFuel / (UNITS[id].movePoints + UNITS[id].fuelPerDay);
 
-  it("ships stay out at full speed in the order of their real endurance: Supply Ship, Submarine, Carrier, Battleship, Destroyer, Landing Craft, Torpedo Boat", () => {
-    const order = ["supplyShip", "submarine", "carrier", "battleship", "destroyer", "landingCraft", "torpedoBoat"] as const;
+  it("surface ships stay out at full speed in the order of their real endurance: Supply Ship, Carrier, Battleship, Destroyer, Landing Craft, Torpedo Boat", () => {
+    const order = ["supplyShip", "carrier", "battleship", "destroyer", "landingCraft", "torpedoBoat"] as const;
     for (let i = 0; i + 1 < order.length; i++) {
       const [longer, shorter] = [order[i], order[i + 1]];
       if (!longer || !shorter) continue;
@@ -120,12 +120,18 @@ describe("fuel and ammo reflect the real machines (01-units §8a)", () => {
     }
   });
 
-  it("days at sea follow the square root of the real ship's endurance at cruising speed, within a day (01-units §8a)", () => {
+  it("a surface ship's days at sea follow the square root of the real ship's endurance at cruising speed, within a day (01-units §8a)", () => {
     // Real endurance in days at cruising speed, averaged over the ships the art shows.
-    const real = { supplyShip: 50, submarine: 40, carrier: 37, battleship: 32, destroyer: 13, landingCraft: 4, torpedoBoat: 1 } as const;
+    const real = { supplyShip: 50, carrier: 37, battleship: 32, destroyer: 13, landingCraft: 4, torpedoBoat: 1 } as const;
     for (const [id, days] of Object.entries(real) as [keyof typeof real, number][]) {
       expect(Math.abs(daysAtSea(id) - 2.33 * Math.sqrt(days)), id).toBeLessThan(1);
     }
+  });
+
+  it("a Submarine's tank is half what its real endurance would give, at the developer's request, so it lasts fewer days at full speed than a Destroyer (01-units §8a)", () => {
+    expect(Math.abs(2 * daysAtSea("submarine") - 2.33 * Math.sqrt(40))).toBeLessThan(1);
+    expect(daysAtSea("submarine")).toBeLessThan(daysAtSea("destroyer"));
+    expect(daysAtSea("submarine")).toBeGreaterThan(daysAtSea("landingCraft"));
   });
 
   it("a Torpedo Boat lasts about two days at full speed, a Landing Craft five: coastal craft that had to stay near a base", () => {

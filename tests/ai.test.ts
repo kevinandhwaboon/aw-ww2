@@ -965,12 +965,14 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
     if (!scenario) throw new Error(`no scenario ${id}`);
     return createGame({ ...scenario.setup, seed });
   };
-  const everyone = (state: GameState) => state.players.map(() => greedy);
+  // A fresh AI for each player in each game, as the game itself does (src/main.ts): an AI remembers
+  // enemies it saw in fog of war, and that memory belongs to one game.
+  const everyone = (state: GameState) => state.players.map(() => greedyAi());
 
-  // Maps whose day limit ends every game: Iwo Jima by day 18, Midway by day 12, Guadalcanal by day 15. On the others the
+  // Maps whose day limit ends every game: Iwo Jima by day 18, Midway by day 12, Guadalcanal by day 15, Ten-Go by day 12. On the others the
   // AIs must defeat each other outright, landing troops where needed (09-ai §4b), and those games
   // often run past 40 days (Bastogne 59 to over 80).
-  const LAND_MAPS = ["iwo-jima", "midway", "guadalcanal"];
+  const LAND_MAPS = ["iwo-jima", "midway", "guadalcanal", "ten-go"];
 
   for (const id of LAND_MAPS) {
     it(`${id}: a game between AIs ends with a winner within 40 days, with no AI bugs`, async () => {

@@ -1,7 +1,7 @@
 # Topic Doc 14: Pacific Scenarios
 
-**Status:** four Pacific maps built (v0): Iwo Jima, The Slot, Midway and Guadalcanal. Balance untested.
-**Last updated:** 2026-11-16
+**Status:** five Pacific maps built (v0): Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go. Balance untested.
+**Last updated:** 2026-11-20 (§3 Midway always in fog)
 **Depends on:** 00-master-design.md §6 and §8, 01-units.md, 04-economy-production.md §8 (victory conditions), 05-supply-transport.md (landings), 08-art-pipeline.md (Japanese art).
 
 ---
@@ -170,8 +170,19 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 - **Japan, the Kido Butai**, north-west of Midway: four Carriers, Akagi (Fighter, Torpedo Bomber), Kaga (Dive Bomber, Torpedo Bomber), Sōryū (Fighter, Dive Bomber) and Hiryū (Dive Bomber, Torpedo Bomber); two Battleships (Haruna, Kirishima) and three Destroyers (the cruisers Tone and Chikuma and the screen; the game has no Cruiser, as in The Slot). Every Carrier can strike Sand Island on its first turn without moving. Torpedo Bombers can't hit land, so they are the reserve kept for ships, as Nagumo's was.
 - **Japan, the Main Body**: Yamamoto's battleships, two Battleships and a Destroyer, far to the north-west, two days behind.
 - **Japan, the invasion force**, south-west of Midway, more than two days' sailing away: three Landing Craft carrying four Infantry and two Assault Infantry, a Battleship and two Destroyers. The submarine **I-168** waits between Pearl Harbor and Midway. One Infantry holds the home base.
+- **Japan, the submarine cordon** (added 2026-11-20 with fog): two Submarines on the line between Pearl Harbor and Midway, south of Point Luck. The real cordon was meant to catch the US carriers sailing out from Pearl Harbor and reached its line on 3 June, after they had passed. Here it starts out of sight of the US carriers and can't find them on day 1, but it watches the route from Pearl Harbor and can go looking.
 - **The US carriers** at Point Luck, north-east of Midway: Enterprise (two Dive Bombers: its dive bombers sank Akagi and Kaga), Hornet (Fighter, Torpedo Bomber: Torpedo 8 found the enemy first and was cut down) and Yorktown (Dive Bomber, Torpedo Bomber), with three Destroyers for their cruisers and destroyers.
 - **Midway**: its own air group on Eastern Island, a Fighter, a Bomber (the B-17s), a Dive Bomber and a Torpedo Bomber (the new Avengers); the 6th Marine Defense Battalion, three Infantry in the bunkers and the command post, an Artillery (the coastal guns) and a Flak Gun; a Torpedo Boat (the PT boats) in the harbor. Two Submarines on picket: Nautilus north-east of the Japanese carriers, another on the invasion's way in. One Infantry holds Pearl Harbor.
+
+### Fog of war (since 2026-11-20)
+
+At the developer's request, **the map is always played in fog of war** (`settings.fogOfWar`, 19-fog-of-war §1, as on the Battle of Britain and Ten-Go), because the real battle was decided by who found whom first. Nothing else about fog is special here; the setup is arranged so the rules give the history:
+
+- **At the start neither side sees a single enemy unit** (a test checks).
+- **The US knows where to look.** Its codebreakers had read the plan, so the briefing says the Kido Butai comes from the north-west, and on day 1 the submarine Nautilus (and Midway's aircraft, standing for the PBY Catalinas that sighted the carriers at dawn) can reach sight of a Japanese Carrier (a test checks).
+- **Japan doesn't know the US carriers are there.** No Japanese ship or aircraft can get a US Carrier into its sight on day 1, whatever it does (a test checks). It has to search, with Fighters (move 9, vision 2), Destroyers and its submarine cordon, as Nagumo's cruiser floatplanes did, late.
+- **The dawn strike needs a spotter.** A unit can only attack an enemy it can see (19-fog-of-war §5), and from where they start Japan's ships can't see Midway's defenders. Bunkers are terrain and can be bombed blind, but to hit the guns and aircraft on the islands, fly a Fighter over first (or send a Destroyer in), then strike with the bombers.
+- **The dilemma is Nagumo's.** Every aircraft Japan sends at Midway isn't searching for the US carriers or guarding its own, and a Carrier that launched can't move that turn (05-supply-transport §10). A US Carrier can close to striking range unseen and launch the next turn at a Carrier it found on day 1, which, if it launched, is still there.
 
 ### How the opening works
 
@@ -191,17 +202,17 @@ Each Carrier's two aircraft stand for its whole air group (a real carrier held a
 
 ### Weather
 
-- Clear all game. The real Kido Butai approached under a weather front, but there's no fog of war or cloud in the game yet (12-weather).
+- Clear all game. Fog of war is always on (above). The real Kido Butai approached under a weather front on 2 and 3 June, before the game starts; the morning of 4 June was clear, so there's no rain.
 
 ### How it's made
 
 - `tools/maps/midway.mjs` builds the scenario file; `node tools/maps/midway.mjs --reach` also lists every unit an enemy could attack on its first turn, for tuning. `tools/maps/overview.mjs midway` redraws the picture above. The overview now colors properties and units by side (Allies green, Axis red) instead of by player order.
-- Tests (`tests/scenario.test.ts`, "Midway") check the nations and order, the objectives and their owner, the day-12 rule, the atoll's two islands inside the reef, Japan's four Carriers north-west of Midway each able to strike Sand Island, the three US Carriers north-east with two aircraft each, that nothing can attack an enemy Carrier from where it starts, that each US Carrier is one move from striking range, Midway's air group, the invasion force's distance, that Japan has no airfield, and the build lists. The AI tests play it AI vs AI to a finish: every game ends by day 12.
+- Tests (`tests/scenario.test.ts`, "Midway") check the nations and order, the objectives and their owner, the day-12 rule, the atoll's two islands inside the reef, Japan's four Carriers north-west of Midway each able to strike Sand Island, the three US Carriers north-east with two aircraft each, that nothing can attack an enemy Carrier from where it starts, that each US Carrier is one move from striking range, Midway's air group, the invasion force's distance, that Japan has no airfield, and the build lists. Since 2026-11-20 also: fog always on; no enemy unit in sight of either side at the start; no Japanese unit can find a US Carrier on day 1; Nautilus can find a Japanese Carrier on day 1; the submarine cordon south of Point Luck. The AI tests play it AI vs AI to a finish: every game ends by day 12.
 
 ### Known gaps
 
-- **No fog of war.** Midway was decided by who found whom first; here both sides see everything from the start, and the US code-breaking advantage is gone. The move-or-launch timing carries the tension instead. Fog stays under "later / maybe" (00-master-design §4); this is the map that most wants it.
-- **Balance is a first guess**, especially the day-12 limit, half income, and the strength of Midway's air group. In AI vs AI games (10 seeds) Japan wins every time, by day 7 to 9, but mostly because of the AI (next point), not the map.
+- **Balance is a first guess**, especially the day-12 limit, half income, and the strength of Midway's air group. AI vs AI (2026-11-20, seeds 1 to 30): without fog the two sides were even (5 and 5 in seeds 1 to 10); with fog alone the US won 9 of 10, since it moves first and knows where to look while Japan searches blind, as in the real battle. With the submarine cordon the US wins 25 of 30 and Japan 5 (days 8 to 12). Playing Japan yourself is the real test: a human who scouts before striking does better than the Greedy AI.
+- **No search aircraft.** The PBY Catalinas and the cruiser floatplanes that did most of the real searching have no unit; Fighters, Submarines and Destroyers search instead. Midway's radar, which saw the Japanese strike coming, isn't shown either: the Radar Station (01-units §2a) has only British art.
 - **The Greedy AI doesn't hold objectives it must defend.** It garrisons only its HQ island (09-ai §4c), so as the US it ships Midway's Marines away in a Landing Craft and Japan walks in. Playing Japan against the computer is easy for now; playing the US against the computer, or hot-seat, is the better test.
 - Carriers carry 2 aircraft, so each stands for a whole air group, and there's no combat air patrol: Fighters only shoot down aircraft that end their move nearby.
 
@@ -289,3 +300,87 @@ On 7 August 1942 the 1st Marine Division landed on Guadalcanal and took the airf
 - Caves and tunnels (Japanese units reappearing behind the front) aren't a rule.
 - The pre-landing bombardment is played out in the first days, not a special rule: Battleships and bombers soften the beach line before the Landing Craft go in. There's no beach-obstacle terrain yet (02-terrain §4), so nothing has to be cleared from the sand itself.
 - The Greedy AI plays it (09-ai §4b): as the US it bombards, launches and lands, but doesn't yet hold back its Landing Craft until the beach line is broken, and it uses each Bomber for about one strike a game instead of flying it home to rearm.
+
+## 6. Ten-Go (`ten-go`)
+
+![Overview](maps/ten-go.png)
+
+Same key as above: army green properties are US, red Japanese, grey neutral. Drafted and built 2026-11-19 at the developer's request.
+
+### The history it follows
+
+On 1 April 1945 the US landed on Okinawa's west coast at the Hagushi beaches and took the Yontan and Kadena airfields that day. Japan's 32nd Army held the south of the island around Shuri. On 6 April, alongside the first mass kamikaze attack from Kyushu, Japan sent the battleship Yamato, the light cruiser Yahagi and eight destroyers out of Tokuyama through the Bungo Strait. They had no air cover. Their orders were to reach Okinawa, beach Yamato as a fixed battery behind the US landing and fire on the beachhead in support of the 32nd Army. The fleet was ordered to carry only enough fuel for the trip out, though officers at Tokuyama quietly loaded more. Two US submarines saw it leave that evening. On the morning of 7 April carrier scout planes found it south-west of Kyushu, and Task Force 58 sent nearly 400 aircraft in waves. Yamato sank after about two hours, with roughly 3,000 of its crew, along with Yahagi and four destroyers. About 3,700 Japanese died; the US lost about 10 aircraft and a dozen airmen. The fleet never came within 200 km of Okinawa.
+
+### Why a straight recreation doesn't work, and the fix
+
+Historically the battle was hopelessly one-sided, and a Japan player who can only watch their fleet sink has nothing to play for. The map keeps the forces close to history but gives Japan a real goal and a real chance, **using only rules the game already has**:
+
+- **Japan's goal is the Okinawa beachhead, not the fleet battle.** Japan wins by retaking the Yontan and Kadena airfields with the 32nd Army. Its troops on the island are too weak to do it alone. With Yamato's guns in range (2–6 squares) shelling the US defenders, they can. That is what the sortie was for.
+- **The US wins by holding the airfields to a deadline**, which in practice means sinking or stopping Yamato before it gets within range.
+- **Fog of war is always on** (`settings.fogOfWar`, as on the Battle of Britain), so the US has to find the fleet first. Japan can pick its route: east of Kyushu and the island chain, near Task Force 58, or west through the Osumi Strait and down the East China Sea.
+- **Fuel for one way.** Japan's ships start with enough fuel to reach gun range of the beachhead with a little to spare, but not to come home. That reflects the orders without a special rule. (They can still turn back to their own port and refuel there, which the computer sometimes does.)
+
+### Area and scale
+
+- **22 × 32 squares, about 20 nautical miles a square**, north up. The Bungo Strait and Japan's base are in the top-right corner, with Shikoku east of the strait. Kyushu fills the top middle, with Kanoya on its southern tip. Below it are the Osumi Strait, Tanegashima and Yakushima, then the Tokara reefs and the Amami islands running south-west to Okinawa at the bottom left.
+- The shortest sea route from Yamato's start to a square where its guns reach both airfields takes **at least 5 days** (Battleship move 5; a test checks). A carrier strike reaches about 7 squares, roughly 140 nautical miles (the real ones reached about 250).
+- **Okinawa is drawn about four times life size**, as Midway's atoll is, so there's room for a land battle: the hills and forest of the north, Nago and the Motobu peninsula, the Ishikawa isthmus, the Hagushi beaches with **Yontan** and **Kadena** in the middle of the west coast, two rows of open ground, and then the 32nd Army's **row of four bunkers on the Shuri heights** at the south edge, with Shuri and Naha's harbor behind it.
+
+### Places
+
+| | US | Japan | Neutral |
+|---|---|---|---|
+| Base | HQ, Factory, Port, City (south-east corner, standing for Ulithi) | HQ, Factory, Port, City (top-right corner, standing for Tokuyama and Kure) | |
+| Okinawa | **Yontan** and **Kadena** (Airfields, the objectives) | Shuri (City), Naha (Port) | Nago (City) in the north |
+| Kyushu | | Kanoya (Airfield) | |
+
+- **Income:** 500 per property (half, as on Midway), so the starting forces do the fighting. The US starts with 6 properties, Japan with 7; both start with 2,000.
+
+### Starting forces (the evening of 6 April)
+
+- **Japan, the Surface Special Attack Force**, leaving the Bungo Strait: Yamato (Battleship, 45 of 80 fuel) and four Destroyers (Yahagi and the eight destroyers, paired; the game has no Cruiser), 50 of 65 fuel each.
+- **Japan, Kanoya:** two Fighters. Historically the fleet had almost no air cover; this is the main balance lever.
+- **Japan, the 32nd Army** on the Shuri line: three Infantry and an Assault Infantry garrisoning the four bunkers (03-combat §4: the bunker has to be broken before the men inside can be hurt), with a Mortar, two Artillery and an Infantry behind. It is three squares from Kadena.
+- **US, Task Force 58**, east of the Amami islands: three Carriers (Dive Bomber and Torpedo Bomber; Fighter and Torpedo Bomber; Fighter and Dive Bomber), a Battleship and three Destroyers.
+- **US, off the Hagushi beaches:** one of Admiral Deyo's old Battleships (ready to meet Yamato if the aircraft failed), a Destroyer, a Landing Craft with an Infantry aboard, and a Supply Ship.
+- **US ashore:** three Infantry (one on each airfield), two Medium Tanks, an Artillery and a Flak Gun.
+- **US, on picket:** two Submarines (Threadfin and Hackleback) south of the Bungo Strait, just out of torpedo reach of the fleet but close enough to see it come out.
+- **Nothing can attack either fleet on day 1** (a test checks).
+
+### How the opening works
+
+- **The US moves first**, as on every built-in map. Its day-1 turn is the evening of 6 April: the submarines take position, and the carriers wait.
+- **Japan's first turn is the sortie.** The fleet can hunt the picket submarines or slip past them.
+- After that, in the fog, the US has at least five days to find, track and sink a fleet that is trying to stay hidden, while the land battle at Shuri goes on.
+
+### Build lists
+
+- Both sides: every unit except the Heavy Tank (01-units §1). With half income, little gets built in time to matter.
+
+### Victory
+
+- **Japan** wins by capturing **Yontan and Kadena** (`captureProperties`), or the US HQ.
+- **The US** wins by still being in the game when **day 12** starts (`surviveDays`), or by capturing Japan's HQ.
+- Rout is on. Resign is always available.
+
+### Weather
+
+- Rain on day 4 only, standing for the low cloud of 7 April. With fog already on, rain's effect is that every unit sees 1 square less (12-weather §3a). That makes the fleet harder to find, but doesn't weaken air strikes.
+
+### Presentation
+
+- **No Rising Sun flag**, and no flags on the ships beyond the game's usual nation marker (CLAUDE.md: no political symbols).
+- **Plain, factual text.** The mission was suicidal and is often romanticised. The description says what happened, without "honour" or "glorious last stand" wording.
+- **Map select:** the dot is where Yamato sank, south-west of Kyushu. The preview shows US Avengers (Torpedo Bombers) over the sea, not the battleship or an explosion.
+
+### How it's made
+
+- `tools/maps/ten-go.mjs` builds the scenario file; `tools/maps/overview.mjs ten-go` redraws the picture above.
+- Tests (`tests/scenario.test.ts`, "Ten-Go"): the nations and order; the objectives and their owner; the day-12 rule; fog always on; rain on day 4 only; the fleet of one Battleship and four Destroyers in the north-east; at least five days' sailing to gun range of both airfields; fuel enough to get there but less than twice that; nothing can attack either fleet on day 1; Task Force 58's three Carriers with two Torpedo Bombers between them; Japan's two Fighters and one airfield; Okinawa one island from Shuri to both airfields and Nago, Nago neutral; the 32nd Army south of the airfields and US troops on both; half income; no Heavy Tanks. The AI tests play it AI vs AI to a finish.
+
+### Known gaps
+
+- **Balance is a first guess.** AI vs AI (seeds 1 to 10, 2026-11-19): the US wins 9, by holding to day 12; Japan wins 1, on day 10. The land battle at Shuri is now close (the US is often down to one to three units on the island by day 8). With no bunkers, in a first try, the 32nd Army was wiped out by day 9 every game.
+- **The computer as Japan rarely sails for Okinawa.** The Greedy AI has no pull toward a far-off target for ships (09-ai §4i is for land units), so Yamato mostly waits near the strait or fights the submarines. Playing Japan yourself, against the computer or hot-seat, is the real test.
+- Without a Cruiser, Yahagi is a Destroyer.
+- Possible later rules, each its own decision: a "unit reaches this square" victory condition, so beaching Yamato wins outright; a unique Yamato, tougher and longer-ranged than a regular Battleship (a scenario-only unit like the Radar Station, 01-units §2a, or a scenario modifier); low cloud weather that weakens air strikes (12-weather); a "sink these units" victory condition (also missing on Midway, §3); and the kamikaze unit, if it's ever added, for the attacks from Kyushu that day.

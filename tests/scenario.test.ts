@@ -11,6 +11,7 @@ import { parseScenario, type Scenario } from "../src/engine/scenario";
 import { createGame } from "../src/engine/setup";
 import type { GameState } from "../src/engine/state";
 import { moveDestinations } from "../src/engine/movement";
+import { isHiddenFrom } from "../src/engine/visibility";
 import { SCENARIOS } from "../src/scenarios";
 import { defaultComputerPlayers } from "../src/ui/computerPlayers";
 import { makeGame } from "./helpers";
@@ -76,8 +77,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway and Guadalcanal", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal", "ten-go"]);
   });
 
   it("have unique ids", () => {
@@ -1014,7 +1015,7 @@ describe("built-in scenarios (00-master-design §8)", () => {
   describe("Midway (14-scenarios-pacific §3)", () => {
     const midway = SCENARIOS.find((s) => s.id === "midway");
     if (!midway) throw new Error("missing scenario");
-    const { map, units, victory, players, propertyOwners } = midway.setup;
+    const { map, units, victory, players, propertyOwners, settings } = midway.setup;
     const US = 0;
     const JAPAN = 1;
     const objectives = victory?.find((v) => v.type === "captureProperties")?.properties ?? [];
@@ -1125,6 +1126,45 @@ describe("built-in scenarios (00-master-design §8)", () => {
       for (const lc of craft) {
         expect(lc.cargo).toHaveLength(2);
         expect(dist(lc.pos, commandPost)).toBeGreaterThan(2 * UNITS.landingCraft.movePoints);
+      }
+    });
+
+    it("the map is always played in fog of war: the battle was decided by who found whom first (19-fog-of-war §1)", () => {
+      expect(settings?.fogOfWar).toBe(true);
+      expect(createGame({ ...midway.setup, seed: 1 }).settings.fogOfWar).toBe(true);
+    });
+
+    it("at the start neither side can see a single enemy unit: both have to search", () => {
+      const game = createGame({ ...midway.setup, seed: 1 });
+      for (const viewer of [US, JAPAN]) {
+        for (const enemy of game.units.filter((u) => u.owner !== viewer)) {
+          expect(isHiddenFrom(game, enemy, viewer), `${enemy.type} at ${enemy.pos.x},${enemy.pos.y} seen by player ${viewer}`).toBe(true);
+        }
+      }
+    });
+
+    it("no Japanese ship or aircraft can find a US Carrier on day 1: Point Luck is beyond every one's move plus its vision, as Japan didn't know the US carriers were there", () => {
+      for (const target of carriers(US)) {
+        for (const a of attackers(JAPAN)) {
+          expect(dist(a.pos, target.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs carrier at ${target.pos.x},${target.pos.y}`)
+            .toBeGreaterThan(UNITS[a.type].movePoints + UNITS[a.type].vision);
+        }
+      }
+    });
+
+    it("the US can find the Kido Butai on day 1, as its scouts did at dawn: the submarine Nautilus is within a move plus its vision of a Japanese Carrier", () => {
+      const subs = (units ?? []).filter((u) => u.owner === US && u.type === "submarine");
+      const finds = subs.some((s) => carriers(JAPAN).some((c) => dist(s.pos, c.pos) <= UNITS.submarine.movePoints + UNITS.submarine.vision));
+      expect(finds).toBe(true);
+    });
+
+    it("Japan's submarine cordon between Pearl Harbor and Midway is on station south of Point Luck, after the US carriers have passed it", () => {
+      const pearl = propertyOwners?.find((p) => p.owner === US && terrainAt(map, p.pos) === "hq")?.pos;
+      if (!pearl) throw new Error("no US HQ");
+      const cordon = (units ?? []).filter((u) => u.owner === JAPAN && u.type === "submarine" && u.pos.x > airfield.x && u.pos.y < pearl.y - 5);
+      expect(cordon).toHaveLength(2);
+      for (const s of cordon) {
+        for (const c of carriers(US)) expect(s.pos.y, `submarine at ${s.pos.x},${s.pos.y}`).toBeGreaterThan(c.pos.y);
       }
     });
 
@@ -1267,6 +1307,155 @@ describe("built-in scenarios (00-master-design §8)", () => {
     });
 
     it("income is 500 per property, so the starting forces do most of the fighting", () => {
+      expect(settings?.incomePerProperty).toBe(500);
+    });
+
+    it("neither side builds Heavy Tanks (01-units §1)", () => {
+      for (const p of players) expect(p.buildable).not.toContain("heavyTank");
+    });
+  });
+
+  describe("Ten-Go (14-scenarios-pacific §6)", () => {
+    const tenGo = SCENARIOS.find((s) => s.id === "ten-go");
+    if (!tenGo) throw new Error("missing scenario");
+    const { map, units, victory, players, propertyOwners, settings, weather } = tenGo.setup;
+    const US = 0;
+    const JAPAN = 1;
+    const all = units ?? [];
+    const objectives = victory?.find((v) => v.type === "captureProperties")?.properties ?? [];
+    const [yontan, kadena] = objectives;
+    if (!yontan || !kadena) throw new Error("missing objectives");
+    const yamato = all.find((u) => u.owner === JAPAN && u.type === "battleship");
+    if (!yamato) throw new Error("missing Yamato");
+    const dist = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const ofSide = (owner: number, type: UnitTypeId) => all.filter((u) => u.owner === owner && u.type === type);
+    const ownerOf = (p: Point) => (propertyOwners ?? []).find((o) => o.pos.x === p.x && o.pos.y === p.y)?.owner ?? null;
+    /** Every unit that could attack on day 1, aircraft aboard a Carrier included (they launch from its square). */
+    const attackers = (owner: number) => all.filter((u) => u.owner === owner)
+      .flatMap((u) => [{ type: u.type, pos: u.pos }, ...(u.cargo ?? []).map((c) => ({ type: c.type, pos: u.pos }))]);
+    /** How far a unit can attack without help on day 1: move and fire, or just fire for indirect units. */
+    const reach = (type: UnitTypeId) => {
+      const { range, canMoveAndFire, movePoints } = UNITS[type];
+      return range === null ? -1 : (canMoveAndFire ? movePoints : 0) + range.max;
+    };
+    /** The cheapest a ship could sail from one square to each other square, ignoring other units. */
+    const sailingCost = (from: Point): Map<string, number> => {
+      const cost = new Map([[`${from.x},${from.y}`, 0]]);
+      const queue = [from];
+      for (let p = queue.shift(); p; p = queue.shift()) {
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+          const q = P(p.x + dx, p.y + dy);
+          if (q.x < 0 || q.y < 0 || q.x >= map.width || q.y >= map.height) continue;
+          const step = TERRAIN[terrainAt(map, q)].moveCost.sea;
+          if (step === null) continue;
+          const total = (cost.get(`${p.x},${p.y}`) ?? 0) + step;
+          if (total >= (cost.get(`${q.x},${q.y}`) ?? Infinity)) continue;
+          cost.set(`${q.x},${q.y}`, total);
+          queue.push(q);
+        }
+      }
+      return cost;
+    };
+    /** The shortest sail from Yamato's start to a square from which its guns reach both airfields. */
+    const toGunRange = Math.min(...[...sailingCost(yamato.pos)].flatMap(([key, spent]) => {
+      const [x = 0, y = 0] = key.split(",").map(Number);
+      const max = UNITS.battleship.range.max;
+      return dist(P(x, y), yontan) <= max && dist(P(x, y), kadena) <= max ? [spent] : [];
+    }));
+    const daysToGunRange = Math.ceil(toGunRange / UNITS.battleship.movePoints);
+
+    it("the US fights Japan and moves first, as on every built-in map (08-art-pipeline §12)", () => {
+      expect(players.map((p) => p.nation)).toEqual(["us", "japan"]);
+    });
+
+    it("Japan wins by capturing both Okinawa airfields, Yontan and Kadena, which the US holds at the start", () => {
+      expect(victory).toContainEqual({ type: "captureProperties", side: "axis", properties: [yontan, kadena] });
+      expect([yontan, kadena].map((p) => terrainAt(map, p))).toEqual(["airfield", "airfield"]);
+      for (const p of objectives) expect(ownerOf(p)).toBe(US);
+    });
+
+    it("the US wins by holding the airfields to the start of day 12", () => {
+      expect(victory).toContainEqual({ type: "surviveDays", side: "allies", days: 12 });
+    });
+
+    it("the map is always played in fog of war, so the US has to find the fleet (19-fog-of-war §1)", () => {
+      expect(settings?.fogOfWar).toBe(true);
+      expect(createGame({ ...tenGo.setup, seed: 1 }).settings.fogOfWar).toBe(true);
+    });
+
+    it("it rains on day 4 only, standing for the low cloud of 7 April (12-weather §3a)", () => {
+      expect(weather?.forecast.filter((f) => f.weather === "rain").map((f) => f.fromDay)).toEqual([4]);
+      expect(weather?.forecast[0]).toEqual({ fromDay: 1, weather: "clear" });
+    });
+
+    it("Japan's fleet is one Battleship (Yamato) and four Destroyers, leaving the Bungo Strait in the north-east", () => {
+      expect(ofSide(JAPAN, "battleship")).toHaveLength(1);
+      expect(ofSide(JAPAN, "destroyer")).toHaveLength(4);
+      for (const ship of [...ofSide(JAPAN, "battleship"), ...ofSide(JAPAN, "destroyer")]) {
+        expect(ship.pos.x, `${ship.type} at ${ship.pos.x},${ship.pos.y}`).toBeGreaterThan(map.width / 2);
+        expect(ship.pos.y, `${ship.type} at ${ship.pos.x},${ship.pos.y}`).toBeLessThan(5);
+      }
+    });
+
+    it("Yamato needs at least five days to get both airfields within gun range, so the US has time to find it", () => {
+      expect(Number.isFinite(toGunRange)).toBe(true);
+      expect(daysToGunRange).toBeGreaterThanOrEqual(5);
+    });
+
+    it("Japan's ships carry fuel to reach gun range of the beachhead, but not to sail home again", () => {
+      for (const ship of [...ofSide(JAPAN, "battleship"), ...ofSide(JAPAN, "destroyer")]) {
+        const { fuelPerMove, fuelPerDay, maxFuel } = UNITS[ship.type];
+        const fuel = ship.fuel ?? maxFuel;
+        // The Destroyers keep Yamato's pace.
+        const outward = toGunRange * fuelPerMove + daysToGunRange * fuelPerDay;
+        expect(fuel, `${ship.type} at ${ship.pos.x},${ship.pos.y}`).toBeGreaterThanOrEqual(outward);
+        expect(fuel, `${ship.type} at ${ship.pos.x},${ship.pos.y}`).toBeLessThan(2 * outward);
+      }
+    });
+
+    it("nothing can attack either fleet on day 1: not Task Force 58's aircraft, the picket submarines or Kanoya's fighters", () => {
+      const fleet = (owner: number) => all.filter((u) => u.owner === owner && UNITS[u.type].category === "naval");
+      for (const owner of [US, JAPAN]) {
+        for (const target of fleet(1 - owner)) {
+          for (const a of attackers(owner).filter((u) => baseDamage(u.type, target.type) !== null)) {
+            expect(dist(a.pos, target.pos), `${a.type} at ${a.pos.x},${a.pos.y} vs ${target.type} at ${target.pos.x},${target.pos.y}`).toBeGreaterThan(reach(a.type));
+          }
+        }
+      }
+    });
+
+    it("Task Force 58 has three Carriers with two aircraft each, two of them Torpedo Bombers", () => {
+      const carriers = ofSide(US, "carrier");
+      expect(carriers).toHaveLength(3);
+      for (const c of carriers) expect(c.cargo, `carrier at ${c.pos.x},${c.pos.y}`).toHaveLength(2);
+      expect(carriers.flatMap((c) => c.cargo ?? []).filter((c) => c.type === "torpedoBomber")).toHaveLength(2);
+    });
+
+    it("Japan's only air cover is two Fighters at Kanoya on Kyushu", () => {
+      const air = all.filter((u) => u.owner === JAPAN && UNITS[u.type].category === "air");
+      expect(air.map((u) => u.type)).toEqual(["fighter", "fighter"]);
+      expect(properties(tenGo, "airfield", JAPAN)).toHaveLength(1);
+    });
+
+    it("Okinawa is one island: the 32nd Army at Shuri can march to both airfields, and Nago in the north is neutral", () => {
+      const shuri = (propertyOwners ?? []).find((o) => o.owner === JAPAN && terrainAt(map, o.pos) === "city" && o.pos.y > kadena.y);
+      if (!shuri) throw new Error("missing Shuri");
+      expect(connected(map, "foot", shuri.pos, yontan)).toBe(true);
+      expect(connected(map, "foot", shuri.pos, kadena)).toBe(true);
+      const nago = P(5, 22);
+      expect(terrainAt(map, nago)).toBe("city");
+      expect(ownerOf(nago)).toBeNull();
+      expect(connected(map, "foot", nago, yontan)).toBe(true);
+    });
+
+    it("the 32nd Army is dug in south of the airfields, and the US holds both with troops on them", () => {
+      const army = all.filter((u) => u.owner === JAPAN && UNITS[u.type].category === "land" && connected(map, "foot", u.pos, kadena));
+      expect(army.length).toBeGreaterThanOrEqual(6);
+      for (const u of army) expect(u.pos.y, `${u.type} at ${u.pos.x},${u.pos.y}`).toBeGreaterThan(kadena.y + 2);
+      for (const p of objectives) expect(all.some((u) => u.owner === US && u.pos.x === p.x && u.pos.y === p.y)).toBe(true);
+    });
+
+    it("income is 500 per property, so the starting forces do the fighting", () => {
       expect(settings?.incomePerProperty).toBe(500);
     });
 
