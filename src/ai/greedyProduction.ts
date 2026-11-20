@@ -103,20 +103,38 @@ export abstract class ProductionBrain extends LandingBrain {
   }
 
   /**
-   * Whether one of our aircraft or ships is coming in to this airfield or port for fuel, ammo or
-   * repairs and could get there within two turns: then it's kept free rather than built on, or the
-   * new unit would be standing there when it arrives (09-ai §4c).
+   * Whether one of our aircraft or ships coming in for fuel, ammo or repairs needs this airfield or
+   * port kept free rather than built on, or the new unit would be standing there when it arrives
+   * (09-ai §4c). Each one coming home reserves only the nearest such site it could reach within two
+   * turns, so a busy air war doesn't keep every airfield empty and stop all building (09-ai §4l).
    */
   protected neededForService(site: Point): boolean {
-    const repairs = propertyDefAt(this.state, site)?.repairs;
-    if (repairs !== "air" && repairs !== "naval") return false;
-    return this.state.units.some(
-      (u) =>
-        u.owner === this.me &&
-        defOf(u.type).category === repairs &&
-        distance(u.pos, site) <= 2 * stats.movePoints(this.state, u) &&
-        this.headingHome(u) !== null,
-    );
+    return this.serviceSites().has(this.index(site));
+  }
+
+  private serviceSites(): ReadonlySet<number> {
+    if (this.serviceCache) return this.serviceCache;
+    const reserved = new Set<number>();
+    const homeward = this.state.units
+      .filter((u) => u.owner === this.me && (defOf(u.type).category === "air" || defOf(u.type).category === "naval") && this.headingHome(u) !== null)
+      .sort((a, b) => a.id - b.id);
+    for (const unit of homeward) {
+      const category = defOf(unit.type).category;
+      const reach = 2 * stats.movePoints(this.state, unit);
+      let best: { i: number; d: number } | null = null;
+      for (const property of this.state.properties) {
+        if (property.owner !== this.me || propertyDefAt(this.state, property.pos)?.repairs !== category) continue;
+        const i = this.index(property.pos);
+        const d = distance(unit.pos, property.pos);
+        if (d > reach || reserved.has(i)) continue;
+        const occupant = unitAt(this.state, property.pos);
+        if (occupant && occupant.id !== unit.id) continue;
+        if (!best || d < best.d) best = { i, d };
+      }
+      if (best) reserved.add(best.i);
+    }
+    this.serviceCache = reserved;
+    return reserved;
   }
 
   /**

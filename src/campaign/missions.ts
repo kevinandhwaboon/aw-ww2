@@ -45,6 +45,8 @@ export const MISSIONS: readonly CampaignMission[] = [
         { type: "mediumTank", owner: 1, pos: { x: 11, y: 8 } },
         { type: "artillery", owner: 1, pos: { x: 8, y: 7 } },
         { type: "flakGun", owner: 1, pos: { x: 8, y: 9 } },
+        // A fourth barge at Ostend, loaded for the second wave.
+        { type: "landingCraft", owner: 1, pos: { x: 26, y: 7 }, cargo: [{ type: "infantry" }, { type: "mediumTank" }] },
       ],
       // The towns the first wave has taken, between Hythe and Ashford, and the factory at Maidstone.
       properties: [
@@ -60,20 +62,23 @@ export const MISSIONS: readonly CampaignMission[] = [
   },
   {
     map: "gazala",
-    commanders: { 2: "falk", 3: "ferrante" },
+    // Not Falk, whose units carry less fuel: on Gazala the sweep is decided by fuel (18-scenarios-north-africa §2).
+    commanders: { 2: "wendt", 3: "ferrante" },
     advantage: {
-      // The panzers have already broken through round Bir Hakeim and stand south of El Adem, with fuel in Halftracks.
+      // More armour for the sweep round Bir Hakeim, and Halftracks to keep it fuelled and carry infantry to Tobruk.
       units: [
-        { type: "mediumTank", owner: 2, pos: { x: 29, y: 20 } },
-        { type: "mediumTank", owner: 2, pos: { x: 30, y: 21 } },
-        { type: "mediumTank", owner: 2, pos: { x: 29, y: 22 } },
-        { type: "mediumTank", owner: 2, pos: { x: 29, y: 19 } },
-        { type: "halftrack", owner: 2, pos: { x: 30, y: 20 }, cargo: [{ type: "infantry" }] },
-        { type: "halftrack", owner: 2, pos: { x: 31, y: 21 }, cargo: [{ type: "infantry" }] },
-        { type: "artillery", owner: 2, pos: { x: 30, y: 22 } },
-        { type: "mediumTank", owner: 3, pos: { x: 29, y: 24 } },
-        { type: "mediumTank", owner: 3, pos: { x: 28, y: 25 } },
-        { type: "infantry", owner: 3, pos: { x: 27, y: 26 } },
+        { type: "halftrack", owner: 2, pos: { x: 6, y: 29 }, cargo: [{ type: "infantry" }] },
+        { type: "halftrack", owner: 2, pos: { x: 5, y: 29 }, cargo: [{ type: "infantry" }] },
+        { type: "halftrack", owner: 2, pos: { x: 7, y: 29 }, cargo: [{ type: "infantry" }] },
+        { type: "mediumTank", owner: 2, pos: { x: 6, y: 30 } },
+        { type: "mediumTank", owner: 2, pos: { x: 8, y: 29 } },
+        { type: "mediumTank", owner: 2, pos: { x: 5, y: 30 } },
+        { type: "halftrack", owner: 2, pos: { x: 6, y: 31 }, cargo: [{ type: "infantry" }] },
+        { type: "halftrack", owner: 2, pos: { x: 4, y: 30 }, cargo: [{ type: "infantry" }] },
+        { type: "mediumTank", owner: 2, pos: { x: 7, y: 31 } },
+        { type: "halftrack", owner: 3, pos: { x: 8, y: 31 }, cargo: [{ type: "infantry" }] },
+        { type: "halftrack", owner: 3, pos: { x: 8, y: 30 }, cargo: [{ type: "infantry" }] },
+        { type: "mediumTank", owner: 3, pos: { x: 7, y: 30 } },
       ],
       funds: { 2: 3000, 3: 2000 },
       incomePercent: 25,

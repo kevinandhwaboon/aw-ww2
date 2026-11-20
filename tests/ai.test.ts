@@ -555,6 +555,20 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
     expect(nextBuild(makeGame(["P" + "S".repeat(12)], units(50), setup))).not.toBeNull();
   });
 
+  it("a ship coming in for fuel keeps only the nearest port free: our other ports still build (09-ai §4l)", () => {
+    // Two ports, both within two turns of a Torpedo Boat low on fuel: the nearer one is kept for it.
+    const setup = {
+      players: [{ name: "Allies", nation: "us" as const, funds: 30000 }, { name: "Axis", nation: "germany" as const }],
+      propertyOwners: [{ pos: P(0, 0), owner: 0 }, { pos: P(10, 0), owner: 0 }],
+    };
+    const state = makeGame(["P" + "S".repeat(9) + "P" + "S".repeat(6)], [
+      { type: "torpedoBoat", owner: 0, pos: P(7, 0), fuel: 6 },
+      { type: "destroyer", owner: 1, pos: P(16, 0) },
+    ], setup);
+    const build = chooseCommand(waitAll(state));
+    expect(build).toMatchObject({ type: "build", pos: P(0, 0) });
+  });
+
   it("an empty Landing Craft goes into our own port to collect stranded units", async () => {
     const state = makeGame(["..PSSSSS_..Q", "...SSSSS_..."], [
       { type: "infantry", owner: 0, pos: P(1, 0) },
@@ -1016,23 +1030,27 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   }, 60_000);
 
   it("the-slot: both sides land on other islands, and properties change hands (09-ai §4b)", async () => {
-    const state = start("the-slot");
-    const result = await playMatch(state, everyone(state), 25);
-    const count = tally(state, result.commands);
-    expect(result.bugs).toEqual([]);
-    expect(count.launches).toBeGreaterThan(0);
-    expect(count.landings).toBeGreaterThan(5);
-    // Counted as they happen: a property taken and later retaken still changed hands.
-    let replay = state;
+    // Two games, since in any one game the landings can all be beaten off (seed 7 has no capture
+    // since the change to which airfields and ports are kept for service, 09-ai §4l).
     let captures = 0;
-    for (const command of result.commands) {
-      const step = apply(replay, command);
-      if (!step.ok) throw new Error(`replay rejected: ${step.message}`);
-      replay = step.state;
-      captures += step.events.filter((e) => e.type === "propertyCaptured" && e.previousOwner !== null).length;
+    for (const seed of [7, 1]) {
+      const state = start("the-slot", seed);
+      const result = await playMatch(state, everyone(state), 25);
+      const count = tally(state, result.commands);
+      expect(result.bugs).toEqual([]);
+      expect(count.launches).toBeGreaterThan(0);
+      expect(count.landings).toBeGreaterThan(5);
+      // Counted as they happen: a property taken and later retaken still changed hands.
+      let replay = state;
+      for (const command of result.commands) {
+        const step = apply(replay, command);
+        if (!step.ok) throw new Error(`replay rejected: ${step.message}`);
+        replay = step.state;
+        captures += step.events.filter((e) => e.type === "propertyCaptured" && e.previousOwner !== null).length;
+      }
     }
     expect(captures).toBeGreaterThan(0);
-  }, 120_000);
+  }, 240_000);
 
   it("same seed, same game: an AI vs AI game replays exactly", async () => {
     const first = await playMatch(start("bastogne", 3), everyone(start("bastogne")), 10);

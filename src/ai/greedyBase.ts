@@ -89,6 +89,7 @@ export abstract class BrainBase {
   protected readonly followUpCache = new Map<number, readonly { id: number; damage: number }[]>();
   protected loadableCache: readonly Point[] | null = null;
   protected ghostCache: readonly Unit[] | null = null;
+  protected serviceCache: ReadonlySet<number> | null = null;
 
   constructor(
     protected readonly state: GameState,

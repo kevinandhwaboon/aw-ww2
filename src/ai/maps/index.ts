@@ -4,14 +4,18 @@ import { greedyAi } from "../greedy";
 import type { MapPlan } from "../mapPlan";
 import type { AiPlayer } from "../player";
 import { GREEDY_WEIGHTS } from "../weights";
+import { battleOfBritainPlan } from "./battleOfBritain";
+import { gazalaPlan } from "./gazala";
 import { midwayPlan } from "./midway";
 import { objectivePlan } from "./objectives";
 
 /** A fresh plan for each game, since a plan may keep hints such as where it has searched. */
 const PLANS: Readonly<Record<string, () => MapPlan>> = {
   midway: midwayPlan,
-  // Rommel's drive on Tobruk.
-  gazala: () => objectivePlan("Tobruk plan"),
+  // Sea Lion: break the Navy and the radar from the air, then land together on Dover and Hawkinge.
+  "battle-of-britain": battleOfBritainPlan,
+  // Rommel's sweep round Bir Hakeim, kept supplied, then on to Tobruk.
+  gazala: gazalaPlan,
   // The 32nd Army's counterattack on the airfields.
   "ten-go": () => objectivePlan("Okinawa plan"),
 };
