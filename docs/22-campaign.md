@@ -1,6 +1,6 @@
 # Topic Doc 22: Campaign and Skirmish
 
-**Status:** v0 decided and built 2026-11-20. Every built map is a campaign mission with an advantage for the computer (§5): Midway, Sevastopol, Guadalcanal and Ten-Go are tuned to the target by self-play; the Battle of Britain and Gazala are still too easy; four big maps are untested first guesses. Midway has the first map-specific AI (§6a), and Gazala and Ten-Go a simple objective plan (§6b).
+**Status:** v0 decided and built 2026-11-20. Every built map is a campaign mission with an advantage for the computer (§5): Midway, Sevastopol, Guadalcanal and Ten-Go are tuned to the target by self-play; the Battle of Britain and Gazala are still too easy; Stalingrad and four other big maps are first guesses, since AI games there rarely finish. Midway has the first map-specific AI (§6a), and Gazala and Ten-Go a simple objective plan (§6b).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8, §15), 06-commanders.md, 09-ai.md, 11-tech-setup.md §3j. **Feeds:** every scenario doc (each map's campaign setup is listed here, §5).
 
@@ -73,7 +73,7 @@ Measured with `npm run selfplay -- --campaign` (09-ai §7), which plays the camp
 | 4 | Sevastopol | Jakob Wendt | +4,500 funds; +45% income | 4 of 20 |
 | 5 | Guadalcanal | Isao Kuramochi | Two Infantry and an Artillery already ashore at Koli Point, east of Henderson Field | 6 of 20 |
 | 6 | El Alamein | Konrad Falk, Aldo Ferrante | None: the Axis already wins every AI game (the Allied AI doesn't clear a corridor, 18-scenarios-north-africa §1) | 0 of 12 |
-| 7 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | STALINGRAD_RESULT |
+| 7 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | 0 of 8, but a first guess: 2 Axis wins, the other 6 undecided at day 40 |
 | 8 | The Slot | Isao Kuramochi | +3,000 funds; +25% income | untested: 1 of 8 AI games ends by day 40 |
 | 9 | Kursk | Konrad Falk | +4,000 funds; +25% income | untested: AI games don't end (1 of 8 by day 40 in Skirmish) |
 | 10 | Normandy | Jakob Wendt | +4,000 funds; +25% income | untested: AI games stall (09-ai §7) |
