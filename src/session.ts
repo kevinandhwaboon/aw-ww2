@@ -15,6 +15,7 @@ import { BattleScene } from "./game/battle/BattleScene";
 import { InputController } from "./game/controller";
 import { MapScene } from "./game/MapScene";
 import { TILE_SIZE } from "./game/placeholderTiles";
+import { turnServiceSteps, type TurnService } from "./game/turnService";
 import { handheldViewSize, viewSize } from "./game/viewport";
 import { mountPad, type PadInput } from "./ui/pad";
 import { playerColors } from "./game/placeholderUnits";
@@ -63,6 +64,14 @@ export interface Session {
 /** What the banner says when the weather changes (12-weather §5). */
 const WEATHER_BANNER: Record<WeatherId, string> = { clear: "The skies clear", snow: "Snow is falling", rain: "Rain is falling" };
 
+/**
+ * Turn-start repairs and resupplies, one unit at a time (04-economy §2): the cursor rests on the unit,
+ * then each displayed HP repaired takes a tick.
+ */
+const SERVICE_MS = { cursor: 160, tick: 170 };
+
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** Pause before each AI unit acts, so its moves can be followed (09-ai §5). */
 const AI_PAUSE_MS = 250;
 
@@ -93,6 +102,9 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
   updateViewer();
   /** The game as the viewer sees it: what the map, the panels and the controls work from. */
   const seen = (s: GameState): GameState => (viewer === null ? s : stateSeenBy(s, viewer));
+  /** While turn-start repairs play, the map and HUD show the game partway through them. */
+  let servicing: GameState | null = null;
+  const shownGame = (): GameState => servicing ?? seen(state);
 
   const width = state.map.width * TILE_SIZE;
   const height = state.map.height * TILE_SIZE;
@@ -191,7 +203,7 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
   function showCursorInfo(): void {
     if (!inBounds(state.map, cursor)) return;
     const onLeft = scene.tileInLeftHalf(cursor);
-    hud.update(seen(state), onLeft);
+    hud.update(shownGame(), onLeft);
     // While an aircraft is out on its Carrier being launched, the panel describes it.
     tileInfoPanel.show(scene.shownState(), cursor, onLeft, viewer !== null && !tileInSight(state, cursor, viewer));
     unitPanel?.show(state, unitAt(seen(state), cursor));
@@ -236,6 +248,9 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
     const previous = state;
     state = result.state;
     updateViewer();
+    // Repairs and resupplies at turn start show after the Day banner, so until then they're undone.
+    const service = turnServiceSteps(seen(previous), seen(state), shown.events);
+    if (service.steps.length > 0) servicing = service.start;
     debugPanel?.logEvents(state, previous, result.events);
     render();
     for (const event of result.events) {
@@ -255,7 +270,9 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
       // war, or rain in the forecast, it's always used, so nobody sees the other's view (19-fog-of-war §7).
       if ((passDevice || fogInGame(state)) && humans > 1 && ais[player.id] == null) await handoff.show(`Day ${event.day} · ${player.name}`, earned ? `Income${earned}` : "", color);
       else await banner.show(`Day ${event.day} · ${player.name}${earned}`, color);
+      await playService(service, turnStartTile(state, player.id));
     }
+    servicing = null;
     render();
     if (state.result) {
       sounds.play("gameOver");
@@ -264,6 +281,31 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
     }
     if (aiTurn()) void runAi();
     return true;
+  }
+
+  /**
+   * The cursor visits each unit repaired or resupplied at the start of the turn, one at a time: a
+   * supply crate pops up over a unit refuelled and rearmed, and a repaired unit's HP counts up while
+   * the funds count down (04-economy §2). Then the cursor goes back to the HQ.
+   */
+  async function playService(service: TurnService, home: Point): Promise<void> {
+    if (service.steps.length === 0) return;
+    for (const step of service.steps) {
+      if (ended) return;
+      scene.setCursor(step.pos);
+      await pause(SERVICE_MS.cursor);
+      sounds.play("supply");
+      const pop = scene.playServicePop(step.pos, step.repairedHp, step.resupplied);
+      for (const frame of step.frames) {
+        servicing = frame;
+        render();
+        await pause(SERVICE_MS.tick);
+      }
+      await pop;
+    }
+    servicing = null;
+    render();
+    scene.setCursor(home);
   }
 
   let aiRunning = false;
@@ -312,7 +354,7 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
   }
 
   function render(): void {
-    scene.setState(seen(state));
+    scene.setState(shownGame());
     scene.setFog(viewer === null ? null : tilesInSight(state, viewer));
     debugPanel?.update(state);
     showCursorInfo();
