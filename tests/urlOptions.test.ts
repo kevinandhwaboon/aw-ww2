@@ -59,8 +59,8 @@ describe("URL options (11-tech-setup §7)", () => {
   });
 
   it("a player may pick any commander of their own side, whatever the nation (06-commanders §2)", () => {
-    expect(commandersFor("canada")).toEqual(["harlan", "calloway", "ashdown", "tremblay", "morozov"]);
-    expect(commandersFor("italy")).toEqual(["falk", "ferrante", "arakawa"]);
+    expect(commandersFor("canada")).toEqual(["harlan", "tremblay", "ashdown", "morozov", "calloway", "penhallow"]);
+    expect(commandersFor("italy")).toEqual(["falk", "wendt", "ferrante", "kuramochi", "arakawa"]);
   });
 
   it("a commander chosen for the other side is dropped, and no choice leaves the player without one (06-commanders §2)", () => {

@@ -944,14 +944,14 @@ body.pad-layout {
 
 /* ---- Commanders (06-commanders §5) ---- */
 .flag,
-.commander-head,
+.commander-bust,
 .commander-full {
   image-rendering: pixelated;
 }
 
-.commander-head {
-  width: 32px;
-  height: 32px;
+.commander-bust {
+  width: 48px;
+  height: 48px;
   flex: none;
 }
 
@@ -965,10 +965,15 @@ body.pad-layout {
   display: flex;
 }
 
-/* In the turn bar the head is as tall as the flag row and the funds row together. */
-.hud-commander .commander-head {
-  width: 64px;
+/* In the turn bar the full portrait is as tall as the flag row and the funds row together. */
+.hud-commander .commander-full {
+  width: 48px;
   height: 64px;
+  border: none;
+}
+
+.hud-commander .commander-bust {
+  display: none;
 }
 
 .hud-rows {
@@ -999,7 +1004,12 @@ body.pad-layout {
   width: 24px;
 }
 
-.pad-layout .hud-commander .commander-head {
+.pad-layout .hud-commander .commander-full {
+  display: none;
+}
+
+.pad-layout .hud-commander .commander-bust {
+  display: block;
   width: 32px;
   height: 32px;
 }
@@ -1037,6 +1047,21 @@ body.pad-layout {
 
 .commander-pick-next {
   margin-left: auto;
+}
+
+.commander-pick-label,
+.commander-row-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+
+.commander-pick-origin,
+.commander-row-origin {
+  font-size: 11px;
+  opacity: 0.75;
 }
 
 .commander-pick-summary {

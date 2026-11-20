@@ -10,12 +10,12 @@ let packFolder = "";
 export const packFileUrl = (path: string): string => new URL(path, packFolder).href;
 
 /**
- * A commander's portrait from the active pack: from the waist up, or the head alone for the turn
- * bar (06-commanders §4). Null when the pack has no portraits.
+ * A commander's portrait from the active pack: from the waist up, or the bust (head, shoulders
+ * and chest) for lists and a phone's turn bar (06-commanders §4). Null when the pack has no portraits.
  */
-export function commanderPortraitUrl(id: CommanderId, crop: "full" | "head"): string | null {
+export function commanderPortraitUrl(id: CommanderId, crop: "full" | "bust"): string | null {
   const folder = activePack().commanderPortraits;
-  return folder === null ? null : packFileUrl(`${folder}${id}${crop === "head" ? "-head" : ""}.png`);
+  return folder === null ? null : packFileUrl(`${folder}${id}${crop === "bust" ? "-bust" : ""}.png`);
 }
 
 /** The page's CSS colors come from the pack too (see the variables in ui/style.css). */

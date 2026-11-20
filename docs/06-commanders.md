@@ -1,7 +1,7 @@
 # Topic Doc 06: Commanders
 
 **Status:** rules built on 2026-11-16 (milestone 13); the screens in §5 are not built yet. Portraits drawn. Names and numbers are provisional.
-**Last updated:** 2026-11-16
+**Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md §7, 01-units.md, 02-terrain.md, 03-combat.md (§6 veterancy), 04-economy-production.md §5 (repair), 05-supply-transport.md, 08-art-pipeline.md, 11-tech-setup.md (milestone 13, CO hooks; §3c controls).
 
 ---
@@ -32,7 +32,8 @@ Real names thinly disguised (same initials, sound-alike names) were rejected: th
 
 ## 2. How a commander works
 
-- There are **eight commanders: one from each nation, and a second American for the navy** (§3). The first roster had two per nation; on 2026-11-15 the developer asked for fewer, so each pair was merged into one, and on 2026-11-16 asked for the American admiral back as a naval specialist.
+- There are **eleven commanders: six Allied and five Axis** (§3). The first roster had two per nation; on 2026-11-15 the developer asked for fewer, so each pair was merged into one, and on 2026-11-16 asked for the American admiral back as a naval specialist. On 2026-11-20 the developer asked for a specialist in each of four branches on each side, so three were added: a British airman, a German infantry officer and a Japanese admiral.
+- **Every commander comes from a branch: Tanks, Infantry, Naval or Air.** Each side has at least one of each. The branch shows in their uniform (§4) and is named on the screens beside their nation (§5).
 - **A commander serves a side, not a nation.** A player may fight under any commander from their own side: any of the five Allied commanders for an Allied nation, any of the three Axis commanders for an Axis nation. A commander never serves the other side. Two players on one side may pick the same commander.
 - **"No commander" is always a choice**, and it is the default. A player with no commander has no bonus and no drawback, so a battle where nobody picks one plays exactly as the game did before commanders.
 - A commander has **bonuses and one drawback**, all always on. They are modifiers in the modifier layer, so a commander is data with no logic (§6).
@@ -44,7 +45,7 @@ Unit classes used below:
 - **Foot soldiers**: Infantry and Assault Infantry.
 - **Indirect fire**: Mortar, Artillery and Rocket Artillery.
 
-## 3. Roster (v2)
+## 3. Roster (v3)
 
 All numbers are starting points for balancing.
 
@@ -52,42 +53,50 @@ All numbers are starting points for balancing.
 
 | | Commander | Style | Bonuses | Drawback |
 |---|---|---|---|---|
-| ![Walt Harlan](art/commanders/harlan-x3.png) | **Walt Harlan**<br>United States | Never stops moving, and keeps his machines running. Would sooner attack again than wait for the guns | Tanks +1 move. Every unit repairs 1 extra HP per turn on a property that repairs it | Indirect fire −10% attack |
-| ![Dale Calloway](art/commanders/calloway-x3.png) | **Dale Calloway**<br>United States | A patient admiral. Keeps his ships moving and brings them home | Ships +1 move and +10% defense | Tanks −10% attack |
-| ![Hugh Ashdown](art/commanders/ashdown-x3.png) | **Hugh Ashdown**<br>United Kingdom | Methodical. Attacks only after the guns have done their work, and then with infantry | Indirect fire +15% attack. Foot soldiers +10% attack | Tanks −1 move |
-| ![Luc Tremblay](art/commanders/tremblay-x3.png) | **Luc Tremblay**<br>Canada | An inventor who carries his infantry forward under armor. His troops learn fast | Halftracks +1 move. Units reach Veteran at 2 kills and Elite at 5 (03-combat §6: normally 3 and 9) | Air units −10% attack |
-| ![Stepan Morozov](art/commanders/morozov-x3.png) | **Stepan Morozov**<br>Soviet Union | Wins by weight of numbers, and fights for a city street by street | All units cost 10% less. Foot soldiers +20% attack in Cities | All units −10% defense |
+| ![Walt Harlan](art/commanders/harlan-x3.png) | **Walt Harlan**<br>Tanks · United States | Never stops moving, and keeps his machines running. Would sooner attack again than wait for the guns | Tanks +1 move. Every unit repairs 1 extra HP per turn on a property that repairs it | Indirect fire −10% attack |
+| ![Dale Calloway](art/commanders/calloway-x3.png) | **Dale Calloway**<br>Naval · United States | A patient admiral. Keeps his ships moving and brings them home | Ships +1 move and +10% defense | Tanks −10% attack |
+| ![Hugh Ashdown](art/commanders/ashdown-x3.png) | **Hugh Ashdown**<br>Infantry · United Kingdom | Methodical. Attacks only after the guns have done their work, and then with infantry | Indirect fire +15% attack. Foot soldiers +10% attack | Tanks −1 move |
+| ![Luc Tremblay](art/commanders/tremblay-x3.png) | **Luc Tremblay**<br>Tanks · Canada | An inventor who carries his infantry forward under armor. His troops learn fast | Halftracks +1 move. Units reach Veteran at 2 kills and Elite at 5 (03-combat §6: normally 3 and 9) | Air units −10% attack |
+| ![Stepan Morozov](art/commanders/morozov-x3.png) | **Stepan Morozov**<br>Infantry · Soviet Union | Wins by weight of numbers, and fights for a city street by street | All units cost 10% less. Foot soldiers +20% attack in Cities | All units −10% defense |
+| ![Rhys Penhallow](art/commanders/penhallow-x3.png) | **Rhys Penhallow**<br>Air · United Kingdom | Wins the sky first, then lets the army walk in under it | Air units +10% attack and +10% defense. Fighters +1 move | Ships −10% attack |
 
 ### Axis
 
 | | Commander | Style | Bonuses | Drawback |
 |---|---|---|---|---|
-| ![Konrad Falk](art/commanders/falk-x3.png) | **Konrad Falk**<br>Germany | Bold, fast strikes that outrun his supply columns | Tanks and Tank Destroyers +15% attack when they start the fight. Recon +1 move | All units carry 20% less fuel and ammo |
-| ![Aldo Ferrante](art/commanders/ferrante-x3.png) | **Aldo Ferrante**<br>Italy | A patient defender. Lets the ground do the work and makes an attacker pay for every step | All units +15% defense on Hills, Ridges and Cities. All units +20% attack on counterattacks | All units −10% attack when they start the fight |
-| ![Kenji Arakawa](art/commanders/arakawa-x3.png) | **Kenji Arakawa**<br>Japan | Strikes first from the air, and digs in deep on the ground | Dive Bombers and Torpedo Bombers +1 move and +10% attack. Land units on Bunkers and Hills +25% defense against indirect fire, ships and bombers (a Bomber, Dive Bomber or Torpedo Bomber) | Tanks −1 move |
+| ![Konrad Falk](art/commanders/falk-x3.png) | **Konrad Falk**<br>Tanks · Germany | Bold, fast strikes that outrun his supply columns | Tanks and Tank Destroyers +15% attack when they start the fight. Recon +1 move | All units carry 20% less fuel and ammo |
+| ![Jakob Wendt](art/commanders/wendt-x3.png) | **Jakob Wendt**<br>Infantry · Germany | Trusts the rifleman. Digs in, holds on, and gives ground a step at a time | Foot soldiers +15% attack and +15% defense. Mortar Teams +1 move | Air units cost 10% more |
+| ![Aldo Ferrante](art/commanders/ferrante-x3.png) | **Aldo Ferrante**<br>Infantry · Italy | A patient defender. Lets the ground do the work and makes an attacker pay for every step | All units +15% defense on Hills, Ridges and Cities. All units +20% attack on counterattacks | All units −10% attack when they start the fight |
+| ![Isao Kuramochi](art/commanders/kuramochi-x3.png) | **Isao Kuramochi**<br>Naval · Japan | A night-fighting admiral. Closes fast and fires first | Ships +20% attack when they start the fight. Submarines and Torpedo Boats +1 move | Foot soldiers −10% attack |
+| ![Kenji Arakawa](art/commanders/arakawa-x3.png) | **Kenji Arakawa**<br>Air · Japan | Strikes first from the air, and digs in deep on the ground | Dive Bombers and Torpedo Bombers +1 move and +10% attack. Land units on Bunkers and Hills +25% defense against indirect fire, ships and bombers (a Bomber, Dive Bomber or Torpedo Bomber) | Tanks −1 move |
 
 ### What the merge dropped
 
-From the first roster of 14: cheaper foot movement on Hills and Rivers, the Halftrack defense and Assault Infantry bonuses, the Rocket Artillery bonus, city defense, foot soldiers' bonus against vehicles with the faster Transport Aircraft, and every vision bonus. Vision did nothing until fog of war arrived as an option on 2026-11-17 (19-fog-of-war), so no commander is built on it yet. Calloway is the only naval specialist.
+From the first roster of 14: cheaper foot movement on Hills and Rivers, the Halftrack defense and Assault Infantry bonuses, the Rocket Artillery bonus, city defense, foot soldiers' bonus against vehicles with the faster Transport Aircraft, and every vision bonus. Vision did nothing until fog of war arrived as an option on 2026-11-17 (19-fog-of-war), so no commander is built on it yet.
+
+Ferrante is counted as Infantry for his mountain troops' uniform, though his bonuses cover every unit; Wendt is the Axis infantry specialist. Tremblay is counted as Tanks for the armoured corps he comes from.
 
 ## 4. Portraits
 
-Each commander has a 48 × 64 pixel portrait from the waist up, drawn in code by `tools/art/commanders.mjs` and saved in `docs/art/commanders/`: `<id>.png`, `<id>-x3.png` at three times the size for this doc, and `<id>-head.png`, a 32 × 32 crop of the head for the turn bar.
+Each commander has a 48 × 64 pixel portrait from the waist up, drawn in code by `tools/art/commanders.mjs` and saved in `docs/art/commanders/`: `<id>.png`, `<id>-x3.png` at three times the size for this doc, and `<id>-bust.png`, the top 48 × 48 (head, shoulders and chest) for lists.
 
-![All eight portraits](art/commanders/sheet.png)
+![All eleven portraits](art/commanders/sheet.png)
 
-The portraits are also a chance to show **an officer's uniform of each nation**, in its real colors and not the nation's map color. The panel behind each figure carries a light shade of the map color.
+The portraits are also a chance to show **an officer's uniform of each nation and branch**, in its real colors and not the nation's map color. A head alone was too hard to tell apart (the developer, 2026-11-20), so the small portraits show the shoulders and chest too, and **the uniform names the branch at a glance**: sailors in navy blue or whites, airmen in flying helmets or air force blue with wings, tank officers with tanker headgear, infantry in steel helmets, field caps or service dress. The panel behind each figure carries a light shade of the map color.
 
 | Commander | Uniform |
 |---|---|
-| Walt Harlan | US Army: steel helmet with goggles pushed up, the short olive drab field jacket with a waistband, khaki shirt and tie, brass collar discs, ribbons. A cigar |
+| Walt Harlan | US Army, tanks: steel helmet with goggles pushed up, the short olive drab field jacket with a waistband, khaki shirt and tie, brass collar discs, ribbons. A cigar |
 | Dale Calloway | US Navy: white-topped cap with a gold chin strap and badge, the double-breasted blue-black coat with gold buttons and gold lace on the cuffs, white shirt, black tie, ribbons |
-| Hugh Ashdown | British Army: khaki service dress, a staff officer's cap with a red band, red collar patches, brass buttons, pleated pockets, a brown leather belt with a cross strap, ribbons |
-| Luc Tremblay | Canadian Army: the khaki battledress blouse, the armoured corps' black beret, shirt and tie. Glasses |
-| Stepan Morozov | Red Army: fur cap, the khaki tunic with a standing collar, gold shoulder boards edged in red, a gold star medal, leather belt and cross strap |
-| Konrad Falk | German Army: field grey tunic with a dark green collar and plain silver collar bars, soft field cap, silver shoulder cords, black belt, a scarf and field glasses |
+| Hugh Ashdown | British Army, infantry: khaki service dress, a staff officer's cap with a red band, red collar patches, brass buttons, pleated pockets, a brown leather belt with a cross strap, ribbons |
+| Luc Tremblay | Canadian Army, armoured corps: the khaki battledress blouse, the armoured corps' black beret, shirt and tie. Glasses |
+| Stepan Morozov | Red Army, infantry: fur cap, the khaki tunic with a standing collar, gold shoulder boards edged in red, a gold star medal, leather belt and cross strap |
+| Rhys Penhallow | Royal Air Force: blue-grey service dress with a cloth belt, peaked cap with a black band and a plain gold badge, light blue shirt and black tie, white pilot's wings, pale blue rank rings on the cuffs. A handlebar moustache |
+| Konrad Falk | German Army, tanks: field grey tunic with a dark green collar and plain silver collar bars, soft field cap under a tank crew headset with a throat microphone, silver shoulder cords, black belt, field glasses |
+| Jakob Wendt | German Army, infantry: steel helmet with no decal, field grey tunic with a dark green collar and plain silver collar bars, silver shoulder cords, black belt and cross strap, ribbons. Stubble |
 | Aldo Ferrante | Italian Army, mountain troops: grey-green tunic, the felt hat with a tall feather, green collar flames, brown belt and cross strap, ribbons |
-| Kenji Arakawa | Japanese Army: khaki tunic with a turned-down collar and red collar patches, field cap with a plain gold star, brown belt and cross strap |
+| Isao Kuramochi | Japanese Navy: the white summer tunic with a standing collar and five gold buttons, black shoulder boards with gold edges, white-covered cap with a black band and a plain gold anchor, ribbons |
+| Kenji Arakawa | Japanese Army air service: khaki tunic with a turned-down collar and red collar patches, a leather flying helmet with goggles, gold aircrew wings, brown belt and cross strap |
 
 - **No Nazi or political symbols** (00-master-design §6). The German uniform has no eagle on the cap or the chest and no other emblem; the Italian has no fasces; the Japanese cap star and the Soviet red star are the armies' own plain markings, as on the units.
 - Nothing is drawn from a photo or a real person (§1 rule 4). Where a look is tied to one famous commander, it is avoided or mixed.
@@ -107,7 +116,8 @@ A new game is two screens, and both work from the keyboard alone (the developer'
 
 On the players screen:
 
-- **Left and Right change the commander in focus**: **No commander** (the default), then the commanders of that player's side. Z or a click steps forward too. The computer's players get the same choice.
+- **Left and Right change the commander in focus**: **No commander** (the default), then the commanders of that player's side in roster order (§3). Z or a click steps forward too. The computer's players get the same choice.
+- The choice shows the commander's bust, name, and branch and nation ("Naval · Japan").
 - Under each choice, one line gives the chosen commander's bonuses and drawback.
 - Up and Down walk every control. Up from the first commander wraps round to Start, so a game with no changes is Z, Up, Z.
 - X goes back to the maps and keeps what was chosen. Choices are also kept when you come back after a game. On a map where that player is on the other side, the choice is dropped.
@@ -115,7 +125,7 @@ On the players screen:
 
 ### The turn bar
 
-The head of the current player's commander portrait sits **in the turn bar to the left of their flag** (the HUD with the flag, day and funds), and changes with the flag when the turn passes. It is drawn at twice its size, 64 × 64, **as tall as the flag row and the funds row together** (the developer's request, 2026-11-16). On a phone the status bar is a single row, so the head is as tall as that row, 32 × 32. A player with no commander shows the flag alone.
+The current player's commander portrait sits **in the turn bar to the left of their flag** (the HUD with the flag, day and funds), and changes with the flag when the turn passes. It is the full portrait from the waist up at its own size, 48 × 64, **as tall as the flag row and the funds row together** (the developer's request, 2026-11-16; the head alone was shown until 2026-11-20, when the developer found it too hard to tell commanders apart by face). On a phone the status bar is a single row, so the bust is shown as tall as that row, 32 × 32. A player with no commander shows the flag alone.
 
 ### The Commanders screen
 
@@ -129,8 +139,8 @@ The turn menu (11-tech-setup §3c) gains a third item, above the other two:
 
 **COMMANDERS** opens a screen that lists every commander, Allies then Axis, with **the current player's own commander already selected**. If they have none, the first in the list is selected and a line says they are playing without a commander.
 
-- The list shows each head and name. Commanders in this battle are marked with the flag of each player who has them.
-- The selected commander's details fill the rest of the screen: the full portrait from the waist up, name, nation and side, who they command in this battle, style, each bonus and the drawback, in the same words as §3.
+- The list shows each bust, name, and branch and nation. Commanders in this battle are marked with the flag of each player who has them.
+- The selected commander's details fill the rest of the screen: the full portrait from the waist up, name, branch, nation and side, who they command in this battle, style, each bonus and the drawback, in the same words as §3.
 - Arrow keys or a click move through the list. X, Esc, the Close button or a click outside closes it.
 - Opening it uses no action and doesn't end the turn. Closing it comes back to the turn menu with COMMANDERS highlighted, not END TURN, so a stray Z can't end the turn.
 - It can also be opened at any time, **including while watching the computer's turn**, with the medal button in the turn bar or the C key. Opened while the computer moves, it selects the commander of the person watching (the last human to play), not the computer's.
@@ -139,7 +149,7 @@ The turn menu (11-tech-setup §3c) gains a third item, above the other two:
 
 The rules are built and tested (`tests/commanders.test.ts`). The screens in §5 are not, so a commander can't be picked in the game yet.
 
-- **Data.** `src/engine/data/commanders.ts` holds each commander: name, nation, the words of §3, and a list of effects. An effect is a modifier without a source or a player.
+- **Data.** `src/engine/data/commanders.ts` holds each commander: name, nation, branch, the words of §3, and a list of effects. The branch has no effect on the rules; the effects do the work. An effect is a modifier without a source or a player.
 - **A commander per player.** `Player.commander` is optional; missing means no commander. `createGame` takes it per player and refuses a commander from the other side.
 - **Derived, not stored.** The engine turns each player's commander into modifiers for that player alone, at lookup time, as it does for weather. `GameState.modifiers` keeps only scenario modifiers, so a saved game holds just who commands whom.
 - **Percentages add.** "+15% attack" adds 15 to the attack value of the damage formula (03-combat §1), which starts at 100, as veterancy does. A Veteran under a +15% commander attacks at 125. Defense works the same way.

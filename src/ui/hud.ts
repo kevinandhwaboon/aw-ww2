@@ -53,7 +53,7 @@ function commandersButton(onClick: () => void): HTMLButtonElement {
 }
 
 /**
- * The current player's flag, their commander's head beside it (06-commanders §5), the day and their
+ * The current player's flag, their commander's portrait beside it (06-commanders §5), the day and their
  * funds. Sits on the side of the map away from the cursor.
  */
 export function createHud(root: HTMLElement, sound: SoundControl, onCommanders: () => void): { update: (state: GameState, cursorOnLeft: boolean) => void } {
@@ -83,8 +83,10 @@ export function createHud(root: HTMLElement, sound: SoundControl, onCommanders: 
       const leader = current.commander ?? null;
       if (leader !== shownCommander) {
         shownCommander = leader;
-        const portrait = leader === null ? null : commanderPortrait(leader, "head");
-        commander.replaceChildren(...(portrait ? [portrait] : []));
+        // The full portrait, or on a phone's one-row status bar the bust (06-commanders §5).
+        const portrait = leader === null ? null : commanderPortrait(leader, "full");
+        const bust = leader === null ? null : commanderPortrait(leader, "bust");
+        commander.replaceChildren(...(portrait ? [portrait] : []), ...(bust ? [bust] : []));
         commander.hidden = portrait === null;
         hud.classList.toggle("hud-with-commander", portrait !== null);
       }

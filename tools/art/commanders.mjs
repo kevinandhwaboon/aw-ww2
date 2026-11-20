@@ -1,6 +1,6 @@
 // Commander portraits (docs/06-commanders.md §4): 48x64 pixel figures from the waist up, one per
-// commander, each in an officer's uniform of their nation, plus a 32x32 head crop for the turn bar
-// and a sheet for the docs. Every commander is fictional; nothing here is drawn from a real person.
+// commander, each in an officer's uniform of their nation and branch (tanks, infantry, navy, air),
+// plus a 48x48 bust crop (head, shoulders and chest) for lists and a sheet for the docs. Every commander is fictional; nothing here is drawn from a real person.
 // Uniforms carry no Nazi or political symbols (00-master-design §6).
 // Run: node tools/art/commanders.mjs
 import { mkdirSync } from "node:fs";
@@ -33,6 +33,11 @@ const CLOTH = {
   greyGreen: { l: "#98a08c", m: "#747c68", d: "#525a48" },
   // Japanese khaki.
   jpKhaki: { l: "#b09c5c", m: "#8c7a40", d: "#64562c" },
+  // RAF blue-grey.
+  raf: { l: "#7c8ca8", m: "#5a6a88", d: "#3c4a64" },
+  // A German steel helmet's grey-green paint.
+  deHelmet: { l: "#7a8274", m: "#5a6256", d: "#3c4238" },
+  flightLeather: { l: "#9a6a40", m: "#74482a", d: "#4a2c18" },
   fur: { l: "#b0a898", m: "#847c6e", d: "#5a5448" },
   white: { l: "#fcfaf2", m: "#e8e4d8", d: "#c0bcb0" },
   black: { l: "#4a4a48", m: "#2a2a28", d: "#161614" },
@@ -158,7 +163,13 @@ function portrait(spec) {
     rect(22, 55, 25, 60, u.belt.buckle); rect(23, 57, 24, 58, u.belt.buckleInner ?? b.d);
   }
   // Gold lace on the cuffs.
-  if (u.cuffLace) for (const y of u.cuffLace) { row(y, 6, 11, GOLD); row(y, 36, 41, GOLD_D); }
+  if (u.cuffLace) for (const y of u.cuffLace) { row(y, 6, 11, u.cuffColor ?? GOLD); row(y, 36, 41, u.cuffShade ?? GOLD_D); }
+  // Aircrew wings over the wearer's left breast: a badge in the middle, feathers either side.
+  if (u.wings) {
+    const y = u.wings.y, c = u.wings.color, shade = u.wings.shade;
+    row(y, 25, 35, c); row(y + 1, 26, 34, shade); set(25, y + 1, null); set(35, y + 1, null);
+    row(y - 1, 27, 33, c); rect(29, y - 2, 31, y + 1, u.wings.badge); set(30, y - 2, c);
+  }
   // Field glasses hung round the neck.
   if (u.binoculars) {
     for (let i = 0; i < 10; i++) { set(19 - Math.floor(i / 5), 33 + i, INK); set(28 + Math.floor(i / 5), 33 + i, INK); }
@@ -166,6 +177,7 @@ function portrait(spec) {
     col(18, 43, 49, BLACK_LEATHER.l); col(25, 43, 49, BLACK_LEATHER.l);
     row(49, 18, 22, "#6a8ca0"); row(49, 25, 29, "#6a8ca0");
   }
+  if (u.lanyard) { for (let i = 0; i < 9; i++) set(14 + Math.floor(i / 3), 33 + i, u.lanyard); }
   if (u.scarf) { rect(19, 28, 28, 31, u.scarf); rect(20, 32, 27, 33, u.scarf); row(31, 19, 28, u.scarfShade); }
 
   // ---- Head. ----
@@ -207,6 +219,7 @@ function portrait(spec) {
   else { row(24, 21, 26, skin.lip); row(25, 22, 25, skin.d); }
   if (spec.lines) { col(19, 20, 22, skin.d); col(28, 20, 22, skin.d); set(18, 18, skin.d); set(29, 18, skin.d); }
   if (spec.moustache) { row(22, 20, 27, spec.moustache); row(23, 19, 22, spec.moustache); row(23, 25, 28, spec.moustache); }
+  if (spec.handlebar) { set(18, 22, spec.moustache); set(17, 21, spec.moustache); set(29, 22, spec.moustache); set(30, 21, spec.moustache); }
   const isSkin = (c) => c === skin.m || c === skin.d || c === skin.l;
   if (spec.stubble) for (let y = 21; y <= 28; y++) for (let x = 15; x <= 32; x++) {
     if (isSkin(px[y][x]) && (x + y) % 2 === 0 && !(y >= 23 && y <= 25 && x >= 20 && x <= 27) && (y >= 23 || x <= 18 || x >= 29)) px[y][x] = spec.stubble;
@@ -249,7 +262,41 @@ function portrait(spec) {
       row(9, 14, 33, spec.bandEdge ?? spec.band ?? hat.d);
       if (spec.chinStrap) row(12, 14, 33, spec.chinStrap);
       rect(13, 13, 34, 13, INK); rect(14, 14, 33, 14, "#2e2c26"); row(13, 16, 24, "#5a5850");
-      if (badge) { rect(22, 8, 25, 11, badge); set(22, 8, null); set(25, 8, null); px[8][22] = px[8][25] = spec.band ?? hat.d; rect(23, 6, 24, 7, badge); }
+      if (badge && spec.anchor) {
+        col(23, 7, 11, badge); col(24, 7, 11, badge); row(8, 22, 25, badge); row(11, 21, 26, badge); set(21, 10, badge); set(26, 10, badge);
+      } else if (badge) { rect(22, 8, 25, 11, badge); set(22, 8, null); set(25, 8, null); px[8][22] = px[8][25] = spec.band ?? hat.d; rect(23, 6, 24, 7, badge); }
+      break;
+    }
+    case "steel": {
+      // Steel helmet with a short visor and side skirts flared down over the ears.
+      oval(23.5, 11.5, 11.5, 9.5, hat.m, (x, y) => y <= 12);
+      oval(20.5, 7.5, 6.5, 4, hat.l);
+      oval(23.5, 11.5, 11.5, 9.5, hat.d, (x, y) => y <= 12 && x >= 31);
+      for (let y = 12; y <= 18; y++) {
+        const flare = Math.floor((y - 12) / 2);
+        rect(12 - flare, y, 16, y, hat.m); rect(31, y, 35 + flare, y, hat.d);
+        set(12 - flare, y, hat.d);
+      }
+      row(13, 15, 32, hat.d); row(14, 16, 31, INK);
+      row(19, 9, 16, hat.d); row(19, 31, 38, INK);
+      // Chin strap.
+      col(16, 19, 25, LEATHER.d); col(31, 19, 25, LEATHER.d);
+      break;
+    }
+    case "flight": {
+      // Leather flying helmet, ear flaps down, goggles pushed up on the forehead.
+      oval(23.5, 12, 10, 10, hat.m, (x, y) => y <= 13);
+      oval(20, 7, 6, 4, hat.l);
+      oval(23.5, 12, 10, 10, hat.d, (x, y) => y <= 13 && x >= 30);
+      rect(13, 13, 17, 23, hat.m); rect(30, 13, 34, 23, hat.d);
+      col(13, 13, 23, hat.d); row(23, 13, 17, hat.d);
+      rect(14, 16, 16, 19, hat.d); rect(31, 16, 33, 19, INK);
+      // Chin strap.
+      col(17, 23, 27, hat.d); col(30, 23, 27, hat.d); row(28, 18, 29, hat.d);
+      row(13, 17, 30, hat.d);
+      rect(14, 9, 33, 9, "#3a3830");
+      rect(16, 8, 22, 11, "#3a3830"); rect(25, 8, 31, 11, "#3a3830");
+      rect(17, 9, 21, 10, "#a8d8e8"); rect(26, 9, 30, 10, "#a8d8e8"); set(17, 9, WHITE); set(26, 9, WHITE);
       break;
     }
     case "beret": {
@@ -297,6 +344,14 @@ function portrait(spec) {
     }
   }
 
+  // A tank crew headset over the cap: a band and ear cups.
+  if (spec.headset) {
+    rect(12, 15, 15, 20, BLACK_LEATHER.m); rect(32, 15, 35, 20, BLACK_LEATHER.d);
+    set(13, 16, BLACK_LEATHER.l); col(13, 9, 14, BLACK_LEATHER.m); col(34, 9, 14, BLACK_LEATHER.d);
+    // Throat microphone strap.
+    row(27, 19, 28, BLACK_LEATHER.m); rect(22, 27, 25, 28, BLACK_LEATHER.l);
+  }
+
   // Dark outline around the whole figure.
   const solid = px.map((r) => r.map((c) => c !== null));
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -334,6 +389,17 @@ export const COMMANDERS = [
     bg: ["#c4d4e4", "#98b0c8"],
   },
   {
+    // Royal Air Force: blue-grey service dress with a cloth belt, peaked cap with a black band and a
+    // plain gold badge, light blue shirt and black tie, pilot's wings, rank rings on the cuffs.
+    id: "penhallow", name: "Rhys Penhallow", skin: "fair", cloth: "raf", hair: "sandy", jaw: 1,
+    hat: "peaked", band: "#1e1e22", badge: GOLD, moustache: "#a88444", handlebar: true, mouth: "smile", eyes: "#4a6c8c",
+    uniform: { collar: "open", apex: 38, shirt: "#b4c8e4", shirtShade: "#8094b4", tie: "#1a1a1e",
+      buttons: [44, 50], buttonColor: GOLD, buttonShade: GOLD_D, pockets: { y: 44, pleat: true }, ribbons: ["bwr"],
+      wings: { y: 40, color: WHITE, shade: "#b4b4b0", badge: "#c8b468" },
+      belt: { leather: CLOTH.raf, buckle: GOLD }, cuffLace: [57, 59], cuffColor: "#9cb4d8", cuffShade: "#7088a8" },
+    bg: ["#dcc8a8", "#bca47c"],
+  },
+  {
     // British Army: khaki service dress, staff cap with a red band, red collar patches, cross-belt.
     id: "ashdown", name: "Hugh Ashdown", skin: "fair", cloth: "serge", hair: "grey", lines: true,
     hat: "peaked", band: "#b03030", bandEdge: "#8c2424", badge: GOLD, moustache: "#c8c4b8", eyes: "#4a5a6c",
@@ -360,13 +426,23 @@ export const COMMANDERS = [
     bg: ["#b8c4a0", "#94a078"],
   },
   {
-    // German Army: field grey tunic with a dark green collar and plain collar bars, soft field cap,
-    // scarf and field glasses. No eagle and no other emblem.
+    // German Army, tanks: field grey tunic with a dark green collar and plain collar bars, soft field
+    // cap under a crew headset, field glasses. No eagle and no other emblem.
     id: "falk", name: "Konrad Falk", skin: "fair", cloth: "fieldGrey", hair: "sandy", jaw: -1, eyes: "#4a6c8c",
-    hat: "field", capButtons: SILVER, sideburns: true, lines: true,
+    hat: "field", capButtons: SILVER, sideburns: true, lines: true, headset: true,
     uniform: { collar: "fall", collarCloth: "bottleGreen", collarBars: SILVER, buttons: [36, 41, 46, 51], buttonColor: SILVER, buttonShade: "#8a8e8a",
       pockets: { y: 41, pleat: true, scalloped: true }, boards: SILVER, boardEdge: "#2a3c30",
       belt: { leather: BLACK_LEATHER, buckle: SILVER, buckleInner: "#8a8e8a" }, binoculars: true },
+    bg: ["#b4c0cc", "#8a98a8"],
+  },
+  {
+    // German Army, infantry: steel helmet with no decal, field grey tunic with a dark green collar and
+    // plain collar bars, a pistol belt with a cross strap. No eagle and no other emblem.
+    id: "wendt", name: "Jakob Wendt", skin: "ruddy", cloth: "fieldGrey", hair: "dark", jaw: 1, eyes: "#5a6a5a",
+    hat: "steel", hatCloth: "deHelmet", sternBrows: true, stubble: "#b8846a", lines: true,
+    uniform: { collar: "fall", collarCloth: "bottleGreen", collarBars: SILVER, buttons: [36, 41, 46, 51], buttonColor: SILVER, buttonShade: "#8a8e8a",
+      pockets: { y: 42, pleat: true, scalloped: true }, boards: SILVER, boardEdge: "#2a3c30", ribbons: ["gry"],
+      belt: { leather: BLACK_LEATHER, buckle: SILVER, buckleInner: "#8a8e8a", strap: true } },
     bg: ["#b4c0cc", "#8a98a8"],
   },
   {
@@ -379,15 +455,28 @@ export const COMMANDERS = [
     bg: ["#bcd0ec", "#90acd8"],
   },
   {
-    // Japanese Army: khaki tunic with a turned-down collar and red collar patches, field cap with a
-    // plain star, cross-belt.
+    // Japanese Navy: the white summer tunic with a standing collar and five gold buttons, black
+    // shoulder boards with gold stripes, white-covered cap with a black band and a plain gold anchor.
+    id: "kuramochi", name: "Isao Kuramochi", skin: "tan", cloth: "white", hair: "black", jaw: -1,
+    hat: "peaked", hatCloth: "white", band: "#16161c", badge: GOLD, chinStrap: "#16161c", anchor: true, lines: true, moustache: "#22201e",
+    uniform: { collar: "stand", buttons: [35, 40, 45, 50, 55], buttonColor: GOLD, buttonShade: GOLD_D,
+      boards: "#16161c", boardEdge: GOLD, boardPips: SILVER, ribbons: ["ryb", "wrg"], pockets: null },
+    bg: ["#ecdcb4", "#d0b888"],
+  },
+  {
+    // Japanese Army air service: khaki tunic with a turned-down collar and red collar patches, a
+    // leather flying helmet with goggles, aircrew wings, cross-belt.
     id: "arakawa", name: "Kenji Arakawa", skin: "tan", cloth: "jpKhaki", hair: "grey",
-    hat: "field", badge: GOLD, capBand: "#64562c", sternBrows: true, browColor: "#5a5650", beard: "#b8b4aa", beardShade: "#8c887e",
+    hat: "flight", hatCloth: "flightLeather", sternBrows: true, browColor: "#5a5650", beard: "#b8b4aa", beardShade: "#8c887e",
     uniform: { collar: "fall", collarTabs: "#c03028", collarStars: GOLD, buttons: [36, 41, 46, 51], buttonColor: GOLD, buttonShade: GOLD_D,
-      pockets: { y: 41, scalloped: true }, belt: brownBelt(true), ribbons: ["ryr"] },
+      pockets: { y: 41, scalloped: true }, belt: brownBelt(true), wings: { y: 37, color: GOLD, shade: GOLD_D, badge: "#c03028" } },
     bg: ["#ecdcb4", "#d0b888"],
   },
 ];
+
+// The game's roster order (src/engine/data/commanders.ts), so the docs sheet reads the same way.
+const ORDER = ["harlan", "tremblay", "ashdown", "morozov", "calloway", "penhallow", "falk", "wendt", "ferrante", "kuramochi", "arakawa"];
+COMMANDERS.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 
 function blit(target, grid, ox, oy, scale, crop = { x: 0, y: 0, w: W, h: H }) {
   for (let y = 0; y < crop.h; y++) for (let x = 0; x < crop.w; x++) {
@@ -399,12 +488,12 @@ function blit(target, grid, ox, oy, scale, crop = { x: 0, y: 0, w: W, h: H }) {
 }
 
 mkdirSync(OUT, { recursive: true });
-// The game's own copies: the full portrait and the head (06-commanders §4, art pack "commanderPortraits").
+// The game's own copies: the full portrait and the bust (06-commanders §4, art pack "commanderPortraits").
 const GAME = "public/assets/commanders";
 mkdirSync(GAME, { recursive: true });
 const SCALE = 3, GAP = 8;
-// The turn bar shows only the head: a 32x32 crop with its own frame.
-const HEAD = { x: 8, y: 0, w: 32, h: 32 };
+// Lists show the bust: the top 48x48, head, shoulders and chest, with its own frame.
+const BUST = { x: 0, y: 0, w: 48, h: 48 };
 const sheet = canvas(COMMANDERS.length * (W * SCALE + GAP) + GAP, H * SCALE + GAP * 2);
 sheet.px.fill(255);
 COMMANDERS.forEach((spec, i) => {
@@ -416,14 +505,12 @@ COMMANDERS.forEach((spec, i) => {
   const big = canvas(W * SCALE, H * SCALE);
   blit(big, grid, 0, 0, SCALE);
   savePng(big, `${OUT}/${spec.id}-x3.png`);
-  const headGrid = grid.map((r) => [...r]);
-  for (let k = 0; k < 32; k++) {
-    headGrid[HEAD.y + 31][HEAD.x + k] = INK; headGrid[HEAD.y + k][HEAD.x] = INK; headGrid[HEAD.y + k][HEAD.x + 31] = INK;
-  }
-  const head = canvas(32, 32);
-  blit(head, headGrid, 0, 0, 1, HEAD);
-  savePng(head, `${OUT}/${spec.id}-head.png`);
-  savePng(head, `${GAME}/${spec.id}-head.png`);
+  const bustGrid = grid.map((r) => [...r]);
+  for (let k = 0; k < BUST.w; k++) bustGrid[BUST.y + BUST.h - 1][BUST.x + k] = INK;
+  const bust = canvas(BUST.w, BUST.h);
+  blit(bust, bustGrid, 0, 0, 1, BUST);
+  savePng(bust, `${OUT}/${spec.id}-bust.png`);
+  savePng(bust, `${GAME}/${spec.id}-bust.png`);
   blit(sheet, grid, GAP + i * (W * SCALE + GAP), GAP, SCALE);
 });
 savePng(sheet, `${OUT}/sheet.png`);
