@@ -70,6 +70,8 @@ const BUILT_IN_COLORS = {
   // The flashing low-supply badges on the map (05-supply-transport §11): a red jerrycan, an olive ammo can
   fuelCan: "#d83a28",
   ammoCan: "#6a7440",
+  // The supply crate that pops up over a unit refuelled and rearmed at the start of its turn (04-economy §2)
+  supplyCrate: "#a87838",
   // Battle scenes (08-art-pipeline §18): backgrounds
   battleSkyTop: "#5888d0",
   battleSkyLow: "#a8c8e8",
