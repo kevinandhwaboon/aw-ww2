@@ -81,7 +81,7 @@ export * as stats from "./stats";
 export type { FightRole, Modifier, ModifierScope, ModifiableStat, StatContext } from "./modifiers";
 export { COMMANDERS, COMMANDER_IDS, commanderDef, type CommanderDef, type CommanderId } from "./data/commanders";
 export { parseAsciiMap, terrainAt, inBounds, type GameMap, type Point } from "./map";
-export { TERRAIN, TERRAIN_IDS, type TerrainId, type TerrainDef, type MovementType } from "./data/terrain";
+export { MOVEMENT_TYPES, TERRAIN, TERRAIN_IDS, type TerrainId, type TerrainDef, type MovementType } from "./data/terrain";
 export { UNITS, UNIT_TYPE_IDS, type UnitTypeId, type UnitDef, type UnitCategory } from "./data/units";
 export { baseDamage, DAMAGE_CHART, type DamageEntry, type DamageTarget } from "./data/damage";
 export { veterancyFor, VETERANCY, type VeterancyLevel } from "./data/veterancy";

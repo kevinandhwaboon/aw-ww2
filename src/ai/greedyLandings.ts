@@ -13,10 +13,15 @@ import {
   propertyDefAt,
   stats,
   supplyTargets,
+  TERRAIN,
+  TERRAIN_IDS,
+  MOVEMENT_TYPES,
   terrainAt,
   unitAt,
   type GameState,
   type Point,
+  type TerrainDef,
+  type MovementType,
   type Unit,
   type UnitTypeId,
 } from "../engine";
@@ -34,6 +39,17 @@ import {
   BrainBase,
 } from "./greedyBase";
 import type { GreedyWeights } from "./weights";
+
+/**
+ * Movement types that can't enter any property, so a unit that moves that way can never be rearmed
+ * by one (today only rail, the Railway Gun's: 02-terrain §4c). From the terrain data, once.
+ */
+const NO_PROPERTY_MOVES: ReadonlySet<MovementType> = new Set(
+  MOVEMENT_TYPES.filter((m) => TERRAIN_IDS.every((t) => {
+    const terrain: TerrainDef = TERRAIN[t];
+    return terrain.property === undefined || terrain.moveCost[m] === null;
+  })),
+);
 
 export abstract class LandingBrain extends BrainBase {
   /** Head for the nearest of these goals (in ai/greedy.ts). */
@@ -220,6 +236,31 @@ export abstract class LandingBrain extends BrainBase {
       if (guard) posts.set(guard.id, objective);
     }
     this.guardCache = posts;
+    return posts;
+  }
+
+  /**
+   * Supply posts (09-ai §4j): each of our armed land units that can't stand on any property, and so
+   * can never be rearmed by one (today only the Railway Gun, which runs on track), gets the nearest
+   * of our empty Halftracks that can drive to a square beside it. That Halftrack stays beside it,
+   * rearming it every turn. Keyed by the Halftrack's id.
+   */
+  protected supplyPosts(): ReadonlyMap<number, Unit> {
+    if (this.supplyPostCache) return this.supplyPostCache;
+    const posts = new Map<number, Unit>();
+    const mine = this.state.units.filter((u) => u.owner === this.me);
+    const dependents = mine.filter((u) => {
+      const def = defOf(u.type);
+      return def.category === "land" && def.primaryWeapon !== null && NO_PROPERTY_MOVES.has(def.movementType);
+    });
+    for (const dependent of dependents) {
+      const cart = mine
+        .filter((u) => !posts.has(u.id) && defOf(u.type).specialActions.includes("resupply") && defOf(u.type).category === "land" && u.cargo.length === 0)
+        .filter((u) => this.neighbors(dependent.pos).some((p) => this.connected(u.type, u.pos, p)))
+        .sort((a, b) => distance(a.pos, dependent.pos) - distance(b.pos, dependent.pos) || a.id - b.id)[0];
+      if (cart) posts.set(cart.id, dependent);
+    }
+    this.supplyPostCache = posts;
     return posts;
   }
 

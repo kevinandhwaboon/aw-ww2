@@ -81,6 +81,7 @@ export abstract class BrainBase {
   protected pressCache: boolean | null = null;
   protected garrisonCache: ReadonlySet<number> | null = null;
   protected guardCache: ReadonlyMap<number, Point> | null = null;
+  protected supplyPostCache: ReadonlyMap<number, Unit> | null = null;
   protected escortCache: ReadonlyMap<number, Unit> | null = null;
   protected readonly threatTileCache = new Map<number, ReadonlySet<number>>();
   protected readonly dangerCache = new Map<string, number>();
