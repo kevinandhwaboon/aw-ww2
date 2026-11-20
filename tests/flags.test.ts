@@ -16,3 +16,9 @@ describe("Italy's flag (00-master-design §6)", () => {
     for (const row of FLAGS.italy) expect(row).toBe("VVVVVWWWWWWRRRRR");
   });
 });
+
+describe("Free France's flag (00-master-design §6)", () => {
+  it("is the plain blue, white and red tricolour, with no Cross of Lorraine", () => {
+    for (const row of FLAGS.freeFrance) expect(row).toBe("BBBBBWWWWWWRRRRR");
+  });
+});

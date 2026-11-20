@@ -5,6 +5,7 @@ import { parseScenario, type Scenario } from "../engine/scenario";
 import bastogne from "./bastogne.json";
 import battleOfBritain from "./battle-of-britain.json";
 import elAlamein from "./el-alamein.json";
+import gazala from "./gazala.json";
 import guadalcanal from "./guadalcanal.json";
 import iwoJima from "./iwo-jima.json";
 import kursk from "./kursk.json";
@@ -16,4 +17,4 @@ import stalingrad from "./stalingrad.json";
 import tenGo from "./ten-go.json";
 import theSlot from "./the-slot.json";
 
-export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal, tenGo].map(parseScenario);
+export const SCENARIOS: readonly Scenario[] = [normandy, marketGarden, elAlamein, gazala, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal, tenGo].map(parseScenario);

@@ -229,6 +229,22 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [0, 136, 192, 80],
     },
   },
+  gazala: {
+    theater: "northAfrica",
+    lon: 23.5,
+    lat: 31.6,
+    where: "Bir Hakeim, Libya",
+    when: "May–June 1942",
+    feature: "The Free French at Bir Hakeim",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "mediumTank", nation: "germany", terrain: "plains" },
+      defender: { kind: "infantry", nation: "freeFrance", terrain: "bunker" },
+      weapon: "primary",
+      counter: "secondary",
+      crop: [192, 136, 192, 80],
+    },
+  },
   "iwo-jima": {
     theater: "pacific",
     lon: 141.3,

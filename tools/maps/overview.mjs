@@ -22,7 +22,7 @@ const TERRAIN = {
 if (scenario.weather?.season === "desert") TERRAIN["."] = "#e6cf98";
 const KIND = { f: "#ffeb3b", A: "#ffffff", P: "#00e5ff", Q: "#000000" };
 // Colored by side, not by player order, so a scenario where the Axis moves first (Midway) reads the same.
-const ALLIES = new Set(["us", "uk", "canada", "ussr"]);
+const ALLIES = new Set(["us", "uk", "canada", "freeFrance", "ussr"]);
 const sideOf = (owner) => (ALLIES.has(scenario.players[owner]?.nation) ? 0 : 1);
 const OWNER = ["#64783a", "#e53935"];
 const UNIT = ["#2a3818", "#b71c1c"];
