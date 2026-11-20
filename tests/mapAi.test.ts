@@ -6,9 +6,13 @@ import { describe, expect, it } from "vitest";
 import { campaignAi, hasMapPlan } from "../src/ai/maps";
 import { CARRIER_STRIKE_BONUS, midwayPhase, midwayPlan, SEARCH_POINTS } from "../src/ai/maps/midway";
 import { objectivePlan } from "../src/ai/maps/objectives";
+import { AIR_WAR_BONUS, battleOfBritainPlan, LAST_SAILING_DAY, seaLionPhase, SHIPS_TO_SINK } from "../src/ai/maps/battleOfBritain";
+import { gazalaPlan, LINE_EAST, SWEEP_POINT } from "../src/ai/maps/gazala";
 import { greedyAi } from "../src/ai/greedy";
 import { aiStep, makeView } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
+import { INCOME_DAYS, sideAhead, standing } from "../src/ai/standing";
+import { UNITS } from "../src/engine/data/units";
 import { MISSIONS } from "../src/campaign/missions";
 import { missionScenario } from "../src/campaign/setup";
 import { apply } from "../src/engine/apply";
@@ -59,12 +63,12 @@ function carrierFound(state: GameState): GameState {
 }
 
 describe("Midway's map AI for Japan (22-campaign §6a)", () => {
-  it("the campaign uses it on Midway, the objective plan on Gazala and Ten-Go, and plain Greedy elsewhere", () => {
-    expect(hasMapPlan("midway")).toBe(true);
-    expect(hasMapPlan("gazala")).toBe(true);
-    expect(hasMapPlan("ten-go")).toBe(true);
+  it("the campaign has map AIs on the Battle of Britain, Gazala, Midway and Ten-Go, and plain Greedy elsewhere", () => {
+    for (const map of ["battle-of-britain", "gazala", "midway", "ten-go"]) expect(hasMapPlan(map), map).toBe(true);
     expect(hasMapPlan("normandy")).toBe(false);
-    expect(campaignAi("gazala").name).toMatch(/Tobruk plan/);
+    expect(campaignAi("battle-of-britain").name).toMatch(/Sea Lion plan/);
+    expect(campaignAi("gazala").name).toMatch(/Rommel's sweep/);
+    expect(campaignAi("ten-go").name).toMatch(/Okinawa plan/);
     expect(campaignAi("midway").name).toMatch(/Midway plan/);
     expect(campaignAi("normandy").name).toBe("Greedy");
   });
@@ -189,5 +193,103 @@ describe("the objective plan: drive on the objective (22-campaign §6b)", () => 
     if (!infantry || !tank) throw new Error("no units");
     expect(plan.keepOff?.(state, infantry)).toEqual([]);
     expect(plan.keepOff?.(state, tank)).toEqual([{ x: 7, y: 2 }]);
+  });
+});
+
+describe("who is ahead in a game that hasn't ended (22-campaign §5b)", () => {
+  const rows = ["C......C"];
+  const setup = (units: readonly UnitSetup[], funds = 0): GameSetup => ({
+    ...makeSetup(rows, units),
+    players: [
+      { name: "Allies", nation: "us", funds },
+      { name: "Axis", nation: "germany" },
+    ],
+    propertyOwners: [{ pos: { x: 0, y: 0 }, owner: 0 }, { pos: { x: 7, y: 0 }, owner: 1 }],
+  });
+
+  it("a side's standing is its army at its present strength, plus its funds, plus five days' income", () => {
+    const state = createGame(setup([{ type: "mediumTank", owner: 1, pos: { x: 6, y: 0 }, hp: 50 }], 2000));
+    const tank = UNITS.mediumTank.cost;
+    // The Allies move first and have already had day 1's income: 2,000 + 1,000.
+    expect(standing(state)).toEqual({ allies: 3000 + INCOME_DAYS * 1000, axis: tank / 2 + INCOME_DAYS * 1000 });
+  });
+
+  it("the side with the higher standing is ahead, and a game that's over counts for its winner", () => {
+    const state = createGame(setup([{ type: "mediumTank", owner: 1, pos: { x: 6, y: 0 } }]));
+    expect(sideAhead(state)).toBe("axis");
+    expect(sideAhead({ ...state, result: { winningSide: "allies", winners: [0], reason: "surviveDays" } })).toBe("allies");
+  });
+});
+
+describe("the Battle of Britain's map AI: Sea Lion (22-campaign §6c)", () => {
+  const game = (): GameState => {
+    const scenario = SCENARIOS.find((s) => s.id === "battle-of-britain");
+    const mission = MISSIONS.find((m) => m.map === "battle-of-britain");
+    if (!scenario || !mission) throw new Error("no Battle of Britain");
+    const result = apply(createGame({ ...missionScenario(scenario, mission).setup, seed: 1 }), { type: "endTurn" });
+    if (!result.ok) throw new Error(result.message);
+    return result.state;
+  };
+  const sunk = (state: GameState, ships: number): GameState => ({
+    ...state,
+    players: state.players.map((p) => (p.side === "allies" ? { ...p, unitsLost: { ...p.unitsLost, destroyer: ships } } : p)),
+  });
+
+  it("the barges wait in port until enough of the Royal Navy is sunk, or the season is running out", () => {
+    const state = game();
+    expect(seaLionPhase(state)).toBe("airWar");
+    expect(seaLionPhase(sunk(state, SHIPS_TO_SINK))).toBe("invasion");
+    expect(seaLionPhase({ ...state, day: LAST_SAILING_DAY })).toBe("invasion");
+  });
+
+  it("in the air war a barge's orders are to stay in its port", () => {
+    const state = game();
+    const barge = state.units.find((u) => u.owner === 1 && u.type === "landingCraft");
+    if (!barge) throw new Error("no barge");
+    expect(battleOfBritainPlan().goals?.(state, barge)).toEqual([barge.pos]);
+  });
+
+  it("before the invasion, warships and radar stations are the targets worth most", () => {
+    const state = game();
+    const plan = battleOfBritainPlan();
+    const bomber = state.units.find((u) => u.owner === 1 && u.type === "bomber");
+    const destroyer = state.units.find((u) => u.owner === 0 && u.type === "destroyer");
+    const infantry = state.units.find((u) => u.owner === 0 && u.type === "infantry");
+    if (!bomber || !destroyer || !infantry) throw new Error("setup");
+    expect(plan.attackBonus?.(state, bomber, destroyer)).toBe(AIR_WAR_BONUS);
+    expect(plan.attackBonus?.(state, bomber, infantry)).toBe(0);
+  });
+});
+
+describe("Gazala's map AI: Rommel's sweep (22-campaign §6d)", () => {
+  const game = (): GameState => {
+    const scenario = SCENARIOS.find((s) => s.id === "gazala");
+    const mission = MISSIONS.find((m) => m.map === "gazala");
+    if (!scenario || !mission) throw new Error("no Gazala");
+    return { ...createGame({ ...missionScenario(scenario, mission).setup, seed: 1 }), currentPlayer: 2 };
+  };
+
+  it("the assault force south of the line heads round the south end of the minefield, not into it", () => {
+    const state = game();
+    const tank = state.units.find((u) => u.owner === 2 && u.type === "mediumTank" && u.pos.y >= 18 && u.pos.x < LINE_EAST);
+    if (!tank) throw new Error("no tank in the assault force");
+    expect(gazalaPlan().goals?.(state, tank)).toEqual([SWEEP_POINT]);
+  });
+
+  it("once round the line, the armour drives on Tobruk", () => {
+    const state = game();
+    const tank = state.units.find((u) => u.owner === 2 && u.type === "mediumTank");
+    if (!tank) throw new Error("no tank");
+    expect(gazalaPlan().goals?.(state, { ...tank, pos: { x: LINE_EAST + 2, y: 25 } })).toEqual([{ x: 29, y: 9 }]);
+  });
+
+  it("an empty Halftrack goes to the tanks in the sweep that are lowest on fuel", () => {
+    const state = game();
+    const tanks = state.units.filter((u) => u.owner === 2 && u.type === "mediumTank" && u.pos.y >= 18);
+    const thirsty = tanks[0];
+    const halftrack = state.units.find((u) => u.owner === 2 && u.type === "halftrack");
+    if (!thirsty || !halftrack) throw new Error("setup");
+    const low: GameState = { ...state, units: state.units.map((u) => (u.id === thirsty.id ? { ...u, fuel: 3 } : u)) };
+    expect(gazalaPlan().goals?.(low, { ...halftrack, cargo: [] })).toEqual([thirsty.pos]);
   });
 });

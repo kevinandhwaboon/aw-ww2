@@ -1,6 +1,6 @@
 # Topic Doc 22: Campaign and Skirmish
 
-**Status:** v0 decided and built 2026-11-20. Every built map is a campaign mission with an advantage for the computer (§5): Midway, Sevastopol, Guadalcanal and Ten-Go are tuned to the target by self-play; the Battle of Britain and Gazala are still too easy; Stalingrad and four other big maps are first guesses, since AI games there rarely finish. Midway has the first map-specific AI (§6a), and Gazala and Ten-Go a simple objective plan (§6b).
+**Status:** v0 decided and built 2026-11-20. Every built map is a campaign mission with an advantage for the computer, tuned by self-play to the target (§5): by wins on the maps where AI games finish, by who is ahead on day 20 on the five big maps (§5b). Map AIs on the Battle of Britain (§6c), Gazala (§6d), Midway (§6a) and Ten-Go (§6b).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8, §15), 06-commanders.md, 09-ai.md, 11-tech-setup.md §3j. **Feeds:** every scenario doc (each map's campaign setup is listed here, §5).
 
@@ -65,31 +65,36 @@ The data is in `src/campaign/missions.ts`, one entry per mission, with no logic:
 
 Measured with `npm run selfplay -- --campaign` (09-ai §7), which plays the campaign setups with the standard AI as the Allies and the campaign's AI as the Axis, and reports the Allied win rate. Maps where AI vs AI games don't finish (Normandy, Kursk, The Slot, Bastogne: the AIs stall) can't be measured that way; they get a first-guess advantage in proportion to the others, marked "untested" below.
 
-| # | Mission | Axis commander | Advantage | Allied AI wins (measured 2026-11-20) |
+| # | Mission | Axis commander | Advantage | Result (measured 2026-11-20): Allied AI wins, or who is ahead on day 20 |
 |---|---|---|---|---|
-| 1 | Battle of Britain | Kenji Arakawa | Sea Lion's first wave ashore inland of Hythe (4 Infantry, an Assault Infantry, 2 Medium Tanks, an Artillery, a Flak Gun); Maidstone's factory and four Kent towns start German; +4,000 funds; +25% income | **10 of 12: too easy** (below) |
-| 2 | Gazala | Konrad Falk (Germany), Aldo Ferrante (Italy) | A second wave already round Bir Hakeim, south of El Adem (6 Medium Tanks, 2 Halftracks with Infantry, an Artillery, an Infantry); +3,000 and +2,000 funds; +25% income; the Tobruk plan (§6b) | **12 of 12: too easy** (below) |
+| 1 | Battle of Britain | Kenji Arakawa | Sea Lion's first wave ashore inland of Hythe (4 Infantry, an Assault Infantry, 2 Medium Tanks, an Artillery, a Flak Gun); a fourth barge at Ostend loaded with an Infantry and a Medium Tank; Maidstone's factory and four Kent towns start German; +4,000 funds; +25% income; the Sea Lion plan (§6c) | 5 of 20 |
+| 2 | Gazala | Jakob Wendt (Germany), Aldo Ferrante (Italy) | More for the sweep round Bir Hakeim: 4 Medium Tanks and 5 Halftracks carrying Infantry for Germany, a Medium Tank and 2 Halftracks carrying Infantry for Italy; +3,000 and +2,000 funds; +25% income; Rommel's sweep (§6d). Not Falk, whose units carry 20% less fuel: here fuel decides the battle | 4 of 20 |
 | 3 | Midway | Kenji Arakawa | The invasion force's oiler (a Supply Ship) and a fourth Landing Craft with an Infantry; the Midway plan (§6a) | 4 of 20 |
 | 4 | Sevastopol | Jakob Wendt | +4,500 funds; +45% income | 4 of 20 |
 | 5 | Guadalcanal | Isao Kuramochi | Two Infantry and an Artillery already ashore at Koli Point, east of Henderson Field | 6 of 20 |
 | 6 | El Alamein | Konrad Falk, Aldo Ferrante | None: the Axis already wins every AI game (the Allied AI doesn't clear a corridor, 18-scenarios-north-africa §1) | 0 of 12 |
-| 7 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | 0 of 8, but a first guess: 2 Axis wins, the other 6 undecided at day 40 |
-| 8 | The Slot | Isao Kuramochi | +3,000 funds; +25% income | untested: 1 of 8 AI games ends by day 40 |
-| 9 | Kursk | Konrad Falk | +4,000 funds; +25% income | untested: AI games don't end (1 of 8 by day 40 in Skirmish) |
-| 10 | Normandy | Jakob Wendt | +4,000 funds; +25% income | untested: AI games stall (09-ai §7) |
+| 7 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (6 of them Axis wins by day 12) |
+| 8 | The Slot | Kenji Arakawa | A Battleship and a Destroyer more off Japan's home island. Not Kuramochi: his ships' +20% put Japan ahead in 8 of 8 even with no other advantage | Ahead on day 20: the computer 10 of 12 (Skirmish: 3 of 8) |
+| 9 | Kursk | Konrad Falk | +5% income, to make up for Falk's short fuel (with him alone, 4 of 8; with +10%, 8 of 8) | Ahead on day 20: the computer 9 of 12 (Skirmish, no commanders: 6 of 8) |
+| 10 | Normandy | Jakob Wendt | The panzer reserve by Caen at once (a Heavy Tank, 2 Medium Tanks, 2 Infantry, an Artillery); +5,000 funds; +50% income, since Normandy is a production race and the Allies hold 36 properties to Germany's 19 | Ahead on day 20: the computer 9 of 12 (Skirmish: 0 of 8) |
 | 11 | Market Garden | Konrad Falk | None: Germany already wins every AI game (the Allied AI can't link the drops with XXX Corps, 17-scenarios-market-garden) | 0 of 4 (Skirmish) |
-| 12 | Bastogne | Konrad Falk | +3,000 funds; +25% income | untested: 0 of 8 AI games end by day 40 |
+| 12 | Bastogne | Konrad Falk | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (Skirmish: 0 of 8) |
 | 13 | Iwo Jima | Kenji Arakawa | None: Japan already wins every AI game | 0 of 8 (Skirmish) |
 | 14 | Ten-Go | Isao Kuramochi | 13 more of the 32nd Army in front of Shuri (6 Infantry, 2 Assault Infantry, 2 Medium Tanks, 2 Artillery, a Mortar Team); +2,000 funds; +25% income; the Okinawa plan (§6b) | 5 of 20 |
 
-Seeds 1–20 (1–12 where marked of 12), 40-day limit, standard AI at Normal as the Allies.
+Seeds 1–20 (1–12 or 1–8 where marked), standard AI at Normal as the Allies: a 40-day limit for wins, and day 20 for who is ahead on the big maps (§5b).
 
 ### 5a. What tuning found
 
-- **Units and bases move the result; money mostly doesn't.** On Midway, Guadalcanal and Ten-Go, extra funds and income changed nothing measurable; the extra units decided it. Only Sevastopol, a straight siege, tuned with funds and income alone, and steeply: +4,000 and +40% gave the Allies 10 of 20, +5,000 and +50% gave them 1 of 20.
-- **The computer can't spend money on some maps.** On the Battle of Britain, Germany ends the game with tens of thousands unspent (95,600 in one game, 26,000 by day 12 even in Skirmish): Greedy builds only units that score above zero against the enemies it sees, and in fog against RAF Fighters nothing does. That's an AI limit (09-ai), and it makes funds useless there.
+- **Units and bases move the result; money mostly doesn't**, except on production maps. On Midway, Guadalcanal and Ten-Go, extra funds and income changed nothing measurable; the extra units decided it. On Normandy, a buildup race, income decided it, steeply: +25% put Germany ahead in 1 of 8, +50% in 8 of 8. Sevastopol, a straight siege, tuned with funds and income alone, also steeply: +4,000 and +40% gave the Allies 10 of 20, +5,000 and +50% gave them 1 of 20.
+- **The computer can't spend money on some maps.** On the Battle of Britain, Germany ended the game with tens of thousands unspent (95,600 in one game). Part of it was a fault in the standard AI, which kept every airfield free while any aircraft was heading home to one; that's fixed for every game (09-ai §4l). The rest is the map: Germany has more aircraft than airfields and one factory, so extra money can't become units there.
 - **More units can make a map AI worse.** An extra Carrier at Midway (Zuikaku) took Japan from 6 of 12 wins to none, and two extra Submarines to 1 of 12, because both found the US carriers sooner and the strike phase then stopped all attacks on Midway. The fix was in the invasion: without the oiler, Japan's Landing Craft ran dry after landing on Sand Island and never crossed to Eastern Island's airfield.
-- **Too easy: the Battle of Britain and Gazala.** Both need a fuller map AI rather than more units. On the Battle of Britain the first wave is destroyed within two days whatever its size, and Germany stops building (above). On Gazala the Axis armour heads for Tobruk by the shortest way, through the minefield, and stalls there; the second wave near El Adem is destroyed by the British armour by day 4. They're the first two missions, so the campaign opens gently until they get their plans.
+- **The plan mattered more than the numbers on the first two missions.** With extra units alone the Allied AI still won 10 of 12 on the Battle of Britain and 12 of 12 on Gazala. With their map AIs (§6c, §6d) and a few more units, 5 and 4 of 20.
+- **The commander matters.** Konrad Falk's drawback (20% less fuel and ammo) left Gazala's panzers starting with 24 fuel and running dry halfway to Tobruk; Gazala uses Jakob Wendt instead.
+
+### 5b. Who is ahead on day 20 (for the big maps)
+
+On maps where AI vs AI games rarely end within 40 days, tuning counts **who is ahead on day 20** instead (decided 2026-11-20): the winner if the game is over, otherwise the side with the higher **standing**, which is its army's value at its present strength (passengers included), plus its funds, plus five days of its income (so ground held counts, HQs and objectives included). `npm run selfplay -- --campaign --standing --days 20` reports it (`src/ai/standing.ts`). The target is the same in spirit: the computer ahead in about three games in four.
 
 ## 6. Map-specific AIs
 
@@ -114,7 +119,27 @@ The invasion force sails with Greedy's own landing plan from the start (09-ai §
 
 A simple plan for maps where the computer must take a place to win and the standard AI fights whatever is nearest instead (`src/ai/maps/objectives.ts`). Its land units, fighting or capturing, head for the objectives their side still has to capture and can walk to; and its units that can't capture keep off those squares, so they don't stand on an objective and block the infantry (seen on the Battle of Britain, where German aircraft sat over Dover and Hawkinge). It knows only the map and the victory conditions, which every player knows.
 
-Used on Gazala (Tobruk) and Ten-Go (the two airfields). On Ten-Go it's enough: the 32nd Army now takes both airfields in some games. On Gazala the armour heads for Tobruk but by the shortest way, through the minefield line, and stalls there, so it needs a fuller plan (§8). It was tried on the Battle of Britain and made Germany weaker (12 of 12 Allied wins against 10 of 12 without it): its troops walked into the defences of Dover and Hawkinge one at a time, so that map plays without it.
+Used on Ten-Go (the two airfields), where it's enough: the 32nd Army takes both airfields in some games. It was the first plan for Gazala too, where the armour headed for Tobruk by the shortest way, through the minefield line, and stalled (§6d replaced it). It was tried on the Battle of Britain and made Germany weaker (12 of 12 Allied wins against 10 of 12 without it): its troops walked into the defences of Dover and Hawkinge one at a time (§6c replaced it). Its parts are reused by both.
+
+### 6c. The Battle of Britain: Germany, Sea Lion (built 2026-11-20)
+
+Sea Lion as planned: the Luftwaffe first, then the barges (20-scenarios-battle-of-britain).
+
+1. **The air war.** Until the Royal Navy has lost 4 warships (`SHIPS_TO_SINK`; Germany knows, it sank them), the barges stay in their ports, and an attack on a warship or a Radar Station scores a bonus, so the bombers go for the Navy and the radar.
+2. **The invasion.** Once the Navy is broken, or on day 9 at the latest (`LAST_SAILING_DAY`, so there's time before day 15), the barges sail with Greedy's own massed landings (09-ai §4c), land units drive on Dover and Hawkinge (§6b), units that can't capture keep off them, and attacks near the objectives score a bonus.
+
+Measured (seeds 1–20): sailing earlier (3 warships, day 7) made it worse, 14 Allied wins; waiting for 5 warships and day 9, 7. With the fourth barge, 5.
+
+### 6d. Gazala: the Axis, Rommel's sweep (built 2026-11-20)
+
+The sweep round the south end of the line, kept supplied (18-scenarios-north-africa §2).
+
+- **The assault force** (the Axis units south of row 18 and west of the minefield) first heads for a point past the south end of the minefield, south-east of Bir Hakeim (`SWEEP_POINT`), instead of into the line. Once east of the line it drives on Tobruk (§6b).
+- **Empty Halftracks** follow the tanks in the sweep that are lowest on fuel (below half a tank), the nearest first: the engine refills every unit next to a Halftrack at the start of the turn (05-supply-transport §3), so the armour doesn't run dry.
+- **Loaded Halftracks** carry their Infantry round with the armour and on to Tobruk, since tanks can't capture.
+- The infantry facing the north of the line plays Greedy as before.
+
+With the sweep alone (and the old forward force), the armour reached Tobruk on day 12 but nothing could capture it; with Halftracks carrying infantry, the Allied AI wins 6 of 12, and with the units in the table 4 of 20.
 
 ## 7. Screens
 
@@ -126,7 +151,7 @@ Used on Gazala (Tobruk) and Ten-Go (the two airfields). On Ten-Go it's enough: t
 ## 8. Known gaps and later
 
 - No difficulty choice; if the tuned missions turn out too hard or too easy for people, a difficulty that scales the extra funds and units is the natural next step.
-- Only Midway has a full map AI; Gazala and Ten-Go have the simple objective plan. The next candidates are the two missions that are still too easy: **Gazala** (clear a lane through the minefield, or keep the sweep round Bir Hakeim supplied, 18-scenarios-north-africa §2) and the **Battle of Britain** (win the air first, then land in mass with escorts). The standard AI's production also needs to keep building when nothing scores well (§5a).
-- The untested missions (The Slot, Kursk, Normandy, Bastogne) need tuning by play, or a self-play measure that doesn't need the game to end, such as who is ahead on day 20.
+- Map AIs: the Battle of Britain, Gazala and Midway have full plans; Ten-Go the simple objective plan. The others play the standard AI with more units.
+- The big maps are tuned by who is ahead on day 20 (§5b), a stand-in for who would win: they need checking by play.
 - No briefing art, no story between missions, no carry-over.
 - The campaign maps can't be played as the Axis; that's what Skirmish is for.

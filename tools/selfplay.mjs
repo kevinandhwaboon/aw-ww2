@@ -8,6 +8,8 @@
 //   npm run selfplay -- --fog                          with fog of war on (19-fog-of-war)
 //   npm run selfplay -- --campaign                     the campaign missions (22-campaign §5): the Allies as --players,
 //                                                      the Axis as the campaign's computer, with its advantage and map AI
+//   npm run selfplay -- --standing --days 20           also say which side is ahead when the games stop (22-campaign §5b):
+//                                                      the winner, or the higher army value + funds + 5 days' income
 //
 // Exits with 1 if any game had a problem, so a script or an agent can loop on it.
 
@@ -30,6 +32,7 @@ const { values: args } = parseArgs({
     commanders: { type: "boolean", default: false },
     fog: { type: "boolean", default: false },
     campaign: { type: "boolean", default: false },
+    standing: { type: "boolean", default: false },
   },
 });
 
@@ -42,7 +45,7 @@ function seedList(text) {
 const lastDay = Number(args.days);
 const seeds = seedList(args.seeds);
 if (!Number.isInteger(lastDay) || lastDay < 1 || seeds.length === 0 || seeds.some((s) => !Number.isInteger(s))) {
-  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders] [--fog] [--campaign]");
+  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders] [--fog] [--campaign] [--standing]");
   process.exit(2);
 }
 
@@ -66,6 +69,7 @@ try {
   const { MISSIONS } = await server.ssrLoadModule("/src/campaign/missions.ts");
   const { missionScenario, axisPlayers } = await server.ssrLoadModule("/src/campaign/setup.ts");
   const { campaignAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
+  const { sideAhead } = await server.ssrLoadModule("/src/ai/standing.ts");
 
   const makeAi = { greedy: () => greedyAi(), easy: () => greedyAi(weightsFor("easy")), random: (seed, id) => randomAi(seed * 100 + id) }[args.players];
   if (!makeAi) throw new Error(`Unknown --players ${args.players}: use greedy, easy or random`);
@@ -83,6 +87,7 @@ try {
   console.log(`${args.players} vs ${args.campaign ? "the campaign's computer" : args.players}, ${seeds.length} seed(s), up to day ${lastDay}${args.commanders ? ", with commanders" : ""}${args.fog ? ", fog of war" : ""}${args.deep ? ", trying every legal command each turn" : ""}\n`);
   for (const scenario of scenarios) {
     const wins = new Map();
+    const ahead = new Map();
     const endDays = [];
     let commands = 0;
     let problems = 0;
@@ -94,6 +99,7 @@ try {
       const ais = start.players.map((p) => (axis.includes(p.id) ? campaignAi(scenario.id) : makeAi(seed, p.id)));
       const report = await selfPlay(start, ais, lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
+      ahead.set(sideAhead(report.state), (ahead.get(sideAhead(report.state)) ?? 0) + 1);
       if (report.state.result) {
         endDays.push(report.state.day);
         const side = report.state.result.winningSide;
@@ -113,7 +119,8 @@ try {
     const seconds = ((performance.now() - t0) / 1000).toFixed(1);
     const won = [...wins].map(([side, n]) => `${side} ${n}`).join(", ") || "none";
     const days = endDays.length ? `, ending day ${Math.min(...endDays)}-${Math.max(...endDays)}` : "";
-    console.log(`${scenario.id.padEnd(12)} ${endDays.length}/${seeds.length} games ended (wins: ${won}${days}); ${commands} commands, ${problems} with problems, ${seconds}s`);
+    const standingText = args.standing ? `; ahead at the end: ${[...ahead].map(([side, n]) => `${side} ${n}`).join(", ")}` : "";
+    console.log(`${scenario.id.padEnd(12)} ${endDays.length}/${seeds.length} games ended (wins: ${won}${days})${standingText}; ${commands} commands, ${problems} with problems, ${seconds}s`);
   }
 } finally {
   await server.close();

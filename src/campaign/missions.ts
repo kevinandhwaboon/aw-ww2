@@ -125,18 +125,39 @@ export const MISSIONS: readonly CampaignMission[] = [
   },
   {
     map: "the-slot",
-    commanders: { 1: "kuramochi" },
-    advantage: { funds: { 1: 3000 }, incomePercent: 25 },
+    // Not Kuramochi: on this naval map his +20% for ships put Japan ahead in every game on day 20 (22-campaign §5b).
+    commanders: { 1: "arakawa" },
+    advantage: {
+      // A Battleship and a Destroyer more off Japan's home island.
+      units: [
+        { type: "battleship", owner: 1, pos: { x: 14, y: 7 } },
+        { type: "destroyer", owner: 1, pos: { x: 14, y: 6 } },
+      ],
+    },
   },
   {
     map: "kursk",
     commanders: { 1: "falk" },
-    advantage: { funds: { 1: 4000 }, incomePercent: 25 },
+    // Falk's short fuel costs Germany here (ahead on day 20 in 4 of 8 with him alone, 22-campaign §5b);
+    // the standings are close enough that 5% more income makes up for it.
+    advantage: { incomePercent: 5 },
   },
   {
     map: "normandy",
     commanders: { 1: "wendt" },
-    advantage: { funds: { 1: 4000 }, incomePercent: 25 },
+    advantage: {
+      // The panzer reserve released at once, by Caen; and France's output behind the Atlantic Wall.
+      units: [
+        { type: "heavyTank", owner: 1, pos: { x: 45, y: 63 } },
+        { type: "mediumTank", owner: 1, pos: { x: 44, y: 63 } },
+        { type: "mediumTank", owner: 1, pos: { x: 45, y: 61 } },
+        { type: "infantry", owner: 1, pos: { x: 44, y: 62 } },
+        { type: "infantry", owner: 1, pos: { x: 46, y: 62 } },
+        { type: "artillery", owner: 1, pos: { x: 43, y: 63 } },
+      ],
+      funds: { 1: 5000 },
+      incomePercent: 50,
+    },
   },
   {
     map: "market-garden",
