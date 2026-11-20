@@ -122,6 +122,19 @@ Built in milestone 12. Details settled while building it:
 
 A file is refused if an objective isn't a property, the side has no players, or `surviveDays` is earlier than day 2.
 
+### `evacuateUnits` (decided 2026-11-20, not built)
+
+Decided at the developer's request for Dunkirk (21-scenarios-dunkirk §1, which has the full rules and tests). The original game has nothing like it.
+
+| Condition | Meaning | Checked |
+|---|---|---|
+| `evacuateUnits` | A named side wins once `count` of its land units have reached the `zone` squares | After each command |
+
+- A unit of the side that ends up on a zone square, by any means, is **removed and counted**. It isn't a loss (§8a).
+- `unitTypes` (optional) limits which types count; others are still removed but not counted. Left out, every land unit counts.
+- Any HP counts as one unit. A unit built on a zone square doesn't count. Allies add to the same count.
+- The count is kept per side in `GameState`. A file is refused if `count` is under 1, the zone is empty, or a listed unit type doesn't exist.
+
 - **On screen:** objective properties have gold corner marks (corners, not a full box, so they never look like the cursor or a selection), and the tile info box says "★ Objective" on them. The HUD lists each objective with its progress, such as "Axis: hold both marked objectives for 8 days (3/8)". The results screen shows the same list with how each one ended.
 
 ### 8a. Losses on the results screen
