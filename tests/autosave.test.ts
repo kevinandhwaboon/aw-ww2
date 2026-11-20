@@ -68,6 +68,15 @@ describe("autosave (11-tech-setup §3j)", () => {
     expect(readAutosave(store, ids)).toEqual({ scenarioId: "bastogne", options, state });
   });
 
+  it("a campaign mission's autosave remembers it's a campaign game, so a win carried on still counts (22-campaign §2)", () => {
+    const store = memoryStore();
+    const state = game();
+    writeAutosave(store, { scenarioId: "bastogne", options, state, campaign: true });
+    expect(readAutosave(store, ids)?.campaign).toBe(true);
+    writeAutosave(store, { scenarioId: "bastogne", options, state });
+    expect(readAutosave(store, ids)?.campaign).toBeUndefined();
+  });
+
   it("a carried-on game plays on exactly as it would have without the reload, luck rolls included", () => {
     const store = memoryStore();
     writeAutosave(store, { scenarioId: "bastogne", options, state: game() });

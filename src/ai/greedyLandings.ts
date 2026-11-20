@@ -636,7 +636,8 @@ export abstract class LandingBrain extends BrainBase {
       (dealt / 100) * targetCost -
       this.w.counterLoss * (taken / 100) * this.cost(moved) +
       (kill + focus) * targetCost +
-      (capturing ? this.w.stopCaptureBonus : 0)
+      (capturing ? this.w.stopCaptureBonus : 0) +
+      (this.mapPlan?.attackBonus?.(this.state, moved, target) ?? 0)
     );
   }
 

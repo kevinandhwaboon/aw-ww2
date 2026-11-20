@@ -24,6 +24,7 @@ import {
   type UnitDef,
   type UnitTypeId,
 } from "../engine";
+import type { MapPlan } from "./mapPlan";
 import { MinQueue } from "./minQueue";
 import type { GreedyWeights } from "./weights";
 
@@ -92,6 +93,8 @@ export abstract class BrainBase {
   constructor(
     protected readonly state: GameState,
     protected readonly w: GreedyWeights,
+    /** A map-specific AI's plan (22-campaign §6), or null for plain Greedy. */
+    protected readonly mapPlan: MapPlan | null = null,
   ) {
     this.me = state.currentPlayer;
     this.enemies = state.units.filter((u) => this.isEnemy(u.owner));

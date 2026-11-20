@@ -6,6 +6,8 @@
 //   npm run selfplay -- --players random --deep        random legal play, trying every legal command each turn
 //   npm run selfplay -- --commanders                   every player under a commander of their side, picked by seed (06-commanders)
 //   npm run selfplay -- --fog                          with fog of war on (19-fog-of-war)
+//   npm run selfplay -- --campaign                     the campaign missions (22-campaign §5): the Allies as --players,
+//                                                      the Axis as the campaign's computer, with its advantage and map AI
 //
 // Exits with 1 if any game had a problem, so a script or an agent can loop on it.
 
@@ -27,6 +29,7 @@ const { values: args } = parseArgs({
     deep: { type: "boolean", default: false },
     commanders: { type: "boolean", default: false },
     fog: { type: "boolean", default: false },
+    campaign: { type: "boolean", default: false },
   },
 });
 
@@ -39,7 +42,7 @@ function seedList(text) {
 const lastDay = Number(args.days);
 const seeds = seedList(args.seeds);
 if (!Number.isInteger(lastDay) || lastDay < 1 || seeds.length === 0 || seeds.some((s) => !Number.isInteger(s))) {
-  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders] [--fog]");
+  console.error("Usage: npm run selfplay -- [--maps a,b] [--seeds 1-5 | 1,4,9] [--days 30] [--players greedy|easy|random] [--deep] [--commanders] [--fog] [--campaign]");
   process.exit(2);
 }
 
@@ -60,17 +63,24 @@ try {
   const { selfPlay, randomAi } = await server.ssrLoadModule("/src/ai/selfplay.ts");
   const { greedyAi } = await server.ssrLoadModule("/src/ai/greedy.ts");
   const { weightsFor } = await server.ssrLoadModule("/src/ai/weights.ts");
+  const { MISSIONS } = await server.ssrLoadModule("/src/campaign/missions.ts");
+  const { missionScenario, axisPlayers } = await server.ssrLoadModule("/src/campaign/setup.ts");
+  const { campaignAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
 
   const makeAi = { greedy: () => greedyAi(), easy: () => greedyAi(weightsFor("easy")), random: (seed, id) => randomAi(seed * 100 + id) }[args.players];
   if (!makeAi) throw new Error(`Unknown --players ${args.players}: use greedy, easy or random`);
-  const scenarios = args.maps === "all" ? SCENARIOS : args.maps.split(",").map((id) => {
+  const picked = args.maps === "all" ? SCENARIOS : args.maps.split(",").map((id) => {
     const scenario = SCENARIOS.find((s) => s.id === id);
     if (!scenario) throw new Error(`Unknown map ${id}: use ${SCENARIOS.map((s) => s.id).join(", ")}`);
     return scenario;
   });
+  // With --campaign, each map is played as its campaign mission, in campaign order.
+  const scenarios = args.campaign
+    ? MISSIONS.flatMap((m) => picked.filter((s) => s.id === m.map).map((s) => missionScenario(s, m)))
+    : picked;
 
   rmSync(failuresDir, { recursive: true, force: true });
-  console.log(`${args.players} vs ${args.players}, ${seeds.length} seed(s), up to day ${lastDay}${args.commanders ? ", with commanders" : ""}${args.fog ? ", fog of war" : ""}${args.deep ? ", trying every legal command each turn" : ""}\n`);
+  console.log(`${args.players} vs ${args.campaign ? "the campaign's computer" : args.players}, ${seeds.length} seed(s), up to day ${lastDay}${args.commanders ? ", with commanders" : ""}${args.fog ? ", fog of war" : ""}${args.deep ? ", trying every legal command each turn" : ""}\n`);
   for (const scenario of scenarios) {
     const wins = new Map();
     const endDays = [];
@@ -80,7 +90,9 @@ try {
     for (const seed of seeds) {
       const setup = args.commanders ? withCommanders(scenario.setup, seed) : scenario.setup;
       const start = createGame({ ...setup, seed, ...(args.fog ? { settings: { ...setup.settings, fogOfWar: true } } : {}) });
-      const report = await selfPlay(start, start.players.map((p) => makeAi(seed, p.id)), lastDay, { checkLegal: args.deep });
+      const axis = args.campaign ? axisPlayers(scenario) : [];
+      const ais = start.players.map((p) => (axis.includes(p.id) ? campaignAi(scenario.id) : makeAi(seed, p.id)));
+      const report = await selfPlay(start, ais, lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
       if (report.state.result) {
         endDays.push(report.state.day);
@@ -92,7 +104,7 @@ try {
         failed++;
         mkdirSync(failuresDir, { recursive: true });
         const file = join(failuresDir, `${scenario.id}-${args.players}-seed${seed}.json`);
-        writeFileSync(file, JSON.stringify({ map: scenario.id, seed, players: args.players, commanders: args.commanders ? start.players.map((p) => p.commander) : null, fog: args.fog, lastDay, problems: report.problems, commands: report.commands }, null, 1));
+        writeFileSync(file, JSON.stringify({ map: scenario.id, campaign: args.campaign, seed, players: args.players, commanders: args.commanders ? start.players.map((p) => p.commander) : null, fog: args.fog, lastDay, problems: report.problems, commands: report.commands }, null, 1));
         const first = report.problems[0];
         console.log(`  PROBLEM ${scenario.id} seed ${seed}: [${first.kind}] day ${first.day}, player ${first.player}, command ${first.commandIndex}: ${first.text}`);
         if (report.problems.length > 1) console.log(`    and ${report.problems.length - 1} more, in ${file}`);
