@@ -61,7 +61,7 @@ Shots from the left half are heard a little to the left and shots landing on the
 | A unit is built | A short clank |
 | A submarine dives or surfaces | A splash |
 | A unit is ambushed | An alert |
-| Units are repaired or resupplied at turn start | One soft chime, however many units |
+| Units are repaired or resupplied at turn start | One soft chime per unit, as the cursor reaches it (04-economy §2) |
 
 ### The game and the controls
 

@@ -13,6 +13,7 @@ import { planDrop } from "./battle/drop";
 import { planCombat, planFortAttack } from "./battle/plan";
 import { planCapture, planGarrison } from "./battle/storm";
 import { packColor, packColorNumber } from "./artPack";
+import { drawSupplyCrateBadge } from "./placeholderUnits";
 import { moveStyle, stepDirection, type MoveStyle, type StepDirection } from "./facing";
 import { TILE_SIZE } from "./placeholderTiles";
 import { sounds } from "./sound/player";
@@ -25,6 +26,8 @@ const MOVE_LIFT: Record<MoveStyle, number> = { foot: 1.5, vehicle: 0.5, air: 0, 
 /** Dust behind vehicles and foam behind ships: how long a puff lasts and how far it grows. */
 const PUFF = { ms: 380, size: 1.6, grow: 2 };
 const COMBAT_MS = { nudge: 70, flash: 140, float: 480, explode: 260 };
+/** The supply crate over a unit resupplied at turn start: popping up, staying, fading away. */
+const SERVICE_POP_MS = { pop: 180, hold: 260, fade: 220 };
 /** How long the view takes to pan to the next thing that happens. */
 export const ACTION_PAN_MS = 220;
 
@@ -52,6 +55,8 @@ export interface PlaybackHost {
   unitType(unitId: UnitId): UnitTypeId | undefined;
   revealTiles(tiles: readonly Point[], ms: number): Promise<void>;
   textTexture(text: string, color: string, outline?: string): string;
+  /** A texture drawn once and cached under `key`. */
+  texture(key: string, draw: () => HTMLCanvasElement): string;
 }
 
 export class MapPlayback {
@@ -163,7 +168,9 @@ export class MapPlayback {
         if (tile) await this.floatLabel(tile, event.type === "unitDived" ? "DIVE" : "SURFACE", packColor("submerged"));
       }
     }
-    const labels = this.repairLabels(events);
+    // Repairs and resupplies at the start of a turn play afterwards, one unit at a time (servicePop).
+    const turnStart = events.findIndex((e) => e.type === "turnStarted");
+    const labels = this.repairLabels(turnStart < 0 ? events : events.slice(0, turnStart));
     if (labels.length > 0) sounds.play("supply");
     await Promise.all(labels);
   }
@@ -221,6 +228,29 @@ export class MapPlayback {
       if (event.type === "unitResupplied" && !repaired.has(event.unitId)) over(event.unitId, "SUPPLY", packColor("labelBlue"));
     }
     return labels;
+  }
+
+  /**
+   * A unit being serviced at the start of its turn: a supply crate pops up over it if it was
+   * refuelled and rearmed, and "+2" rises off it if it was repaired.
+   */
+  async servicePop(tile: Point, repairedHp: number, resupplied: boolean): Promise<void> {
+    const shown: Promise<void>[] = [];
+    if (resupplied) shown.push(this.supplyCrate(tile));
+    if (repairedHp > 0) shown.push(this.floatLabel(tile, `+${repairedHp}`, packColor("labelGreen")));
+    await Promise.all(shown);
+  }
+
+  /** The supply crate bounces up out of the unit, holds a moment, then rises and fades. */
+  private async supplyCrate(tile: Point): Promise<void> {
+    const { x, y } = center(tile);
+    const crate = this.add.image(x, y - 4, this.host.texture("supply-crate", drawSupplyCrateBadge)).setScale(0);
+    await new Promise<void>((resolve) => {
+      this.tweens.add({ targets: crate, scale: 1, y: y - 10, duration: SERVICE_POP_MS.pop, ease: "Back.easeOut", onComplete: () => resolve() });
+    });
+    await this.tween(crate, { y: y - 10 }, SERVICE_POP_MS.hold);
+    await this.tween(crate, { y: y - 16, alpha: 0 }, SERVICE_POP_MS.fade);
+    crate.destroy();
   }
 
   /**

@@ -32,6 +32,8 @@ This includes the first player's first turn, so they collect income on day 1, as
 
 Each event in this sequence is emitted as an engine event so the UI can show it (funds ticking up, "+2" heals).
 
+**How step 3 is shown** (decided 2026-11-19, at the developer's request): after the Day banner, the cursor visits each unit repaired or resupplied, **one unit at a time**, in the order the engine serviced them (property repairs first, row by row, then Halftrack and Supply Ship resupply). A unit refuelled and rearmed gets a supply crate popping up over it, and its low fuel and ammo cans go away. A repaired unit's HP badge counts up one point at a time with a green "+2" rising off it, while the funds in the HUD count down by the repair cost. A unit both repaired and resupplied is one visit. Then the cursor goes back to the HQ. Only units the viewer can see are visited (19-fog-of-war §7).
+
 ## 3. Capture
 
 - Units with `canCapture` (Infantry, Assault Infantry) can capture enemy or neutral properties.

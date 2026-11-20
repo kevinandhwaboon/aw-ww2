@@ -129,6 +129,7 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Forecast panel | Panel frame | "DMG 71-80%" style text |
 | Pixel font | 1 full font | Open-licensed, with letters, digits and % - + ? |
 | Floating numbers | Uses the pixel font | Damage, capture and repair labels |
+| Supply crate | 1 small icon | Pops up over a unit resupplied at turn start (04-economy §2); the pack's `supplyCrate` color today |
 
 ## 7. HTML screens and panels
 

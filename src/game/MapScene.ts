@@ -144,6 +144,7 @@ export class MapScene extends Phaser.Scene implements MapView {
     unitType: (unitId) => this.unitLooks.get(unitId)?.type,
     revealTiles: (tiles, ms) => this.revealTiles(tiles, ms),
     textTexture: (text, color, outline) => this.textTexture(text, color, outline),
+    texture: (key, draw) => this.texture(key, draw),
   });
 
   constructor(private readonly options: MapSceneOptions) {
@@ -875,6 +876,12 @@ export class MapScene extends Phaser.Scene implements MapView {
   async playEvents(events: readonly GameEvent[]): Promise<void> {
     await this.whenCreated;
     return this.playback.playEvents(events);
+  }
+
+  /** A unit being repaired and/or resupplied at the start of its turn (see turnService.ts). */
+  async playServicePop(tile: Point, repairedHp: number, resupplied: boolean): Promise<void> {
+    await this.whenCreated;
+    return this.playback.servicePop(tile, repairedHp, resupplied);
   }
 
   // ---- Rendering game state ----

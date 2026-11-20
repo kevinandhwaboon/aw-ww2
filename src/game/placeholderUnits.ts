@@ -130,6 +130,22 @@ export function drawAmmoCanBadge(): HTMLCanvasElement {
   ], body, "#c8d088");
 }
 
+/** A cross-braced wooden supply crate, shown over a unit as it's refuelled and rearmed (04-economy §2). */
+export function drawSupplyCrateBadge(): HTMLCanvasElement {
+  const body = activePack().colors.supplyCrate;
+  return pixelIcon([
+    "OOOOOOOOO",
+    "OLBBBBBLO",
+    "OBLBBBLBO",
+    "OBBLBLBBO",
+    "OBBBLBBBO",
+    "OBBLBLBBO",
+    "OBLBBBLBO",
+    "OLBBBBBLO",
+    "OOOOOOOOO",
+  ], body, "#e0b870");
+}
+
 /**
  * Veterancy chevrons: one for Veteran, three for Elite (03-combat §6). Point up, like a sergeant's
  * stripes, with nothing behind them: the unit shows through between the stripes.
