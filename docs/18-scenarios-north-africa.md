@@ -1,8 +1,8 @@
 # Topic Doc 18: North Africa Scenarios
 
-**Status:** built (v0) on 2026-11-15. Balance untested.
-**Last updated:** 2026-11-15
-**Depends on:** 00-master-design.md §6 and §8, 01-units.md (availability rule), 02-terrain.md §4 and §4b (Minefield, Ridge, Salt Marsh), 03-combat.md §4 (attacking fortifications), 04-economy-production.md §5 and §8 (ally repair, victory conditions), 08-art-pipeline.md §21 (seasons).
+**Status:** §1 El Alamein built (v0) on 2026-11-15, balance untested. §2 Gazala and Tobruk designed 2026-11-20, not built.
+**Last updated:** 2026-11-20 (§2 Gazala and Tobruk)
+**Depends on:** 00-master-design.md §6 and §8, 01-units.md (availability rule), 02-terrain.md §4 and §4b (Minefield, Ridge, Salt Marsh), 03-combat.md §4 (attacking fortifications), 04-economy-production.md §5 and §8 (ally repair, victory conditions), 08-art-pipeline.md §21 (seasons), 19-fog-of-war.md (Gazala).
 
 ---
 
@@ -148,7 +148,7 @@ No new supply rule. The desert's long supply lines are shown through the map, un
 ### Computer opponent
 
 - The Greedy AI already attacks fortifications and plans its paths as if breakable ones were gone (09-ai), so it can clear minefields with no new rule.
-- **As built, AI vs AI, the Axis always wins** (seeds 1 to 4, all on day 15, with no engine or AI problem): the Allied AI clears only 5 to 7 of the 51 minefield squares, scattered along the belt rather than a corridor, and never gets its armour through. Teaching it to concentrate on a corridor is later AI work (§2).
+- **As built, AI vs AI, the Axis always wins** (seeds 1 to 4, all on day 15, with no engine or AI problem): the Allied AI clears only 5 to 7 of the 51 minefield squares, scattered along the belt rather than a corridor, and never gets its armour through. Teaching it to concentrate on a corridor is later AI work (§3).
 
 ### Art
 
@@ -196,7 +196,189 @@ Scenario tests ("El Alamein"):
 - "Italy fields no Heavy Tank or Rocket Artillery"
 - "An Italian tank in a German-held town is repaired at Italy's cost" (04-economy §5)
 
-## 2. Known gaps and later work
+## 2. Gazala and Tobruk (`gazala`)
+
+**Status:** designed 2026-11-20 at the developer's request, not built.
+
+### Why this map
+
+The second North Africa map, chosen over Kasserine Pass, Crusader, the Mareth Line and Torch. It is the opposite of El Alamein (§1):
+- **The Axis attacks** and the British defend.
+- **The flank is open.** The line stops in the desert at Bir Hakeim, so the battle is about maneuver, not a frontal grind.
+- **Fog of war** (19-fog-of-war) exists now, and this is the battle it suits best: the British didn't know where the Axis armour would come from. The fog is always on for this map.
+- **The Free French** join as a nation of their own, holding Bir Hakeim.
+- It needs **no new terrain or rule**: Minefields, Ridges, Bunkers, the desert season, ally repair and Italy's own art are all built.
+
+### The history it follows
+
+In May 1942 the Eighth Army held the **Gazala line**, west of Tobruk: a continuous minefield running about 70 km south from the coast at Gazala, with fortified brigade "boxes" along it. The 1st South African and 50th Divisions held the north, the 150th Brigade box stood at Got el Ualeb, and the **1st Free French Brigade** held the southern end at **Bir Hakeim**. The British armour waited behind the line around Knightsbridge and El Adem, and the 2nd South African Division garrisoned **Tobruk**, whose old defences had been stripped to build the line.
+
+On the night of 26 May (Operation Venezia) Rommel took the Afrika Korps (15th and 21st Panzer), the Italian Ariete and Trieste divisions and the 90th Light round the south of Bir Hakeim, while the Italian infantry made a frontal feint against the north of the line. By dawn the Axis armour was behind the British line; the 3rd Indian Motor Brigade, south-east of Bir Hakeim, was overrun in its first hour.
+
+The attack ran short of fuel. The Axis armour regrouped inside the British minefields, in the **Cauldron**, overran the 150th Brigade box on 1 June and cut a supply lane west through the mines. Bir Hakeim held for fifteen days against German and Italian attacks and Stukas before the French broke out on the night of 10 June. The British armour was beaten piecemeal around Knightsbridge on 12–13 June, the Eighth Army fell back east, and on 20 June Rommel turned on Tobruk and took it in a day, with 33,000 prisoners.
+
+### Area and scale
+
+- **About 38 × 32 squares**, about 3.2 km each, north up. The generator settles the exact size.
+- From Tmimi (west) to Sidi Rezegh, past Tobruk (east), and from the coast (north) to well south of Bir Hakeim, so there's room for the sweep round the end of the line. Roughly 22.95°E to 24.25°E and 31.35°N to 32.35°N.
+- Generated from real longitude and latitude, like El Alamein.
+- From the Axis start south-west of Bir Hakeim to Tobruk is about 20 squares round the end of the line: three to four days for a Medium Tank with nobody in the way, which costs it most of a tank of fuel.
+
+### Players
+
+Four players, in this turn order:
+
+1. **UK** (Allies): the Eighth Army, with the South African and Indian divisions and the 50th Division folded in, as on El Alamein.
+2. **Free France** (Allies), a new nation: the 1st Free French Brigade at Bir Hakeim.
+3. **Germany** (Axis): the Afrika Korps and the 90th Light.
+4. **Italy** (Axis): the Ariete and Trieste divisions in the sweep, and the X and XXI Corps' infantry facing the north of the line.
+
+- **The Allies move first,** as on every built-in map; the Axis assault comes on Germany's first turn.
+- **By default the computer plays Germany and Italy** (09-ai §5). One person plays the UK and the Free French: two Allied turns a day, as on Market Garden, but the Free French turn is short, a garrison holding out.
+- **The Free French have no HQ.** They are out only if every Free French unit is destroyed, as the US on Market Garden. Allies repair at each other's properties (04-economy §5).
+
+#### Free France as a nation
+
+At El Alamein the Free French were folded into the UK (§1 "Why the Free French are folded in"). Here Bir Hakeim is the centrepiece of the battle, so they get their own player.
+- **New nation `freeFrance`**, on the Allied side, named "Free France". The country is France; "Free" tells it apart from Vichy France, which this game never fields.
+- **It borrows the UK's art** (`ART_LOANS`, as Canada does): the brigade was equipped and supplied by the British. Battle scenes draw it with the UK's equipment.
+- **Color: army green** (`olive`). The UK wears brown and Italy blue; Free France borrowing the UK's brown would make both lose their color by the usual rule (08-art-pipeline §12). The UK sheets already come in olive. On a map with the US, Free France would fall back to a slot color.
+- **Flag:** the plain blue, white and red vertical tricolour. No Cross of Lorraine, keeping to the rule on symbols (00-master-design §6).
+
+### Places
+
+| | UK | Free France | Germany | Italy |
+|---|---|---|---|---|
+| HQ | **Tobruk** (objective) | none | Tmimi | none |
+| Factories | | | Tmimi rear (the coast road west) | Rotonda Segnali |
+| Airfields | El Adem, Sidi Rezegh landing ground | | Tmimi airfield | |
+| Cities | Gazala, Acroma, Knightsbridge, Bir el Gubi | Bir Hakeim | | Bir Temrad |
+
+- **Income:** the UK starts with about 8 properties and Free France 1, against Germany's 3 and Italy's 2. The Axis is much poorer but starts with its armour concentrated; the British armour is spread out across the desert.
+- **Every Axis property is west of the minefield.** That is the supply story (below).
+- **Tobruk** sits on its harbour. It is a city (the HQ), not a Port: there are no ships on this map.
+
+### The Gazala line
+
+- **One Minefield belt**, one square deep, from the coast at Gazala south to Bir Hakeim, drawn 4-connected as on El Alamein. It stops at Bir Hakeim: south of it the desert is open.
+- **Boxes** along it, each a cluster of two or three Bunkers just behind the mines: Gazala (1st South African Division), two 50th Division boxes, Got el Ualeb (150th Brigade), and **Bir Hakeim**, a ring of Bunkers round the Free French town with mines round it on every side.
+- **Gaps:** the coast road crosses the belt at the Gazala box's Bunker, and the Trigh Capuzzo and the Trigh el Abd cross it at Bunkers too, as at El Alamein. No minefield lies on a road.
+- **Behind the line:** the **Knightsbridge box** (201st Guards Brigade) at the junction of the Trigh Capuzzo and the Bir Hakeim track, and the 3rd Indian Motor Brigade in the open south-east of Bir Hakeim.
+- **The Tobruk perimeter:** an old ring of Minefields and Bunkers round Tobruk, about 8 squares across, with **several gaps** where it had been stripped for the Gazala line. That is why it fell in a day: it should slow an attack, not stop one.
+
+### Terrain
+
+- Mostly **Plains**, drawn as desert.
+- **Hills** for the steep escarpments: along the coast at Gazala, and round Tobruk and El Adem, each with gaps where the roads and tracks climb it. Tanks can only cross at the gaps.
+- **Ridge** for the lower escarpments and rises: Sidi Rezegh, Rigel Ridge near Knightsbridge, and the ground round the Cauldron.
+- **Roads:** the Via Balbia along the coast, and the desert tracks: the Trigh Capuzzo (Tmimi to Tobruk through Knightsbridge), the Trigh el Abd further south, and the Bir Hakeim track north to Acroma.
+- **Sea** along the north edge.
+- No Salt Marsh: the south edge is open desert.
+
+### Fog of war
+
+- **Always on** for this map (`settings.fogOfWar`, 19-fog-of-war §1), as on the Battle of Britain, Ten-Go and Midway.
+- The Axis assault force starts south-west of Bir Hakeim, out of sight of every Allied unit and property. The UK has to find it with Recon and aircraft.
+- The Italian infantry facing the north of the line is in sight from the boxes, so the feint is the first thing the Allies see.
+
+### Starting forces
+
+All units are first guesses, scaled to the map as on the other maps.
+
+- **UK** (4,000 funds):
+  - **Gazala box** (1st South African Division): three Infantry in Bunkers, an Artillery.
+  - **50th Division boxes:** three Infantry in Bunkers, a Mortar Team, an Artillery.
+  - **Got el Ualeb** (150th Brigade): two Infantry in Bunkers, an Artillery, a Tank Destroyer.
+  - **Knightsbridge** (201st Guards Brigade): two Infantry, an Artillery.
+  - **1st Armoured Division**, near Knightsbridge: four Medium Tanks (Grants), a Light Tank, a Halftrack carrying Infantry.
+  - **7th Armoured Division**, near Bir el Gubi: three Medium Tanks, a Light Tank, a Recon, an Artillery.
+  - **3rd Indian Motor Brigade**, south-east of Bir Hakeim: two Infantry, a Halftrack, an Artillery. Exposed, as it was.
+  - **Tobruk** (2nd South African Division): three Infantry, an Artillery, a Flak Gun.
+  - **Desert Air Force** at El Adem: two Fighters and a Bomber.
+- **Free France** (1,000 funds), at Bir Hakeim: three Infantry in Bunkers, an Assault Infantry, a Mortar Team, an Artillery (the French 75s) and a Flak Gun (the Bofors that fought off the Stukas).
+- **Germany** (3,000 funds), the assault force south-west of Bir Hakeim, out of sight:
+  - **15th and 21st Panzer:** six Medium Tanks and a Light Tank.
+  - **90th Light:** two Halftracks carrying Infantry, a Recon, an Artillery.
+  - **Anti-tank:** two Tank Destroyers (the 88s).
+  - **At Tmimi:** two Fighters and a Bomber (the Stukas, drawn with Germany's bomber art).
+- **Italy** (2,000 funds):
+  - **Ariete and Trieste**, in the assault force: four Medium Tanks, a Light Tank, two Infantry, an Artillery.
+  - **X and XXI Corps**, facing the north of the line: six Infantry, two Artillery, a Mortar Team.
+  - **At Tmimi:** a Fighter.
+- **Fuel:** every tank starts full. The sweep round Bir Hakeim is what empties them.
+
+### Supply
+
+No new rule, as on El Alamein: the map makes the Cauldron.
+- **Every Axis property is west of the minefield.** Armour that has swung round Bir Hakeim is about 20 squares from the nearest place to refuel.
+- **Two ways to keep it moving:** Halftracks bringing fuel the long way round the south, or **clearing a lane through the minefield** to shorten the route, which is what Rommel did at Got el Ualeb. Breaking the 150th Brigade box opens it.
+- **The British** have Tobruk, El Adem and the boxes behind them, and an ally's property repairs and refuels their units (04-economy §5), so a tank can refuel at Bir Hakeim.
+
+### Weather and season
+
+- Clear all game, in the desert season (08-art-pipeline §21). The fog of war is a game setting, not weather.
+
+### Build lists
+
+- **UK:** every land unit except the Heavy Tank and Rocket Artillery, plus Fighter and Bomber.
+- **Free France:** Infantry, Assault Infantry, Mortar Team, Recon, Artillery, Flak Gun. It owns no factory, so it can build only if it captures one.
+- **Germany:** every land unit except the Heavy Tank (no Tigers in Africa until Tunisia) and Rocket Artillery, plus Fighter and Bomber.
+- **Italy:** as on El Alamein (§1 "Italy as a nation").
+- No ships and no Transport Aircraft for anyone.
+
+### Victory
+
+- **The Axis wins by capturing Tobruk** (`captureProperties` for the Axis). That ends the game for the whole Allied side at once; plain HQ capture would only knock out the UK and leave the Free French playing on.
+- **The Allies win by holding out to the start of day 16** (`surviveDays`). The real battle took 27 days to Tobruk.
+- **Both sides** also win by capturing the enemy HQ or destroying every enemy unit (`hqCapture`, `rout`). The Allies taking Tmimi would end the game.
+
+### Computer opponent
+
+- The Greedy AI needs no new rule. Its route-finding treats a breakable minefield as passable once broken (09-ai), so it may attack the line rather than go round Bir Hakeim. Whether it sweeps round the south is to be checked in AI vs AI games; if it doesn't, a later AI change can weigh the open flank.
+- Under fog, the AI sees only what its side sees (09-ai rule 3).
+- AI vs AI must end within the day limit on every game (day 16 at the latest), with no AI bug (09-ai §7).
+
+### Art
+
+- **Free France** borrows the UK's art in army green, and needs only its flag (HUD and capture flag). No new map or battle art.
+- **The map** uses the desert season and existing tiles. No new terrain art.
+
+### How it's made
+
+- `tools/maps/gazala.mjs` generates the scenario from real longitude and latitude for the coast, the places, the escarpments, the Gazala line, the boxes and the Tobruk perimeter, as `el-alamein.mjs` does. It checks that the minefield runs unbroken from the sea to Bir Hakeim with no mine on a road, that a land route round the south of Bir Hakeim exists, and that the Axis assault force starts out of sight of every Allied unit and property. `tools/maps/overview.mjs gazala` draws `docs/maps/gazala.png`.
+
+### Build order
+
+1. **Free France:** the nation, its flag, its art loan from the UK and its color.
+2. **Map:** the generator, the scenario file with fog always on, and its overview picture. It comes after El Alamein on the map select, in the North Africa theater.
+3. **Checks:** `npm run check`, then `npm run selfplay` on Gazala and every other map. Check that the map select and players screen handle four players.
+
+### Tests to write
+
+- "Free France is an Allied nation that borrows the UK's art and wears army green"
+- "Free France's flag is the plain tricolour"
+- "The UK moves first, then Free France, then Germany, then Italy"
+- "The computer plays Germany and Italy by default"
+- "Fog of war is always on for Gazala"
+- "The Axis wins at once by capturing Tobruk, and the Free French are out with the UK"
+- "The Allies win at the start of day 16"
+- "The Free French play on after the UK resigns"
+- "The minefield runs unbroken from the sea to Bir Hakeim, and no mine lies on a road"
+- "A land route round the south of Bir Hakeim reaches Tobruk"
+- "The Axis assault force starts out of sight of every Allied unit and property"
+- "Every Axis property is west of the minefield"
+- "The Tobruk perimeter has gaps"
+- "A British tank at Bir Hakeim is repaired at the UK's cost" (04-economy §5)
+
+### Known gaps
+
+- **Night:** the sweep came by night; there is no night in the game.
+- **Stukas** are drawn with Germany's bomber art (the Ju 88): Germany has no Dive Bomber art.
+- **The Cauldron's dust and confusion** are only the fog of war.
+- **Bir Hakeim's breakout** (the French fought their way out by night) is up to the player.
+- Balance is a first guess: funds, the size of the assault force, the day 16 limit and the Tobruk perimeter's gaps all need playtesting.
+
+## 3. Known gaps and later work (El Alamein)
 
 - **Italian battle scenes** draw Italy's own soldiers, tank crews, tanks, armoured car and aircraft; its lorry, guns and AA use the German shapes, as Japan's do. No Bersaglieri plumes yet.
 - **Free French** are folded into the UK (§1 "Why the Free French are folded in"). A nation borrowing the UK art can be added for a map where they matter more.
