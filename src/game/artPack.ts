@@ -340,6 +340,9 @@ export const BUILT_IN_PACK: ArtPack = {
     japan: { team: "khaki", fill: "#9a8648", outline: "#463a1e" },
     ussr: { team: "green4bo", fill: "#52643a", outline: "#222c18" },
     italy: { team: "blue", fill: "#3a6fd8", outline: "#1a3270" },
+    // Free France borrows the UK's art (ART_LOANS) but not its brown, so a map with both tells them
+    // apart: army green, which the UK sheets also come in (18-scenarios-north-africa §2).
+    freeFrance: { team: "olive", fill: "#64783a", outline: "#2a3818" },
   },
   colors: BUILT_IN_COLORS,
   unitSheets: [],
@@ -604,10 +607,11 @@ export function unitFrame(art: UnitArt, view: UnitView, frame = 0): number {
 
 /**
  * Nations drawn with another nation's art when a pack has none of their own (00-master-design §6):
- * Canada fields the UK's sprites, battle figures and color. (Italy borrowed Germany's until it got
+ * Canada fields the UK's sprites, battle figures and color, and Free France the UK's sprites and
+ * battle figures in army green (18-scenarios-north-africa §2). (Italy borrowed Germany's until it got
  * its own on 2026-11-18.)
  */
-export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk" };
+export const ART_LOANS: Readonly<Partial<Record<NationId, NationId>>> = { canada: "uk", freeFrance: "uk" };
 
 /**
  * The nation whose equipment battle scenes draw for this one: the nation it borrows art from, if

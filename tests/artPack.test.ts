@@ -521,8 +521,23 @@ describe("each nation's colors (08-art-pipeline §12)", () => {
     for (const type of ["heavyTank", "rocketArtillery", "battleship", "diveBomber"] as const) expect(rows).not.toContain(type);
   });
 
-  it("battle scenes draw each nation's own equipment; only Canada borrows the UK's", () => {
+  it("Free France borrows the UK's unit art but wears army green, so the UK keeps its brown on Gazala (18-scenarios-north-africa §2)", () => {
+    expect(teams(["uk", "freeFrance", "germany", "italy"])).toEqual(["brown", "olive", "grey", "blue"]);
+    const pack = parseArtPack(defaultPack);
+    try {
+      setGameNations(["uk", "freeFrance", "germany", "italy"]);
+      const soldier = findUnitArt(pack, "freeFrance", 1, "infantry");
+      expect(soldier && pack.unitSheets[soldier.sheet]?.nation).toBe("uk");
+      expect(soldier && pack.unitSheets[soldier.sheet]?.team).toBe("olive");
+    } finally {
+      setGameNations([]);
+    }
+  });
+
+  it("battle scenes draw each nation's own equipment; Canada and Free France borrow the UK's", () => {
     expect(drawnAs("italy")).toBe("italy");
+    expect(drawnAs("freeFrance")).toBe("uk");
+    expect(FLAGS.freeFrance).not.toEqual(FLAGS.uk);
     expect(drawnAs("canada")).toBe("uk");
     expect(drawnAs("germany")).toBe("germany");
     expect(FLAGS.italy).not.toEqual(FLAGS.germany);

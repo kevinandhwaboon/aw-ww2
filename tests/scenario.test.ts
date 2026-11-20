@@ -77,8 +77,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal", "ten-go"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Gazala, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "gazala", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal", "ten-go"]);
   });
 
   it("have unique ids", () => {
@@ -1851,6 +1851,177 @@ describe("El Alamein (18-scenarios-north-africa)", () => {
     expect(need(after.players[ITALY], "Italy").funds).toBe(italyFunds + 4 * 1000 - 1600);
     // Germany earned its income on its own turn and paid nothing for the Italian tank.
     expect(need(after.players[GERMANY], "Germany").funds).toBe(germanyFunds + 5 * 1000);
+  });
+});
+
+describe("Gazala (18-scenarios-north-africa §2)", () => {
+  const scenario = SCENARIOS.find((s) => s.id === "gazala");
+  if (!scenario) throw new Error("missing scenario");
+  const { map } = scenario.setup;
+  const UK = 0;
+  const FRANCE = 1;
+  const GERMANY = 2;
+  const ITALY = 3;
+  const start = () => createGame({ ...scenario.setup, seed: 1 });
+  const need = <T,>(value: T | undefined, what: string): T => {
+    if (value === undefined) throw new Error(`missing ${what}`);
+    return value;
+  };
+  const run = (state: GameState, ...commands: Command[]) =>
+    commands.reduce((s, c) => {
+      const result = apply(s, c);
+      if (!result.ok) throw new Error(result.message);
+      return result.state;
+    }, state);
+  const endTurns = (n: number): Command[] => Array.from({ length: n }, () => ({ type: "endTurn" }));
+  const units = scenario.setup.units ?? [];
+  const tobruk = need(properties(scenario, "hq", UK)[0], "Tobruk").pos;
+  const birHakeim = need(properties(scenario, "city", FRANCE)[0], "Bir Hakeim").pos;
+  const at = (x: number, y: number) => (x >= 0 && y >= 0 && x < map.width && y < map.height ? terrainAt(map, P(x, y)) : undefined);
+  const key = (p: Point) => `${p.x},${p.y}`;
+  const mines = map.terrain.flatMap((t, i) => (t === "minefield" ? [P(i % map.width, Math.floor(i / map.width))] : []));
+
+  /** Squares a tank reaches from `from`, ignoring units; bunkers optionally blocked, and any squares given. */
+  function reachable(from: Point, blockBunkers: boolean, blocked: ReadonlySet<string> = new Set()): Set<string> {
+    const seen = new Set([key(from)]);
+    const queue = [from];
+    while (queue.length > 0) {
+      const p = queue.shift() ?? from;
+      for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+        const q = P(p.x + dx, p.y + dy);
+        const t = at(q.x, q.y);
+        if (t === undefined || TERRAIN[t].moveCost.tracks === null || (blockBunkers && t === "bunker") || seen.has(key(q)) || blocked.has(key(q))) continue;
+        seen.add(key(q));
+        queue.push(q);
+      }
+    }
+    return seen;
+  }
+  const axisStart = need(units.find((u) => u.owner === GERMANY && u.type === "mediumTank"), "a German tank").pos;
+
+  it("the UK moves first, then Free France, then Germany, then Italy", () => {
+    expect(scenario.setup.players.map((p) => p.nation)).toEqual(["uk", "freeFrance", "germany", "italy"]);
+  });
+
+  it("the computer plays Germany and Italy by default (09-ai §5)", () => {
+    expect(defaultComputerPlayers(scenario)).toEqual([GERMANY, ITALY]);
+  });
+
+  it("fog of war is always on for Gazala (19-fog-of-war §1)", () => {
+    expect(scenario.setup.settings?.fogOfWar).toBe(true);
+    expect(start().settings.fogOfWar).toBe(true);
+  });
+
+  it("the map is drawn as desert, under clear skies all game", () => {
+    expect(scenario.setup.weather?.season).toBe("desert");
+  });
+
+  it("the Axis wins at once by capturing Tobruk, and the Free French are out with the UK", () => {
+    const state = start();
+    const infantry = { ...need(state.units[0], "a unit"), id: 999, type: "infantry" as const, owner: GERMANY, pos: tobruk, hp: 100, moved: false, acted: false, cargo: [] };
+    const ready: GameState = {
+      ...state,
+      currentPlayer: GERMANY,
+      properties: state.properties.map((p) => (p.pos.x === tobruk.x && p.pos.y === tobruk.y ? { ...p, capturePoints: 1 } : p)),
+      units: [...state.units.filter((u) => u.pos.x !== tobruk.x || u.pos.y !== tobruk.y), infantry],
+    };
+    const after = run(ready, { type: "move", unitId: 999, path: [], action: { type: "capture" } });
+    expect(after.result?.winningSide).toBe("axis");
+    expect(after.players[FRANCE]?.defeated).toBe(true);
+  });
+
+  it("the Allies win at the start of day 16", () => {
+    const after = run(start(), ...endTurns(15 * 4));
+    expect(after.day).toBe(16);
+    expect(after.result?.winningSide).toBe("allies");
+    expect(after.result?.reason).toBe("surviveDays");
+  });
+
+  it("Free France has no HQ, so it plays on after the UK resigns", () => {
+    expect(properties(scenario, "hq", FRANCE)).toEqual([]);
+    const after = run(start(), { type: "resign" });
+    expect(after.result).toBeNull();
+    expect(after.players[UK]?.defeated).toBe(true);
+    expect(after.players[FRANCE]?.defeated).toBe(false);
+  });
+
+  it("the minefield runs unbroken from the sea to Bir Hakeim: north of Bir Hakeim, tanks can't get through without taking a box", () => {
+    // Shut the open south: everything south of Bir Hakeim's ring. Then nothing gets from the Axis
+    // camps to Tobruk without crossing a mine or a Bunker.
+    const south = new Set<string>();
+    for (let y = birHakeim.y; y < map.height; y++) for (let x = 0; x < map.width; x++) south.add(`${x},${y}`);
+    expect(reachable(axisStart, true, south).has(key(tobruk))).toBe(false);
+  });
+
+  it("no minefield lies on a road: roads cross the line at Bunkers", () => {
+    const roadNext = (p: Point) => [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(([dx = 0, dy = 0]) => at(p.x + dx, p.y + dy) === "road").length;
+    expect(mines.length).toBeGreaterThanOrEqual(35);
+    const crossings = map.terrain.flatMap((t, i) => (t === "bunker" && roadNext(P(i % map.width, Math.floor(i / map.width))) >= 2 ? [i] : []));
+    expect(crossings.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("the south end of the line is open: tanks can go round Bir Hakeim and reach Tobruk without taking a box", () => {
+    expect(reachable(axisStart, true).has(key(tobruk))).toBe(true);
+  });
+
+  it("the Axis assault force starts out of sight of every Allied unit and property (19-fog-of-war)", () => {
+    const state = start();
+    const assault = state.units.filter((u) => (u.owner === GERMANY || u.owner === ITALY) && UNITS[u.type].category === "land" && u.pos.y > birHakeim.y - 3);
+    expect(assault.length).toBeGreaterThanOrEqual(15);
+    for (const viewer of [UK, FRANCE]) for (const u of assault) expect(isHiddenFrom(state, u, viewer), `${u.type} at ${u.pos.x},${u.pos.y}`).toBe(true);
+  });
+
+  it("the Italian infantry facing the north of the line is in sight from the boxes", () => {
+    const state = start();
+    const seen = state.units.filter((u) => u.owner === ITALY && u.type === "infantry" && !isHiddenFrom(state, u, UK));
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("every Axis property is west of the minefield", () => {
+    const westmost = Math.min(...mines.map((m) => m.x));
+    for (const owner of [GERMANY, ITALY]) for (const p of (scenario.setup.propertyOwners ?? []).filter((q) => q.owner === owner)) expect(p.pos.x).toBeLessThan(westmost);
+  });
+
+  it("the Tobruk perimeter has gaps: it slows an attack from the south, it doesn't stop one", () => {
+    // Shut every gap-free route by blocking only the perimeter's mines: Tobruk is still reachable.
+    const fromSouth = reachable(P(tobruk.x, tobruk.y + 7), true);
+    expect(fromSouth.has(key(tobruk))).toBe(true);
+    const nearTobruk = mines.filter((m) => Math.max(Math.abs(m.x - tobruk.x), Math.abs(m.y - tobruk.y)) === 5);
+    expect(nearTobruk.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("Free French soldiers hold Bir Hakeim from Bunkers round the town, inside a ring of mines", () => {
+    const garrison = units.filter((u) => u.owner === FRANCE && u.type === "infantry" && at(u.pos.x, u.pos.y) === "bunker");
+    expect(garrison.length).toBe(3);
+    const ring = mines.filter((m) => Math.max(Math.abs(m.x - birHakeim.x), Math.abs(m.y - birHakeim.y)) === 2);
+    expect(ring.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("every tank starts with a full tank: the sweep is what empties them", () => {
+    expect(units.every((u) => u.fuel === undefined)).toBe(true);
+  });
+
+  it("nobody can build a Heavy Tank, Rocket Artillery or a ship", () => {
+    for (const player of scenario.setup.players) {
+      for (const type of ["heavyTank", "rocketArtillery", "destroyer", "landingCraft", "transportAircraft"] as const) {
+        expect(player.buildable ?? [], `${player.name} ${type}`).not.toContain(type);
+      }
+    }
+  });
+
+  it("a British tank at Bir Hakeim is repaired and refuelled at the UK's cost (04-economy §5)", () => {
+    const state = start();
+    const tank = { ...need(state.units[0], "a unit"), id: 999, type: "mediumTank" as const, owner: UK, pos: birHakeim, hp: 50, fuel: 5, cargo: [] };
+    const ready: GameState = { ...state, units: [...state.units.filter((u) => u.pos.x !== birHakeim.x || u.pos.y !== birHakeim.y), tank] };
+    const ukFunds = need(ready.players[UK], "UK").funds;
+    const franceFunds = need(ready.players[FRANCE], "Free France").funds;
+    const after = run(ready, ...endTurns(4)); // round to the UK's next turn
+    const repaired = after.units.find((u) => u.id === 999);
+    expect(repaired?.hp).toBe(70);
+    expect(repaired?.fuel).toBe(UNITS.mediumTank.maxFuel);
+    // The UK earns its 8 properties' income on its next turn, less 20% of the tank's 8,000 for 2 HP.
+    expect(need(after.players[UK], "UK").funds).toBe(ukFunds + 8 * 1000 - 1600);
+    expect(need(after.players[FRANCE], "Free France").funds).toBe(franceFunds + 1000);
   });
 });
 

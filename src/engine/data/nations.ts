@@ -7,6 +7,7 @@ export const NATIONS = {
   us: { name: "United States", side: "allies" },
   uk: { name: "United Kingdom", side: "allies" },
   canada: { name: "Canada", side: "allies" },
+  freeFrance: { name: "Free France", side: "allies" },
   ussr: { name: "Soviet Union", side: "allies" },
   germany: { name: "Germany", side: "axis" },
   japan: { name: "Japan", side: "axis" },

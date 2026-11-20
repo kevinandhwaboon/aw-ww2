@@ -1,7 +1,8 @@
 // Small national flags for the HUD. Placeholder art, and deliberately free of political symbols:
 // the Soviet flag is a white-edged red star on a plain green field (no hammer and sickle), Germany shows the Balkenkreuz, its wartime military marking, and
 // Japan shows its national flag, the plain red disc, never the rising-sun ensign. Italy shows the plain
-// tricolour, never the Savoy crest or the fasces.
+// tricolour, never the Savoy crest or the fasces. Free France shows the plain French tricolour, without
+// the Cross of Lorraine.
 
 import type { NationId } from "../engine/data/nations";
 
@@ -83,6 +84,18 @@ export const FLAGS: Readonly<Record<NationId, readonly string[]>> = {
     "WWWWWWRRRRWWWWWW",
     "WWWWWWWWWWWWWWWW",
     "WWWWWWWWWWWWWWWW",
+  ],
+  // Free France: the plain blue, white and red vertical tricolour.
+  freeFrance: [
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
+    "BBBBBWWWWWWRRRRR",
   ],
   // Italy: the plain green, white and red tricolour, never the Savoy crest of the wartime flag.
   italy: [
