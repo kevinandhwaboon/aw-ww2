@@ -41,6 +41,15 @@ export function missionScenario(scenario: Scenario, mission: CampaignMission): S
     const nation = scenario.setup.players[Number(id)]?.nation;
     if (nation && NATIONS[COMMANDERS[commander].nation].side !== NATIONS[nation].side) throw new Error(`${where}: ${commander} can't command player ${id}`);
   }
+  // Only unit types the nation fielded on this map: ones it can build here or already has (00-master-design §6).
+  for (const extra of advantage.units ?? []) {
+    const fielded = new Set([
+      ...(scenario.setup.players[extra.owner]?.buildable ?? []),
+      ...(scenario.setup.units ?? []).filter((u) => u.owner === extra.owner).flatMap((u) => [u.type, ...(u.cargo ?? []).map((c) => c.type)]),
+    ]);
+    const odd = [extra.type, ...(extra.cargo ?? []).map((c) => c.type)].find((type) => !fielded.has(type));
+    if (odd) throw new Error(`${where}: player ${extra.owner} doesn't field a ${odd} on this map`);
+  }
 
   const { setup } = scenario;
   const players = setup.players.map((player, id) => {

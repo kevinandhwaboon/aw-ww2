@@ -143,6 +143,14 @@ describe("the computer's advantage (22-campaign §4)", () => {
     );
   });
 
+  it("extra units are only types that nation fielded on the map: ones it can build there or already has", () => {
+    const base = scenarioOf("battle-of-britain");
+    // Germany has no warships on the Battle of Britain map (20-scenarios-battle-of-britain).
+    expect(() => missionScenario(base, { map: "battle-of-britain", commanders: {}, advantage: { units: [{ type: "destroyer", owner: 1, pos: { x: 22, y: 5 } }] } })).toThrow(
+      /doesn't field a destroyer/,
+    );
+  });
+
   it("the briefing says what the computer has been given, player by player", () => {
     const mission: CampaignMission = {
       map: "gazala",

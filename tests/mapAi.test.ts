@@ -1,9 +1,11 @@
-// Midway's map AI for Japan (22-campaign §6a): search and strike Midway, then every bomber for the
-// US Carriers once they're found, then the invasion. It sees only what Japan sees.
+// The campaign's map AIs (22-campaign §6). Midway's for Japan (§6a): search and strike Midway, then
+// every bomber for the US Carriers once they're found, then the invasion. It sees only what Japan
+// sees. And the simple "drive on the objective" plan (§6b).
 
 import { describe, expect, it } from "vitest";
 import { campaignAi, hasMapPlan } from "../src/ai/maps";
 import { CARRIER_STRIKE_BONUS, midwayPhase, midwayPlan, SEARCH_POINTS } from "../src/ai/maps/midway";
+import { objectivePlan } from "../src/ai/maps/objectives";
 import { greedyAi } from "../src/ai/greedy";
 import { aiStep, makeView } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
@@ -11,9 +13,20 @@ import { MISSIONS } from "../src/campaign/missions";
 import { missionScenario } from "../src/campaign/setup";
 import { apply } from "../src/engine/apply";
 import { launchState } from "../src/engine/transport";
-import { createGame } from "../src/engine/setup";
+import { parseAsciiMap } from "../src/engine/map";
+import { createGame, type GameSetup, type UnitSetup } from "../src/engine/setup";
 import type { GameState, Unit } from "../src/engine/state";
 import { SCENARIOS } from "../src/scenarios";
+
+const makeSetup = (rows: readonly string[], units: readonly UnitSetup[]): GameSetup => ({
+  map: parseAsciiMap(rows),
+  players: [
+    { name: "Allies", nation: "us" },
+    { name: "Axis", nation: "germany" },
+  ],
+  units,
+  seed: 1,
+});
 
 const US = 0;
 const JAPAN = 1;
@@ -46,9 +59,12 @@ function carrierFound(state: GameState): GameState {
 }
 
 describe("Midway's map AI for Japan (22-campaign §6a)", () => {
-  it("the campaign uses it on Midway, and plain Greedy elsewhere", () => {
+  it("the campaign uses it on Midway, the objective plan on Gazala and Ten-Go, and plain Greedy elsewhere", () => {
     expect(hasMapPlan("midway")).toBe(true);
+    expect(hasMapPlan("gazala")).toBe(true);
+    expect(hasMapPlan("ten-go")).toBe(true);
     expect(hasMapPlan("normandy")).toBe(false);
+    expect(campaignAi("gazala").name).toMatch(/Tobruk plan/);
     expect(campaignAi("midway").name).toMatch(/Midway plan/);
     expect(campaignAi("normandy").name).toBe("Greedy");
   });
@@ -134,4 +150,44 @@ describe("Midway's map AI for Japan (22-campaign §6a)", () => {
     expect(report.problems).toEqual([]);
     expect(report.state.result).not.toBeNull();
   }, 60_000);
+});
+
+describe("the objective plan: drive on the objective (22-campaign §6b)", () => {
+  /** A 2-player map: the Axis must capture the city at the right; a sea channel cuts off the top row. */
+  const rows = [
+    "SSSSSSSS",
+    "........",
+    "......HC",
+  ];
+  const game = (units: readonly UnitSetup[]): GameState =>
+    createGame({
+      ...makeSetup(rows, units),
+      victory: [{ type: "captureProperties", side: "axis", properties: [{ x: 7, y: 2 }] }, { type: "surviveDays", side: "allies", days: 10 }],
+    });
+
+  it("land units head for the objectives their side still has to capture", () => {
+    const state = { ...game([{ type: "infantry", owner: 1, pos: { x: 0, y: 2 } }, { type: "mediumTank", owner: 1, pos: { x: 0, y: 1 } }, { type: "infantry", owner: 0, pos: { x: 3, y: 1 } }]), currentPlayer: 1 };
+    const plan = objectivePlan("test");
+    for (const unit of state.units.filter((u) => u.owner === 1)) expect(plan.goals?.(state, unit)).toEqual([{ x: 7, y: 2 }]);
+  });
+
+  it("an objective already taken, or one a unit can't reach over land, gives it no orders", () => {
+    const state = { ...game([{ type: "infantry", owner: 1, pos: { x: 0, y: 2 } }, { type: "infantry", owner: 0, pos: { x: 3, y: 1 } }]), currentPlayer: 1 };
+    const taken = { ...state, properties: state.properties.map((p) => ({ ...p, owner: 1 })) };
+    const plan = objectivePlan("test");
+    const infantry = state.units.find((u) => u.owner === 1);
+    if (!infantry) throw new Error("no infantry");
+    expect(plan.goals?.(taken, infantry)).toBeNull();
+    // Out at sea, nothing on land can be walked to.
+    expect(plan.goals?.(state, { ...infantry, type: "destroyer", pos: { x: 2, y: 0 } })).toBeNull();
+  });
+
+  it("units that can't capture keep off the objective, so they don't block a capturer", () => {
+    const state = { ...game([{ type: "infantry", owner: 1, pos: { x: 0, y: 2 } }, { type: "mediumTank", owner: 1, pos: { x: 0, y: 1 } }, { type: "infantry", owner: 0, pos: { x: 3, y: 1 } }]), currentPlayer: 1 };
+    const plan = objectivePlan("test");
+    const [infantry, tank] = state.units.filter((u) => u.owner === 1);
+    if (!infantry || !tank) throw new Error("no units");
+    expect(plan.keepOff?.(state, infantry)).toEqual([]);
+    expect(plan.keepOff?.(state, tank)).toEqual([{ x: 7, y: 2 }]);
+  });
 });

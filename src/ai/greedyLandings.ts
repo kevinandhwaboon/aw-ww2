@@ -490,10 +490,12 @@ export abstract class LandingBrain extends BrainBase {
     const delivering = unit.cargo.length > 0 && (isLandingCraft(unit.type) || isAirTransport(unit.type));
     const danger = this.w.dangerWeight > 0 && staying && !delivering && !this.pressing() ? this.w.dangerWeight * this.danger(unit, dest) : 0;
     const pull = staying && plan.kind === "advance" && !plan.embark ? this.objectivePull(unit, dest) : 0;
+    // A map plan's squares to keep off (22-campaign §6): treated like blocking one of our own sites.
+    const keptOff = staying && (this.mapPlan?.keepOff?.(this.state, unit) ?? []).some((p) => samePoint(p, dest));
     return (
       this.actionScore(unit, plan, command, dest) +
       pull -
-      (blocks || inTheWay ? this.w.blockSitePenalty : 0) -
+      (blocks || inTheWay || keptOff ? this.w.blockSitePenalty : 0) -
       (exposed ? this.w.carrierDangerPenalty : 0) -
       danger -
       (staying && this.pastReturn(unit, plan, command, dest) ? Math.max(this.w.noReturnPenalty, this.w.noReturnOwnValue * this.worth(unit)) : 0)

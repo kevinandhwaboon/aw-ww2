@@ -33,31 +33,84 @@ export const MISSIONS: readonly CampaignMission[] = [
   {
     map: "battle-of-britain",
     commanders: { 1: "arakawa" },
-    advantage: { funds: { 1: 4000 }, incomePercent: 25 },
+    advantage: {
+      // Sea Lion's first wave is already ashore, inland of Hythe.
+      units: [
+        { type: "infantry", owner: 1, pos: { x: 9, y: 8 } },
+        { type: "infantry", owner: 1, pos: { x: 9, y: 7 } },
+        { type: "infantry", owner: 1, pos: { x: 10, y: 7 } },
+        { type: "infantry", owner: 1, pos: { x: 7, y: 8 } },
+        { type: "assaultInfantry", owner: 1, pos: { x: 8, y: 8 } },
+        { type: "mediumTank", owner: 1, pos: { x: 10, y: 8 } },
+        { type: "mediumTank", owner: 1, pos: { x: 11, y: 8 } },
+        { type: "artillery", owner: 1, pos: { x: 8, y: 7 } },
+        { type: "flakGun", owner: 1, pos: { x: 8, y: 9 } },
+      ],
+      // The towns the first wave has taken, between Hythe and Ashford, and the factory at Maidstone.
+      properties: [
+        { pos: { x: 9, y: 6 }, owner: 1 },
+        { pos: { x: 11, y: 7 }, owner: 1 },
+        { pos: { x: 11, y: 10 }, owner: 1 },
+        { pos: { x: 10, y: 11 }, owner: 1 },
+        { pos: { x: 8, y: 11 }, owner: 1 },
+      ],
+      funds: { 1: 4000 },
+      incomePercent: 25,
+    },
   },
   {
     map: "gazala",
     commanders: { 2: "falk", 3: "ferrante" },
-    advantage: { funds: { 2: 3000, 3: 2000 }, incomePercent: 25 },
+    advantage: {
+      // The panzers have already broken through round Bir Hakeim and stand south of El Adem, with fuel in Halftracks.
+      units: [
+        { type: "mediumTank", owner: 2, pos: { x: 29, y: 20 } },
+        { type: "mediumTank", owner: 2, pos: { x: 30, y: 21 } },
+        { type: "mediumTank", owner: 2, pos: { x: 29, y: 22 } },
+        { type: "mediumTank", owner: 2, pos: { x: 29, y: 19 } },
+        { type: "halftrack", owner: 2, pos: { x: 30, y: 20 }, cargo: [{ type: "infantry" }] },
+        { type: "halftrack", owner: 2, pos: { x: 31, y: 21 }, cargo: [{ type: "infantry" }] },
+        { type: "artillery", owner: 2, pos: { x: 30, y: 22 } },
+        { type: "mediumTank", owner: 3, pos: { x: 29, y: 24 } },
+        { type: "mediumTank", owner: 3, pos: { x: 28, y: 25 } },
+        { type: "infantry", owner: 3, pos: { x: 27, y: 26 } },
+      ],
+      funds: { 2: 3000, 3: 2000 },
+      incomePercent: 25,
+    },
   },
   {
     map: "midway",
     commanders: { 1: "arakawa" },
-    advantage: { funds: { 1: 2000 }, incomePercent: 25 },
+    advantage: {
+      // The invasion force sails with its oiler and a fourth transport.
+      units: [
+        { type: "supplyShip", owner: 1, pos: { x: 9, y: 19 } },
+        { type: "landingCraft", owner: 1, pos: { x: 8, y: 20 }, cargo: [{ type: "infantry" }] },
+      ],
+    },
   },
   {
     map: "sevastopol",
     commanders: { 1: "wendt" },
-    advantage: { funds: { 1: 3000 }, incomePercent: 25 },
+    advantage: { funds: { 1: 4500 }, incomePercent: 45 },
   },
   {
     map: "guadalcanal",
     commanders: { 1: "kuramochi" },
-    advantage: { funds: { 1: 3000 }, incomePercent: 25 },
+    advantage: {
+      // Kawaguchi's men already ashore at Koli Point, east of Henderson Field.
+      units: [
+        { type: "infantry", owner: 1, pos: { x: 30, y: 17 } },
+        { type: "infantry", owner: 1, pos: { x: 30, y: 16 } },
+        { type: "artillery", owner: 1, pos: { x: 31, y: 17 } },
+      ],
+    },
   },
   {
     map: "el-alamein",
     commanders: { 1: "falk", 2: "ferrante" },
+    // The Axis already wins every AI game here: the Allied AI doesn't clear a corridor (18-scenarios-north-africa §1).
     advantage: {},
   },
   {
@@ -83,7 +136,8 @@ export const MISSIONS: readonly CampaignMission[] = [
   {
     map: "market-garden",
     commanders: { 2: "falk" },
-    advantage: { funds: { 2: 3000 }, incomePercent: 25 },
+    // Germany already wins every AI game here: the Allied AI can't link the drops with XXX Corps (17-scenarios-market-garden).
+    advantage: {},
   },
   {
     map: "bastogne",
@@ -93,11 +147,31 @@ export const MISSIONS: readonly CampaignMission[] = [
   {
     map: "iwo-jima",
     commanders: { 1: "arakawa" },
+    // Japan already wins every AI game here: the US AI doesn't take the island in time (14-scenarios-pacific §5).
     advantage: {},
   },
   {
     map: "ten-go",
     commanders: { 1: "kuramochi" },
-    advantage: { funds: { 1: 2000 }, incomePercent: 25 },
+    advantage: {
+      // More of the 32nd Army in front of Shuri.
+      units: [
+        { type: "infantry", owner: 1, pos: { x: 5, y: 29 } },
+        { type: "infantry", owner: 1, pos: { x: 4, y: 29 } },
+        { type: "mediumTank", owner: 1, pos: { x: 6, y: 29 } },
+        { type: "artillery", owner: 1, pos: { x: 3, y: 29 } },
+        { type: "infantry", owner: 1, pos: { x: 7, y: 29 } },
+        { type: "assaultInfantry", owner: 1, pos: { x: 3, y: 28 } },
+        { type: "artillery", owner: 1, pos: { x: 7, y: 28 } },
+        { type: "mortar", owner: 1, pos: { x: 8, y: 29 } },
+        { type: "infantry", owner: 1, pos: { x: 7, y: 30 } },
+        { type: "infantry", owner: 1, pos: { x: 8, y: 28 } },
+        { type: "assaultInfantry", owner: 1, pos: { x: 2, y: 30 } },
+        { type: "mediumTank", owner: 1, pos: { x: 8, y: 30 } },
+        { type: "infantry", owner: 1, pos: { x: 7, y: 31 } },
+      ],
+      funds: { 1: 2000 },
+      incomePercent: 25,
+    },
   },
 ];

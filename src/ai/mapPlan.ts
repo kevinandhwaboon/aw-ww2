@@ -24,4 +24,6 @@ export interface MapPlan {
    * with goals is launched toward them even with nothing to attack (a scout).
    */
   goals?(state: GameState, unit: Unit): readonly Point[] | null;
+  /** Squares this unit shouldn't end its move on, such as an objective it can't capture and would only block. */
+  keepOff?(state: GameState, unit: Unit): readonly Point[];
 }

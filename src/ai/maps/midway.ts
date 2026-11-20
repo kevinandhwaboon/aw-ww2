@@ -6,7 +6,7 @@
 // whatever the US does, and nothing here reads where an unseen US unit is.
 
 import { distance, tileInSight, type GameState, type Point, type Unit, type UnitTypeId } from "../../engine";
-import { isCarrier, isLandingCraft } from "../greedyBase";
+import { defOf, isCarrier, isLandingCraft } from "../greedyBase";
 import type { MapPlan } from "../mapPlan";
 
 /**
@@ -33,6 +33,9 @@ const SEARCH_MEMORY_DAYS = 3;
 
 /** An attack on a US Carrier is worth this much more than its damage alone, in funds. */
 export const CARRIER_STRIKE_BONUS = 30000;
+
+/** Bombers in the air at once against Midway before the US Carriers are found; the rest are the reserve. */
+export const DAWN_STRIKE = 3;
 
 const BOMBERS: readonly UnitTypeId[] = ["bomber", "diveBomber", "torpedoBomber"];
 
@@ -99,7 +102,14 @@ export function midwayPlan(): MapPlan {
     },
 
     attackBonus(state, attacker, target) {
-      if (midwayPhase(state) !== "strike") return 0;
+      const phase = midwayPhase(state);
+      if (phase === "invade") return 0;
+      if (phase === "search") {
+        // Nagumo's reserve: once the dawn strike is in the air, the other bombers stay aboard, armed for ships.
+        const airborne = state.units.filter((u) => u.owner === attacker.owner && u.id !== attacker.id && BOMBERS.includes(u.type)).length;
+        const atLand = defOf(target.type).category === "land";
+        return BOMBERS.includes(attacker.type) && launching(state, attacker) && atLand && airborne >= DAWN_STRIKE ? -Infinity : 0;
+      }
       if (isCarrier(target.type) && isEnemy(state, target.owner)) return CARRIER_STRIKE_BONUS;
       // A bomber still aboard is kept for the US Carriers.
       return BOMBERS.includes(attacker.type) && launching(state, attacker) ? -Infinity : 0;

@@ -5,10 +5,15 @@ import type { MapPlan } from "../mapPlan";
 import type { AiPlayer } from "../player";
 import { GREEDY_WEIGHTS } from "../weights";
 import { midwayPlan } from "./midway";
+import { objectivePlan } from "./objectives";
 
 /** A fresh plan for each game, since a plan may keep hints such as where it has searched. */
 const PLANS: Readonly<Record<string, () => MapPlan>> = {
   midway: midwayPlan,
+  // Rommel's drive on Tobruk.
+  gazala: () => objectivePlan("Tobruk plan"),
+  // The 32nd Army's counterattack on the airfields.
+  "ten-go": () => objectivePlan("Okinawa plan"),
 };
 
 export function hasMapPlan(map: string): boolean {
