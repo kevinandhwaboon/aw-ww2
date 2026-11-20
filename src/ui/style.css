@@ -748,12 +748,17 @@ body {
 }
 
 /* ---- The campaign screen: the missions in order, and the briefing of the one picked (22-campaign §7) ---- */
-.campaign {
-  width: min(960px, 100%);
+/* The missions in two columns under the world map, in order down each column. */
+.campaign-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: repeat(var(--rows, 7), auto);
+  grid-auto-flow: column;
+  column-gap: 8px;
 }
 
-.campaign .map-select-body {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+.world-label.campaign-label.locked:not(.selected) {
+  opacity: 0.6;
 }
 
 .campaign-mark {
@@ -779,9 +784,14 @@ body {
 }
 
 @media (max-width: 760px) {
-  .map-select-body,
-  .campaign .map-select-body {
+  .map-select-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .campaign-list {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row;
+    grid-template-rows: none;
   }
 }
 

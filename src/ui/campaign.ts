@@ -14,7 +14,8 @@ import { commanderPicker, type CommanderPicker } from "./commanders";
 import { el } from "./dom";
 import type { GameOptions } from "./gameOptions";
 import { menuKeys } from "./menuKeys";
-import { BATTLE_PLACES, THEATERS } from "./theaters";
+import { BATTLE_PLACES, project, THEATERS, type BattlePlace } from "./theaters";
+import { WorldMap } from "./worldMap";
 
 /** A mission with the map it's played on: the mission's own scenario, advantage included. */
 export interface CampaignEntry {
@@ -65,12 +66,24 @@ export function showCampaign(
 ): void {
   const node = el("div", "screen");
   root.append(node);
-  const close = () => node.remove();
+  // The world map, as on the map select: a dot for every mission, and the camera flies to the
+  // theater of the one picked, so walking the chain hops round the world in the order of the war.
+  const world = new WorldMap();
+  const close = () => {
+    world.stop();
+    node.remove();
+  };
   const panel = el("div", "panel screen-panel map-select campaign");
+  const mapFrame = el("div", "world-map");
+  const labels = el("div", "world-labels");
+  mapFrame.append(world.canvas, labels);
   const list = el("div", "map-list campaign-list");
+  list.style.setProperty("--rows", String(Math.ceil(entries.length / 2)));
+  const left = el("div", "map-select-left");
+  left.append(mapFrame, list);
   const brief = el("div", "map-brief campaign-brief");
   const body = el("div", "map-select-body");
-  body.append(list, brief);
+  body.append(left, brief);
   panel.append(el("div", "panel-title", "Campaign"), el("div", "screen-hint", "↑ ↓ mission · Z choose · X back"), body);
   node.append(panel);
 
@@ -83,16 +96,42 @@ export function showCampaign(
   let briefControls: HTMLElement[] = [];
   /** Keeps what was chosen on the briefing shown, before another replaces it. */
   let rememberShown = () => {};
+  /** The mission whose briefing is shown; -1 before the first. */
+  let shown = -1;
+  const labelFor: { label: HTMLButtonElement; place: BattlePlace }[] = [];
+
+  function placeLabels(): void {
+    const view = world.currentView;
+    for (const { label, place } of labelFor) {
+      const at = project(view, place.lon, place.lat);
+      label.style.left = `${(at.x * 100).toFixed(2)}%`;
+      label.style.top = `${(at.y * 100).toFixed(2)}%`;
+      label.hidden = at.x < 0 || at.x > 1 || at.y < 0 || at.y > 1;
+    }
+  }
+  world.onMove = placeLabels;
 
   function choose(index: number): void {
     const entry = entries[index];
-    if (!entry) return;
+    if (!entry || index === shown) return;
     rememberShown();
+    const first = shown < 0;
+    const from = BATTLE_PLACES[entries[shown]?.scenario.id ?? ""]?.theater;
+    shown = index;
     rows.forEach((row, i) => row.classList.toggle("selected", i === index));
+    labelFor.forEach(({ label }, i) => label.classList.toggle("selected", i === index));
     const { mission, scenario } = entry;
     const status = missionStatus(missions, progress, index);
     const place = BATTLE_PLACES[scenario.id];
     const axis = axisPlayers(scenario);
+    world.setDots(
+      entries.flatMap((e) => {
+        const at = BATTLE_PLACES[e.scenario.id];
+        return at ? [{ id: e.scenario.id, lon: at.lon, lat: at.lat }] : [];
+      }),
+      scenario.id,
+    );
+    if (place && (first || place.theater !== from)) world.flyTo(THEATERS[place.theater].view, first);
 
     const pickers: { id: number; picker: CommanderPicker }[] = [];
     const players = el("div", "player-options");
@@ -156,8 +195,19 @@ export function showCampaign(
     });
     list.append(row);
     rows.push(row);
+    if (place) {
+      const label = el("button", `world-label campaign-label ${status} ${place.label ?? ""}`, `${index + 1}. ${entry.scenario.name}`);
+      label.tabIndex = -1;
+      label.addEventListener("click", () => {
+        if (index === shown) briefControls[0]?.focus();
+        else rows[index]?.focus();
+      });
+      labels.append(label);
+      labelFor.push({ label, place });
+    }
   });
 
+  placeLabels();
   menuKeys(list, rows, () => {
     close();
     onBack();
