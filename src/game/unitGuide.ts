@@ -24,6 +24,7 @@ export const UNIT_GUIDE: Readonly<Record<UnitTypeId, UnitGuide>> = {
   mobileAA: { role: "Air defense that also shreds infantry", strongVs: ["fighter", "bomber", "infantry"], weakVs: ["mediumTank", "heavyTank", "tankDestroyer"] },
   flakGun: { role: "Long-range air defense. Air targets only", strongVs: ["fighter", "bomber", "transportAircraft"], weakVs: ["lightTank", "mediumTank", "artillery"] },
   radarStation: { role: "Sees enemy aircraft 10 squares away, other units only next to it. Can't move. Unarmed", strongVs: [], weakVs: ["bomber", "assaultInfantry", "heavyTank"] },
+  railwayGun: { role: "Rides the rails only, 1 square a turn. One huge shot a turn at range 3-20 breaks any bunker. 3 shells; a Halftrack next to it rearms it", strongVs: ["infantry", "heavyTank", "artillery"], weakVs: ["bomber", "assaultInfantry", "mediumTank"] },
   fighter: { role: "Hunts aircraft. 2 rounds of ammo; a Bomber takes both", strongVs: ["transportAircraft", "diveBomber", "torpedoBomber"], weakVs: ["mobileAA", "flakGun"] },
   bomber: { role: "Heavy strikes on land and sea. 2 bomb loads", strongVs: ["mediumTank", "heavyTank", "battleship"], weakVs: ["mobileAA", "flakGun"] },
   transportAircraft: { role: "Unarmed. Flies foot units in", strongVs: [], weakVs: ["fighter", "flakGun"] },

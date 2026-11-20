@@ -10,7 +10,7 @@ export const UNIT_TYPE_IDS = [
   "lightTank", "mediumTank", "heavyTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA",
   // Land (phase 2)
-  "flakGun", "radarStation",
+  "flakGun", "radarStation", "railwayGun",
   // Air (phase 2)
   "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
   // Naval (phase 2)
@@ -185,6 +185,14 @@ export const UNITS = {
   radarStation: {
     ...BASE, phase: 2, name: "Radar Station", category: "land", cost: 12000, movePoints: 0, movementType: "tracks",
     vision: 1, airVision: 10, maxFuel: 0, range: null, neverBuilt: true,
+  },
+
+  // Schwerer Gustav (01-units §2b): moves only on Railway squares, 1 a turn; one huge shot a turn at
+  // range 3–20, 3 shells, rearmed by a Halftrack next to it. Never built.
+  railwayGun: {
+    ...BASE, phase: 2, name: "Railway Gun", category: "land", cost: 30000, movePoints: 1, movementType: "rail",
+    vision: 1, maxFuel: 50, primaryWeapon: { name: "80 cm gun", maxAmmo: 3 }, range: { min: 3, max: 20 },
+    canMoveAndFire: false, neverBuilt: true,
   },
 
   // ---- Air, phase 2 ----

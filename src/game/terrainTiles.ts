@@ -37,13 +37,19 @@ const at = (map: GameMap, x: number, y: number): TerrainId | undefined =>
  * A road or river that dead-ends at the map's edge runs straight on past it, so it never stops
  * short of the border. One that turns or branches there keeps its shape.
  */
-export function joinMask(map: GameMap, x: number, y: number, joins: readonly TerrainId[]): number {
+export function joinMask(
+  map: GameMap,
+  x: number,
+  y: number,
+  joins: readonly TerrainId[],
+  alsoJoins: (x: number, y: number) => boolean = () => false,
+): number {
   let mask = 0;
   const offMap: number[] = [];
   for (const { bit, dx, dy } of SIDES) {
     const next = at(map, x + dx, y + dy);
     if (next === undefined) offMap.push(bit);
-    else if (joins.includes(next)) mask |= bit;
+    else if (joins.includes(next) || alsoJoins(x + dx, y + dy)) mask |= bit;
   }
   const deadEnd = SIDES.some(({ bit }) => mask === bit);
   for (const bit of offMap) {
@@ -58,6 +64,17 @@ export function bridgeRunsAcross(map: GameMap, x: number, y: number): boolean {
   if (water(at(map, x, y - 1)) || water(at(map, x, y + 1))) return true;
   return !(water(at(map, x - 1, y)) || water(at(map, x + 1, y)));
 }
+
+/**
+ * A Railway square where the line crosses a river (02-terrain §4c): river on two opposite sides. It
+ * draws as river with a girder span over it, and the river runs into it from both banks.
+ */
+export function isRailCrossing(map: GameMap, x: number, y: number): boolean {
+  if (at(map, x, y) !== "railway") return false;
+  const river = (dx: number, dy: number) => at(map, x + dx, y + dy) === "river";
+  return (river(0, -1) && river(0, 1)) || (river(-1, 0) && river(1, 0));
+}
+const railCrossingAt = (map: GameMap) => (x: number, y: number) => isRailCrossing(map, x, y);
 
 /** Picks the same variant for a cell every time, so the map doesn't shuffle when redrawn. */
 export function variantFor(x: number, y: number, count: number): number {
@@ -191,7 +208,14 @@ export function terrainLayers(map: GameMap, x: number, y: number, sheet: Terrain
     return deck ? [base, tile(bridgeRunsAcross(map, x, y) ? deck.horizontal : deck.vertical)] : [base];
   }
   if (id === "road" && connected.road !== undefined) return [tile(connected.road + joinMask(map, x, y, ROAD_JOINS))];
-  if (id === "river" && connected.river !== undefined) return [tile(connected.river + joinMask(map, x, y, RIVER_JOINS))];
+  if (id === "river" && connected.river !== undefined) return [tile(connected.river + joinMask(map, x, y, RIVER_JOINS, railCrossingAt(map)))];
+  if (id === "railway") {
+    if (isRailCrossing(map, x, y) && connected.river !== undefined && sheet.railBridges) {
+      const base = tile(connected.river + joinMask(map, x, y, RIVER_JOINS, railCrossingAt(map)));
+      return [base, tile(bridgeRunsAcross(map, x, y) ? sheet.railBridges.horizontal : sheet.railBridges.vertical)];
+    }
+    if (connected.railway !== undefined) return [tile(connected.railway + joinMask(map, x, y, ["railway"]))];
+  }
 
   if (id === "beach" && beach !== undefined) {
     const mask = beachWaterMask(map, x, y);

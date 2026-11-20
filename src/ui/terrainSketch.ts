@@ -33,6 +33,7 @@ const FEATURE_OF: Readonly<Record<TerrainId, SketchFeature>> = {
   minefield: "land",
   ridge: "hills",
   saltMarsh: "marsh",
+  railway: "land",
 };
 
 export interface TerrainSketch {

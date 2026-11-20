@@ -1,7 +1,7 @@
 # Topic Doc 02: Terrain
 
 **Status:** v0 decided. Values follow the original game (default rule) except where marked **(new)**. Expect tuning after playtesting.
-**Last updated:** 2026-11-15 (§4a Major Bridge, §4b desert terrain)
+**Last updated:** 2026-11-19 (§4c Railway and the `rail` movement type)
 **Depends on:** 00-master-design.md, 01-units.md, 03-combat.md. **Feeds:** 04-economy-production (properties), 05-supply-transport (unloading, beaches), map making.
 
 ---
@@ -24,6 +24,7 @@
 | `air` | Air | All air units (phase 2) |
 | `sea` | Ship | Battleship, Destroyer, Submarine, Torpedo Boat, Carrier, Supply Ship (phase 2) |
 | `landingCraft` | Transport (Lander) | Landing Craft (phase 2) |
+| `rail` **(new)** | — | Railway Gun (scenario only). Enters Railway squares only (§4c) |
 
 ## 3. Terrain table (v0)
 
@@ -99,6 +100,20 @@ Decided at the developer's request for El Alamein (18-scenarios-north-africa). T
 - **Salt Marsh** is impassable to every land unit, like Sea, but isn't water, so ships can't enter it either. It's the Qattara Depression, which closed the south end of the El Alamein line.
 - **Modifier layer:** all three go through the modifier layer like every other terrain (§1).
 - **As built (2026-11-15):** in scenario map text a Minefield is `m`, a Ridge `d` and Salt Marsh `z`. Art packs give them tiles under `minefield`, `ridge` and `saltMarsh` (08-art-pipeline §21); the AI already plans its routes as if a breakable obstacle were gone, so it attacks minefields with no new rule.
+
+## 4c. Railway and rail movement **(new)** (decided 2026-11-19)
+
+Decided at the developer's request for Sevastopol (15-scenarios-eastern-front §3) and the Railway Gun (01-units §2b). The original game has nothing like it.
+
+| Terrain | Stars | foot | heavyFoot | wheels | tracks | air | sea | landingCraft | rail |
+|---|---|---|---|---|---|---|---|---|---|
+| Railway | 0 | 1 | 1 | 1 | 1 | 1 | — | — | 1 |
+
+- **Railway** is a railway line. For every other unit it's exactly a **Road**: the trackbed is firm, open ground. Where a line crosses a river, the Railway square is its bridge, and everyone crosses there as on a road bridge. A line can't be blown or cut (yet).
+- **`rail` is a new movement type**, used only by the Railway Gun. It can enter **Railway squares and nothing else**: every other terrain is impassable to it, properties included. So a map maker decides exactly where a railway gun can go by where the track runs.
+- **Weather doesn't change rail costs**: a train runs in snow and rain (12-weather §3 has no rail entries).
+- **Modifier layer:** Railway's costs and stars go through the modifier layer like every other terrain (§1).
+- **As built:** in scenario map text a Railway is `R`. Art packs draw it as a ballasted track that joins up with neighboring Railway squares, as roads do (08-art-pipeline §14).
 
 ## 5. Movement rules
 

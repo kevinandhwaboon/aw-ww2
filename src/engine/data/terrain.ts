@@ -10,6 +10,8 @@ export const MOVEMENT_TYPES = [
   "air",
   "sea",
   "landingCraft",
+  // 02-terrain §4c: the Railway Gun. Enters Railway squares only.
+  "rail",
 ] as const;
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
@@ -19,6 +21,7 @@ export const TERRAIN_IDS = [
   "bunker", "rubble", "obstacle",
   "majorBridge", "blownBridge",
   "minefield", "ridge", "saltMarsh",
+  "railway",
 ] as const;
 export type TerrainId = (typeof TERRAIN_IDS)[number];
 
@@ -65,7 +68,8 @@ const costs = (
   air: number | null,
   sea: number | null,
   landingCraft: number | null,
-): MoveCosts => ({ foot, heavyFoot, wheels, tracks, air, sea, landingCraft });
+  rail: number | null = null,
+): MoveCosts => ({ foot, heavyFoot, wheels, tracks, air, sea, landingCraft, rail });
 
 const LAND_PROPERTY = costs(1, 1, 1, 1, 1, _, _);
 
@@ -121,6 +125,9 @@ export const TERRAIN = {
   },
   ridge: { name: "Ridge", defenseStars: 2, moveCost: costs(1, 1, 3, 2, 1, _, _) },
   saltMarsh: { name: "Salt Marsh", defenseStars: 0, moveCost: costs(_, _, _, _, 1, _, _) },
+  // 02-terrain §4c: a railway line. A Road for everyone else (and its own bridge over a river); the
+  // only terrain a rail unit can enter.
+  railway: { name: "Railway", defenseStars: 0, moveCost: costs(1, 1, 1, 1, 1, _, _, 1) },
 } as const satisfies Record<TerrainId, TerrainDef>;
 
 export function terrainDef(id: TerrainId): TerrainDef {

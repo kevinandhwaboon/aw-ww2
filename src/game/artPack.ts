@@ -237,13 +237,15 @@ export interface TerrainSheet {
   /** Tile numbers per terrain. Several are variants, picked by map position. */
   readonly tiles: Readonly<Partial<Record<TerrainId, readonly number[]>>>;
   /** First of 16 joined pieces, in neighbor-mask order (N=1, E=2, S=4, W=8). */
-  readonly connected: Readonly<Partial<Record<"road" | "river", number>>>;
+  readonly connected: Readonly<Partial<Record<ConnectedTerrain, number>>>;
   /** Bridge decks drawn over a river piece. */
   readonly bridges: BridgeTiles | null;
   /** Major Bridge decks drawn over a river piece (02-terrain §4a). Without them, the Bridge deck is used. */
   readonly majorBridges?: BridgeTiles;
   /** Blown Bridge wrecks drawn over a river piece (02-terrain §4a). Without them, a Blown Bridge is drawn as river. */
   readonly blownBridges?: BridgeTiles;
+  /** A railway's girder span drawn over a river piece where the line crosses one (02-terrain §4c). */
+  readonly railBridges?: BridgeTiles;
   /** First of 8 shore pieces drawn over sea next to land: edges N, E, S, W, then corners NE, SE, SW, NW. */
   readonly shore?: number;
   /**
@@ -442,9 +444,13 @@ function parseUnitSheet(raw: unknown, index: number): UnitSheet {
 }
 
 
+/** Terrain drawn as 16 pieces that join their neighbors, like roads. */
+export type ConnectedTerrain = "road" | "river" | "railway";
+const CONNECTED: readonly string[] = ["road", "river", "railway"] satisfies readonly ConnectedTerrain[];
+
 function parseTerrainSheet(raw: unknown): TerrainSheet {
   if (!isObject(raw)) return fail(`"terrain" must be an object`);
-  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, shore, beach, beachFlares, winterPath, desertPath } = raw;
+  const { path, tiles, frames = 1, tileWidth = 16, connected = {}, bridges, majorBridges, blownBridges, railBridges, shore, beach, beachFlares, winterPath, desertPath } = raw;
   const { tileHeight = tileWidth } = raw;
   if (!isRelativePath(path)) return fail(`terrain: "path" must be a file in the pack`);
   if (!isObject(tiles)) return fail(`terrain: "tiles" must be an object`);
@@ -460,7 +466,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   }
   if (!isObject(connected)) return fail(`terrain: "connected" must be an object`);
   for (const [terrain, first] of Object.entries(connected)) {
-    if (terrain !== "road" && terrain !== "river") return fail(`terrain: only road and river can be connected, not "${terrain}"`);
+    if (!CONNECTED.includes(terrain)) return fail(`terrain: only road, river and railway can be connected, not "${terrain}"`);
     if (!isTileNumber(first)) return fail(`terrain: connected "${terrain}" must be a whole number`);
   }
   const bridgeTiles = (name: string, value: unknown): BridgeTiles | undefined => {
@@ -473,6 +479,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
   const plain = bridgeTiles("bridges", bridges);
   const major = bridgeTiles("majorBridges", majorBridges);
   const blown = bridgeTiles("blownBridges", blownBridges);
+  const rail = bridgeTiles("railBridges", railBridges);
   if (shore !== undefined && !isTileNumber(shore)) return fail(`terrain: "shore" must be a whole number`);
   if (beach !== undefined && !isTileNumber(beach)) return fail(`terrain: "beach" must be a whole number`);
   if (beachFlares !== undefined && !isTileNumber(beachFlares)) return fail(`terrain: "beachFlares" must be a whole number`);
@@ -488,6 +495,7 @@ function parseTerrainSheet(raw: unknown): TerrainSheet {
     bridges: plain ?? null,
     ...(major === undefined ? {} : { majorBridges: major }),
     ...(blown === undefined ? {} : { blownBridges: blown }),
+    ...(rail === undefined ? {} : { railBridges: rail }),
     ...(shore === undefined ? {} : { shore }),
     ...(beach === undefined ? {} : { beach }),
     ...(beachFlares === undefined ? {} : { beachFlares }),
