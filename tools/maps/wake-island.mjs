@@ -140,7 +140,9 @@ const EDGES = {
 // ---- The siege, 8–23 December (§3): units arrive at the start of Japan's turn and strike on its next ----
 const raid = (n) => Array.from({ length: n }, () => ({ type: "bomber", sortieTurns: 2 }));
 const ships = (type, n, extra = {}) => Array.from({ length: n }, () => ({ type, ...extra }));
-const craft = (...cargo) => ({ type: "landingCraft", cargo: cargo.map((type) => ({ type })) });
+// Japan's Landing Craft turn for home once they've put their troops ashore (§5c); the US's stay.
+const craft = (...cargo) => ({ type: "landingCraft", cargo: cargo.map((type) => ({ type })), leavesWhenEmpty: true });
+const usCraft = (...cargo) => ({ type: "landingCraft", cargo: cargo.map((type) => ({ type })) });
 const wave = (n, day, name, from, units) => ({ day, player: JAPAN, wave: n, name, zone: EDGES[from].zone, from, units });
 const arrivals = [
   // The 36 bombers from Roi that caught VMF-211 on the ground at noon.
@@ -181,7 +183,7 @@ const arrivals = [
     units: [
       { type: "carrier", cargo: [{ type: "fighter" }, { type: "fighter" }] },
       { type: "supplyShip" },
-      craft("infantry", "artillery"),
+      usCraft("infantry", "artillery"),
       { type: "destroyer" },
     ],
   },
@@ -198,7 +200,7 @@ const waves = {
   growth: 0.12,
   edges: Object.values(EDGES),
   unitCap: 60,
-  convoy: { player: US, fromWave: 13, every: 4, edge: "east", units: [{ type: "supplyShip" }, craft("infantry", "infantry")] },
+  convoy: { player: US, fromWave: 13, every: 4, edge: "east", units: [{ type: "supplyShip" }, usCraft("infantry", "infantry")] },
 };
 
 // ---- Build lists ----

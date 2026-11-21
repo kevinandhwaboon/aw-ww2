@@ -8,7 +8,7 @@ import { battleOfBritainPlan } from "./battleOfBritain";
 import { gazalaPlan } from "./gazala";
 import { midwayPlan } from "./midway";
 import { objectivePlan } from "./objectives";
-import { survivalPlan } from "./survival";
+import { survivalDefencePlan, survivalPlan } from "./survival";
 
 /** A fresh plan for each game, since a plan may keep hints such as where it has searched. */
 const PLANS: Readonly<Record<string, () => MapPlan>> = {
@@ -37,4 +37,9 @@ export function campaignAi(map: string): AiPlayer {
  */
 export function survivalAi(): AiPlayer {
   return greedyAi(GREEDY_WEIGHTS, survivalPlan("Survival plan"));
+}
+
+/** The computer defending on a survival map, as self-play does to tune the waves (23-survival §6, §8). */
+export function survivalDefenderAi(): AiPlayer {
+  return greedyAi(GREEDY_WEIGHTS, survivalDefencePlan("Survival defence"));
 }

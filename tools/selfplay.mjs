@@ -70,7 +70,7 @@ try {
   const { weightsFor } = await server.ssrLoadModule("/src/ai/weights.ts");
   const { MISSIONS } = await server.ssrLoadModule("/src/campaign/missions.ts");
   const { missionScenario, axisPlayers } = await server.ssrLoadModule("/src/campaign/setup.ts");
-  const { campaignAi, survivalAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
+  const { campaignAi, survivalAi, survivalDefenderAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
   const { SURVIVAL_MAPS } = await server.ssrLoadModule("/src/survival/maps.ts");
   const { sideAhead } = await server.ssrLoadModule("/src/ai/standing.ts");
 
@@ -101,8 +101,14 @@ try {
       const start = createGame({ ...setup, seed, ...(args.fog ? { settings: { ...setup.settings, fogOfWar: true } } : {}) });
       const axis = args.campaign ? axisPlayers(scenario) : [];
       // On a survival map the waves always play the survival plan, as in the game (23-survival §6).
-      const attacker = SURVIVAL_MAPS.find((m) => m.map === scenario.id)?.attacker;
-      const ais = start.players.map((p) => (axis.includes(p.id) ? campaignAi(scenario.id) : p.id === attacker ? survivalAi() : makeAi(seed, p.id)));
+      // The defender, when it's Greedy, keeps its HQ with the survival defence plan.
+      const survivalMap = SURVIVAL_MAPS.find((m) => m.map === scenario.id);
+      const ais = start.players.map((p) => {
+        if (axis.includes(p.id)) return campaignAi(scenario.id);
+        if (p.id === survivalMap?.attacker) return survivalAi();
+        if (p.id === survivalMap?.defender && args.players === "greedy") return survivalDefenderAi();
+        return makeAi(seed, p.id);
+      });
       const report = await selfPlay(start, ais, lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
       ahead.set(sideAhead(report.state), (ahead.get(sideAhead(report.state)) ?? 0) + 1);

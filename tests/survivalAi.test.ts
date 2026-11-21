@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 import { survivalAi } from "../src/ai/maps";
-import { AIR_DEFENCE_BONUS, enemyHqs, HQ_BLOCKER_BONUS, hqBlockers, survivalPlan } from "../src/ai/maps/survival";
+import { AIR_DEFENCE_BONUS, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
 import { chooseCommand } from "../src/ai/greedy";
 import type { AiPlayer } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
@@ -160,5 +160,74 @@ describe("an aircraft parked on the HQ (23-survival §6)", () => {
     // The parked fighter is shot down; it was the US's last unit, so the US is out.
     expect(report.state.players[0]?.unitsLost).toMatchObject({ fighter: 1 });
     expect(report.state.result?.winningSide).toBe("axis");
+  });
+});
+
+describe("units heading home (23-survival §5c)", () => {
+  it("the computer flies a raider heading home to the map's edge, and it leaves (23-survival §5c)", async () => {
+    const rows = ["...............", "...............", "...............", "...............", "...............", "...............", "..............."];
+    const start = createGame({
+      map: parseAsciiMap(rows),
+      players: [
+        { name: "US", nation: "us" },
+        { name: "Japan", nation: "japan", buildable: [] },
+      ],
+      units: [
+        // A Bomber can't attack a Fighter, so the US stays in the game while the bomber flies out.
+        { type: "fighter", owner: 0, pos: { x: 0, y: 6 } },
+        { type: "infantry", owner: 1, pos: { x: 14, y: 6 } },
+      ],
+      // Japan's bomber turns for home on its second turn, in the middle of the map.
+      arrivals: [{ day: 1, player: 1, zone: [{ x: 7, y: 3 }], units: [{ type: "bomber", sortieTurns: 1 }] }],
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+    const idle: AiPlayer = { name: "idle", chooseCommand: () => ({ type: "endTurn" }) };
+    const report = await selfPlay(start, [idle, survivalAi()], 6);
+    expect(report.problems).toEqual([]);
+    expect(report.state.units.some((u) => u.type === "bomber")).toBe(false);
+    expect(report.state.players[1]?.unitsLost).toEqual({});
+  });
+});
+
+describe("the defender's plan when the computer plays it (23-survival §6)", () => {
+  const rows = ["SSSSSSSS", "........", "......CQ"];
+  const usTurn = (units: readonly UnitSetup[]): GameState =>
+    createGame({
+      map: parseAsciiMap(rows),
+      players: [
+        { name: "US", nation: "us" },
+        { name: "Japan", nation: "japan" },
+      ],
+      propertyOwners: [{ pos: { x: 7, y: 2 }, owner: 0 }, { pos: { x: 6, y: 2 }, owner: 0 }],
+      units,
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+
+  it("an enemy on or next to the HQ draws every attack, most of all one capturing it (23-survival §6)", () => {
+    const state = usTurn([
+      { type: "mediumTank", owner: 0, pos: { x: 0, y: 1 } },
+      { type: "infantry", owner: 1, pos: { x: 7, y: 2 } },
+      { type: "infantry", owner: 1, pos: { x: 7, y: 1 } },
+      { type: "infantry", owner: 1, pos: { x: 2, y: 1 } },
+    ]);
+    const [tank, onHq, beside, far] = state.units;
+    if (!tank || !onHq || !beside || !far) throw new Error("missing units");
+    const capturing = { ...state, properties: state.properties.map((p) => (p.pos.x === 7 ? { ...p, capturingUnit: onHq.id, capturePoints: 10 } : p)) };
+    const plan = survivalDefencePlan("test");
+    expect(plan.attackBonus?.(capturing, tank, onHq)).toBe(2 * HQ_DEFENCE_BONUS);
+    expect(plan.attackBonus?.(capturing, tank, beside)).toBe(HQ_DEFENCE_BONUS);
+    expect(plan.attackBonus?.(capturing, tank, far)).toBe(0);
+  });
+
+  it("when the enemy lands near the HQ, the defender's armed land units turn back for it (23-survival §6)", () => {
+    const plan = survivalDefencePlan("test");
+    const quiet = usTurn([{ type: "mediumTank", owner: 0, pos: { x: 0, y: 1 } }, { type: "infantry", owner: 1, pos: { x: 0, y: 2 } }]);
+    const tank = quiet.units[0];
+    if (!tank) throw new Error("no tank");
+    expect(plan.goals?.(quiet, tank)).toBeNull();
+    const landed = usTurn([{ type: "mediumTank", owner: 0, pos: { x: 0, y: 1 } }, { type: "infantry", owner: 1, pos: { x: 5, y: 1 } }]);
+    expect(plan.goals?.(landed, landed.units[0] ?? tank)).toEqual([{ x: 5, y: 1 }]);
   });
 });

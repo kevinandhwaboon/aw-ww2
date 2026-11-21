@@ -130,6 +130,7 @@ function buyWave(state: GameState, generator: WaveGenerator, pattern: WavePatter
       type: entry.type,
       ...(entry.cargo ? { cargo: entry.cargo.map((type) => ({ type })) } : {}),
       ...(entry.sortieTurns === undefined ? {} : { sortieTurns: entry.sortieTurns }),
+      ...(entry.leavesWhenEmpty ? { leavesWhenEmpty: true } : {}),
     };
     for (let i = 0; i < count; i++) groups[group]?.units.push(unit);
   }

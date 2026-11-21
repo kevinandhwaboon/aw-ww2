@@ -6,7 +6,7 @@ import { beatHistory, bestRun, describeRun, ordinal, placeOf, readRecords, runOf
 import { showSurvival, type SurvivalEntry } from "./ui/survival";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
-import { campaignAi, survivalAi } from "./ai/maps";
+import { campaignAi, survivalAi, survivalDefenderAi } from "./ai/maps";
 import { MISSIONS } from "./campaign/missions";
 import { alliesWon, campaignComplete, missionStatus, missionsWon, readProgress, withWin, writeProgress } from "./campaign/progress";
 import { missionScenario } from "./campaign/setup";
@@ -205,6 +205,7 @@ function start(
       if (mission) return campaignAi(scenario.id);
       // The waves play the survival plan (23-survival §6); the defender, if the computer plays it, plain Greedy.
       if (survival && id === survival.survival.attacker) return survivalAi();
+      if (survival && id === survival.survival.defender) return survivalDefenderAi();
       return greedyAi(weightsFor(options.level));
     }),
     debug: url.debug,

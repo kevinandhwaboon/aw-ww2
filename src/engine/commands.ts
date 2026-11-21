@@ -180,7 +180,9 @@ export type GameEvent =
       readonly name?: string;
       readonly units: readonly { readonly unitId: UnitId; readonly unitType: UnitTypeId; readonly pos: Point }[];
     }
-  /** A raider went home at the start of its owner's turn (23-survival §5c). Not a loss. */
+  /** A raider whose turns are up, or a Landing Craft that has unloaded, turns for home (23-survival §5c). */
+  | { readonly type: "unitHomeward"; readonly unitId: UnitId; readonly pos: Point }
+  /** A unit heading home left the map from its edge at the start of its owner's turn (23-survival §5c). Not a loss. */
   | { readonly type: "unitLeft"; readonly unitId: UnitId; readonly unitType: UnitTypeId; readonly owner: PlayerId; readonly pos: Point }
   | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
   | { readonly type: "gameOver"; readonly result: GameResult }

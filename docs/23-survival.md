@@ -146,12 +146,15 @@ Everything else is the standard game. These are the new pieces, all in the engin
 - **`rout` can name a side.** `{ "type": "rout", "side": "allies" }` checks only that side's players. On Wake, Japan often has no units on the map between waves, and must not lose for it.
 - **The US loses** when Japan captures the HQ or when the US has no units left (the rout, for the US only), or by resigning. **Japan never loses**, and there's no win for the US.
 
-### 5c. Raiders go home (built 2026-11-20)
+### 5c. Raiders and empty Landing Craft fly and sail home (built 2026-11-20; revised 2026-11-21)
 
-- A unit arrival can carry **`sortieTurns`**: after that many of its owner's turns on the map, at the start of the next one, the unit leaves the map. It's removed, not destroyed: not in the losses tally (04-economy §8a), not a kill. If it is carrying units, they go with it.
-- A unit that lands on a Carrier or an airfield of its own side loses its `sortieTurns` and stays as usual.
-- **Event:** `unitLeft`, so the screen can show it flying off the edge (it fades with a "HEADING HOME" label).
-- **As built:** the unit counts down `sortie` at the start of each of its owner's turns, before fuel is burned, so it never crashes on the turn it leaves; with `sortieTurns: 2` it arrives (and can't act), acts on its next two turns, and leaves at the start of the third. "A property of its side that services it" is checked then: an airfield for an aircraft (a port, for a ship given a sortie). Loading onto a Carrier drops the sortie at once.
+Revised at the developer's request: units no longer vanish where they are; they leave from the map's edge.
+
+- A unit arrival can carry **`sortieTurns`** (a raider from a base off the map) or **`leavesWhenEmpty`** (a Landing Craft that brought a wave).
+- At the start of its owner's turn, a raider whose turns are up, or a `leavesWhenEmpty` transport that has nothing aboard, **turns for home** (`unitHomeward` event, a "HEADING HOME" label). From then on it makes for the nearest square on the map's edge. It can still move and fight on the way, and be shot down; if it runs out of fuel, it crashes as usual.
+- At the start of its owner's turn, a unit heading home that **stands on a square at the map's edge leaves** (`unitLeft`, the sprite fades out), with whatever it carries. Leaving isn't a loss (04-economy §8a) and isn't a kill.
+- A unit that lands on a Carrier, or stands on a property of its side that services it (an airfield for an aircraft), has found a base: it stops counting and stays as usual.
+- **As built:** the sortie counts down at the start of each of its owner's turns, before fuel is burned. With `sortieTurns: 2` a raider arrives (and can't act), acts on its next two turns, turns for home at the start of the third and leaves at the start of the turn after it reaches the edge. The computer steers every unit heading home to the nearest edge square (Greedy, 09-ai §4). On Wake, Japan's Landing Craft (scripted and generated) turn for home once they've unloaded; the US's (Task Force 14, the convoys) stay.
 
 ### 5d. Japan gets nothing from what it captures (decided 2026-11-20)
 
@@ -180,6 +183,7 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
   - The plan knows only what a human attacker would: the map, its own units and what it sees. It doesn't know what the next waves are (it never needs to).
 - **The US** can be played by the standard AI, for testing and tuning only (§8).
 - **As built (S4, `src/ai/maps/survival.ts`):** the plan's objective is every HQ of the other side; land units (not transports) that can capture or fight head for one they can walk to, and units that can't capture keep off it. An aircraft's attack on a Flak Gun, a Mobile AA or an aircraft scores 6,000 more (`AIR_DEFENCE_BONUS`); there's no bonus for the airfield itself, since a property can't be attacked. Ships, transports and landings are Greedy as usual. The survival AI is used only for the attacker in Survival games (and in self-play on survival maps), like the map plans in the Campaign (22-campaign §6).
+- **The defender's plan (2026-11-21, `survivalDefencePlan`):** when the computer plays the US, as self-play does to tune the waves, an attack on an enemy on or next to the HQ scores 15,000 more (`HQ_DEFENCE_BONUS`), and twice that on one capturing it; when an enemy land unit is within 4 squares of the HQ (`HQ_ALARM_RANGE`), the US's armed land units turn back for it. Plain Greedy didn't treat a capture of its HQ as urgent and let its Marines wander off after other targets.
 - **An aircraft parked on the HQ (fixed 2026-11-21, at the developer's request).** Infantry can't attack aircraft and Bombers can't either, so a plane left on the HQ blocked every capture with nothing able to remove it. Now:
   - **The AI:** a unit standing on the HQ the attacker must take draws every attack that can reach it (it scores 20,000 more, `HQ_BLOCKER_BONUS`), and every unit whose weapons can hit it is sent for it, whatever its kind: Fighters, launched from their Carriers if need be (09-ai §4k scouts), Mobile AA and any armed unit. Units that can't hit it (Bombers against an aircraft) carry on as before; infantry still heads for the HQ to capture it once it's clear.
   - **The waves:** every generated Landing brings a Landing Craft with a Mobile AA and an Infantry (15% of its budget, so even the smallest has one), the Combined assault one too, and the second landing (wave 9) a ninth Landing Craft with a Mobile AA.
@@ -202,6 +206,7 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
   - S4, Japan's survival plan (seeds 1–8): days 20–30, waves 11–14. The plan alone didn't make Japan stronger.
   - Tried, seeds 1–8: half the US income (days 20–27, no stronger); no Task Force 14 (falls by day 20 in 5 of 8, but the relief arriving is the developer's choice, §10 Q4); the second landing with 3 more Landing Craft and a Battleship (days 19–25); twice as big (days 19–30); twice as big with two more Battleships in wave 6 and two more Bombers in wave 7 (days 15–21, and the only game to fall by wave 9).
   - **Chosen (seeds 1–18):** the second landing three times the first, as in history (above). The US falls on days 19–25, by day 20 in 11 of 18, at waves 10–13.
+  - **After the fly-out rule (2026-11-21, seeds 1–12):** empty Landing Craft used to sit on the beaches after unloading, which by accident held back later landings and kept the US's units busy by the HQ. Leaving, they make the waves stronger: with plain Greedy the US fell on day 8 in every game; with the defender plan, on days 8–14 (half on days 12–14). A smaller first landing (one Landing Craft) gave days 12–21; more US starting funds made it worse (days 8–12). One cause is the map: the US factory is at Camp 2 on the north arm, so new units take days to walk round to the HQ on the south arm. **Balance to be decided by the developer** (§11).
 
 ## 9. Build plan
 

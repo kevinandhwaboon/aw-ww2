@@ -85,8 +85,10 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
       const title = [e.wave === undefined ? "" : `Wave ${e.wave}`, e.name ?? ""].filter(Boolean).join(": ");
       return `${title ? `${title}: ` : ""}${name(e.player)} ${what} arrived`;
     }
+    case "unitHomeward":
+      return `${unitName(e.unitId)} turns for home`;
     case "unitLeft":
-      return `${name(e.owner)} ${unitTypeName(e.unitType)} went home`;
+      return `${name(e.owner)} ${unitTypeName(e.unitType)} left the map for home`;
     case "playerDefeated":
       return `${name(e.player)} is out (${OUT_TEXT[e.reason]})`;
     case "gameOver":

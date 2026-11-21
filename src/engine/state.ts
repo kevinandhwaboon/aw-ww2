@@ -95,11 +95,18 @@ export interface Unit {
    */
   readonly launched?: true;
   /**
-   * A raider from a base off the map: how many more of its owner's turns it stays before it goes home
-   * at the start of the next one (23-survival §5c). Missing for every other unit, and dropped once it
-   * reaches a Carrier or a property of its side that services it.
+   * A raider from a base off the map: how many more of its owner's turns it stays before it turns for
+   * home (23-survival §5c). Missing for every other unit, and dropped once it reaches a Carrier or a
+   * property of its side that services it.
    */
   readonly sortie?: number;
+  /** A Landing Craft that brought a wave: it turns for home once it has unloaded (23-survival §5c). */
+  readonly leavesWhenEmpty?: true;
+  /**
+   * Heading off the map: it leaves at the start of its owner's turn if it stands on a square at the
+   * map's edge (23-survival §5c). It can still move and fight on the way.
+   */
+  readonly homeward?: true;
 }
 
 /** A unit that arrives during the game, described like a starting unit (23-survival §5a). */
@@ -113,8 +120,10 @@ export interface ArrivingUnit {
   readonly kills?: number;
   /** Passengers, arriving aboard. */
   readonly cargo?: readonly ArrivingUnit[];
-  /** A raider: turns it stays on the map after it arrives before going home (23-survival §5c). */
+  /** A raider: turns it stays on the map after it arrives before it turns for home (23-survival §5c). */
   readonly sortieTurns?: number;
+  /** A transport that turns for home once it has unloaded (23-survival §5c). */
+  readonly leavesWhenEmpty?: boolean;
 }
 
 /**

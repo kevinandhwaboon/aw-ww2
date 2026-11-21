@@ -202,6 +202,8 @@ class Brain extends ProductionBrain {
   }
 
   private plan(unit: Unit): Plan {
+    // Heading home off the map (23-survival §5c): make for the nearest square on its edge.
+    if (unit.homeward === true) return this.advance(unit, this.mapEdge(), "mapEdge");
     const def = defOf(unit.type);
     const home = this.repairTiles(unit);
     // A transport with passengers presses on while it has the fuel to land them and get back to one
@@ -395,6 +397,15 @@ class Brain extends ProductionBrain {
       }
     }
     return tiles;
+  }
+
+  /** Every square on the map's edge, where a unit heading home leaves (23-survival §5c). */
+  private mapEdge(): Point[] {
+    const { width, height } = this.state.map;
+    const edge: Point[] = [];
+    for (let x = 0; x < width; x++) edge.push({ x, y: 0 }, { x, y: height - 1 });
+    for (let y = 1; y < height - 1; y++) edge.push({ x: 0, y }, { x: width - 1, y });
+    return edge;
   }
 
   protected advance(unit: Unit, goals: readonly Point[], key: string, offsets?: readonly number[]): Plan {
