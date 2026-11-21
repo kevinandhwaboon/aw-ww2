@@ -56,9 +56,28 @@ describe("Wake Island (23-survival §2)", () => {
   });
 
   it("the US starts with VMF-211's four Wildcats, three Flak Guns, the Marines and a Submarine (23-survival §2)", () => {
-    const count = (type: string) => all.filter((u) => u.type === type).length;
+    const count = (type: string) => all.filter((u) => u.owner === US && u.type === type).length;
     expect([count("fighter"), count("flakGun"), count("infantry"), count("assaultInfantry"), count("submarine")]).toEqual([4, 3, 4, 1, 1]);
-    expect(all.every((u) => u.owner === US)).toBe(true);
+  });
+
+  it("Japan starts with only two Supply Ships, one off the south of the atoll and one off the north (23-survival §2)", () => {
+    const japanese = all.filter((u) => u.owner === JAPAN);
+    expect(japanese.map((u) => u.type)).toEqual(["supplyShip", "supplyShip"]);
+    const atollMiddle = map.height / 2;
+    expect(japanese.some((u) => u.pos.y > atollMiddle + 5)).toBe(true);
+    expect(japanese.some((u) => u.pos.y < atollMiddle - 5)).toBe(true);
+  });
+
+  it("Japan's Supply Ships carry 30 loads, since Japan has no port to refill them at (23-survival §2)", () => {
+    const state = start();
+    const oilers = state.units.filter((u) => u.owner === JAPAN && u.type === "supplyShip");
+    expect(oilers.map((u) => [u.ammo, stats.maxAmmo(state, u)])).toEqual([
+      [30, 30],
+      [30, 30],
+    ]);
+    // The US's own Supply Ships keep the usual 5.
+    const usOiler = { ...oilers[0], owner: US } as (typeof oilers)[number];
+    expect(stats.maxAmmo(state, usOiler)).toBe(5);
   });
 
   it("the landing beaches are on the south shores of Wilkes and Wake (23-survival §2)", () => {
@@ -82,7 +101,7 @@ describe("Wake Island (23-survival §2)", () => {
 
   it("the US loses when Japan captures the HQ or it has no units left, and Japan never loses (23-survival §5b)", () => {
     expect(victory).toEqual([{ type: "hqCapture" }, { type: "rout", side: "allies" }]);
-    // Japan has no units at the start and before the first raid, and is still in the game.
+    // Japan is still in the game before its first raid, with only its Supply Ships.
     const { state } = play(start(), 1);
     expect(state.players[JAPAN]?.defeated).toBe(false);
   });
@@ -115,6 +134,13 @@ describe("Wake Island (23-survival §2)", () => {
       ["landingCraft", ["infantry", "infantry"]],
       ["landingCraft", ["infantry", "infantry"]],
     ]);
+  });
+
+  it("the second landing brings an anti-aircraft gun ashore with the naval infantry (23-survival §3, §6)", () => {
+    const second = arrivals?.find((a) => a.wave === 9);
+    const cargo = (second?.units ?? []).flatMap((u) => u.cargo ?? []).map((c) => c.type);
+    expect(cargo).toContain("mobileAA");
+    expect(cargo.filter((t) => t === "infantry" || t === "assaultInfantry").length).toBeGreaterThanOrEqual(16);
   });
 
   it("the raids from the Marshalls go home after two turns (23-survival §3, §5c)", () => {
