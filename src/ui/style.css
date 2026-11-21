@@ -668,6 +668,16 @@ body {
   }
 }
 
+/* The Survival screen's high scores (23-survival §5e). */
+.survival-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.survival-table td:first-child {
+  opacity: 0.7;
+}
+
 .btn-big {
   font-size: 18px;
   padding: 8px 24px;

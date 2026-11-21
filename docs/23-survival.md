@@ -164,7 +164,11 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 ### 5e. The record
 
 - `GameState` keeps the wave reached and the day. The results screen shows "**Reached wave 11, held 20 days**", history's mark (§3), and the kills as a bill of Japan's losses (like 04-economy §8a).
-- **Best record per map** on the device (`localStorage`, `ww2-tactics.survival`): the best wave, then the most days. Separate from the autosave and from campaign progress, like 22-campaign §2.
+- **High scores (since 2026-11-21, at the developer's request):** the **10 best runs per map** are kept on the device (`localStorage`, `ww2-tactics.survival`, version 2), best first: more waves, then more days; a run that ties one already there goes after it. Each run keeps its wave, its days, the date it was played and the defender's commander. Separate from the autosave and from campaign progress, like 22-campaign §2.
+  - A run is added once, when the game ends; one that wouldn't make the top ten isn't added.
+  - The Survival screen lists the picked map's table under the maps (place, wave, days, commander, date). The results screen says "New best", or the run's place ("3rd best run") when it makes the table. The title card shows each map's best wave.
+  - A best run saved before the table (version 1) reads as a table of that one run, with no date.
+  - The date comes from the browser's clock when the game ends; the record's rules (`src/survival/record.ts`) are pure and are given it.
 
 ## 6. The computer
 

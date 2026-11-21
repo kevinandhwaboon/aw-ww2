@@ -2,7 +2,7 @@ import type { Scenario } from "./engine/scenario";
 import { loadArtPack } from "./game/loadArtPack";
 import { SCENARIOS, SURVIVAL_SCENARIOS } from "./scenarios";
 import { SURVIVAL_MAPS } from "./survival/maps";
-import { beatHistory, describeRun, isBetter, readRecords, runOf, withRun, writeRecords } from "./survival/record";
+import { beatHistory, bestRun, describeRun, ordinal, placeOf, readRecords, runOf, withRun, writeRecords } from "./survival/record";
 import { showSurvival, type SurvivalEntry } from "./ui/survival";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
@@ -92,7 +92,7 @@ function titleNotes(): { campaign?: string; survival?: string } {
   const won = missionsWon(missions, readProgress(store));
   const records = readRecords(store);
   const best = survivalMaps.flatMap((e) => {
-    const run = records[e.scenario.id];
+    const run = bestRun(records, e.scenario.id);
     return run ? [`${e.scenario.name}: wave ${run.wave}`] : [];
   });
   return {
@@ -117,14 +117,16 @@ function openSurvival(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice |
   );
 }
 
-/** The best run before this game, kept so the results can say whether it's a new best. */
+/** The high scores before this game, kept so the results can say where it placed. */
 let bestBefore: ReturnType<typeof readRecords> = {};
 
 /** What the results screen says after a survival game (23-survival §5e, §7). */
 function survivalNote(entry: SurvivalEntry, state: GameState): string {
   const run = runOf(state);
   const lines = [describeRun(run)];
-  if (isBetter(run, bestBefore[entry.scenario.id])) lines.push("New best");
+  const place = placeOf(bestBefore, entry.scenario.id, run);
+  if (place === 1) lines.push("New best");
+  else if (place !== null) lines.push(`${ordinal(place)} best run`);
   lines.push(beatHistory(entry.survival, run) ? `Held longer than history: ${entry.survival.historyLine}` : `History: ${entry.survival.historyLine}`);
   return lines.join(" · ");
 }
@@ -170,6 +172,8 @@ function start(
   survival?: SurvivalEntry,
 ): void {
   if (survival) bestBefore = readRecords(store);
+  /** Whether this game's run is already in the high scores. */
+  let recorded = saved?.state.result != null;
   const computer = options.computer ?? defaultComputerPlayers(scenario);
   /** The game as it last stood, so what comes after it can depend on how it ended. */
   let latest: GameState | null = saved?.state ?? null;
@@ -186,8 +190,13 @@ function start(
         console.warn("Couldn't autosave the game: browser storage is blocked or full");
       }
       if (mission && alliesWon(state)) writeProgress(store, withWin(readProgress(store), mission.mission.map));
-      // The best run is kept once the game is over (23-survival §5e).
-      if (survival && state.result) writeRecords(store, withRun(readRecords(store), scenario.id, runOf(state)));
+      // The run joins the map's high scores once the game is over, once (23-survival §5e).
+      if (survival && state.result && !recorded) {
+        recorded = true;
+        const commander = state.players[survival.survival.defender]?.commander ?? null;
+        const run = { ...runOf(state), date: new Date().toISOString().slice(0, 10), commander };
+        writeRecords(store, withRun(readRecords(store), scenario.id, run));
+      }
     },
     passDevice: options.passDevice,
     battleScenes: options.battleScenes,

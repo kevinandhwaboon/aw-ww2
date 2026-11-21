@@ -5,7 +5,8 @@ import type { CommanderId } from "../engine/data/commanders";
 import { NATIONS } from "../engine/data/nations";
 import type { Scenario } from "../engine/scenario";
 import type { SurvivalMap } from "../survival/maps";
-import { describeRun, type SurvivalRecords } from "../survival/record";
+import { commanderName } from "../game/artPack";
+import { bestRun, describeRun, TOP_RUNS, type SurvivalRecords } from "../survival/record";
 import { commandersFor } from "../urlOptions";
 import { commanderPicker } from "./commanders";
 import { el } from "./dom";
@@ -48,6 +49,34 @@ export function survivalOptions(entry: SurvivalEntry, commander: CommanderId | n
   };
 }
 
+/** A map's high-score table: place, wave, days, commander and date, best first (23-survival §5e). */
+function highScores(records: SurvivalRecords, map: string): HTMLElement {
+  const runs = records[map] ?? [];
+  const box = el("div");
+  box.append(el("div", "panel-subtitle", "High scores"));
+  if (runs.length === 0) {
+    box.append(el("div", "receipt-none", "No runs yet: be the first to hold out"));
+    return box;
+  }
+  const table = el("table", "stat-table survival-table");
+  const header = el("tr");
+  for (const label of ["", "Wave", "Days", "Commander", "Date"]) header.append(el("th", undefined, label));
+  table.append(header);
+  runs.forEach((run, i) => {
+    const tr = el("tr");
+    tr.append(
+      el("td", undefined, String(i + 1)),
+      el("td", undefined, String(run.wave)),
+      el("td", undefined, String(run.days)),
+      el("td", undefined, run.commander ? commanderName(run.commander) : "None"),
+      el("td", undefined, run.date || "—"),
+    );
+    table.append(tr);
+  });
+  box.append(table);
+  return box;
+}
+
 export function showSurvival(
   root: HTMLElement,
   entries: readonly SurvivalEntry[],
@@ -63,7 +92,9 @@ export function showSurvival(
   const panel = el("div", "panel screen-panel map-select survival");
   const list = el("div", "map-list");
   const left = el("div", "map-select-left");
-  left.append(list, el("div", "campaign-saved", "Best runs are saved on this device"));
+  // The picked map's high scores (23-survival §5e), under the list of maps.
+  const scores = el("div", "survival-scores");
+  left.append(list, scores, el("div", "campaign-saved", `The ${TOP_RUNS} best runs on each map are saved on this device`));
   const brief = el("div", "map-brief");
   const body = el("div", "map-select-body");
   body.append(left, brief);
@@ -95,7 +126,8 @@ export function showSurvival(
     const luckBox = checkbox("Luck in combat", luck);
     const scenesBox = checkbox("Battle scenes", battleScenes);
     const fogBox = checkbox("Fog of war", fog);
-    const best = records[scenario.id];
+    const best = bestRun(records, scenario.id);
+    scores.replaceChildren(highScores(records, scenario.id));
 
     const sketchCanvas = el("canvas", "terrain-sketch");
     const legend = el("div", "sketch-legend");
@@ -142,7 +174,7 @@ export function showSurvival(
   }
 
   entries.forEach((entry, index) => {
-    const best = records[entry.scenario.id];
+    const best = bestRun(records, entry.scenario.id);
     const row = el("button", "list-row campaign-row");
     row.append(el("span", undefined, entry.scenario.name), el("span", "campaign-mark", best ? `Wave ${best.wave}` : ""));
     row.addEventListener("focus", () => choose(index));
