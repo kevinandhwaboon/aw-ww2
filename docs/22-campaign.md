@@ -144,7 +144,7 @@ With the sweep alone (and the old forward force), the armour reached Tobruk on d
 
 ## 7. Screens
 
-- **Title:** Campaign, Skirmish, and Continue when there's a game to carry on. Continue works for either kind of game; a campaign game carried on still unlocks the next mission when won.
+- **Title:** Campaign, Skirmish, Survival, and Continue when there's a game to carry on; each mode is a card with a moving picture and what it is (00-master-design §12). Continue works for either kind of game; a campaign game carried on still unlocks the next mission when won.
 - **Campaign screen:** the map select's world map (00-master-design §12) with a numbered label on every mission's dot (locked ones dimmed), and under it the missions in order in two columns, each with a mark for won, open or locked (the date for the open one). Picking a mission flies the camera to its theater, pulling back to the whole world on the way between distant ones, so walking the chain hops round the world in the order of the war (added 2026-11-20 at the developer's request). Picking an open mission shows its briefing (the scenario's description, then a line on what the computer has been given), the Allied commander choice for each Allied player, Luck and Battle scenes, and Start. Up and Down walk the missions, Z picks, X goes back to the title.
 - **Results:** after a campaign mission, the results screen names the mission won and the one unlocked, with **Campaign** (back to the campaign screen) in place of New Game; after the last mission, won, **Continue** plays the ending (§7a).
 - **Skirmish** is the map select and players screens unchanged (06-commanders §5, 09-ai §5).

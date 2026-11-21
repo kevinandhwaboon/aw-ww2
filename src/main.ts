@@ -77,7 +77,28 @@ function missionNote(entry: CampaignEntry, state: GameState): string {
 
 /** The title screen's choices besides Skirmish, with this game to carry on, if any. */
 function titleChoices(game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null): TitleChoices {
-  return { campaign: () => openCampaign(game, ui, resume), survival: () => openSurvival(game, ui, resume), resume };
+  return {
+    campaign: () => openCampaign(game, ui, resume),
+    survival: () => openSurvival(game, ui, resume),
+    resume,
+    showcase: SURVIVAL_SCENARIOS,
+    notes: titleNotes(),
+  };
+}
+
+/** The player's progress under each way to play on the title screen. */
+function titleNotes(): { campaign?: string; survival?: string } {
+  const missions = campaign.map((e) => e.mission);
+  const won = missionsWon(missions, readProgress(store));
+  const records = readRecords(store);
+  const best = survivalMaps.flatMap((e) => {
+    const run = records[e.scenario.id];
+    return run ? [`${e.scenario.name}: wave ${run.wave}`] : [];
+  });
+  return {
+    ...(won > 0 ? { campaign: `${won} of ${missions.length} missions won` } : {}),
+    ...(best.length > 0 ? { survival: `Best · ${best.join(" · ")}` } : {}),
+  };
 }
 
 const backToTitle = (game: HTMLElement, ui: HTMLElement, resume: ResumeChoice | null) => () =>

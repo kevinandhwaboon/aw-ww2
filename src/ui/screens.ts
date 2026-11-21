@@ -12,6 +12,7 @@ import { playFeatureShot } from "./featureShot";
 import { drawSketch, featureColor, featureName } from "./sketchCanvas";
 import { sketchMap, SKETCH_FEATURES } from "./terrainSketch";
 import { BATTLE_PLACES, project, THEATER_IDS, THEATERS, type BattlePlace, type TheaterId } from "./theaters";
+import { TITLE_MODES, type TitleModeId } from "./titleModes";
 import { WorldMap } from "./worldMap";
 
 export { defaultComputerPlayers };
@@ -39,47 +40,66 @@ export interface TitleChoices {
   readonly survival: () => void;
   /** The game to carry on, if there is one. */
   readonly resume: ResumeChoice | null;
+  /** Maps the title's moving pictures may be drawn with besides the Skirmish ones, such as the survival maps. */
+  readonly showcase?: readonly Scenario[];
+  /** A line of progress under a mode, such as "3 of 14 missions won". */
+  readonly notes?: Partial<Record<TitleModeId, string>>;
 }
 
+/**
+ * The title screen (00-master-design §12): Continue when there's a game to carry on, then a card for
+ * each way to play, with its moving picture (a looping battle scene), what it is, and the player's
+ * progress in it. Arrows move between them; Z or a click chooses.
+ */
 export function showTitleScreen(root: HTMLElement, scenarios: readonly Scenario[], defaults: GameOptions, onStart: OnStart, title: TitleChoices): void {
   const { resume } = title;
-  const { node, close } = screen(root);
+  const { node, close: closeScreen } = screen(root);
+  const stops: (() => void)[] = [];
+  const close = () => {
+    for (const stop of stops) stop();
+    closeScreen();
+  };
   const panel = el("div", "panel screen-panel title-panel");
-  const campaign = el("button", "btn btn-big", "Campaign");
-  campaign.addEventListener("click", () => {
-    close();
-    title.campaign();
-  });
-  const survival = el("button", "btn btn-big", "Survival");
-  survival.addEventListener("click", () => {
-    close();
-    title.survival();
-  });
-  const play = el("button", "btn btn-big", "Skirmish");
-  play.addEventListener("click", () => {
-    close();
-    showMapSelect(root, scenarios, defaults, onStart, title);
-  });
-  panel.append(el("h1", "title-name", "WW2"));
-  const buttons = [campaign, play, survival];
+  panel.append(el("h1", "title-name", "WW2"), el("div", "title-sub", "Turn-based tactics, 1940–1945"));
+  const buttons: HTMLButtonElement[] = [];
+
   if (resume) {
     // Continue comes first, so Z on the title screen carries the game on.
-    const carryOn = el("button", "btn btn-big", "Continue");
+    const carryOn = el("button", "btn btn-big title-continue");
+    carryOn.append(el("span", undefined, "Continue"), el("span", "title-continue-game", resume.label));
     carryOn.addEventListener("click", () => {
       close();
       resume.go();
     });
-    panel.append(carryOn, el("div", "title-sub", resume.label));
-    buttons.unshift(carryOn);
+    panel.append(carryOn);
+    buttons.push(carryOn);
   }
-  panel.append(
-    campaign,
-    el("div", "title-sub", "Lead the Allies through the war against a stronger computer"),
-    play,
-    el("div", "title-sub", "Any battle, either side: play the computer, or a friend on one device"),
-    survival,
-    el("div", "title-sub", "Hold out against waves that grow until you fall"),
-  );
+
+  const open: Record<TitleModeId, () => void> = {
+    campaign: () => title.campaign(),
+    skirmish: () => showMapSelect(root, scenarios, defaults, onStart, title),
+    survival: () => title.survival(),
+  };
+  const maps = [...scenarios, ...(title.showcase ?? [])];
+  const cards = el("div", "title-modes");
+  for (const mode of TITLE_MODES) {
+    const card = el("button", "title-mode");
+    const frame = el("div", "feature-frame title-mode-shot");
+    const canvas = el("canvas", "feature-shot");
+    frame.append(canvas, el("div", "feature-caption", mode.caption));
+    const note = title.notes?.[mode.id];
+    card.append(frame, el("div", "title-mode-name", mode.name), el("div", "title-mode-text", mode.description));
+    if (note) card.append(el("div", "title-mode-note", note));
+    card.addEventListener("click", () => {
+      close();
+      open[mode.id]();
+    });
+    const scenario = maps.find((m) => m.id === mode.scenario);
+    if (scenario) stops.push(playFeatureShot(canvas, scenario, mode.shot));
+    cards.append(card);
+    buttons.push(card);
+  }
+  panel.append(cards);
   node.append(panel);
   buttons[0]?.focus();
   menuKeys(panel, buttons);
