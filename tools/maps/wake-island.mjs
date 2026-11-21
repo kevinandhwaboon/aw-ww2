@@ -113,6 +113,12 @@ const units = [
   unit("assaultInfantry", 20, 17),
   // Triton, on patrol to the south when the war began.
   unit("submarine", 18, 24),
+  // Japan's fleet oilers, one off the south of the atoll and one off the north, to keep the waves'
+  // ships at sea: Japan has no port to refuel at. They carry 30 loads (modifiers, below), not 5.
+  // Out to the west, clear of Triton's patrol, of the coastal guns and of the airfield, and short of
+  // the edges where the waves come in. Nearer the atoll they drew the defenders off the HQ.
+  { type: "supplyShip", owner: JAPAN, pos: { x: 3, y: 25 } },
+  { type: "supplyShip", owner: JAPAN, pos: { x: 3, y: 3 } },
 ];
 
 // ---- Where the waves come in: two rows or columns along each edge, nearest the middle first ----
@@ -161,6 +167,8 @@ const arrivals = [
     craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "infantry"),
     craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "assaultInfantry"),
     craft("assaultInfantry", "assaultInfantry"), craft("assaultInfantry", "assaultInfantry"),
+    // An anti-aircraft gun ashore with them, so an aircraft parked on the command post can't hold it alone.
+    craft("mobileAA", "infantry"),
   ]),
   // The relief that never came, here allowed to arrive (§10 Q4): Saratoga with VMF-221's fighters,
   // the oiler Neches, and Tangier with Marines and guns.
@@ -214,7 +222,11 @@ const scenario = {
   propertyOwners: Object.values(P).map(([x, y]) => ({ pos: { x, y }, owner: US })),
   units,
   victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
-  modifiers: [{ source: "survival", stat: "income", op: "set", value: 0, scope: { players: [JAPAN] } }],
+  modifiers: [
+    { source: "survival", stat: "income", op: "set", value: 0, scope: { players: [JAPAN] } },
+    // Japan's oilers can't refill at a port, so they carry enough for the siege.
+    { source: "survival", stat: "maxAmmo", op: "set", value: 30, scope: { players: [JAPAN], unitTypes: ["supplyShip"] } },
+  ],
   arrivals,
   waves,
 };

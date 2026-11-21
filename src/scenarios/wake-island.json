@@ -96,7 +96,9 @@
     { "type": "infantry", "owner": 0, "pos": { "x": 16, "y": 18 } },
     { "type": "infantry", "owner": 0, "pos": { "x": 24, "y": 18 } },
     { "type": "assaultInfantry", "owner": 0, "pos": { "x": 20, "y": 17 } },
-    { "type": "submarine", "owner": 0, "pos": { "x": 18, "y": 24 } }
+    { "type": "submarine", "owner": 0, "pos": { "x": 18, "y": 24 } },
+    { "type": "supplyShip", "owner": 1, "pos": { "x": 3, "y": 25 } },
+    { "type": "supplyShip", "owner": 1, "pos": { "x": 3, "y": 3 } }
   ],
   "victory": [
     { "type": "hqCapture" },
@@ -114,6 +116,20 @@
       "scope": {
         "players": [
           1
+        ]
+      }
+    },
+    {
+      "source": "survival",
+      "stat": "maxAmmo",
+      "op": "set",
+      "value": 30,
+      "scope": {
+        "players": [
+          1
+        ],
+        "unitTypes": [
+          "supplyShip"
         ]
       }
     }
@@ -939,6 +955,13 @@
           "cargo": [
             { "type": "assaultInfantry" },
             { "type": "assaultInfantry" }
+          ]
+        },
+        {
+          "type": "landingCraft",
+          "cargo": [
+            { "type": "mobileAA" },
+            { "type": "infantry" }
           ]
         }
       ]

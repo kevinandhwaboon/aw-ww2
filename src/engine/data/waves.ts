@@ -64,7 +64,10 @@ const PACIFIC: readonly WavePattern[] = [
         edges: ["south", "west"],
         units: [
           { type: "destroyer", share: 0.3 },
-          { type: "landingCraft", share: 0.5, cargo: ["infantry", "infantry"] },
+          { type: "landingCraft", share: 0.35, cargo: ["infantry", "infantry"] },
+          // Anti-aircraft ashore, so an aircraft parked on the HQ can't hold it alone (23-survival §6).
+          // Enough of the budget for at least one in the smallest landing.
+          { type: "landingCraft", share: 0.15, cargo: ["mobileAA", "infantry"] },
           { type: "landingCraft", share: 0.1, cargo: ["assaultInfantry", "mortar"], fromWave: 12 },
           { type: "landingCraft", share: 0.1, cargo: ["lightTank", "infantry"], fromWave: 12 },
         ],
@@ -124,8 +127,9 @@ const PACIFIC: readonly WavePattern[] = [
         edges: ["south", "west"],
         units: [
           { type: "destroyer", share: 0.15 },
-          { type: "landingCraft", share: 0.25, cargo: ["infantry", "infantry"] },
+          { type: "landingCraft", share: 0.15, cargo: ["infantry", "infantry"] },
           { type: "landingCraft", share: 0.1, cargo: ["assaultInfantry", "lightTank"] },
+          { type: "landingCraft", share: 0.1, cargo: ["mobileAA", "infantry"] },
         ],
       },
       { edges: ["south", "west", "north"], units: [{ type: "bomber", share: 0.3, sortieTurns: RAID_SORTIE }] },

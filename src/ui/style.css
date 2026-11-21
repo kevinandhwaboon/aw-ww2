@@ -558,6 +558,126 @@ body {
   font-size: 13px;
 }
 
+/* The title screen: a card for each way to play, with its moving picture (00-master-design §12). */
+.title-panel {
+  width: min(1040px, 100%);
+  text-align: center;
+}
+
+.title-continue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0 auto 4px;
+  min-width: min(420px, 100%);
+}
+
+.title-continue-game {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.title-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  text-align: left;
+}
+
+.title-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.title-mode:hover,
+.title-mode:focus {
+  outline: none;
+  background: var(--highlight);
+}
+
+.feature-frame.title-mode-shot {
+  /* Room under the picture for its caption only. */
+  padding: 0 0 10px;
+}
+
+.title-mode-name {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.title-mode-text {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.title-mode-note {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.75;
+}
+
+@media (max-width: 760px) {
+  .title-modes {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* On a phone each card is a row: the picture beside the name and what the mode is. */
+  .title-mode {
+    display: grid;
+    grid-template-columns: 42% 1fr;
+    grid-template-rows: auto auto 1fr;
+    column-gap: 8px;
+    row-gap: 2px;
+    padding: 6px;
+  }
+
+  .feature-frame.title-mode-shot {
+    grid-row: 1 / span 3;
+    align-self: start;
+    padding: 0;
+  }
+
+  .title-mode-shot .feature-caption {
+    display: none;
+  }
+
+  .title-mode-name {
+    font-size: 16px;
+  }
+
+  .title-mode-text,
+  .title-mode-note {
+    font-size: 11px;
+  }
+
+  .title-panel .title-name {
+    font-size: 28px;
+    margin-top: 0;
+  }
+}
+
+/* The Survival screen's high scores (23-survival §5e). */
+.survival-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.survival-table td:first-child {
+  opacity: 0.7;
+}
+
 .btn-big {
   font-size: 18px;
   padding: 8px 24px;

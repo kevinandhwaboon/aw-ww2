@@ -155,6 +155,13 @@ describe("Endless waves (23-survival §4)", () => {
     expect(waves(14).some((w) => w[0]?.name === "Combined assault")).toBe(true);
   });
 
+  it("landings bring Mobile AA ashore, so an aircraft parked on the HQ can't hold it alone (23-survival §6)", () => {
+    const state = game();
+    const landings = SEEDS.map((seed) => generated({ ...state, rng: seed }, 10)).filter((w) => w[0]?.name === "Landing");
+    expect(landings.length).toBeGreaterThan(0);
+    for (const wave of landings) expect(everyUnit(wave).some((u) => u.cargo?.some((c) => c.type === "mobileAA"))).toBe(true);
+  });
+
   it("land-based raiders in a generated wave go home after two turns, carrier aircraft don't (23-survival §3, §5c)", () => {
     const state = game();
     const units = SEEDS.flatMap((seed) => everyUnit(generated({ ...state, rng: seed }, 12).filter((a) => a.player === 1)));

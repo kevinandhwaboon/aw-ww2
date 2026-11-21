@@ -55,7 +55,8 @@ Wake is a coral atoll in the central Pacific, three low islands round a shallow 
   - **The 3-inch batteries:** 3 Flak Guns, by the airfield, at Peacock Point and on Peale.
   - **The Marines:** 4 Infantry (one on Wilkes, one on Peale, two on Wake) and an Assault Infantry in reserve by the command post.
   - **A Submarine** to the south (Triton was on patrol off Wake when the war began).
-- **Japan:** only wave 1, the noon raid (§3), already on the map south of the atoll.
+- **Japan:** two **Supply Ships** (its fleet oilers), one off the south-west of the atoll and one off the north-west (added 2026-11-21 at the developer's request: the waves' ships were running out of fuel). Japan has no port to refill them at, so each carries **30 loads instead of 5** (a scenario modifier on `maxAmmo`, 01-units §4). Every other Japanese unit comes in a wave (§3).
+  - **Where they are matters.** Placed nearer the atoll (south of Wake beside Triton, or north near the airfield), the computer playing the US sank the south one on day 1 and sent its fighters, guns and Marines after the north one, leaving the HQ empty for the first landing (11 of 12 games fell by day 8). Out to the west, clear of the guns and the airfield, no game fell before day 20.
 
 ### Build lists
 
@@ -98,7 +99,7 @@ After the second landing, history ends and the waves keep coming, **a new wave e
 | Pattern | What it spends the budget on | From |
 |---|---|---|
 | Raid | Bombers, with Fighters from wave 12 | South or west |
-| Landing | Destroyers and Landing Craft full of foot soldiers (Mortar Teams and Light Tanks from wave 12) | South or west |
+| Landing | Destroyers and Landing Craft full of foot soldiers, one with a Mobile AA (Mortar Teams and Light Tanks from wave 12) | South or west |
 | Bombardment | Battleships and Destroyers | Any but east |
 | Carrier strike | Carriers with full decks, and Destroyers | West or north |
 | Wolf pack | Submarines and Torpedo Boats, hunting ships | Any |
@@ -164,7 +165,11 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 ### 5e. The record
 
 - `GameState` keeps the wave reached and the day. The results screen shows "**Reached wave 11, held 20 days**", history's mark (§3), and the kills as a bill of Japan's losses (like 04-economy §8a).
-- **Best record per map** on the device (`localStorage`, `ww2-tactics.survival`): the best wave, then the most days. Separate from the autosave and from campaign progress, like 22-campaign §2.
+- **High scores (since 2026-11-21, at the developer's request):** the **10 best runs per map** are kept on the device (`localStorage`, `ww2-tactics.survival`, version 2), best first: more waves, then more days; a run that ties one already there goes after it. Each run keeps its wave, its days, the date it was played and the defender's commander. Separate from the autosave and from campaign progress, like 22-campaign §2.
+  - A run is added once, when the game ends; one that wouldn't make the top ten isn't added.
+  - The Survival screen lists the picked map's table under the maps (place, wave, days, commander, date). The results screen says "New best", or the run's place ("3rd best run") when it makes the table. The title card shows each map's best wave.
+  - A best run saved before the table (version 1) reads as a table of that one run, with no date.
+  - The date comes from the browser's clock when the game ends; the record's rules (`src/survival/record.ts`) are pure and are given it.
 
 ## 6. The computer
 
@@ -175,6 +180,10 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
   - The plan knows only what a human attacker would: the map, its own units and what it sees. It doesn't know what the next waves are (it never needs to).
 - **The US** can be played by the standard AI, for testing and tuning only (§8).
 - **As built (S4, `src/ai/maps/survival.ts`):** the plan's objective is every HQ of the other side; land units (not transports) that can capture or fight head for one they can walk to, and units that can't capture keep off it. An aircraft's attack on a Flak Gun, a Mobile AA or an aircraft scores 6,000 more (`AIR_DEFENCE_BONUS`); there's no bonus for the airfield itself, since a property can't be attacked. Ships, transports and landings are Greedy as usual. The survival AI is used only for the attacker in Survival games (and in self-play on survival maps), like the map plans in the Campaign (22-campaign §6).
+- **An aircraft parked on the HQ (fixed 2026-11-21, at the developer's request).** Infantry can't attack aircraft and Bombers can't either, so a plane left on the HQ blocked every capture with nothing able to remove it. Now:
+  - **The AI:** a unit standing on the HQ the attacker must take draws every attack that can reach it (it scores 20,000 more, `HQ_BLOCKER_BONUS`), and every unit whose weapons can hit it is sent for it, whatever its kind: Fighters, launched from their Carriers if need be (09-ai §4k scouts), Mobile AA and any armed unit. Units that can't hit it (Bombers against an aircraft) carry on as before; infantry still heads for the HQ to capture it once it's clear.
+  - **The waves:** every generated Landing brings a Landing Craft with a Mobile AA and an Infantry (15% of its budget, so even the smallest has one), the Combined assault one too, and the second landing (wave 9) a ninth Landing Craft with a Mobile AA.
+  - Before wave 8 (the carriers, day 13) Japan still has nothing that can hit an aircraft; a plane parked on the HQ that early holds until then, but it isn't serviced there and burns fuel every day.
 
 ## 7. Screens
 

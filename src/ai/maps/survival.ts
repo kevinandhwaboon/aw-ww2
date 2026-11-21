@@ -2,14 +2,20 @@
 // fighting or capturing, head for the enemy HQ they can walk to, and units that can't capture keep off
 // it so the capturers can get on; Landing Craft land them with Greedy's own landing plan (09-ai §4b).
 // Aircraft go first for what keeps the defender in the air: Flak Guns, Mobile AA and its aircraft.
+// A unit standing on the HQ, which no capturer can get past (an aircraft parked there can't be hit by
+// infantry), draws every attack that can reach it, and every unit that can hit it is sent for it:
+// fighters, launched from their Carriers if need be, and anti-aircraft.
 // It knows only what any attacker would: the map, its own units and what it sees.
 
-import { propertyAt, terrainAt, UNITS, type GameState, type Point, type Unit, type UnitTypeId } from "../../engine";
+import { baseDamage, propertyAt, terrainAt, unitAt, UNITS, type GameState, type Point, type Unit, type UnitTypeId } from "../../engine";
 import type { MapPlan } from "../mapPlan";
 import { reachable } from "./objectives";
 
 /** An aircraft's attack on one of these is worth this much more, in funds (23-survival §6). */
 export const AIR_DEFENCE_BONUS = 6000;
+
+/** An attack on a unit standing on the HQ is worth this much more, in funds: it's all that stops the capture. */
+export const HQ_BLOCKER_BONUS = 20000;
 
 /** What the raiders go for first: the guns that shoot them down. */
 const AIR_DEFENCE: readonly UnitTypeId[] = ["flakGun", "mobileAA"];
@@ -26,6 +32,18 @@ export function enemyHqs(state: GameState): Point[] {
   });
 }
 
+/** Enemy units standing on the HQs the attacker must take (23-survival §6). */
+export function hqBlockers(state: GameState): Unit[] {
+  const me = state.players[state.currentPlayer];
+  return enemyHqs(state).flatMap((p) => {
+    const unit = unitAt(state, p);
+    return unit && state.players[unit.owner]?.side !== me?.side ? [unit] : [];
+  });
+}
+
+/** Whether this unit's weapons can damage that one at all (03-combat §5). */
+const canHit = (attacker: Unit, target: Unit) => baseDamage(attacker.type, target.type) !== null;
+
 export function survivalPlan(name: string): MapPlan {
   /** Whether a movement type can walk from a square to an HQ: terrain only changes with bridges. */
   const cache = new Map<string, boolean>();
@@ -33,6 +51,9 @@ export function survivalPlan(name: string): MapPlan {
     name,
 
     goals(state, unit) {
+      // Something parked on the HQ that this unit can hit: go for it, whatever kind of unit it is.
+      const blocking = hqBlockers(state).filter((b) => canHit(unit, b) && b.owner !== unit.owner);
+      if (blocking.length > 0) return blocking.map((b) => b.pos);
       const def = UNITS[unit.type];
       if (def.category !== "land" || def.transport) return null;
       if (!def.canCapture && def.primaryWeapon === null) return null;
@@ -52,9 +73,11 @@ export function survivalPlan(name: string): MapPlan {
       return UNITS[unit.type].canCapture ? [] : enemyHqs(state).filter((p) => propertyAt(state, p) !== undefined);
     },
 
-    attackBonus(_state, attacker: Unit, target: Unit) {
-      if (UNITS[attacker.type].category !== "air") return 0;
-      return AIR_DEFENCE.includes(target.type) || UNITS[target.type].category === "air" ? AIR_DEFENCE_BONUS : 0;
+    attackBonus(state, attacker: Unit, target: Unit) {
+      const onHq = enemyHqs(state).some((p) => p.x === target.pos.x && p.y === target.pos.y);
+      const blocker = onHq ? HQ_BLOCKER_BONUS : 0;
+      if (UNITS[attacker.type].category !== "air") return blocker;
+      return blocker + (AIR_DEFENCE.includes(target.type) || UNITS[target.type].category === "air" ? AIR_DEFENCE_BONUS : 0);
     },
   };
 }
