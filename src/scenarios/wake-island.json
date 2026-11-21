@@ -877,6 +877,10 @@
       "units": [
         { "type": "battleship" },
         { "type": "battleship" },
+        { "type": "battleship" },
+        { "type": "battleship" },
+        { "type": "destroyer" },
+        { "type": "destroyer" },
         { "type": "destroyer" },
         { "type": "destroyer" },
         { "type": "destroyer" },
@@ -900,6 +904,34 @@
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
+          ]
+        },
+        {
+          "type": "landingCraft",
+          "cargo": [
+            { "type": "infantry" },
+            { "type": "infantry" }
+          ]
+        },
+        {
+          "type": "landingCraft",
+          "cargo": [
+            { "type": "infantry" },
+            { "type": "infantry" }
+          ]
+        },
+        {
+          "type": "landingCraft",
+          "cargo": [
+            { "type": "infantry" },
+            { "type": "assaultInfantry" }
+          ]
+        },
+        {
+          "type": "landingCraft",
+          "cargo": [
+            { "type": "assaultInfantry" },
+            { "type": "assaultInfantry" }
           ]
         },
         {

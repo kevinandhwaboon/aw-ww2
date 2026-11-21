@@ -22,7 +22,7 @@ export function objectivesToTake(state: GameState): Point[] {
 }
 
 /** Whether a unit like this could get from where it is to the square over the terrain, ignoring other units. */
-function reachable(state: GameState, unit: Unit, to: Point): boolean {
+export function reachable(state: GameState, unit: Unit, to: Point): boolean {
   const { width, height } = state.map;
   const seen = new Uint8Array(width * height);
   const stack: Point[] = [unit.pos];

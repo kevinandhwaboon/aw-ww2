@@ -153,12 +153,14 @@ const arrivals = [
     { type: "carrier", cargo: [{ type: "fighter" }, { type: "diveBomber" }] },
     ...ships("destroyer", 2),
   ]),
-  // 23 December: about 1,500 naval infantry, with Cruiser Division 6 (as Battleships) in support.
+  // 23 December: about 1,500 naval infantry, three times the first landing, with the four heavy
+  // cruisers of Cruiser Division 6 (as Battleships) and the destroyers in support.
   wave(9, 15, "The second landing", "south", [
-    ...ships("battleship", 2),
-    ...ships("destroyer", 4),
+    ...ships("battleship", 4),
+    ...ships("destroyer", 6),
     craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "infantry"),
-    craft("assaultInfantry", "assaultInfantry"),
+    craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "assaultInfantry"),
+    craft("assaultInfantry", "assaultInfantry"), craft("assaultInfantry", "assaultInfantry"),
   ]),
   // The relief that never came, here allowed to arrive (§10 Q4): Saratoga with VMF-221's fighters,
   // the oiler Neches, and Tangier with Marines and guns.

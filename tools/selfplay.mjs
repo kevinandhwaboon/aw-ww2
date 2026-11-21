@@ -70,7 +70,8 @@ try {
   const { weightsFor } = await server.ssrLoadModule("/src/ai/weights.ts");
   const { MISSIONS } = await server.ssrLoadModule("/src/campaign/missions.ts");
   const { missionScenario, axisPlayers } = await server.ssrLoadModule("/src/campaign/setup.ts");
-  const { campaignAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
+  const { campaignAi, survivalAi } = await server.ssrLoadModule("/src/ai/maps/index.ts");
+  const { SURVIVAL_MAPS } = await server.ssrLoadModule("/src/survival/maps.ts");
   const { sideAhead } = await server.ssrLoadModule("/src/ai/standing.ts");
 
   const makeAi = { greedy: () => greedyAi(), easy: () => greedyAi(weightsFor("easy")), random: (seed, id) => randomAi(seed * 100 + id) }[args.players];
@@ -99,7 +100,9 @@ try {
       const setup = args.commanders ? withCommanders(scenario.setup, seed) : scenario.setup;
       const start = createGame({ ...setup, seed, ...(args.fog ? { settings: { ...setup.settings, fogOfWar: true } } : {}) });
       const axis = args.campaign ? axisPlayers(scenario) : [];
-      const ais = start.players.map((p) => (axis.includes(p.id) ? campaignAi(scenario.id) : makeAi(seed, p.id)));
+      // On a survival map the waves always play the survival plan, as in the game (23-survival §6).
+      const attacker = SURVIVAL_MAPS.find((m) => m.map === scenario.id)?.attacker;
+      const ais = start.players.map((p) => (axis.includes(p.id) ? campaignAi(scenario.id) : p.id === attacker ? survivalAi() : makeAi(seed, p.id)));
       const report = await selfPlay(start, ais, lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
       ahead.set(sideAhead(report.state), (ahead.get(sideAhead(report.state)) ?? 0) + 1);

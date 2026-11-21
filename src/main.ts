@@ -6,7 +6,7 @@ import { beatHistory, describeRun, isBetter, readRecords, runOf, withRun, writeR
 import { showSurvival, type SurvivalEntry } from "./ui/survival";
 import { startSession } from "./session";
 import { defaultComputerPlayers, showMapSelect, showTitleScreen, type GameOptions, type ResumeChoice, type TitleChoices } from "./ui/screens";
-import { campaignAi } from "./ai/maps";
+import { campaignAi, survivalAi } from "./ai/maps";
 import { MISSIONS } from "./campaign/missions";
 import { alliesWon, campaignComplete, missionStatus, missionsWon, readProgress, withWin, writeProgress } from "./campaign/progress";
 import { missionScenario } from "./campaign/setup";
@@ -172,7 +172,10 @@ function start(
     battleScenes: options.battleScenes,
     ais: scenario.setup.players.map((_, id) => {
       if (!computer.includes(id)) return null;
-      return mission ? campaignAi(scenario.id) : greedyAi(weightsFor(options.level));
+      if (mission) return campaignAi(scenario.id);
+      // The waves play the survival plan (23-survival §6); the defender, if the computer plays it, plain Greedy.
+      if (survival && id === survival.survival.attacker) return survivalAi();
+      return greedyAi(weightsFor(options.level));
     }),
     debug: url.debug,
     pad: padLayout,
