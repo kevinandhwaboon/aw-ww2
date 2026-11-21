@@ -81,3 +81,47 @@ export function survivalPlan(name: string): MapPlan {
     },
   };
 }
+
+/** An attack on an enemy on or next to our own HQ is worth this much more; on one capturing it, twice that. */
+export const HQ_DEFENCE_BONUS = 15000;
+
+/** How close to our HQ an enemy land unit has to be before our land units turn back for it. */
+export const HQ_ALARM_RANGE = 4;
+
+/** Our own HQs: what the defender must keep (23-survival §6). */
+function ownHqs(state: GameState): Point[] {
+  const me = state.players[state.currentPlayer];
+  return state.properties.flatMap((p) => (p.owner !== null && state.players[p.owner]?.side === me?.side && terrainAt(state.map, p.pos) === "hq" ? [p.pos] : []));
+}
+
+const steps = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+/**
+ * The defender's plan on a survival map, for when the computer plays it, as self-play does to tune
+ * the waves (23-survival §6, §8): keep the HQ. Enemies on or next to it draw every attack that can
+ * reach them, most of all one capturing it; when an enemy land unit is within a few squares of it,
+ * our armed land units turn back for it. Everything else is Greedy as usual.
+ */
+export function survivalDefencePlan(name: string): MapPlan {
+  return {
+    name,
+
+    goals(state, unit) {
+      const def = UNITS[unit.type];
+      if (def.category !== "land" || def.transport || def.primaryWeapon === null && def.secondaryWeapon === null) return null;
+      const me = state.players[state.currentPlayer];
+      const hqs = ownHqs(state);
+      const threats = state.units.filter(
+        (u) => state.players[u.owner]?.side !== me?.side && UNITS[u.type].category === "land" && hqs.some((hq) => steps(hq, u.pos) <= HQ_ALARM_RANGE) && baseDamage(unit.type, u.type) !== null,
+      );
+      return threats.length > 0 ? threats.map((u) => u.pos) : null;
+    },
+
+    attackBonus(state, _attacker, target) {
+      const hqs = ownHqs(state);
+      const capturing = state.properties.some((p) => p.capturingUnit === target.id && hqs.some((hq) => hq.x === p.pos.x && hq.y === p.pos.y));
+      if (capturing) return 2 * HQ_DEFENCE_BONUS;
+      return hqs.some((hq) => steps(hq, target.pos) <= 1) ? HQ_DEFENCE_BONUS : 0;
+    },
+  };
+}

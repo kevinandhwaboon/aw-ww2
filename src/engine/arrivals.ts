@@ -65,6 +65,7 @@ function makeUnit(state: GameState, setup: ArrivingUnit, owner: PlayerId, pos: P
     hasActed: true,
     cargo,
     ...(setup.sortieTurns === undefined ? {} : { sortie: setup.sortieTurns }),
+    ...(setup.leavesWhenEmpty === true ? { leavesWhenEmpty: true as const } : {}),
   };
   const fuel = stats.maxFuel(state, base);
   const ammo = stats.maxAmmo(state, base);
@@ -132,33 +133,59 @@ export function arriveUnits(state: GameState, events: GameEvent[]): GameState {
   };
 }
 
+/** Whether a square is on the map's edge, where a unit heading home leaves (23-survival §5c). */
+export function onMapEdge(state: GameState, pos: Point): boolean {
+  return pos.x === 0 || pos.y === 0 || pos.x === state.map.width - 1 || pos.y === state.map.height - 1;
+}
+
 /**
- * At the very start of the current player's turn: raiders that have used up their turns go home,
- * with whatever they carry, and the rest count one turn down. A raider on a property of its side
- * that services it has found a base, and stays like any unit. Going home isn't a loss (23-survival §5c).
+ * At the very start of the current player's turn (23-survival §5c):
+ * - a unit heading home that stands on the map's edge leaves it, with whatever it carries; going home
+ *   isn't a loss;
+ * - a raider whose turns are up, and a Landing Craft that brought a wave and has unloaded, turn for
+ *   home: from now on they make for the edge, and can be shot down on the way;
+ * - other raiders count one turn down;
+ * - a raider (or a returning unit) on a property of its side that services it, has found a base and
+ *   stays like any unit.
  */
 export function sendRaidersHome(state: GameState, events: GameEvent[]): GameState {
   const player = state.currentPlayer;
-  if (!state.units.some((u) => u.owner === player && u.sortie !== undefined)) return state;
+  const returning = (u: Unit) => u.sortie !== undefined || u.homeward === true || u.leavesWhenEmpty === true;
+  if (!state.units.some((u) => u.owner === player && returning(u))) return state;
   const units: Unit[] = [];
+  const turnHome = (unit: Unit) => {
+    events.push({ type: "unitHomeward", unitId: unit.id, pos: unit.pos });
+    const going: Unit = { ...unit, homeward: true };
+    delete (going as { sortie?: number }).sortie;
+    delete (going as { leavesWhenEmpty?: true }).leavesWhenEmpty;
+    units.push(going);
+  };
   for (const unit of state.units) {
-    if (unit.owner !== player || unit.sortie === undefined) {
+    if (unit.owner !== player || !returning(unit)) {
       units.push(unit);
     } else if (servicesUnit(state, unit.pos, unit)) {
       units.push(withoutSortie(unit));
-    } else if (unit.sortie <= 0) {
-      events.push({ type: "unitLeft", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos });
+    } else if (unit.homeward === true) {
+      if (onMapEdge(state, unit.pos)) events.push({ type: "unitLeft", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos });
+      else units.push(unit);
+    } else if (unit.sortie !== undefined) {
+      if (unit.sortie <= 0) turnHome(unit);
+      else units.push({ ...unit, sortie: unit.sortie - 1 });
+    } else if (unit.cargo.length === 0) {
+      turnHome(unit);
     } else {
-      units.push({ ...unit, sortie: unit.sortie - 1 });
+      units.push(unit);
     }
   }
   return clearAbandonedCaptures({ ...state, units });
 }
 
-/** A raider that has landed somewhere it can stay (23-survival §5c). */
+/** A raider or a returning unit that has landed somewhere it can stay (23-survival §5c). */
 export function withoutSortie(unit: Unit): Unit {
-  if (unit.sortie === undefined) return unit;
+  if (unit.sortie === undefined && unit.homeward === undefined && unit.leavesWhenEmpty === undefined) return unit;
   const stays = { ...unit };
   delete (stays as { sortie?: number }).sortie;
+  delete (stays as { homeward?: true }).homeward;
+  delete (stays as { leavesWhenEmpty?: true }).leavesWhenEmpty;
   return stays;
 }

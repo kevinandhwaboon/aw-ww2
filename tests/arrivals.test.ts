@@ -150,46 +150,84 @@ describe("Arrivals (23-survival §5a)", () => {
   });
 });
 
-describe("Raiders go home (23-survival §5c)", () => {
-  const raid = (units: Arrival["units"]): Arrival => ({ day: 1, player: 1, zone: [P(4, 0), P(3, 0)], units });
+describe("Raiders and empty Landing Craft go home (23-survival §5c)", () => {
+  /** A 5 × 5 map: (2, 2) is in the middle, (4, 2) on the east edge. */
+  const SQUARE = [".....", ".....", ".....", ".....", "....."];
+  const middle = P(2, 2);
+  const raid = (units: Arrival["units"], zone = [middle]): Arrival => ({ day: 1, player: 1, zone, units });
+  const japan = (state: GameState) => state.units.filter((u) => u.owner === 1);
 
-  it("a raider flies for its sortie turns, then goes home at the start of the next one (23-survival §5c)", () => {
-    const state = game(["....."], [raid([{ type: "bomber", sortieTurns: 2 }])]);
-    // Arrives on day 1, flies on days 2 and 3, and leaves at the start of Japan's turn on day 4.
-    expect(axisUnits(run(state, ...days(3)))).toHaveLength(1);
-    const events = eventsOf(state, ...days(3), endTurn);
-    expect(events).toContainEqual({ type: "unitLeft", unitId: 1, unitType: "bomber", owner: 1, pos: P(4, 0) });
-    expect(axisUnits(run(state, ...days(3), endTurn))).toEqual([]);
+  it("a raider flies for its sortie turns, then turns for home and stays on the map (23-survival §5c)", () => {
+    const state = game(SQUARE, [raid([{ type: "bomber", sortieTurns: 2 }])]);
+    // Arrives on day 1, flies on days 2 and 3, and turns for home at the start of Japan's turn on day 4.
+    expect(eventsOf(state, ...days(3), endTurn)).toContainEqual({ type: "unitHomeward", unitId: 1, pos: middle });
+    const after = run(state, ...days(3), endTurn);
+    expect(japan(after).map((u) => [u.type, u.homeward, u.sortie])).toEqual([["bomber", true, undefined]]);
   });
 
-  it("a raider that goes home isn't counted as a loss (23-survival §5c, 04-economy §8a)", () => {
-    const state = game(["....."], [raid([{ type: "bomber", sortieTurns: 1 }])]);
-    expect(run(state, ...days(3)).players[1]?.unitsLost).toEqual({});
+  it("a unit heading home leaves only from a square on the map's edge, at the start of its owner's turn (23-survival §5c)", () => {
+    const state = game(SQUARE, [raid([{ type: "bomber", sortieTurns: 1 }])]);
+    // Day 3: it turns for home in the middle of the map. Left there, it doesn't leave.
+    const turned = run(state, ...days(2), endTurn);
+    expect(japan(run(turned, ...days(3))).map((u) => u.homeward)).toEqual([true]);
+    // Flown to the edge, it leaves at the start of Japan's next turn.
+    const atEdge = run(turned, wait(1, [P(3, 2), P(4, 2)]), endTurn);
+    const events = eventsOf(atEdge, endTurn);
+    expect(events).toContainEqual({ type: "unitLeft", unitId: 1, unitType: "bomber", owner: 1, pos: P(4, 2) });
+    expect(japan(run(atEdge, endTurn))).toEqual([]);
   });
 
-  it("a raider goes home with the units it carries (23-survival §5c)", () => {
-    const state = game(["....."], [raid([{ type: "transportAircraft", sortieTurns: 1, cargo: [{ type: "infantry" }] }])]);
-    const after = run(state, ...days(2), endTurn);
-    expect(axisUnits(after)).toEqual([]);
+  it("a unit leaving the map isn't counted as a loss (23-survival §5c, 04-economy §8a)", () => {
+    const state = game(SQUARE, [raid([{ type: "bomber", sortieTurns: 1 }], [P(4, 2)])]);
+    const after = run(state, ...days(4));
+    expect(japan(after)).toEqual([]);
+    expect(after.players[1]?.unitsLost).toEqual({});
+  });
+
+  it("a unit heading home can still be shot down on its way out (23-survival §5c)", () => {
+    const state = game(SQUARE, [raid([{ type: "bomber", sortieTurns: 1 }])], [allied, { type: "fighter", owner: 0, pos: P(2, 3) }]);
+    const turned = run(state, ...days(2), endTurn, endTurn);
+    const bomber = japan(turned)[0];
+    expect(bomber?.homeward).toBe(true);
+    const attacked = must(turned, { type: "move", unitId: 1, path: [], action: { type: "attack", target: bomber?.id ?? -1 } });
+    expect(attacked.events.some((e) => e.type === "combat")).toBe(true);
+  });
+
+  it("a Landing Craft that brought a wave turns for home once it has unloaded (23-survival §5c)", () => {
+    const BEACH = ["SSSSS", "SSSSS", "SS_..", "SSSSS", "SSSSS"];
+    const state = game(BEACH, [{ day: 1, player: 1, zone: [P(2, 1)], units: [{ type: "landingCraft", leavesWhenEmpty: true, cargo: [{ type: "infantry" }] }] }], [{ type: "infantry", owner: 0, pos: P(4, 2) }]);
+    const arrived = run(state, ...days(1), endTurn);
+    const craft = japan(arrived).find((u) => u.type === "landingCraft");
+    if (!craft) throw new Error("no landing craft");
+    // Loaded, it stays at sea; unloaded on the beach, it turns for home at the start of its next turn.
+    expect(japan(run(arrived, ...days(1))).find((u) => u.type === "landingCraft")?.homeward).toBeUndefined();
+    const unloaded = run(arrived, { type: "move", unitId: craft.id, path: [P(2, 2)], action: { type: "unload", passenger: craft.cargo[0]?.id ?? -1, to: P(3, 2) } }, endTurn);
+    expect(eventsOf(unloaded, endTurn)).toContainEqual({ type: "unitHomeward", unitId: craft.id, pos: P(2, 2) });
+  });
+
+  it("a unit heading home leaves with the units it carries (23-survival §5c)", () => {
+    const state = game(SQUARE, [raid([{ type: "transportAircraft", sortieTurns: 1, cargo: [{ type: "infantry" }] }], [P(4, 2)])]);
+    const after = run(state, ...days(4));
+    expect(japan(after)).toEqual([]);
     expect(after.players[1]?.unitsLost).toEqual({});
   });
 
   it("a raider that lands on its own side's airfield stays (23-survival §5c)", () => {
-    const state = game(["...A."], [raid([{ type: "bomber", sortieTurns: 1 }])], [allied], { propertyOwners: [{ pos: P(3, 0), owner: 1 }] });
+    const state = game(["...A."], [raid([{ type: "bomber", sortieTurns: 1 }], [P(4, 0)])], [allied], { propertyOwners: [{ pos: P(3, 0), owner: 1 }] });
     const landed = run(state, endTurn, endTurn, endTurn, wait(1, [P(3, 0)]), ...days(5));
-    expect(axisUnits(landed).map((u) => [u.type, u.sortie])).toEqual([["bomber", undefined]]);
+    expect(japan(landed).map((u) => [u.type, u.sortie, u.homeward])).toEqual([["bomber", undefined, undefined]]);
   });
 
   it("a raider that lands on a Carrier stays (23-survival §5c)", () => {
-    const state = game(["..SSS"], [raid([{ type: "fighter", sortieTurns: 1 }])], [allied, { type: "carrier", owner: 1, pos: P(2, 0) }]);
+    const state = game(["..SSS"], [raid([{ type: "fighter", sortieTurns: 1 }], [P(4, 0)])], [allied, { type: "carrier", owner: 1, pos: P(2, 0) }]);
     const aboard = run(state, endTurn, endTurn, endTurn, { type: "move", unitId: 2, path: [P(3, 0), P(2, 0)], action: { type: "load" } }, ...days(5));
-    const carrier = axisUnits(aboard).find((u) => u.type === "carrier");
-    expect(carrier?.cargo.map((c) => [c.type, c.sortie])).toEqual([["fighter", undefined]]);
+    const carrier = japan(aboard).find((u) => u.type === "carrier");
+    expect(carrier?.cargo.map((c) => [c.type, c.sortie, c.homeward])).toEqual([["fighter", undefined, undefined]]);
   });
 
   it("units arriving without a sortie stay as long as any unit (23-survival §5c)", () => {
-    const state = game(["....."], [raid([{ type: "infantry" }])]);
-    expect(axisUnits(run(state, ...days(6)))).toHaveLength(1);
+    const state = game(SQUARE, [raid([{ type: "infantry" }], [P(4, 2)])]);
+    expect(japan(run(state, ...days(6)))).toHaveLength(1);
   });
 });
 
@@ -198,7 +236,7 @@ describe("A rout limited to one side (23-survival §5b)", () => {
 
   it("a rout limited to the Allies doesn't defeat an Axis player with no units (23-survival §5b)", () => {
     const state = game(["....."], [{ day: 1, player: 1, zone: [P(4, 0)], units: [{ type: "bomber", sortieTurns: 1 }] }], [allied], routAllies);
-    // The bomber goes home on day 3, leaving the Axis with nothing on the map.
+    // The bomber turns for home on day 3 and, already on the edge, leaves on day 4: the Axis has nothing on the map.
     const after = run(state, ...days(4));
     expect(axisUnits(after)).toEqual([]);
     expect(after.result).toBeNull();

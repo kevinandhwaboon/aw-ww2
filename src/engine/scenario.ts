@@ -126,6 +126,7 @@ function parseArrivingUnit(raw: unknown, where: string): ArrivingUnit {
   return {
     type: raw.type,
     ...optionalCounts(raw, ["hp", "fuel", "ammo", "kills", "sortieTurns"], where),
+    ...(raw.leavesWhenEmpty === undefined ? {} : { leavesWhenEmpty: raw.leavesWhenEmpty === true ? true : fail(`${where}: "leavesWhenEmpty" must be true`) }),
     ...(raw.cargo === undefined ? {} : { cargo: list(raw, "cargo", where).map((c, i) => parseArrivingUnit(c, `${where} cargo ${i}`)) }),
   };
 }

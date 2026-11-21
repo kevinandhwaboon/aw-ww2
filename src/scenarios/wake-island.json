@@ -385,14 +385,16 @@
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         }
       ]
     },
@@ -906,63 +908,72 @@
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "infantry" },
             { "type": "assaultInfantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "assaultInfantry" },
             { "type": "assaultInfantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "assaultInfantry" },
             { "type": "assaultInfantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         },
         {
           "type": "landingCraft",
           "cargo": [
             { "type": "mobileAA" },
             { "type": "infantry" }
-          ]
+          ],
+          "leavesWhenEmpty": true
         }
       ]
     },
