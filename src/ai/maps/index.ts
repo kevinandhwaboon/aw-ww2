@@ -8,6 +8,7 @@ import { battleOfBritainPlan } from "./battleOfBritain";
 import { gazalaPlan } from "./gazala";
 import { midwayPlan } from "./midway";
 import { objectivePlan } from "./objectives";
+import { survivalPlan } from "./survival";
 
 /** A fresh plan for each game, since a plan may keep hints such as where it has searched. */
 const PLANS: Readonly<Record<string, () => MapPlan>> = {
@@ -28,4 +29,12 @@ export function hasMapPlan(map: string): boolean {
 export function campaignAi(map: string): AiPlayer {
   const plan = Object.hasOwn(PLANS, map) ? PLANS[map]?.() : undefined;
   return greedyAi(GREEDY_WEIGHTS, plan ?? null);
+}
+
+/**
+ * The computer bringing the waves on a survival map (23-survival §6): Greedy at Normal, driving on
+ * the defender's HQ. Used only in Survival, as map plans are only in the Campaign.
+ */
+export function survivalAi(): AiPlayer {
+  return greedyAi(GREEDY_WEIGHTS, survivalPlan("Survival plan"));
 }
