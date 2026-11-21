@@ -1,6 +1,6 @@
 # Topic Doc 23: Survival
 
-**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Milestones S1–S3 built 2026-11-20 (§9): the engine rules, the wave generator, and the Wake Island map with the Survival screens, so the mode is playable. Japan's own plan and the tuning (S4) are still to do. Wave numbers are a first guess (§8).
+**Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Built 2026-11-20 and 21 in four milestones (§9): the engine rules, the wave generator, the Wake Island map with the Survival screens, and Japan's plan with a first tuning. Balance needs checking by play (§8).
 **Last updated:** 2026-11-20
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
@@ -80,7 +80,7 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 | 6 | Day 9 | Day 10 | Raid and bombardment | 3 Bombers, 2 Destroyers | South |
 | 7 | Day 11 | Day 12 | Daily raid | 5 Bombers | South |
 | 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; 2 Destroyers | West |
-| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 2 Battleships, 4 Destroyers; 4 Landing Craft with 6 Infantry and 2 Assault Infantry | South |
+| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 4 Battleships (Cruiser Division 6), 6 Destroyers; 8 Landing Craft with 11 Infantry and 5 Assault Infantry, three times the first landing, as in 1941 | South |
 
 - **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. As built, the east edge is only a few squares from Peacock Point, so it can join the fight against the second landing the next day.
 - **Raiders go home.** Bombers and Fighters that come from land bases off the map fly for **2 turns** after they arrive, then return to base at the start of their third turn. They are removed, counted neither as Japanese losses nor as kills (§5c). Aircraft from a Carrier, and any that land at an airfield Japan has captured, stay, as usual.
@@ -174,6 +174,7 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
   - **Raiders** prefer Flak Guns, aircraft and the airfield, then ships.
   - The plan knows only what a human attacker would: the map, its own units and what it sees. It doesn't know what the next waves are (it never needs to).
 - **The US** can be played by the standard AI, for testing and tuning only (§8).
+- **As built (S4, `src/ai/maps/survival.ts`):** the plan's objective is every HQ of the other side; land units (not transports) that can capture or fight head for one they can walk to, and units that can't capture keep off it. An aircraft's attack on a Flak Gun, a Mobile AA or an aircraft scores 6,000 more (`AIR_DEFENCE_BONUS`); there's no bonus for the airfield itself, since a property can't be attacked. Ships, transports and landings are Greedy as usual. The survival AI is used only for the attacker in Survival games (and in self-play on survival maps), like the map plans in the Campaign (22-campaign §6).
 
 ## 7. Screens
 
@@ -185,8 +186,13 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 
 ## 8. Tuning
 
-- **Target:** the standard AI playing the US **falls by wave 9 (the second landing) in about three games in four**. A careful human plays far better than the standard AI (22-campaign §5), so a good player should outlast history most of the time and fall a few waves later.
-- Measured with `npm run selfplay -- --maps wake-island`, which reports the waves reached. **First measurement (S3, 2026-11-20, seeds 1–4, 40 days):** the standard AI as the US falls in every game, on days 20–24, at waves 11–13: a little past history, so the waves are a little weak for the target. Tuning is a data edit: the scripted waves, the budget and growth, the pattern weights.
+- **Target (revised 2026-11-21, S4):** the standard AI playing the US **falls within a few days of history: by day 20 in most games**. The first target, falling by wave 9 in three games in four, can't be met: landing, clearing the Marines and capturing the HQ takes three or four days, so the second landing (day 16) can't finish before wave 10 arrives on day 17, however big it is (tried up to twice the size below, and with heavier raids and bombardment first). A careful human plays far better than the standard AI (22-campaign §5), so a good player should outlast history most of the time and fall a few waves later.
+- Measured with `npm run selfplay -- --maps wake-island`, which reports the waves reached; the waves always play the survival plan (§6).
+- **Measurements** (the standard AI as the US, 40–45 days):
+  - S3, plain Greedy for Japan (seeds 1–4): falls on days 20–24, waves 11–13.
+  - S4, Japan's survival plan (seeds 1–8): days 20–30, waves 11–14. The plan alone didn't make Japan stronger.
+  - Tried, seeds 1–8: half the US income (days 20–27, no stronger); no Task Force 14 (falls by day 20 in 5 of 8, but the relief arriving is the developer's choice, §10 Q4); the second landing with 3 more Landing Craft and a Battleship (days 19–25); twice as big (days 19–30); twice as big with two more Battleships in wave 6 and two more Bombers in wave 7 (days 15–21, and the only game to fall by wave 9).
+  - **Chosen (seeds 1–18):** the second landing three times the first, as in history (above). The US falls on days 19–25, by day 20 in 11 of 18, at waves 10–13.
 
 ## 9. Build plan
 
@@ -197,7 +203,7 @@ Proposed as milestones, each one playable:
 | S1 (**built 2026-11-20**) | Arrivals with entry zones; `rout` by side; `sortieTurns`; the record in `GameState`. Tests (`tests/arrivals.test.ts`) | Arriving and leaving units shown; a wave banner |
 | S2 (**built 2026-11-20**) | The wave generator (§4), seeded. Tests (`tests/waves.test.ts`) | The HUD's wave counter and forecast |
 | S3 (**built 2026-11-20**) | The Wake Island map (`tools/maps/wake-island.mjs`, its picture) and its scripted waves. Tests (`tests/wakeIsland.test.ts`, `tests/survival.test.ts`) | The title item, the Survival screen, the results screen and the best record |
-| S4 | — | Japan's survival plan (§6); `selfplay --survival`; tuning to §8 |
+| S4 (**built 2026-11-21**) | — | Japan's survival plan (§6, `tests/survivalAi.test.ts`); self-play on survival maps; the second landing enlarged (§8) |
 
 ### Tests (proposed names)
 
