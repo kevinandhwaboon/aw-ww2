@@ -77,6 +77,15 @@ describe("autosave (11-tech-setup §3j)", () => {
     expect(readAutosave(store, ids)?.campaign).toBeUndefined();
   });
 
+  it("a survival game's autosave remembers it's a survival game, so it goes back to the Survival screen (23-survival §7)", () => {
+    const store = memoryStore();
+    const state = game();
+    writeAutosave(store, { scenarioId: "bastogne", options, state, survival: true });
+    expect(readAutosave(store, ids)?.survival).toBe(true);
+    writeAutosave(store, { scenarioId: "bastogne", options, state });
+    expect(readAutosave(store, ids)?.survival).toBeUndefined();
+  });
+
   it("a carried-on game plays on exactly as it would have without the reload, luck rolls included", () => {
     const store = memoryStore();
     writeAutosave(store, { scenarioId: "bastogne", options, state: game() });

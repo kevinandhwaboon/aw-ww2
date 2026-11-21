@@ -137,8 +137,9 @@ function parseArrival(raw: unknown, index: number): Arrival {
   return {
     day: count(raw, "day", where),
     player: count(raw, "player", where),
-    ...optionalCounts(raw, ["wave"], where),
+    ...optionalCounts(raw, ["wave", "unitCap"], where),
     ...(raw.name === undefined ? {} : { name: text(raw, "name", where) }),
+    ...(raw.from === undefined ? {} : { from: text(raw, "from", where) }),
     zone: list(raw, "zone", where).map((p) => point(p, where)),
     units: list(raw, "units", where).map((u, i) => parseArrivingUnit(u, `${where} unit ${i}`)),
   };

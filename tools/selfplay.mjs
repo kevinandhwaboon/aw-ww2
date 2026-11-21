@@ -53,7 +53,9 @@ if (!Number.isInteger(lastDay) || lastDay < 1 || seeds.length === 0 || seeds.som
 const server = await createServer({ root, logLevel: "error", appType: "custom", server: { middlewareMode: true, hmr: false, ws: false } });
 let failed = 0;
 try {
-  const { SCENARIOS } = await server.ssrLoadModule("/src/scenarios/index.ts");
+  const { SCENARIOS: SKIRMISH, SURVIVAL_SCENARIOS } = await server.ssrLoadModule("/src/scenarios/index.ts");
+  // The survival maps are played too (23-survival §8); their report adds the waves reached.
+  const SCENARIOS = [...SKIRMISH, ...SURVIVAL_SCENARIOS];
   const { createGame, COMMANDER_IDS, COMMANDERS, NATIONS } = await server.ssrLoadModule("/src/engine/index.ts");
   // With --commanders, each player gets a commander of their own side; the seed and seat decide which.
   const withCommanders = (setup, seed) => ({
@@ -89,6 +91,7 @@ try {
     const wins = new Map();
     const ahead = new Map();
     const endDays = [];
+    const wavesReached = [];
     let commands = 0;
     let problems = 0;
     const t0 = performance.now();
@@ -100,6 +103,7 @@ try {
       const report = await selfPlay(start, ais, lastDay, { checkLegal: args.deep });
       commands += report.commands.length;
       ahead.set(sideAhead(report.state), (ahead.get(sideAhead(report.state)) ?? 0) + 1);
+      if (report.state.waveGenerator) wavesReached.push(report.state.wave);
       if (report.state.result) {
         endDays.push(report.state.day);
         const side = report.state.result.winningSide;
@@ -119,8 +123,9 @@ try {
     const seconds = ((performance.now() - t0) / 1000).toFixed(1);
     const won = [...wins].map(([side, n]) => `${side} ${n}`).join(", ") || "none";
     const days = endDays.length ? `, ending day ${Math.min(...endDays)}-${Math.max(...endDays)}` : "";
+    const waveText = wavesReached.length ? `; waves reached ${Math.min(...wavesReached)}-${Math.max(...wavesReached)}` : "";
     const standingText = args.standing ? `; ahead at the end: ${[...ahead].map(([side, n]) => `${side} ${n}`).join(", ")}` : "";
-    console.log(`${scenario.id.padEnd(12)} ${endDays.length}/${seeds.length} games ended (wins: ${won}${days})${standingText}; ${commands} commands, ${problems} with problems, ${seconds}s`);
+    console.log(`${scenario.id.padEnd(12)} ${endDays.length}/${seeds.length} games ended (wins: ${won}${days})${waveText}${standingText}; ${commands} commands, ${problems} with problems, ${seconds}s`);
   }
 } finally {
   await server.close();
