@@ -92,6 +92,7 @@
 | Resign | RESIGN in the turn menu, then RESIGN NOW | The same with arrow keys and Z |
 | See the commanders (06-commanders §5) | COMMANDERS in the turn menu, or the medal button in the HUD | The same with arrow keys and Z, or C at any time |
 | Menus and screens | Click | Arrow keys, Z to choose, X to go back. A new game is two screens (06-commanders §5): on the map select, arrows pick a map and Z moves on; on the players screen, Up and Down walk the controls, Left and Right change the commander in focus, Up from the first wraps to Start, and X goes back to the maps |
+| Game controller (Xbox pad, ROG Ally, …) | | A is Z, B is X (hold B for a unit's range), D-pad or left stick are the arrow keys, holding a direction repeats it. Works in any browser with the Gamepad API (Chrome, Edge); the browser only shows the controller after its first button press. On the ROG Ally the controls must be in gamepad mode, not desktop (mouse) mode |
 | Sound level (16-sound §8) | The speaker button in the HUD: Off, Low, Medium, High | M turns sound off, and back on |
 
 ## 3d. Combat notes (milestone 3)
