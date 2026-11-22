@@ -41,6 +41,12 @@ export interface WavePattern {
 /** Land-based raiders fly two turns after the turn they arrive (23-survival §3). */
 const RAID_SORTIE = 2;
 
+/**
+ * Warships covering a landing or a bombardment stay five turns, then sail home, so they don't pile up
+ * wave after wave (23-survival §4). A Carrier's escort stays with it.
+ */
+const SHIP_SORTIE = 5;
+
 /** Japan's waves in the central Pacific (23-survival §4), for Wake Island. */
 const PACIFIC: readonly WavePattern[] = [
   {
@@ -65,8 +71,8 @@ const PACIFIC: readonly WavePattern[] = [
       {
         edges: ["south", "west"],
         units: [
-          { type: "destroyer", share: 0.3 },
-          { type: "landingCraft", share: 0.35, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+          { type: "destroyer", share: 0.15, sortieTurns: SHIP_SORTIE },
+          { type: "landingCraft", share: 0.5, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
           // Anti-aircraft ashore, so an aircraft parked on the HQ can't hold it alone (23-survival §6).
           // Enough of the budget for at least one in the smallest landing.
           { type: "landingCraft", share: 0.15, cargo: ["mobileAA", "infantry"], leavesWhenEmpty: true },
@@ -84,8 +90,8 @@ const PACIFIC: readonly WavePattern[] = [
       {
         edges: ["south", "west", "north", "east"],
         units: [
-          { type: "battleship", share: 0.6 },
-          { type: "destroyer", share: 0.4 },
+          { type: "battleship", share: 0.75, sortieTurns: SHIP_SORTIE },
+          { type: "destroyer", share: 0.25, sortieTurns: SHIP_SORTIE },
         ],
       },
     ],
@@ -98,9 +104,9 @@ const PACIFIC: readonly WavePattern[] = [
       {
         edges: ["west", "north"],
         units: [
-          { type: "carrier", share: 0.5, cargo: ["fighter", "diveBomber"] },
-          { type: "carrier", share: 0.25, cargo: ["torpedoBomber", "diveBomber"] },
-          { type: "destroyer", share: 0.25 },
+          { type: "carrier", share: 0.55, cargo: ["fighter", "diveBomber"] },
+          { type: "carrier", share: 0.3, cargo: ["torpedoBomber", "diveBomber"] },
+          { type: "destroyer", share: 0.15 },
         ],
       },
     ],
@@ -128,14 +134,14 @@ const PACIFIC: readonly WavePattern[] = [
       {
         edges: ["south", "west"],
         units: [
-          { type: "destroyer", share: 0.15 },
-          { type: "landingCraft", share: 0.15, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+          { type: "destroyer", share: 0.1, sortieTurns: SHIP_SORTIE },
+          { type: "landingCraft", share: 0.2, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
           { type: "landingCraft", share: 0.1, cargo: ["assaultInfantry", "lightTank"], leavesWhenEmpty: true },
           { type: "landingCraft", share: 0.1, cargo: ["mobileAA", "infantry"], leavesWhenEmpty: true },
         ],
       },
       { edges: ["south", "west", "north"], units: [{ type: "bomber", share: 0.3, sortieTurns: RAID_SORTIE }] },
-      { edges: ["south", "west", "north", "east"], units: [{ type: "battleship", share: 0.2 }] },
+      { edges: ["south", "west", "north", "east"], units: [{ type: "battleship", share: 0.2, sortieTurns: SHIP_SORTIE }] },
     ],
   },
 ];

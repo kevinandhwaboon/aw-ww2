@@ -75,15 +75,16 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 |---|---|---|---|---|---|
 | 1 | Day 1 | Day 2 | The noon raid | 3 Bombers | South |
 | 2 | Day 2 | Day 3 | Daily raid | 3 Bombers | South |
-| 3 | Day 3 | Day 4 (11 Dec) | The first landing | 4 Destroyers; 2 Landing Craft with 2 Infantry each | South |
+| 3 | Day 3 | Day 4 (11 Dec) | The first landing | 2 Destroyers; 2 Landing Craft with 2 Infantry each | South |
 | 4 | Day 5 | Day 6 | Raid and submarines | 3 Bombers and an escort Fighter, 2 Submarines | South |
 | 5 | Day 7 | Day 8 | Daily raid | 4 Bombers and an escort Fighter | South |
-| 6 | Day 9 | Day 10 | Raid and bombardment | 3 Bombers and an escort Fighter, 2 Destroyers | South |
+| 6 | Day 9 | Day 10 | Raid and bombardment | 3 Bombers and an escort Fighter, a Destroyer | South |
 | 7 | Day 11 | Day 12 | Daily raid | 5 Bombers and an escort Fighter | South |
-| 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; 2 Destroyers | West |
-| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 4 Battleships (Cruiser Division 6), 6 Destroyers; 8 Landing Craft with 11 Infantry and 5 Assault Infantry, three times the first landing, as in 1941 | South |
+| 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; a Destroyer | West |
+| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 4 Battleships (Cruiser Division 6), 3 Destroyers; 8 Landing Craft with 11 Infantry and 5 Assault Infantry, three times the first landing, as in 1941 | South |
 
 - **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. As built, the east edge is only a few squares from Peacock Point, so it can join the fight against the second landing the next day.
+- **Fewer Destroyers, and they go home (2026-11-22, at the developer's request: "way too many destroyers").** The warships of the landings and bombardments never left, so they piled up wave after wave, fuelled by the oilers. Now the first landing has 2 Destroyers (was 4), the bombardment 1 (was 2), the carriers' escort 1 (was 2) and the second landing 3 (was 6); and every Destroyer and Battleship covering a landing or a bombardment sails home after 5 turns (`sortieTurns: 5`, §5c), like the raiders. The carriers' escort stays with them. Generated waves follow the same rule and spend less on Destroyers (§4).
 - **Raiders go home.** Bombers and Fighters that come from land bases off the map fly for **2 turns** after they arrive, then return to base at the start of their third turn. They are removed, counted neither as Japanese losses nor as kills (§5c). Aircraft from a Carrier, and any that land at an airfield Japan has captured, stay, as usual.
 - **History's mark:** the Survival screen and the results screen show "Wake fell on 23 December 1941, day 16". Holding the HQ to the start of day 17 is "**Held longer than history**".
 - **As built (S3):** the noon raid arrives on day 1, at the start of Japan's turn, and strikes on day 2, like every other wave: starting units can't carry a sortie, and every wave giving one turn's warning keeps the rule simple. The raids from the south edge are 7 squares from the south shore, one Bomber's move, so each strikes on the turn after it arrives.
@@ -111,6 +112,8 @@ After the second landing, history ends and the waves keep coming, **a new wave e
 - The HUD always shows **the next wave**: its day, its name or pattern and its edge, like the weather forecast (12-weather §5).
 
 ### As built (milestone S2)
+
+- **Since 2026-11-22:** Destroyers have a smaller share of each wave (Landing 15%, was 30%; Bombardment 25%, was 40%; Carrier strike 15%, was 25%; Combined 10%, was 15%), and the Destroyers and Battleships of Landings, Bombardments and Combined assaults sail home after 5 turns. Carrier strikes' Destroyers stay with their Carriers.
 
 - **The patterns are data** (`src/engine/data/waves.ts`, the `pacific` set): each has a name, a weight, the wave it starts from, and one or more groups, each with the edges it may use and its units' shares of the budget. Units that join later (Fighters in raids, Mortar Teams and Light Tanks in landings, from wave 12) have their own `fromWave`. The rules that turn a pattern into units are in `src/engine/waves.ts`.
 - **A map's waves are a `waves` block in its scenario file**: the attacking player, the pattern set, the first wave and its day, the days between waves, the first wave's budget and the growth, the named edges (each a list of entry squares, with the wave it opens on), the unit cap and the convoy.

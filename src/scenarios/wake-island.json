@@ -376,10 +376,8 @@
       ],
       "from": "south",
       "units": [
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
+        { "type": "destroyer", "sortieTurns": 5 },
+        { "type": "destroyer", "sortieTurns": 5 },
         {
           "type": "landingCraft",
           "cargo": [
@@ -648,8 +646,7 @@
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "fighter", "sortieTurns": 2 },
-        { "type": "destroyer" },
-        { "type": "destroyer" }
+        { "type": "destroyer", "sortieTurns": 5 }
       ]
     },
     {
@@ -816,7 +813,6 @@
             { "type": "diveBomber" }
           ]
         },
-        { "type": "destroyer" },
         { "type": "destroyer" }
       ]
     },
@@ -897,16 +893,13 @@
       ],
       "from": "south",
       "units": [
-        { "type": "battleship" },
-        { "type": "battleship" },
-        { "type": "battleship" },
-        { "type": "battleship" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
-        { "type": "destroyer" },
+        { "type": "battleship", "sortieTurns": 5 },
+        { "type": "battleship", "sortieTurns": 5 },
+        { "type": "battleship", "sortieTurns": 5 },
+        { "type": "battleship", "sortieTurns": 5 },
+        { "type": "destroyer", "sortieTurns": 5 },
+        { "type": "destroyer", "sortieTurns": 5 },
+        { "type": "destroyer", "sortieTurns": 5 },
         {
           "type": "landingCraft",
           "cargo": [
