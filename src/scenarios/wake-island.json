@@ -478,6 +478,7 @@
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
+        { "type": "fighter", "sortieTurns": 2 },
         { "type": "submarine" },
         { "type": "submarine" }
       ]
@@ -562,7 +563,8 @@
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
-        { "type": "bomber", "sortieTurns": 2 }
+        { "type": "bomber", "sortieTurns": 2 },
+        { "type": "fighter", "sortieTurns": 2 }
       ]
     },
     {
@@ -645,6 +647,7 @@
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
+        { "type": "fighter", "sortieTurns": 2 },
         { "type": "destroyer" },
         { "type": "destroyer" }
       ]
@@ -730,7 +733,8 @@
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
         { "type": "bomber", "sortieTurns": 2 },
-        { "type": "bomber", "sortieTurns": 2 }
+        { "type": "bomber", "sortieTurns": 2 },
+        { "type": "fighter", "sortieTurns": 2 }
       ]
     },
     {

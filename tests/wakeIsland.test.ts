@@ -143,6 +143,13 @@ describe("Wake Island (23-survival §2)", () => {
     expect(cargo.filter((t) => t === "infantry" || t === "assaultInfantry").length).toBeGreaterThanOrEqual(16);
   });
 
+  it("from the first landing until the carriers, every raid brings a fighter, so a plane parked on the HQ is never safe for long (23-survival §3, §6)", () => {
+    for (const n of [4, 5, 6, 7]) {
+      const raidWave = arrivals?.find((a) => a.wave === n);
+      expect(raidWave?.units.filter((u) => u.type === "fighter"), `wave ${n}`).toEqual([{ type: "fighter", sortieTurns: 2 }]);
+    }
+  });
+
   it("the raids from the Marshalls go home after two turns (23-survival §3, §5c)", () => {
     const raiders = (arrivals ?? []).filter((a) => a.player === JAPAN).flatMap((a) => a.units).filter((u) => u.type === "bomber");
     expect(raiders.length).toBeGreaterThan(0);
