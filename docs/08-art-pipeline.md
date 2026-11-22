@@ -111,8 +111,8 @@ Small marks drawn on top of unit sprites. All of these exist today as placeholde
 | Veterancy badges | Veteran (1 chevron), Elite (3 chevrons). Since 2026-11-16 the chevrons point up, like a sergeant's stripes, with no dark box behind them |
 | Capturing | C badge |
 | Carrying passengers | + badge |
-| Low fuel warning | A flashing red gas can (jerrycan) on the left edge, since 2026-11-10 (it was an F); rule in 05-supply-transport §11 |
-| Low ammo warning | A flashing olive ammo can with brass rounds, stacked above the gas can (since 2026-11-10) |
+| Low fuel warning | A flashing gas can (jerrycan) on the left edge, since 2026-11-10 (it was an F): orange when low, red when empty (since 2026-11-22); rule in 05-supply-transport §11 |
+| Low ammo warning | A flashing olive ammo can with brass rounds, stacked above the gas can (since 2026-11-10); crossed out with a red X when empty (since 2026-11-22) |
 | Transport's passengers | With the cursor on a transport, a panel beside it shows each passenger's sprite, name, HP and cans (05-supply-transport §11) |
 | Submerged | A wave badge in the top-left corner, plus the sprite tinted with the pack's `submerged` color. Placeholder badge drawn in code today |
 

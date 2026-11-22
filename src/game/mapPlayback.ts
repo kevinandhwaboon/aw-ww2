@@ -6,6 +6,7 @@ import type { Combatant, GameEvent } from "../engine/commands";
 import type { Point } from "../engine/map";
 import type { UnitTypeId } from "../engine/data/units";
 import type { GameState, Unit, UnitId } from "../engine/state";
+import { ADRIFT_HP } from "../engine/turn";
 import { weatherOn } from "../engine/weather";
 import type { BattlePlayer } from "./battle/BattleScene";
 import { setBattleWeather } from "./battle/colors";
@@ -153,6 +154,8 @@ export class MapPlayback {
       }
       // A ship that runs dry stays afloat, stuck until it's refuelled (05-supply-transport §7).
       if (event.type === "unitStranded") await this.floatLabel(event.pos, "OUT OF FUEL", packColor("labelWarning"));
+      // Each day after, still dry, it loses HP adrift until it's refuelled or sinks (05-supply-transport §7).
+      if (event.type === "unitAdrift") await this.floatLabel(event.pos, `ADRIFT -${ADRIFT_HP} HP`, packColor("labelWarning"));
       // A raider or an empty Landing Craft turns for home, then flies or sails off the map's edge
       // (23-survival §5c): not a loss, so no explosion.
       if (event.type === "unitHomeward") await this.floatLabel(event.pos, "HEADING HOME", packColor("labelText"));
@@ -205,6 +208,7 @@ export class MapPlayback {
       case "bridgeRebuilt":
       case "unitOutOfFuel":
       case "unitStranded":
+      case "unitAdrift":
       case "unitLeft":
       case "unitHomeward":
       case "unitLaunched":

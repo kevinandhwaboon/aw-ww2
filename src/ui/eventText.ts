@@ -58,6 +58,8 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
       return `${name(e.owner)} ${unitTypeName(e.unitType)} ran out of fuel and was lost`;
     case "unitStranded":
       return `${unitName(e.unitId)} ran out of fuel and can't move until it's refuelled`;
+    case "unitAdrift":
+      return `${unitName(e.unitId)} is adrift with no fuel: down to ${displayHp(e.hp)} HP`;
     case "bridgeBlown":
       return `${unitName(e.unitId)} blew the bridge at (${e.pos.x}, ${e.pos.y})`;
     case "bridgeRebuildProgress":

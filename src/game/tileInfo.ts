@@ -12,14 +12,18 @@ import * as stats from "../engine/stats";
 import { terrainName, unitName } from "./artPack";
 import { objectiveTiles } from "./objectives";
 
-/** An amount left out of the most the unit can hold. `low`: worth a warning color. */
+/** An amount left out of the most the unit can hold. `low`: worth a warning color; `empty`: none left at all. */
 export interface Supply {
   /** What it is: "Fuel", "Ammo", or a Supply Ship's "Supplies" (05-supply-transport §3b). */
   readonly label: string;
   readonly left: number;
   readonly max: number;
   readonly low: boolean;
+  readonly empty: boolean;
 }
+
+/** How short a unit is of fuel or ammo (05-supply-transport §11): fine, low (orange, or the plain ammo can), or empty (red). */
+export type SupplyLevel = "ok" | "low" | "empty";
 
 /** One unit aboard a transport, as the info box lists it. */
 export interface Passenger {
@@ -37,8 +41,9 @@ export interface Passenger {
  *   too little to fly or sail one more full turn away from home and still get back.
  * - Ammo: a unit with a main weapon that has used it up, or has a quarter or less left (rounded up),
  *   counting a single shot still left as full. A Supply Ship's supply loads count as its ammo (§3b).
+ * Either is "empty" at 0, which shows in red.
  */
-export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: boolean; readonly ammo: boolean } {
+export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: SupplyLevel; readonly ammo: SupplyLevel } {
   const maxFuel = stats.maxFuel(state, unit);
   const burn = stats.fuelPerDay(state, unit);
   // A unit with no fuel tank (a Radar Station) never runs short.
@@ -46,7 +51,10 @@ export function supplyWarnings(state: GameState, unit: Unit): { readonly fuel: b
   const maxAmmo = stats.maxAmmo(state, unit);
   const armed = stats.baseMaxAmmo(unit.type) > 0;
   const ammo = armed && (unit.ammo === 0 || (unit.ammo < maxAmmo && unit.ammo <= Math.ceil(maxAmmo / 4)));
-  return { fuel, ammo };
+  return {
+    fuel: !fuel ? "ok" : unit.fuel === 0 ? "empty" : "low",
+    ammo: !ammo ? "ok" : unit.ammo === 0 ? "empty" : "low",
+  };
 }
 
 /**
@@ -129,10 +137,10 @@ function costToNearest(state: GameState, unit: Unit, goals: ReadonlySet<number>)
 function supplies(state: GameState, unit: Unit): { fuel: Supply; ammo: Supply | null } {
   const low = supplyWarnings(state, unit);
   return {
-    fuel: { label: "Fuel", left: unit.fuel, max: stats.maxFuel(state, unit), low: low.fuel },
+    fuel: { label: "Fuel", left: unit.fuel, max: stats.maxFuel(state, unit), low: low.fuel !== "ok", empty: low.fuel === "empty" },
     ammo:
       stats.baseMaxAmmo(unit.type) > 0
-        ? { label: usesSupplyLoads(unit) ? "Supplies" : "Ammo", left: unit.ammo, max: stats.maxAmmo(state, unit), low: low.ammo }
+        ? { label: usesSupplyLoads(unit) ? "Supplies" : "Ammo", left: unit.ammo, max: stats.maxAmmo(state, unit), low: low.ammo !== "ok", empty: low.ammo === "empty" }
         : null,
   };
 }

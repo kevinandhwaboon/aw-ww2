@@ -17,6 +17,8 @@ const BUILT_IN_COLORS = {
   uiInk: "#2a2418",
   uiBorder: "#4a3c28",
   uiAccent: "#c84030",
+  // Low fuel or ammo in the tile info box (05-supply-transport §11); empty uses uiAccent
+  uiWarning: "#c86410",
   uiHighlight: "#e8c070",
   // The phone game pad and the box behind its game screen (00-master-design §12)
   padBody: "#3b3f2a",
@@ -67,9 +69,12 @@ const BUILT_IN_COLORS = {
   labelGreen: "#80f080",
   labelBlue: "#a0d8ff",
   labelWarning: "#ffa030",
-  // The flashing low-supply badges on the map (05-supply-transport §11): a red jerrycan, an olive ammo can
-  fuelCan: "#d83a28",
+  // The flashing supply badges on the map (05-supply-transport §11): an orange jerrycan when fuel is
+  // low and a red one when it's empty; an olive ammo can, with a red cross over it once it's empty
+  fuelCan: "#e88a20",
+  fuelCanEmpty: "#d83a28",
   ammoCan: "#6a7440",
+  ammoCanCross: "#e02818",
   // The supply crate that pops up over a unit refuelled and rearmed at the start of its turn (04-economy §2)
   supplyCrate: "#a87838",
   // Battle scenes (08-art-pipeline §18): backgrounds
@@ -175,6 +180,7 @@ export const PAGE_COLORS: Readonly<Record<string, ColorKey>> = {
   "--panel-ink": "uiInk",
   "--panel-border": "uiBorder",
   "--accent": "uiAccent",
+  "--warning": "uiWarning",
   "--highlight": "uiHighlight",
   "--pad-body": "padBody",
   "--pad-body-edge": "padBodyEdge",

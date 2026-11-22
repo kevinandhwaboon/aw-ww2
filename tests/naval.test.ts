@@ -86,11 +86,43 @@ describe("daily fuel for ships (05-supply-transport §7, 04-economy §2)", () =>
     expect(ofType(must(state, attack(0, 1)).events, "combat")).toHaveLength(1);
   });
 
-  it("a stranded ship is announced once, on the turn its tank runs dry, and then just waits for fuel", () => {
+  it("a stranded ship is announced once, on the turn its tank runs dry", () => {
     const stranded = nextRound(makeGame(["S"], [u("battleship", 0, 0, { fuel: 1 })])).state;
     const { state: after, events } = nextRound(stranded);
     expect(byId(after, 0)?.fuel).toBe(0);
     expect(ofType(events, "unitStranded")).toEqual([]);
+  });
+
+  it("a ship loses nothing on the day its tank runs dry, then 1 HP at the start of each of its turns while it stays dry (05-supply-transport §7)", () => {
+    const dryToday = nextRound(makeGame(["S"], [u("battleship", 0, 0, { fuel: 1 })]));
+    expect(byId(dryToday.state, 0)?.hp).toBe(100);
+    expect(ofType(dryToday.events, "unitAdrift")).toEqual([]);
+    const dayTwo = nextRound(dryToday.state);
+    expect(byId(dayTwo.state, 0)?.hp).toBe(90);
+    expect(ofType(dayTwo.events, "unitAdrift")).toEqual([{ type: "unitAdrift", unitId: 0, pos: P(0, 0), hp: 90 }]);
+    expect(byId(nextRound(dayTwo.state).state, 0)?.hp).toBe(80);
+  });
+
+  it("a ship adrift with 1 HP left sinks, taking anything aboard with it; nobody scores a kill, but its owner counts the losses (05-supply-transport §7)", () => {
+    const state = makeGame(["SS"], [u("landingCraft", 0, 0, { fuel: 0, hp: 8, cargo: [{ type: "infantry" }] }), u("destroyer", 1, 1)]);
+    const { state: after, events } = nextRound(state);
+    expect(byId(after, 0)).toBeUndefined();
+    expect(ofType(events, "unitOutOfFuel").map((e) => (e as { unitId: number }).unitId)).toEqual([0]);
+    expect(after.units.some((x) => x.type === "infantry")).toBe(false);
+    expect(byId(after, 1)?.kills).toBe(0);
+    expect(after.players[0]?.unitsLost).toEqual({ landingCraft: 1, infantry: 1 });
+  });
+
+  it("a dry ship refuelled that morning by its own Supply Ship next to it loses no HP (05-supply-transport §3a, §7)", () => {
+    const state = makeGame(["SS"], [u("destroyer", 0, 0, { fuel: 0 }), u("supplyShip", 0, 1)]);
+    const { state: after, events } = nextRound(state);
+    expect(byId(after, 0)).toMatchObject({ hp: 100, fuel: 65 });
+    expect(ofType(events, "unitAdrift")).toEqual([]);
+  });
+
+  it("land units out of fuel never lose HP: only ships wear down adrift (05-supply-transport §7)", () => {
+    const state = makeGame([".."], [u("mediumTank", 0, 0, { fuel: 0 })]);
+    expect(byId(nextRound(nextRound(state).state).state, 0)?.hp).toBe(100);
   });
 
   it("a Carrier out of fuel can still launch its aircraft, which fly on their own fuel (05-supply-transport §10)", () => {

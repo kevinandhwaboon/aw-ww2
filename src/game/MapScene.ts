@@ -785,9 +785,9 @@ export class MapScene extends Phaser.Scene implements MapView {
       row.add(this.untintedUnitImage(shown, this.unitArt(shown)));
       const low = supplyWarnings(state, passenger);
       let bottom = TILE_SIZE;
-      for (const [warn, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
-        if (!warn) continue;
-        const can = this.add.image(0, bottom, this.texture(key, draw)).setOrigin(0, 1);
+      for (const [level, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
+        if (level === "ok") continue;
+        const can = this.add.image(0, bottom, this.texture(`${key}-${level}`, () => draw(level === "empty"))).setOrigin(0, 1);
         row.add(can);
         this.peekBadges.push(can);
         bottom -= can.height;
@@ -983,9 +983,9 @@ export class MapScene extends Phaser.Scene implements MapView {
       bottom -= c.height;
     }
     const low = supplyWarnings(this.state, unit);
-    for (const [warn, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
-      if (!warn) continue;
-      const can = this.add.image(0, bottom, this.texture(key, draw)).setOrigin(0, 1);
+    for (const [level, key, draw] of [[low.fuel, "fuel-can", drawFuelCanBadge], [low.ammo, "ammo-can", drawAmmoCanBadge]] as const) {
+      if (level === "ok") continue;
+      const can = this.add.image(0, bottom, this.texture(`${key}-${level}`, () => draw(level === "empty"))).setOrigin(0, 1);
       sprite.add(can);
       this.warningBadges.push(can);
       bottom -= can.height;

@@ -314,8 +314,9 @@ class Brain extends ProductionBrain {
 
   /**
    * A Supply Ship (09-ai §4f) sails to the nearest of our units it can reach that needs it: ships low
-   * on fuel, short of ammo or damaged, and land units on the shore nearly out of fuel or ammo. With
-   * nobody in need it keeps company with our warships, so it's at hand when they are. Out of supplies,
+   * on fuel, short of ammo or damaged, and land units on the shore nearly out of fuel or ammo. A ship
+   * already out of fuel comes first, since it loses HP every day it stays dry (05-supply-transport §7).
+   * With nobody in need it keeps company with our warships, so it's at hand when they are. Out of supplies,
    * it goes back to a port to refill them (05-supply-transport §3b).
    */
   private planSupplyShip(unit: Unit): Plan {
@@ -336,6 +337,10 @@ class Brain extends ProductionBrain {
       const occupant = unitAt(this.state, p);
       return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
     });
+    const dry = mine.filter((u) => defOf(u.type).category === "naval" && u.fuel === 0).flatMap(reachable);
+    const rescue = this.advance(unit, dry, `rescue${unit.id}`);
+    // Only if it can get there: otherwise it helps whoever else it can reach.
+    if (rescue.kind === "advance" && Number.isFinite(rescue.dist[this.index(unit.pos)] ?? Infinity)) return rescue;
     const wanting = mine.filter(needs).flatMap(reachable);
     if (wanting.length > 0) return this.advance(unit, wanting, `supply${unit.id}`);
     const fleet = mine.filter((u) => defOf(u.type).category === "naval" && defOf(u.type).range !== null).flatMap(reachable);

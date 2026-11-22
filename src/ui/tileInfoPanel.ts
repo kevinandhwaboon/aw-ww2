@@ -1,7 +1,7 @@
 import type { Point } from "../engine/map";
 import type { GameState } from "../engine/state";
 import { playerColors } from "../game/placeholderUnits";
-import { tileInfo, type Passenger } from "../game/tileInfo";
+import { tileInfo, type Passenger, type Supply } from "../game/tileInfo";
 import { el, stars } from "./dom";
 import { drawFlag } from "./flag";
 
@@ -51,9 +51,11 @@ export function createTileInfo(root: HTMLElement): { show: (state: GameState, ti
       // A unit with no fuel tank (a Radar Station) shows no fuel line.
       fuelText.textContent = unit && unit.fuel.max > 0 ? `Fuel ${unit.fuel.left}/${unit.fuel.max}` : "";
       fuelText.classList.toggle("tile-low", unit?.fuel.low === true);
+      fuelText.classList.toggle("tile-empty", unit?.fuel.empty === true);
       ammoText.hidden = !unit?.ammo;
       ammoText.textContent = unit?.ammo ? `${unit.ammo.label} ${unit.ammo.left}/${unit.ammo.max}` : "";
       ammoText.classList.toggle("tile-low", unit?.ammo?.low === true);
+      ammoText.classList.toggle("tile-empty", unit?.ammo?.empty === true);
       captureLine.hidden = !info.capture;
       captureLine.textContent = info.capture ? `Capture ${info.capture.left}/${info.capture.total}` : "";
       // Major Bridges (02-terrain §4a).
@@ -80,11 +82,16 @@ function cargoRows(cargo: readonly Passenger[]): HTMLElement[] {
     el("div", undefined, "Carrying:"),
     ...cargo.map((p) => {
       const row = el("div", "tile-passenger");
-      const fuel = el("span", p.fuel.low ? "tile-low" : undefined, `Fuel ${p.fuel.left}/${p.fuel.max}`);
+      const fuel = el("span", supplyClass(p.fuel), `Fuel ${p.fuel.left}/${p.fuel.max}`);
       const parts: HTMLElement[] = [el("span", "tile-passenger-name", p.name), el("span", undefined, `HP ${p.hp}`), fuel];
-      if (p.ammo) parts.push(el("span", p.ammo.low ? "tile-low" : undefined, `${p.ammo.label} ${p.ammo.left}/${p.ammo.max}`));
+      if (p.ammo) parts.push(el("span", supplyClass(p.ammo), `${p.ammo.label} ${p.ammo.left}/${p.ammo.max}`));
       row.append(...parts);
       return row;
     }),
   ];
+}
+
+/** The warning classes for a fuel or ammo line: orange when low, red when empty (05-supply-transport §11). */
+function supplyClass(supply: Supply): string | undefined {
+  return supply.empty ? "tile-low tile-empty" : supply.low ? "tile-low" : undefined;
 }
