@@ -22,6 +22,7 @@ import "./ui/style.css";
 import { readAutosave, writeAutosave, type Autosave } from "./autosave";
 import { createGame } from "./engine/setup";
 import type { GameState } from "./engine/state";
+import { startGamepad } from "./ui/gamepad";
 
 const url = parseUrlOptions(new URLSearchParams(window.location.search));
 setPolish(url.polish);
@@ -33,6 +34,8 @@ if (!gameRoot || !uiRoot) throw new Error("index.html is missing #game or #ui");
 
 const smallTouchScreen = window.matchMedia("(pointer: coarse)").matches && Math.min(window.innerWidth, window.innerHeight) < 600;
 const padLayout = url.pad ?? smallTouchScreen;
+// A game controller (Xbox pad, ROG Ally) plays like the keyboard: A is Z, B is X (11-tech-setup §3c).
+startGamepad();
 
 const defaults: GameOptions = {
   luck: url.luck,
