@@ -194,6 +194,7 @@ function soleSubject(event: GameEvent): UnitId | null {
     case "unitResupplied":
     case "unitOutOfFuel":
     case "unitStranded":
+    case "unitAdrift":
     case "unitDived":
     case "unitLeft":
     case "unitHomeward":

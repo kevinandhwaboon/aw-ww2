@@ -155,7 +155,10 @@ export type GameEvent =
   | { readonly type: "unitResupplied"; readonly unitId: UnitId }
   | { readonly type: "unitDived"; readonly unitId: UnitId }
   | { readonly type: "unitSurfaced"; readonly unitId: UnitId }
-  /** An air unit ran out of fuel at turn start and crashed (05-supply-transport §5). */
+  /**
+   * A unit was lost to running out of fuel at turn start: an aircraft crashed (05-supply-transport §5),
+   * or a ship adrift for days sank (§7). Not a kill; anything aboard is lost with it.
+   */
   | {
       readonly type: "unitOutOfFuel";
       readonly unitId: UnitId;
@@ -168,6 +171,11 @@ export type GameEvent =
    * submerged submarine also surfaces, with its own unitSurfaced event first (05-supply-transport §7).
    */
   | { readonly type: "unitStranded"; readonly unitId: UnitId; readonly pos: Point }
+  /**
+   * A ship still out of fuel a day or more after it ran dry lost HP at turn start; `hp` is its internal
+   * HP afterwards (05-supply-transport §7). At 0 it sinks instead, as a unitOutOfFuel event.
+   */
+  | { readonly type: "unitAdrift"; readonly unitId: UnitId; readonly pos: Point; readonly hp: number }
   /**
    * Units came onto the map at the start of `player`'s turn (23-survival §5a). `wave` and `name` are
    * the arrival's, when it has them.

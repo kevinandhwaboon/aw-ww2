@@ -814,6 +814,17 @@ describe("Greedy: Supply Ships (09-ai §4f, 05-supply-transport §3a)", () => {
     expect(command && destination(state, command)?.x).toBe(7);
   });
 
+  it("a Supply Ship goes to a ship that is already out of fuel before one that is only low (05-supply-transport §7)", () => {
+    const state = makeGame(sea(40), [
+      { type: "supplyShip", owner: 0, pos: P(20, 1) },
+      { type: "destroyer", owner: 0, pos: P(26, 1), fuel: 10 },
+      { type: "destroyer", owner: 0, pos: P(10, 1), fuel: 0 },
+      { type: "battleship", owner: 1, pos: P(39, 2) },
+    ]);
+    const command = best(state, find(state, "supplyShip", 0));
+    expect(command && destination(state, command)?.x).toBe(15);
+  });
+
   it("with nobody in need, it keeps company with our warships", () => {
     const state = makeGame(sea(40), [
       { type: "supplyShip", owner: 0, pos: P(2, 1) },

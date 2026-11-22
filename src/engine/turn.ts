@@ -18,6 +18,12 @@ export const CARRIER_REPAIR_HP = 1;
 /** Displayed HP repaired per turn for a ship next to its own Supply Ship (05-supply-transport §3a). */
 export const SUPPLY_SHIP_REPAIR_HP = 1;
 
+/**
+ * Displayed HP a ship loses each day it starts its turn still out of fuel, after the day it ran dry
+ * (05-supply-transport §7). At 0 HP it sinks.
+ */
+export const ADRIFT_HP = 1;
+
 /** The player's units and their passengers are ready again; Carriers may move or launch again. */
 function readyUp(unit: Unit): Unit {
   const ready: Unit = { ...unit, hasActed: false, cargo: unit.cargo.map((c) => (c.hasActed ? { ...c, hasActed: false } : c)) };
@@ -32,12 +38,15 @@ function readyUp(unit: Unit): Unit {
 export function startTurn(state: GameState): { state: GameState; events: GameEvent[] } {
   const events: GameEvent[] = [{ type: "turnStarted", player: state.currentPlayer, day: state.day }];
   const afterRaids = sendRaidersHome(state, events);
+  // Ships already dry before this turn's burn: the ones that may lose HP adrift, below.
+  const dry = new Set(afterRaids.units.filter((u) => u.owner === state.currentPlayer && u.fuel === 0 && unitDef(u.type).category === "naval").map((u) => u.id));
   const afterFuel = burnFuel(afterRaids, events);
   const afterIncome = collectIncome(afterFuel, events);
   const afterRepairs = repairAndResupply(afterIncome, events);
   const afterSupply = supplyRound(afterRepairs, events);
+  const afterAdrift = adrift(afterSupply, dry, events);
   const player = state.currentPlayer;
-  const ready = { ...afterSupply, units: afterSupply.units.map((u) => (u.owner === player ? readyUp(u) : u)) };
+  const ready = { ...afterAdrift, units: afterAdrift.units.map((u) => (u.owner === player ? readyUp(u) : u)) };
   // Arrivals come last, so they aren't ready to act until this player's next turn (23-survival §5a).
   // Then the next endless wave is generated, if it isn't known yet (23-survival §4).
   return { state: generateWaves(arriveUnits(ready, events)), events };
@@ -70,6 +79,30 @@ function burnFuel(state: GameState, events: GameEvent[]): GameState {
       if (surfacing) events.push({ type: "unitSurfaced", unitId: unit.id });
       if (unit.fuel > 0) events.push({ type: "unitStranded", unitId: unit.id, pos: unit.pos });
       units.push({ ...unit, fuel, ...(surfacing ? { submerged: false } : {}) });
+    }
+  }
+  return clearAbandonedCaptures({ ...state, units });
+}
+
+/**
+ * A ship that was already out of fuel before this turn, and that nothing refuelled this morning (a
+ * port, a Supply Ship), loses ADRIFT_HP; at 0 HP it sinks with anything aboard, and nobody scores a
+ * kill (05-supply-transport §7). Not on day 1, when nothing burns fuel either (D1).
+ */
+function adrift(state: GameState, dry: ReadonlySet<number>, events: GameEvent[]): GameState {
+  if (state.day === 1 || dry.size === 0) return state;
+  const units: Unit[] = [];
+  for (const unit of state.units) {
+    if (!dry.has(unit.id) || unit.fuel > 0) {
+      units.push(unit);
+      continue;
+    }
+    const hp = Math.max(0, unit.hp - ADRIFT_HP * 10);
+    if (hp > 0) {
+      events.push({ type: "unitAdrift", unitId: unit.id, pos: unit.pos, hp });
+      units.push({ ...unit, hp });
+    } else {
+      events.push({ type: "unitOutOfFuel", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos });
     }
   }
   return clearAbandonedCaptures({ ...state, units });

@@ -100,9 +100,9 @@ function pixelIcon(rows: readonly string[], body: string, light: string): HTMLCa
   return c;
 }
 
-/** A jerrycan with the embossed X on its side: the low-fuel warning (05-supply-transport §11). */
-export function drawFuelCanBadge(): HTMLCanvasElement {
-  const body = activePack().colors.fuelCan;
+/** A jerrycan with the embossed X on its side: orange when fuel is low, red when it's empty (05-supply-transport §11). */
+export function drawFuelCanBadge(empty: boolean): HTMLCanvasElement {
+  const colors = activePack().colors;
   return pixelIcon([
     "..OOOO.",
     ".OLOLOO",
@@ -112,13 +112,16 @@ export function drawFuelCanBadge(): HTMLCanvasElement {
     "OBLBLBO",
     "OBBBBBO",
     "OOOOOOO",
-  ], body, "#ffb0a0");
+  ], empty ? colors.fuelCanEmpty : colors.fuelCan, empty ? "#ffb0a0" : "#ffd8a0");
 }
 
-/** An ammo can with three brass rounds standing in it: the low-ammo warning (05-supply-transport §11). */
-export function drawAmmoCanBadge(): HTMLCanvasElement {
-  const body = activePack().colors.ammoCan;
-  return pixelIcon([
+/**
+ * An ammo can with three brass rounds standing in it: the low-ammo warning. Once it's empty, a red
+ * cross is drawn over it (05-supply-transport §11).
+ */
+export function drawAmmoCanBadge(empty: boolean): HTMLCanvasElement {
+  const colors = activePack().colors;
+  const c = pixelIcon([
     ".O.O.O.",
     "OYOYOYO",
     "OYOYOYO",
@@ -127,7 +130,17 @@ export function drawAmmoCanBadge(): HTMLCanvasElement {
     "OLLLLLO",
     "OBBBBBO",
     "OOOOOOO",
-  ], body, "#c8d088");
+  ], colors.ammoCan, "#c8d088");
+  if (!empty) return c;
+  // An X corner to corner over the can's 7×7 lower part: rows 1–7.
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("2D canvas not available");
+  ctx.fillStyle = colors.ammoCanCross;
+  for (let i = 0; i < 7; i++) {
+    ctx.fillRect(i, 1 + i, 1, 1);
+    ctx.fillRect(6 - i, 1 + i, 1, 1);
+  }
+  return c;
 }
 
 /** A cross-braced wooden supply crate, shown over a unit as it's refuelled and rearmed (04-economy §2). */

@@ -4,6 +4,7 @@
   --panel-ink: #2a2418;
   --panel-border: #4a3c28;
   --accent: #c84030;
+  --warning: #c86410;
   --highlight: #e8c070;
   /* The phone game pad. These defaults match the built-in art pack, which sets them all at startup. */
   --pad-body: #3b3f2a;
@@ -131,7 +132,7 @@ body {
 }
 
 .tile-low {
-  color: var(--accent);
+  color: var(--warning);
   font-weight: bold;
   /* Blinks like the gas and ammo cans on the map (05-supply-transport §11). */
   animation: tile-low-blink 0.9s steps(1, end) infinite;
@@ -141,6 +142,11 @@ body {
   65% {
     opacity: 0.25;
   }
+}
+
+/* Empty, not just low: red instead of orange (05-supply-transport §11). */
+.tile-low.tile-empty {
+  color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
