@@ -7,7 +7,8 @@
 // fighters, launched from their Carriers if need be, and anti-aircraft.
 // It knows only what any attacker would: the map, its own units and what it sees.
 
-import { baseDamage, propertyAt, terrainAt, unitAt, UNITS, type GameState, type Point, type Unit, type UnitTypeId } from "../../engine";
+import { baseDamage, propertyAt, stats, terrainAt, unitAt, UNITS, type GameState, type Point, type Unit, type UnitTypeId } from "../../engine";
+import { isCarrier } from "../greedyBase";
 import type { MapPlan } from "../mapPlan";
 import { reachable } from "./objectives";
 
@@ -16,6 +17,12 @@ export const AIR_DEFENCE_BONUS = 6000;
 
 /** An attack on a unit standing on the HQ is worth this much more, in funds: it's all that stops the capture. */
 export const HQ_BLOCKER_BONUS = 20000;
+
+/**
+ * How close to the enemy HQ a Carrier sails and stays, in squares: near enough for its aircraft to
+ * strike anything parked on the HQ and come back aboard to rearm, launched or not (23-survival §6).
+ */
+export const CARRIER_STATION = 5;
 
 /** What the raiders go for first: the guns that shoot them down. */
 const AIR_DEFENCE: readonly UnitTypeId[] = ["flakGun", "mobileAA"];
@@ -44,6 +51,23 @@ export function hqBlockers(state: GameState): Unit[] {
 /** Whether this unit's weapons can damage that one at all (03-combat §5). */
 const canHit = (attacker: Unit, target: Unit) => baseDamage(attacker.type, target.type) !== null;
 
+/** The squares a Carrier can be on within CARRIER_STATION of an enemy HQ. */
+export function carrierStation(state: GameState, carrier: Unit): Point[] {
+  const hqs = enemyHqs(state);
+  const out: Point[] = [];
+  for (const hq of hqs) {
+    for (let y = hq.y - CARRIER_STATION; y <= hq.y + CARRIER_STATION; y++) {
+      for (let x = hq.x - CARRIER_STATION; x <= hq.x + CARRIER_STATION; x++) {
+        if (x < 0 || y < 0 || x >= state.map.width || y >= state.map.height) continue;
+        if (Math.abs(x - hq.x) + Math.abs(y - hq.y) > CARRIER_STATION) continue;
+        const terrain = terrainAt(state.map, { x, y });
+        if (stats.moveCost(state, carrier, terrain) !== null && !out.some((p) => p.x === x && p.y === y)) out.push({ x, y });
+      }
+    }
+  }
+  return out;
+}
+
 export function survivalPlan(name: string): MapPlan {
   /** Whether a movement type can walk from a square to an HQ: terrain only changes with bridges. */
   const cache = new Map<string, boolean>();
@@ -51,6 +75,11 @@ export function survivalPlan(name: string): MapPlan {
     name,
 
     goals(state, unit) {
+      // Carriers take station off the HQ, so their aircraft are always within reach of it.
+      if (isCarrier(unit.type)) {
+        const station = carrierStation(state, unit);
+        return station.length > 0 ? station : null;
+      }
       // Something parked on the HQ that this unit can hit: go for it, whatever kind of unit it is.
       const blocking = hqBlockers(state).filter((b) => canHit(unit, b) && b.owner !== unit.owner);
       if (blocking.length > 0) return blocking.map((b) => b.pos);

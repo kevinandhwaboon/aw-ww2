@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 import { survivalAi } from "../src/ai/maps";
-import { AIR_DEFENCE_BONUS, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
+import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
 import { chooseCommand } from "../src/ai/greedy";
 import type { AiPlayer } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
@@ -229,5 +229,49 @@ describe("the defender's plan when the computer plays it (23-survival §6)", () 
     expect(plan.goals?.(quiet, tank)).toBeNull();
     const landed = usTurn([{ type: "mediumTank", owner: 0, pos: { x: 0, y: 1 } }, { type: "infantry", owner: 1, pos: { x: 5, y: 1 } }]);
     expect(plan.goals?.(landed, landed.units[0] ?? tank)).toEqual([{ x: 5, y: 1 }]);
+  });
+});
+
+describe("Japan's Carriers close in (23-survival §6)", () => {
+  /** A long stretch of sea west of an island with the US HQ at its east end. */
+  const ROWS = ["SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", "SSSSSSSSSSSSSSSSSSSSSS......Q.", "SSSSSSSSSSSSSSSSSSSSSS........"];
+  const HQ = { x: 28, y: 2 };
+  const game = (units: readonly UnitSetup[]): GameState =>
+    createGame({
+      map: parseAsciiMap(ROWS),
+      players: [
+        { name: "US", nation: "us" },
+        { name: "Japan", nation: "japan", buildable: [] },
+      ],
+      propertyOwners: [{ pos: HQ, owner: 0 }],
+      units,
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+  const steps = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+  it("a Carrier's station is the sea within a few squares of the enemy HQ (23-survival §6)", () => {
+    const state = { ...game([{ type: "carrier", owner: 1, pos: { x: 0, y: 1 } }, { type: "fighter", owner: 0, pos: HQ }]), currentPlayer: 1 };
+    const carrier = state.units.find((u) => u.type === "carrier");
+    if (!carrier) throw new Error("no carrier");
+    const station = carrierStation(state, carrier);
+    expect(station.length).toBeGreaterThan(0);
+    expect(station.every((p) => steps(p, HQ) <= CARRIER_STATION && ROWS[p.y]?.[p.x] === "S")).toBe(true);
+    expect(survivalPlan("test").goals?.(state, carrier)).toEqual(station);
+  });
+
+  it("a Carrier sails in from far out and its fighters shoot down an aircraft parked on the HQ (23-survival §6)", async () => {
+    const parkedPlayer: AiPlayer = { name: "parked", chooseCommand: () => ({ type: "endTurn" }) };
+    // A US Submarine, which nothing here can hit, keeps the US in the game once the fighter is gone.
+    const start = game([
+      { type: "fighter", owner: 0, pos: HQ },
+      { type: "submarine", owner: 0, pos: { x: 3, y: 3 } },
+      { type: "carrier", owner: 1, pos: { x: 0, y: 1 }, cargo: [{ type: "fighter" }, { type: "fighter" }] },
+    ]);
+    const report = await selfPlay(start, [parkedPlayer, survivalAi()], 15);
+    expect(report.problems).toEqual([]);
+    expect(report.state.players[0]?.unitsLost).toMatchObject({ fighter: 1 });
+    const carrier = report.state.units.find((u) => u.type === "carrier");
+    expect(carrier && steps(carrier.pos, HQ)).toBeLessThanOrEqual(CARRIER_STATION);
   });
 });
