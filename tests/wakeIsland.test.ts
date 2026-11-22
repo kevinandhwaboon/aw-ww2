@@ -123,12 +123,10 @@ describe("Wake Island (23-survival §2)", () => {
     ]);
   });
 
-  it("the first landing comes with four Destroyers and two Landing Craft of naval infantry (23-survival §3)", () => {
+  it("the first landing comes with two Destroyers and two Landing Craft of naval infantry (23-survival §3)", () => {
     const first = arrivals?.find((a) => a.wave === 3);
     expect(first?.name).toBe("The first landing");
     expect(first?.units.map((u) => [u.type, (u.cargo ?? []).map((c) => c.type)])).toEqual([
-      ["destroyer", []],
-      ["destroyer", []],
       ["destroyer", []],
       ["destroyer", []],
       ["landingCraft", ["infantry", "infantry"]],
@@ -136,11 +134,27 @@ describe("Wake Island (23-survival §2)", () => {
     ]);
   });
 
+  it("warships covering the landings and bombardments sail home after five turns; the carriers' escort stays (23-survival §3, §4)", () => {
+    const ships = (n: number) => (arrivals?.find((a) => a.wave === n)?.units ?? []).filter((u) => u.type === "destroyer" || u.type === "battleship");
+    for (const n of [3, 6, 9]) expect(ships(n).every((u) => u.sortieTurns === 5), `wave ${n}`).toBe(true);
+    expect(ships(8).map((u) => u.sortieTurns)).toEqual([undefined]);
+    // No more than a handful of Destroyers in the whole siege.
+    const destroyers = (arrivals ?? []).filter((a) => a.player === JAPAN).flatMap((a) => a.units).filter((u) => u.type === "destroyer");
+    expect(destroyers.length).toBeLessThanOrEqual(7);
+  });
+
   it("the second landing brings an anti-aircraft gun ashore with the naval infantry (23-survival §3, §6)", () => {
     const second = arrivals?.find((a) => a.wave === 9);
     const cargo = (second?.units ?? []).flatMap((u) => u.cargo ?? []).map((c) => c.type);
     expect(cargo).toContain("mobileAA");
     expect(cargo.filter((t) => t === "infantry" || t === "assaultInfantry").length).toBeGreaterThanOrEqual(16);
+  });
+
+  it("from the first landing until the carriers, every raid brings a fighter, so a plane parked on the HQ is never safe for long (23-survival §3, §6)", () => {
+    for (const n of [4, 5, 6, 7]) {
+      const raidWave = arrivals?.find((a) => a.wave === n);
+      expect(raidWave?.units.filter((u) => u.type === "fighter"), `wave ${n}`).toEqual([{ type: "fighter", sortieTurns: 2 }]);
+    }
   });
 
   it("the raids from the Marshalls go home after two turns (23-survival §3, §5c)", () => {

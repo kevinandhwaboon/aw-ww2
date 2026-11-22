@@ -139,6 +139,13 @@ const EDGES = {
 
 // ---- The siege, 8–23 December (§3): units arrive at the start of Japan's turn and strike on its next ----
 const raid = (n) => Array.from({ length: n }, () => ({ type: "bomber", sortieTurns: 2 }));
+// A game liberty (the real raids from Roi flew unescorted, beyond a Zero's reach): from the first
+// landing until the carriers come, each raid brings a fighter, so a plane parked on the command post
+// is never safe for long (§6).
+const escort = { type: "fighter", sortieTurns: 2 };
+// Warships covering a landing or a bombardment stay five turns, then sail home (§4); the carriers'
+// escort stays with them.
+const cover = { sortieTurns: 5 };
 const ships = (type, n, extra = {}) => Array.from({ length: n }, () => ({ type, ...extra }));
 // Japan's Landing Craft turn for home once they've put their troops ashore (§5c); the US's stay.
 const craft = (...cargo) => ({ type: "landingCraft", cargo: cargo.map((type) => ({ type })), leavesWhenEmpty: true });
@@ -150,22 +157,22 @@ const arrivals = [
   wave(2, 2, "Daily raid", "south", raid(3)),
   // Kajioka's first attempt, beaten off on 11 December: cruisers and destroyers (as Destroyers) and
   // the transports with the naval infantry.
-  wave(3, 3, "The first landing", "south", [...ships("destroyer", 4), craft("infantry", "infantry"), craft("infantry", "infantry")]),
-  wave(4, 5, "Raid and submarines", "south", [...raid(3), ...ships("submarine", 2)]),
-  wave(5, 7, "Daily raid", "south", raid(4)),
-  wave(6, 9, "Raid and bombardment", "south", [...raid(3), ...ships("destroyer", 2)]),
-  wave(7, 11, "Daily raid", "south", raid(5)),
+  wave(3, 3, "The first landing", "south", [...ships("destroyer", 2, cover), craft("infantry", "infantry"), craft("infantry", "infantry")]),
+  wave(4, 5, "Raid and submarines", "south", [...raid(3), escort, ...ships("submarine", 2)]),
+  wave(5, 7, "Daily raid", "south", [...raid(4), escort]),
+  wave(6, 9, "Raid and bombardment", "south", [...raid(3), escort, ...ships("destroyer", 1, cover)]),
+  wave(7, 11, "Daily raid", "south", [...raid(5), escort]),
   // Sōryū and Hiryū, detached on the way home from Pearl Harbor, from 21 December.
   wave(8, 13, "Carrier Division 2", "west", [
     { type: "carrier", cargo: [{ type: "fighter" }, { type: "diveBomber" }] },
     { type: "carrier", cargo: [{ type: "fighter" }, { type: "diveBomber" }] },
-    ...ships("destroyer", 2),
+    ...ships("destroyer", 1),
   ]),
   // 23 December: about 1,500 naval infantry, three times the first landing, with the four heavy
   // cruisers of Cruiser Division 6 (as Battleships) and the destroyers in support.
   wave(9, 15, "The second landing", "south", [
-    ...ships("battleship", 4),
-    ...ships("destroyer", 6),
+    ...ships("battleship", 4, cover),
+    ...ships("destroyer", 3, cover),
     craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "infantry"),
     craft("infantry", "infantry"), craft("infantry", "infantry"), craft("infantry", "assaultInfantry"),
     craft("assaultInfantry", "assaultInfantry"), craft("assaultInfantry", "assaultInfantry"),

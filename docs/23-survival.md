@@ -75,15 +75,16 @@ The first nine waves follow history. "Arrives" is the start of Japan's turn on t
 |---|---|---|---|---|---|
 | 1 | Day 1 | Day 2 | The noon raid | 3 Bombers | South |
 | 2 | Day 2 | Day 3 | Daily raid | 3 Bombers | South |
-| 3 | Day 3 | Day 4 (11 Dec) | The first landing | 4 Destroyers; 2 Landing Craft with 2 Infantry each | South |
-| 4 | Day 5 | Day 6 | Raid and submarines | 3 Bombers, 2 Submarines | South |
-| 5 | Day 7 | Day 8 | Daily raid | 4 Bombers | South |
-| 6 | Day 9 | Day 10 | Raid and bombardment | 3 Bombers, 2 Destroyers | South |
-| 7 | Day 11 | Day 12 | Daily raid | 5 Bombers | South |
-| 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; 2 Destroyers | West |
-| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 4 Battleships (Cruiser Division 6), 6 Destroyers; 8 Landing Craft with 11 Infantry and 5 Assault Infantry, three times the first landing, as in 1941 | South |
+| 3 | Day 3 | Day 4 (11 Dec) | The first landing | 2 Destroyers; 2 Landing Craft with 2 Infantry each | South |
+| 4 | Day 5 | Day 6 | Raid and submarines | 3 Bombers and an escort Fighter, 2 Submarines | South |
+| 5 | Day 7 | Day 8 | Daily raid | 4 Bombers and an escort Fighter | South |
+| 6 | Day 9 | Day 10 | Raid and bombardment | 3 Bombers and an escort Fighter, a Destroyer | South |
+| 7 | Day 11 | Day 12 | Daily raid | 5 Bombers and an escort Fighter | South |
+| 8 | Day 13 | Day 14 (21 Dec) | Carrier Division 2 | 2 Carriers, each with a Fighter and a Dive Bomber; a Destroyer | West |
+| 9 | Day 15 | Day 16 (23 Dec) | The second landing | 4 Battleships (Cruiser Division 6), 3 Destroyers; 8 Landing Craft with 11 Infantry and 5 Assault Infantry, three times the first landing, as in 1941 | South |
 
 - **The relief force** (§10, Q4, decided: it arrives): **Task Force 14** arrives for the US on the east edge on day 15, the day it was recalled: a Carrier with 2 Fighters aboard (Saratoga, with VMF-221), a Supply Ship (Neches), a Landing Craft with an Infantry and an Artillery (Tangier), and a Destroyer. It's the game's one what-if: what if it hadn't turned back. As built, the east edge is only a few squares from Peacock Point, so it can join the fight against the second landing the next day.
+- **Fewer Destroyers, and they go home (2026-11-22, at the developer's request: "way too many destroyers").** The warships of the landings and bombardments never left, so they piled up wave after wave, fuelled by the oilers. Now the first landing has 2 Destroyers (was 4), the bombardment 1 (was 2), the carriers' escort 1 (was 2) and the second landing 3 (was 6); and every Destroyer and Battleship covering a landing or a bombardment sails home after 5 turns (`sortieTurns: 5`, §5c), like the raiders. The carriers' escort stays with them. Generated waves follow the same rule and spend less on Destroyers (§4).
 - **Raiders go home.** Bombers and Fighters that come from land bases off the map fly for **2 turns** after they arrive, then return to base at the start of their third turn. They are removed, counted neither as Japanese losses nor as kills (§5c). Aircraft from a Carrier, and any that land at an airfield Japan has captured, stay, as usual.
 - **History's mark:** the Survival screen and the results screen show "Wake fell on 23 December 1941, day 16". Holding the HQ to the start of day 17 is "**Held longer than history**".
 - **As built (S3):** the noon raid arrives on day 1, at the start of Japan's turn, and strikes on day 2, like every other wave: starting units can't carry a sortie, and every wave giving one turn's warning keeps the rule simple. The raids from the south edge are 7 squares from the south shore, one Bomber's move, so each strikes on the turn after it arrives.
@@ -111,6 +112,8 @@ After the second landing, history ends and the waves keep coming, **a new wave e
 - The HUD always shows **the next wave**: its day, its name or pattern and its edge, like the weather forecast (12-weather §5).
 
 ### As built (milestone S2)
+
+- **Since 2026-11-22:** Destroyers have a smaller share of each wave (Landing 15%, was 30%; Bombardment 25%, was 40%; Carrier strike 15%, was 25%; Combined 10%, was 15%), and the Destroyers and Battleships of Landings, Bombardments and Combined assaults sail home after 5 turns. Carrier strikes' Destroyers stay with their Carriers.
 
 - **The patterns are data** (`src/engine/data/waves.ts`, the `pacific` set): each has a name, a weight, the wave it starts from, and one or more groups, each with the edges it may use and its units' shares of the budget. Units that join later (Fighters in raids, Mortar Teams and Light Tanks in landings, from wave 12) have their own `fromWave`. The rules that turn a pattern into units are in `src/engine/waves.ts`.
 - **A map's waves are a `waves` block in its scenario file**: the attacking player, the pattern set, the first wave and its day, the days between waves, the first wave's budget and the growth, the named edges (each a list of entry squares, with the wave it opens on), the unit cap and the convoy.
@@ -187,6 +190,9 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 - **An aircraft parked on the HQ (fixed 2026-11-21, at the developer's request).** Infantry can't attack aircraft and Bombers can't either, so a plane left on the HQ blocked every capture with nothing able to remove it. Now:
   - **The AI:** a unit standing on the HQ the attacker must take draws every attack that can reach it (it scores 20,000 more, `HQ_BLOCKER_BONUS`), and every unit whose weapons can hit it is sent for it, whatever its kind: Fighters, launched from their Carriers if need be (09-ai §4k scouts), Mobile AA and any armed unit. Units that can't hit it (Bombers against an aircraft) carry on as before; infantry still heads for the HQ to capture it once it's clear.
   - **The waves:** every generated Landing brings a Landing Craft with a Mobile AA and an Infantry (15% of its budget, so even the smallest has one), the Combined assault one too, and the second landing (wave 9) a ninth Landing Craft with a Mobile AA.
+  - **Carriers take station off the HQ (2026-11-22, at the developer's request).** Without it, a Carrier only sailed toward targets while it had aircraft aboard, and sat where it was once it had launched them, so its fighters were too far from the HQ to clear a plane parked there or to come back aboard and rearm (one test Carrier stayed 23 squares out). Now every Japanese Carrier sails to within 5 squares of the HQ (`CARRIER_STATION`) and stays there, launched or not: its fighters are always in reach of the HQ, and destroying the one Mobile AA no longer makes a parked plane safe while a Carrier is about. It also puts the Carriers within reach of the US's guns and aircraft.
+  - **Escort fighters (2026-11-22):** from the first landing until the carriers, waves 4–7 each bring a Fighter with the Bombers (going home after two turns, like them), so a plane parked on the HQ after the first Mobile AA is destroyed is never safe for long. A game liberty: the real raids from Roi flew unescorted, beyond a Zero's reach.
+  - Tried and rejected: a Mobile AA in the first landing (wave 3), to cover the days before the carriers. A Mobile AA is deadly against infantry too, and with it the first landing took the HQ on day 8 in all 12 games.
   - Before wave 8 (the carriers, day 13) Japan still has nothing that can hit an aircraft; a plane parked on the HQ that early holds until then, but it isn't serviced there and burns fuel every day.
 
 ## 7. Screens
@@ -206,7 +212,7 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
   - S4, Japan's survival plan (seeds 1–8): days 20–30, waves 11–14. The plan alone didn't make Japan stronger.
   - Tried, seeds 1–8: half the US income (days 20–27, no stronger); no Task Force 14 (falls by day 20 in 5 of 8, but the relief arriving is the developer's choice, §10 Q4); the second landing with 3 more Landing Craft and a Battleship (days 19–25); twice as big (days 19–30); twice as big with two more Battleships in wave 6 and two more Bombers in wave 7 (days 15–21, and the only game to fall by wave 9).
   - **Chosen (seeds 1–18):** the second landing three times the first, as in history (above). The US falls on days 19–25, by day 20 in 11 of 18, at waves 10–13.
-  - **After the fly-out rule (2026-11-21, seeds 1–12):** empty Landing Craft used to sit on the beaches after unloading, which by accident held back later landings and kept the US's units busy by the HQ. Leaving, they make the waves stronger: with plain Greedy the US fell on day 8 in every game; with the defender plan, on days 8–14 (half on days 12–14). A smaller first landing (one Landing Craft) gave days 12–21; more US starting funds made it worse (days 8–12). One cause is the map: the US factory is at Camp 2 on the north arm, so new units take days to walk round to the HQ on the south arm. **Balance to be decided by the developer** (§11).
+  - **After the fly-out rule (2026-11-21, seeds 1–12):** empty Landing Craft used to sit on the beaches after unloading, which by accident held back later landings and kept the US's units busy by the HQ. Leaving, they make the waves stronger: with plain Greedy the US fell on day 8 in every game; with the defender plan, on days 8–14 (half on days 12–14). A smaller first landing (one Landing Craft) gave days 12–21; more US starting funds made it worse (days 8–12). One cause is the map: the US factory is at Camp 2 on the north arm, so new units take days to walk round to the HQ on the south arm. **The developer, playing it (2026-11-22), doesn't find it too hard**, so it stays as it is: the computer playing the US is a weak guide to how a person fares here.
 
 ## 9. Build plan
 

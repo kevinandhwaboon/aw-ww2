@@ -162,6 +162,17 @@ describe("Endless waves (23-survival §4)", () => {
     for (const wave of landings) expect(everyUnit(wave).some((u) => u.cargo?.some((c) => c.type === "mobileAA"))).toBe(true);
   });
 
+  it("Destroyers covering a generated landing or bombardment sail home after five turns, and are a small share of it (23-survival §4)", () => {
+    const state = game();
+    for (const seed of SEEDS) {
+      const wave = generated({ ...state, rng: seed }, 15).filter((a) => a.player === 1);
+      const units = everyUnit(wave);
+      const destroyers = units.filter((u) => u.type === "destroyer");
+      if (wave[0]?.name !== "Carrier strike") expect(destroyers.every((u) => u.sortieTurns === 5)).toBe(true);
+      expect(destroyers.reduce((sum, u) => sum + valueOf(state, u), 0)).toBeLessThanOrEqual(0.3 * waveBudget(GENERATOR, 15));
+    }
+  });
+
   it("land-based raiders in a generated wave go home after two turns, carrier aircraft don't (23-survival §3, §5c)", () => {
     const state = game();
     const units = SEEDS.flatMap((seed) => everyUnit(generated({ ...state, rng: seed }, 12).filter((a) => a.player === 1)));
