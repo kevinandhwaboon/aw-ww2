@@ -100,6 +100,11 @@ function checkVictory(victory: readonly VictoryCondition[], properties: readonly
     }
     const { type, side } = condition;
     if (!players.some((p) => NATIONS[p.nation].side === side)) throw new Error(`${type}: there's no player on the ${side} side`);
+    if (type === "evacuateUnits") {
+      if (!Number.isInteger(condition.count) || condition.count < 1) throw new Error(`${type}: "count" must be 1 or more`);
+      if (condition.zone.length === 0) throw new Error(`${type}: list at least one zone square`);
+      continue;
+    }
     if (type === "surviveDays") {
       if (!Number.isInteger(condition.days) || condition.days < 2) throw new Error(`${type}: "days" must be day 2 or later`);
       continue;
@@ -226,6 +231,7 @@ export function createGame(setup: GameSetup): GameState {
     weather,
     victoryConditions: victory,
     holdStreaks: victory.map(() => 0),
+    evacuated: victory.map(() => 0),
     arrivals,
     wave: 0,
     ...(setup.waveGenerator ? { waveGenerator: setup.waveGenerator } : {}),

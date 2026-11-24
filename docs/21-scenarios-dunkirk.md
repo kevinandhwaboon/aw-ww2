@@ -1,6 +1,6 @@
 # Topic Doc 21: Dunkirk
 
-**Status:** designed (v0 draft), 2026-11-20, at the developer's request, to fill the empty 1940 slot on the map select. **Not built.** Needs one new rule: the `evacuateUnits` victory condition (04-economy §8). Forces and numbers are first guesses.
+**Status:** designed 2026-11-20, **built (v0) 2026-11-24**, at the developer's request, to fill the empty 1940 slot on the map select. Adds one rule, the `evacuateUnits` victory condition (04-economy §8), and an evacuation goal for the AI (09-ai §4m). Skirmish balance measured by AI-vs-AI games (§1 "Balance"); the Campaign mission's advantage is an untuned first guess (22-campaign §5).
 **Last updated:** 2026-11-20
 **Depends on:** 01-units (Landing Craft, availability rule), 02-terrain (§4a Major Bridge, §4b Salt Marsh), 04-economy-production §8 (victory conditions), 05-supply-transport §8 (landings), 09-ai (§4h landings, new evacuation goal), 12-weather (rain). **Feeds:** 00-master-design §8 and §19.
 
@@ -29,10 +29,11 @@ The Luftwaffe bombed the beaches and the ships whenever the weather allowed. On 
 
 ### Area and scale
 
-- **About 36 × 30 squares**, north up. From Calais in the west to Nieuport in the east, from the Kent coast (Margate to Folkestone) in the north to Saint-Omer, Hazebrouck and Ypres in the south.
-- **Land is about 2.5 km a square**, so the perimeter, about 45 km of coast and 10 to 15 km deep, is 18 by 5 squares, and Cassel is 11 squares from Dunkirk.
-- **The Channel is narrowed**, as on the Normandy map (10-scenarios-normandy §1): from the beaches to Dover or Ramsgate is at most **6 squares of sea**, so a loaded Landing Craft (move 6) leaves a beach and reaches England the same day. In 1940 a crossing took 3 to 9 hours; one round trip every two days is the game's rhythm, standing for several sailings.
-- The coastline comes from Natural Earth, as on the other generated maps, with the Channel squeezed.
+- **36 × 37 squares** (as built), north up on the Continent. From Calais in the west to past Nieuport in the east, from Kent in the north to Saint-Omer, Hazebrouck and Armentières in the south.
+- **Land is about 2.5 km a square**, so the pocket is about 57 squares, and Cassel is 10 squares from Dunkirk.
+- **Kent is turned a quarter turn** (changed while building, 2026-11-24). Its coast really runs north–south, 25 to 30 squares from the beaches at this scale, so it is drawn across the top of the map with its east coast facing the Flemish beaches: Folkestone, Dover, Deal, Ramsgate and Margate from west to east. It runs off the top and left edges, as the mainland (with Watling Street leaving for London); east of Margate is the North Sea.
+- **The Channel is narrowed, to 9 squares of sea** (decided 2026-11-24, at the developer's request; the draft had 6). A loaded Landing Craft (move 6) needs **two days** to cross: 10 or 11 moves from any beach in the pocket to the Kent shore. So it spends a night at sea, loaded, where Bombers and S-boats can find it, and rain days (which hide ships) matter. The real crossing was 70–80 km; the draft's one-day crossing had made each craft a two-day shuttle that the Luftwaffe barely touched, and made the balance a cliff.
+- The Flemish coastline comes from Natural Earth, as on the other generated maps; Kent is drawn by hand along it.
 
 ### Players
 
@@ -60,16 +61,14 @@ The Luftwaffe bombed the beaches and the ships whenever the weather allowed. On 
 - **Flat Flanders plains** with few woods. The **Flemish hills**, Mont Cassel and Mont des Cats, are Hills, with Cassel, the strongpoint the 145th Brigade held until 29 May, on the first.
 - **The canals are Rivers.** The Aa (Gravelines–Watten–Saint-Omer), the Colme, the **Bergues–Furnes canal** (the perimeter line) and the Yser (Nieuport–Dixmude–Ypres), with Bridges at the towns. The bridges on the Bergues–Furnes canal and the Yser are **Major Bridges** (02-terrain §4a): the UK's Royal Engineers (Assault Infantry) can blow them, as the BEF did.
 - **The flooded polders are Salt Marsh** (02-terrain §4b): impassable to land units. The French opened the sluices and flooded **Les Moëres**, between Bergues and Hondschoote, and the land along the Yser. They narrow the German attack to the roads and the canal banks. It needs a flooded-fields tile (§1 "Art").
-- **Beaches** along the whole coast from Malo-les-Bains to La Panne, and at Gravelines and Calais. Landing Craft load there (05-supply-transport §8). The Kent coast has no beaches; ships unload at Dover and Ramsgate.
-- **The Flemish banks:** a line of **Reef** squares offshore, with gaps. Reef costs ships 2 and hides them (02-terrain), so the sandbanks shape the routes:
-  - **Route Z**, the shortest, runs west along the coast past Gravelines and Calais, within range of German Artillery there.
-  - **Route Y** goes east, out through a gap off Nieuport and back round: safe from the guns but a day longer.
-  - **Route X**, through the middle of the banks, is the compromise: one square of Reef to cross.
+- **Beaches** along the whole Flemish coast. Landing Craft load there (05-supply-transport §8). **The Kent shore is beach too** (changed while building): with Kent turned, Dover and Ramsgate alone couldn't serve every beach in the pocket, so craft land men anywhere on the shingle except the cliffs by Dover and Folkestone, which are Hills.
+- **The Flemish banks:** a line of **Reef** squares two out from the beaches, with gaps. Reef costs ships 2 and hides them (02-terrain): through a gap is a move shorter than over a bank. The draft's three routes (Z past the Calais guns, Y round by Nieuport, X through the banks) don't survive Kent being turned: every beach now faces England straight across.
+- **The perimeter is laid square by square**: the Mardyck canal down the west face, the Bergues–Furnes canal along the south with **Bergues in the line** (the town and its bunker are the gap), and the lower Yser down the east face from Nieuport. Every road over it crosses on a Major Bridge: at Mardyck on the coast road, at Nieuport, and on the Yser by Dixmude.
 - **Bergues** has a **Bunker** in its old walls. Bunkers have HP and break under fire (03-combat §4).
 
 ### Starting forces (first guess)
 
-**United Kingdom** (12,000 funds, 49 units: 33 on land, 12 ships, 4 aircraft). Foot units are what counts for evacuation (§1 "Victory"); there are **24**.
+**United Kingdom** (12,000 funds, 49 units: 33 on land, 12 ships, 4 aircraft; as built, the Landing Craft at Malo and La Panne start on the beach, the others at Dover and Ramsgate, and the Torpedo Boat at Ramsgate). Foot units are what counts for evacuation (§1 "Victory"); there are **24**.
 
 - **In the perimeter:**
   - West, Mardyck to Bergues (French XVI Corps): 4 Infantry, 1 Artillery; 1 Infantry in the Bergues bunker.
@@ -124,7 +123,7 @@ Rain gives fog of war for the day and makes every unit see 1 square less (12-wea
 
 ### Victory
 
-- **United Kingdom:** evacuate **15 foot units** (`evacuateUnits`, below), about 60% of the 24 it starts with. Or capture Saint-Omer.
+- **United Kingdom:** evacuate **10 foot units** (`evacuateUnits`, below) of the 24 it starts with. Or capture Saint-Omer. (The draft's 15 was set for one-day crossings; see "Balance".)
 - **Germany:** still be in the game when **day 9** starts (`surviveDays`): 5 June, the day after Dunkirk fell. Or capture **Dunkirk**, the UK HQ (`hqCapture`).
 - Rout as usual. Resign is always available.
 
@@ -145,6 +144,21 @@ Recorded in 04-economy §8, where the victory conditions live. In short:
 - **A unit built on a zone square** doesn't count: it never left. (On Dunkirk none can be, as the UK has no factory.)
 - **Checked after each command.** The moment the count reaches the target, the side wins, as with `captureProperties`.
 - **Allies count together**, as ownership does for the other conditions: on a 2-vs-2 map, units of either Allied player add to the same count.
+
+### Income
+
+**500 funds a property a day** for both sides (as built; the usual is 1,000). The UK owns 18 properties, many of them Kent towns it can't lose, and at full income it could buy a Landing Craft every day.
+
+### Balance (measured 2026-11-24)
+
+AI against AI (the standard Greedy on both sides, Skirmish setup), with the 9-square Channel:
+
+| Evacuation target | UK wins | Germany wins |
+|---|---|---|
+| 11 | 1 of 16 | 15 of 16 |
+| **10 (chosen)** | **12 of 20** | **8 of 20**, both by taking Dunkirk and by holding to day 9 |
+
+The UK AI usually brings home 8 to 10 men before the pocket falls, so the target sits on a step: 10 is near even, 11 is lopsided. All three ways to win come up at 10. Before widening the Channel, with one-day crossings, the AI got 17 home every game, so any target from 15 to 17 was a UK win by day 5 and 18 a German one.
 
 ### Computer opponent
 
@@ -194,7 +208,7 @@ Scenario tests ("Dunkirk"):
 - "The UK starts with 24 foot units, so 15 is about 60% of them"
 - "The UK can't build land units"
 - "A Landing Craft can sail from every beach in the perimeter to Dover or Ramsgate in one day"
-- "Route Z passes within range of the German Artillery at Calais"
+- "A Landing Craft takes two days to sail from any beach in the pocket to the English shore" (replaces the Route Z test, see "Terrain")
 - "Every bridge on the Bergues–Furnes canal is a Major Bridge"
 - "No German land unit can reach Dunkirk across the flooded polders"
 - "The weather follows 28 May to 4 June: rain on days 1 and 3"

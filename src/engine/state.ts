@@ -27,7 +27,19 @@ export type VictoryCondition =
   /** `side` wins once it has owned every listed property at the start of `days` days in a row. */
   | { readonly type: "holdProperties"; readonly side: Side; readonly properties: readonly Point[]; readonly days: number }
   /** `side` wins if it still has a player in the game when day `days` starts. */
-  | { readonly type: "surviveDays"; readonly side: Side; readonly days: number };
+  | { readonly type: "surviveDays"; readonly side: Side; readonly days: number }
+  /**
+   * `side` wins once `count` of its land units have reached the `zone` squares (04-economy §8,
+   * 21-scenarios-dunkirk §1). Each one is removed as it arrives; only `unitTypes` count, every land
+   * unit when it's left out.
+   */
+  | {
+      readonly type: "evacuateUnits";
+      readonly side: Side;
+      readonly count: number;
+      readonly zone: readonly Point[];
+      readonly unitTypes?: readonly UnitTypeId[];
+    };
 
 /** The default for a scenario that doesn't say otherwise (04-economy §8). */
 export const DEFAULT_VICTORY: readonly VictoryCondition[] = [{ type: "hqCapture" }, { type: "rout" }];
@@ -278,6 +290,11 @@ export interface GameState {
    * owned all its properties at the start of the day. Always 0 for other conditions.
    */
   readonly holdStreaks: readonly number[];
+  /**
+   * For each victory condition, by index: the units an evacuateUnits condition's side has brought out
+   * so far (21-scenarios-dunkirk §1). Always 0 for other conditions.
+   */
+  readonly evacuated: readonly number[];
   /** Units still to arrive, in the scenario's order (23-survival §5a). */
   readonly arrivals: readonly Arrival[];
   /** The highest wave number that has arrived, 0 before any (23-survival §5e). */

@@ -30,13 +30,16 @@ import {
 import { diveProblem, surfaceProblem } from "./submarine";
 import { isHiddenFrom } from "./visibility";
 import { startTurn } from "./turn";
-import { checkAfterCapture, checkAtDayStart, checkAtTurnEnd, defeatPlayers } from "./victory";
+import { checkAfterCapture, checkAtDayStart, checkAtTurnEnd, checkEvacuations, defeatPlayers } from "./victory";
 
 const reject = (code: RejectionCode, message: string): ApplyResult => ({ ok: false, code, message });
 
 export function apply(state: GameState, command: Command): ApplyResult {
   const result = dispatch(state, command);
-  return result.ok ? { ...result, state: recordLosses(state, result.state, result.events) } : result;
+  if (!result.ok) return result;
+  const evacuated = checkEvacuations(result.state, result.events);
+  const events = evacuated.events.length > 0 ? [...result.events, ...evacuated.events] : result.events;
+  return { ...result, state: recordLosses(state, evacuated.state, events), events };
 }
 
 function dispatch(state: GameState, command: Command): ApplyResult {

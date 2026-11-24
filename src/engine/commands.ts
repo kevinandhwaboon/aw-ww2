@@ -192,6 +192,19 @@ export type GameEvent =
   | { readonly type: "unitHomeward"; readonly unitId: UnitId; readonly pos: Point }
   /** A unit heading home left the map from its edge at the start of its owner's turn (23-survival §5c). Not a loss. */
   | { readonly type: "unitLeft"; readonly unitId: UnitId; readonly unitType: UnitTypeId; readonly owner: PlayerId; readonly pos: Point }
+  /**
+   * A unit reached an evacuation square and left the map (21-scenarios-dunkirk §1). Not a loss.
+   * `counted` is false for a type the condition doesn't count; `total` is the side's count afterwards.
+   */
+  | {
+      readonly type: "unitEvacuated";
+      readonly unitId: UnitId;
+      readonly unitType: UnitTypeId;
+      readonly owner: PlayerId;
+      readonly pos: Point;
+      readonly counted: boolean;
+      readonly total: number;
+    }
   | { readonly type: "playerDefeated"; readonly player: PlayerId; readonly reason: DefeatReason }
   | { readonly type: "gameOver"; readonly result: GameResult }
   | { readonly type: "turnEnded"; readonly player: PlayerId }

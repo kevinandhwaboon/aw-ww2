@@ -121,6 +121,22 @@ export const BATTLE_PLACES: Readonly<Record<string, BattlePlace>> = {
       crop: [192, 140, 192, 80],
     },
   },
+  dunkirk: {
+    theater: "westernEurope",
+    lon: 2.37,
+    lat: 51.04,
+    where: "Dunkirk, France",
+    when: "May–June 1940",
+    feature: "Landing Craft off the beaches",
+    shot: {
+      kind: "battle",
+      attacker: { kind: "bomber", nation: "germany", terrain: "plains" },
+      defender: { kind: "landingCraft", nation: "uk", terrain: "beach" },
+      weapon: "primary",
+      counter: null,
+      crop: [192, 140, 192, 80],
+    },
+  },
   "market-garden": {
     theater: "westernEurope",
     lon: 5.9,

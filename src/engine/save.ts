@@ -22,8 +22,10 @@ export function loadGame(text: string): GameState {
   // Saves from before weather existed are clear all game (12-weather §1); saves from before Major
   // Bridges have no bridge being rebuilt (02-terrain §4a); saves from before fog of war have none (19-fog-of-war).
   // Saves from before the loss tally have nothing lost yet (04-economy §8a). Saves from before
-  // arrivals have none coming and no wave yet (23-survival §5a).
-  const state = saved.state as Omit<GameState, "weather" | "bridgeWorks" | "settings" | "players" | "arrivals" | "wave"> & {
+  // arrivals have none coming and no wave yet (23-survival §5a). Saves from before evacuation have
+  // nobody evacuated (21-scenarios-dunkirk §1).
+  const state = saved.state as Omit<GameState, "weather" | "bridgeWorks" | "settings" | "players" | "arrivals" | "wave" | "evacuated"> & {
+    evacuated?: GameState["evacuated"];
     arrivals?: GameState["arrivals"];
     wave?: number;
     players: (Omit<Player, "unitsLost"> & { unitsLost?: Player["unitsLost"] })[];
@@ -38,6 +40,7 @@ export function loadGame(text: string): GameState {
     bridgeWorks: state.bridgeWorks ?? [],
     arrivals: state.arrivals ?? [],
     wave: state.wave ?? 0,
+    evacuated: state.evacuated ?? state.victoryConditions.map(() => 0),
     settings: { ...state.settings, fogOfWar: state.settings.fogOfWar ?? false },
   };
 }

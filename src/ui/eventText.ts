@@ -10,6 +10,7 @@ const OUT_TEXT: Record<DefeatReason, string> = {
   captureProperties: "the enemy captured every objective",
   holdProperties: "the enemy held the objectives",
   surviveDays: "the enemy held out",
+  evacuateUnits: "the enemy got enough units away",
 };
 
 /** One line of the debug event log describing what happened. */
@@ -91,6 +92,8 @@ export function describeEvent(state: GameState, previous: GameState, e: GameEven
       return `${unitName(e.unitId)} turns for home`;
     case "unitLeft":
       return `${name(e.owner)} ${unitTypeName(e.unitType)} left the map for home`;
+    case "unitEvacuated":
+      return `${name(e.owner)} ${unitTypeName(e.unitType)} evacuated${e.counted ? ` (${e.total} so far)` : ", not counted"}`;
     case "playerDefeated":
       return `${name(e.player)} is out (${OUT_TEXT[e.reason]})`;
     case "gameOver":
