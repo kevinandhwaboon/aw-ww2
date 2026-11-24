@@ -1,7 +1,7 @@
 # Topic Doc 23: Survival
 
 **Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Built 2026-11-20 and 21 in four milestones (§9): the engine rules, the wave generator, the Wake Island map with the Survival screens, and Japan's plan with a first tuning. Balance needs checking by play (§8).
-**Last updated:** 2026-11-24 (§5a zones that need a property, for Crete)
+**Last updated:** 2026-11-24 (Crete designed as the second map, 24-survival-crete)
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
 ---
@@ -136,7 +136,6 @@ Everything else is the standard game. These are the new pieces, all in the engin
 - **The wave generator** (§4) adds the endless waves to the same list, a wave at a time, when the day before the wave starts, so the save always holds what is coming next.
 - Arrivals are a general rule, not a Survival one: any scenario can use them for reinforcements, which several maps lack (Kursk's Steppe Front, Stalingrad's Winter Storm: 15-scenarios-eastern-front §1, §2).
 - **Event:** `unitsArrived` (the wave's number and name, and the units), so the screen can show a banner and pan to them.
-- **Zones that need a property** (decided 2026-11-24 for Crete, 24-survival-crete §5, not built): an arrival can list several entry zones in order, each with an optional `needs` property. A zone is open only while the arriving player's side owns that property; units go to the first open zone with room, then the next; units with nowhere to go wait for that player's next turn, as for a full zone. A single `zone` with no condition works as before. The event names the property the units landed at. With it, a wave pattern can be marked `needsHeldProperty`, so the generator offers it only while the attacker holds one of the properties its zones need.
 - **As built** (`src/engine/arrivals.ts`):
   - Arrivals come after the turn-start sequence (04-economy §2), so they don't burn fuel, earn or get repaired that turn. An arrival on the first player's day 1 is on the map from the start.
   - A unit stands only where its movement type can enter (aircraft anywhere, ships on sea), on an empty square. The unit cap counts passengers, as building does.
