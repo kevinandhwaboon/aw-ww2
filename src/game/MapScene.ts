@@ -15,7 +15,7 @@ import { movingPose, type StepDirection } from "./facing";
 import type { MapView, MenuItem, RangeKind, RangeLayer } from "./controller";
 import { garrisonedBunkers } from "./garrison";
 import { center, MapPlayback } from "./mapPlayback";
-import { objectiveTiles } from "./objectives";
+import { evacuationTiles, objectiveTiles } from "./objectives";
 import { packFileUrl } from "./loadArtPack";
 import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { drawPlaceholderTileset, tileIndex, TILE_SIZE } from "./placeholderTiles";
@@ -944,6 +944,27 @@ export class MapScene extends Phaser.Scene implements MapView {
       }
     }
     layer.add(objectives);
+
+    // An evacuation zone (21-scenarios-dunkirk §1) is lightly shaded in the objective gold, with a
+    // line round its outside edge, so it reads as one area however many squares it has.
+    const zone = evacuationTiles(this.state);
+    if (zone.length > 0) {
+      const inZone = new Set(zone.map((p) => p.y * this.state.map.width + p.x));
+      const has = (x: number, y: number) => x >= 0 && y >= 0 && x < this.state.map.width && inZone.has(y * this.state.map.width + x);
+      const shade = this.add.graphics();
+      shade.fillStyle(packColorNumber("objective"), 0.14);
+      for (const { x, y } of zone) shade.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      shade.fillStyle(packColorNumber("objective"), 0.8);
+      for (const { x, y } of zone) {
+        const left = x * TILE_SIZE;
+        const top = y * TILE_SIZE;
+        if (!has(x, y - 1)) shade.fillRect(left, top, TILE_SIZE, 1);
+        if (!has(x, y + 1)) shade.fillRect(left, top + TILE_SIZE - 1, TILE_SIZE, 1);
+        if (!has(x - 1, y)) shade.fillRect(left, top, 1, TILE_SIZE);
+        if (!has(x + 1, y)) shade.fillRect(left + TILE_SIZE - 1, top, 1, TILE_SIZE);
+      }
+      layer.add(shade);
+    }
 
     // Damaged fortifications show their HP like units do, in the tile's bottom-left corner.
     for (const fort of this.state.fortifications) {

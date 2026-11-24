@@ -197,6 +197,7 @@ function soleSubject(event: GameEvent): UnitId | null {
     case "unitAdrift":
     case "unitDived":
     case "unitLeft":
+    case "unitEvacuated":
     case "unitHomeward":
     case "captureProgress":
     case "propertyCaptured":

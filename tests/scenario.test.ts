@@ -3,7 +3,7 @@ import { apply } from "../src/engine/apply";
 import type { Command } from "../src/engine/commands";
 import { TERRAIN, type MovementType } from "../src/engine/data/terrain";
 import { baseDamage } from "../src/engine/data/damage";
-import { UNITS, type UnitTypeId } from "../src/engine/data/units";
+import { UNIT_TYPE_IDS as UNIT_IDS, UNITS, type UnitTypeId } from "../src/engine/data/units";
 import { NATIONS } from "../src/engine/data/nations";
 import { terrainAt, type GameMap, type Point } from "../src/engine/map";
 import { loadGame, saveGame } from "../src/engine/save";
@@ -77,8 +77,8 @@ function connected(map: GameMap, type: MovementType, from: Point, to: Point): bo
 }
 
 describe("built-in scenarios (00-master-design §8)", () => {
-  it("every built-in map is modeled on a WW2 battle: Normandy, Market Garden, El Alamein, Gazala, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go", () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "market-garden", "el-alamein", "gazala", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal", "ten-go"]);
+  it("every built-in map is modeled on a WW2 battle: Normandy, Dunkirk, Market Garden, El Alamein, Gazala, Bastogne, the Battle of Britain, Stalingrad, Sevastopol, Kursk, Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["normandy", "dunkirk", "market-garden", "el-alamein", "gazala", "bastogne", "battle-of-britain", "stalingrad", "sevastopol", "kursk", "iwo-jima", "the-slot", "midway", "guadalcanal", "ten-go"]);
   });
 
   it("have unique ids", () => {
@@ -86,9 +86,11 @@ describe("built-in scenarios (00-master-design §8)", () => {
   });
 
   describe.each(SCENARIOS.map((s) => [s.name, s] as const))("%s", (_, scenario) => {
-    it("both sides have an HQ and a factory", () => {
+    it("both sides have an HQ, and a factory unless the side can't build land units (21-scenarios-dunkirk §1)", () => {
       for (const side of sides(scenario)) {
         expect(sideProperties(scenario, "hq", side), `players ${side.join(", ")} HQ`).toHaveLength(1);
+        const buildsLand = side.some((id) => (scenario.setup.players[id]?.buildable ?? UNIT_IDS).some((t) => UNITS[t].category === "land"));
+        if (!buildsLand) continue;
         expect(sideProperties(scenario, "factory", side).length, `players ${side.join(", ")} factory`).toBeGreaterThan(0);
       }
     });

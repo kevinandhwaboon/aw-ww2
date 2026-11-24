@@ -7,6 +7,7 @@ import { clearAbandonedCaptures } from "./economy";
 import type { Point } from "./map";
 import { tileIndex } from "./movement";
 import type { Side } from "./data/nations";
+import { unitDef } from "./data/units";
 import { propertyAt, type DefeatReason, type GameState, type PlayerId, type VictoryCondition } from "./state";
 
 /** A property that just changed hands. */
@@ -66,6 +67,8 @@ const RULES: Rules = {
       return (state.holdStreaks[index] ?? 0) >= days ? everyoneBut(state, side) : [];
     },
   },
+  /** Checked after each command by checkEvacuations, which also keeps the count. */
+  evacuateUnits: {},
   /** Still being in the game when the day comes wins. */
   surviveDays: {
     atDayStart(state, { side, days }) {
@@ -109,6 +112,68 @@ export function checkAtDayStart(state: GameState): Outcome {
   );
   const counted = { ...state, holdStreaks };
   return runRules(counted, (rule, condition, index) => rule.atDayStart?.(counted, condition, index));
+}
+
+const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
+
+/** Where the command's units ended up: a move's last square, or the square a passenger was unloaded onto. */
+function arrivedAt(events: readonly GameEvent[]): Map<number, Point> {
+  const ends = new Map<number, Point>();
+  for (const event of events) {
+    if (event.type === "unitMoved") {
+      const end = event.path[event.path.length - 1];
+      if (end) ends.set(event.unitId, end);
+    } else if (event.type === "unitUnloaded") {
+      ends.set(event.unitId, event.pos);
+    }
+  }
+  return ends;
+}
+
+/**
+ * After each command (21-scenarios-dunkirk §1): a land unit of an evacuateUnits condition's side that
+ * this command moved or unloaded onto one of its zone squares leaves the map and is counted, if its
+ * type counts. Units built there never moved, so they never count. The side wins the moment its count
+ * reaches the target.
+ */
+export function checkEvacuations(state: GameState, events: readonly GameEvent[]): Outcome {
+  if (state.result || !state.victoryConditions.some((c) => c.type === "evacuateUnits")) return { state, events: [] };
+  const ends = arrivedAt(events);
+  if (ends.size === 0) return { state, events: [] };
+  let current = state;
+  const out: GameEvent[] = [];
+  for (const [index, condition] of state.victoryConditions.entries()) {
+    if (condition.type !== "evacuateUnits" || current.result) continue;
+    const leaving = current.units.filter((u) => {
+      const end = ends.get(u.id);
+      return (
+        end !== undefined &&
+        samePoint(end, u.pos) &&
+        sideOf(current, u.owner) === condition.side &&
+        unitDef(u.type).category === "land" &&
+        condition.zone.some((z) => samePoint(z, u.pos))
+      );
+    });
+    if (leaving.length === 0) continue;
+    let total = current.evacuated[index] ?? 0;
+    for (const unit of leaving) {
+      const counted = condition.unitTypes === undefined || condition.unitTypes.includes(unit.type);
+      if (counted) total += 1;
+      out.push({ type: "unitEvacuated", unitId: unit.id, unitType: unit.type, owner: unit.owner, pos: unit.pos, counted, total });
+    }
+    const gone = new Set(leaving.map((u) => u.id));
+    current = clearAbandonedCaptures({
+      ...current,
+      units: current.units.filter((u) => !gone.has(u.id)),
+      evacuated: current.evacuated.map((n, i) => (i === index ? total : n)),
+    });
+    if (total >= condition.count) {
+      const won = defeatPlayers(current, everyoneBut(current, condition.side), "evacuateUnits");
+      current = won.state;
+      out.push(...won.events);
+    }
+  }
+  return { state: current, events: out };
 }
 
 /**

@@ -32,6 +32,7 @@ describe("the missions (22-campaign §2)", () => {
 
   it("the missions come in the order the battles were fought", () => {
     expect(MISSIONS.map((m) => m.map)).toEqual([
+      "dunkirk",
       "battle-of-britain",
       "gazala",
       "midway",

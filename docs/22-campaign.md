@@ -20,22 +20,23 @@ One chain in date order, across every theater (decided 2026-11-20). Winning a mi
 
 | # | Mission | When | The computer plays |
 |---|---|---|---|
-| 1 | Battle of Britain | August 1940 | Germany |
-| 2 | Gazala | May–June 1942 | Germany, Italy |
-| 3 | Midway | June 1942 | Japan |
-| 4 | Sevastopol | June 1942 | Germany |
-| 5 | Guadalcanal | October 1942 | Japan |
-| 6 | El Alamein | October 1942 | Germany, Italy |
-| 7 | Stalingrad | November 1942 | Germany |
-| 8 | The Slot | 1943 | Japan |
-| 9 | Kursk | July 1943 | Germany |
-| 10 | Normandy | June 1944 | Germany |
-| 11 | Market Garden | September 1944 | Germany |
-| 12 | Bastogne | December 1944 | Germany |
-| 13 | Iwo Jima | February 1945 | Japan |
-| 14 | Ten-Go | April 1945 | Japan |
+| 1 | Dunkirk | May–June 1940 | Germany |
+| 2 | Battle of Britain | August 1940 | Germany |
+| 3 | Gazala | May–June 1942 | Germany, Italy |
+| 4 | Midway | June 1942 | Japan |
+| 5 | Sevastopol | June 1942 | Germany |
+| 6 | Guadalcanal | October 1942 | Japan |
+| 7 | El Alamein | October 1942 | Germany, Italy |
+| 8 | Stalingrad | November 1942 | Germany |
+| 9 | The Slot | 1943 | Japan |
+| 10 | Kursk | July 1943 | Germany |
+| 11 | Normandy | June 1944 | Germany |
+| 12 | Market Garden | September 1944 | Germany |
+| 13 | Bastogne | December 1944 | Germany |
+| 14 | Iwo Jima | February 1945 | Japan |
+| 15 | Ten-Go | April 1945 | Japan |
 
-Dunkirk (21-scenarios-dunkirk) goes first once it's built. A new map joins the chain at its date.
+Dunkirk (21-scenarios-dunkirk) went first when it was built, 2026-11-24. A new map joins the chain at its date.
 
 - **Progress** is kept on the device (`localStorage`, `ww2-tactics.campaign`): the missions won, saved the moment a mission is won. It's separate from the autosave, so starting a Skirmish never loses campaign progress, and Continue on a campaign game still counts the win. A mission part-played is kept by the autosave (11-tech-setup §3j), and Continue on the title screen carries it on. The campaign screen says how many missions are won and that progress is saved on this device (since 2026-11-20, at the developer's request).
 - A mission counts as won when the game ends with the Allies among the winners.
@@ -68,20 +69,21 @@ Measured with `npm run selfplay -- --campaign` (09-ai §7), which plays the camp
 
 | # | Mission | Axis commander | Advantage | Result (measured 2026-11-20): Allied AI wins, or who is ahead on day 20 |
 |---|---|---|---|---|
-| 1 | Battle of Britain | Kenji Arakawa | Sea Lion's first wave ashore inland of Hythe (4 Infantry, an Assault Infantry, 2 Medium Tanks, an Artillery, a Flak Gun); a fourth barge at Ostend loaded with an Infantry and a Medium Tank; Maidstone's factory and four Kent towns start German; +4,000 funds; +25% income; the Sea Lion plan (§6c) | 5 of 20 |
-| 2 | Gazala | Jakob Wendt (Germany), Aldo Ferrante (Italy) | More for the sweep round Bir Hakeim: 4 Medium Tanks and 5 Halftracks carrying Infantry for Germany, a Medium Tank and 2 Halftracks carrying Infantry for Italy; +3,000 and +2,000 funds; +25% income; Rommel's sweep (§6d). Not Falk, whose units carry 20% less fuel: here fuel decides the battle | 4 of 20 |
-| 3 | Midway | Kenji Arakawa | The invasion force's oiler (a Supply Ship) and a fourth Landing Craft with an Infantry; the Midway plan (§6a) | 4 of 20 |
-| 4 | Sevastopol | Jakob Wendt | +4,500 funds; +45% income | 4 of 20 |
-| 5 | Guadalcanal | Isao Kuramochi | Two Infantry and an Artillery already ashore at Koli Point, east of Henderson Field | 6 of 20 |
-| 6 | El Alamein | Konrad Falk, Aldo Ferrante | None: the Axis already wins every AI game (the Allied AI doesn't clear a corridor, 18-scenarios-north-africa §1) | 0 of 12 |
-| 7 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (6 of them Axis wins by day 12) |
-| 8 | The Slot | Kenji Arakawa | A Battleship and a Destroyer more off Japan's home island. Not Kuramochi: his ships' +20% put Japan ahead in 8 of 8 even with no other advantage | Ahead on day 20: the computer 10 of 12 (Skirmish: 3 of 8) |
-| 9 | Kursk | Konrad Falk | +5% income, to make up for Falk's short fuel (with him alone, 4 of 8; with +10%, 8 of 8) | Ahead on day 20: the computer 9 of 12 (Skirmish, no commanders: 6 of 8) |
-| 10 | Normandy | Jakob Wendt | The panzer reserve by Caen at once (a Heavy Tank, 2 Medium Tanks, 2 Infantry, an Artillery); +5,000 funds; +50% income, since Normandy is a production race and the Allies hold 36 properties to Germany's 19 | Ahead on day 20: the computer 9 of 12 (Skirmish: 0 of 8) |
-| 11 | Market Garden | Konrad Falk | None: Germany already wins every AI game (the Allied AI can't link the drops with XXX Corps, 17-scenarios-market-garden) | 0 of 4 (Skirmish) |
-| 12 | Bastogne | Konrad Falk | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (Skirmish: 0 of 8) |
-| 13 | Iwo Jima | Kenji Arakawa | None: Japan already wins every AI game | 0 of 8 (Skirmish) |
-| 14 | Ten-Go | Isao Kuramochi | 13 more of the 32nd Army in front of Shuri (6 Infantry, 2 Assault Infantry, 2 Medium Tanks, 2 Artillery, a Mortar Team); +2,000 funds; +25% income; the Okinawa plan (§6b) | 5 of 20 |
+| 1 | Dunkirk | Konrad Falk | +5,000 funds; +25% income. A first guess; extra units may come once the map's layout settles | 3 of 8 (Skirmish: 12 of 20) |
+| 2 | Battle of Britain | Kenji Arakawa | Sea Lion's first wave ashore inland of Hythe (4 Infantry, an Assault Infantry, 2 Medium Tanks, an Artillery, a Flak Gun); a fourth barge at Ostend loaded with an Infantry and a Medium Tank; Maidstone's factory and four Kent towns start German; +4,000 funds; +25% income; the Sea Lion plan (§6c) | 5 of 20 |
+| 3 | Gazala | Jakob Wendt (Germany), Aldo Ferrante (Italy) | More for the sweep round Bir Hakeim: 4 Medium Tanks and 5 Halftracks carrying Infantry for Germany, a Medium Tank and 2 Halftracks carrying Infantry for Italy; +3,000 and +2,000 funds; +25% income; Rommel's sweep (§6d). Not Falk, whose units carry 20% less fuel: here fuel decides the battle | 4 of 20 |
+| 4 | Midway | Kenji Arakawa | The invasion force's oiler (a Supply Ship) and a fourth Landing Craft with an Infantry; the Midway plan (§6a) | 4 of 20 |
+| 5 | Sevastopol | Jakob Wendt | +4,500 funds; +45% income | 4 of 20 |
+| 6 | Guadalcanal | Isao Kuramochi | Two Infantry and an Artillery already ashore at Koli Point, east of Henderson Field | 6 of 20 |
+| 7 | El Alamein | Konrad Falk, Aldo Ferrante | None: the Axis already wins every AI game (the Allied AI doesn't clear a corridor, 18-scenarios-north-africa §1) | 0 of 12 |
+| 8 | Stalingrad | Jakob Wendt | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (6 of them Axis wins by day 12) |
+| 9 | The Slot | Kenji Arakawa | A Battleship and a Destroyer more off Japan's home island. Not Kuramochi: his ships' +20% put Japan ahead in 8 of 8 even with no other advantage | Ahead on day 20: the computer 10 of 12 (Skirmish: 3 of 8) |
+| 10 | Kursk | Konrad Falk | +5% income, to make up for Falk's short fuel (with him alone, 4 of 8; with +10%, 8 of 8) | Ahead on day 20: the computer 9 of 12 (Skirmish, no commanders: 6 of 8) |
+| 11 | Normandy | Jakob Wendt | The panzer reserve by Caen at once (a Heavy Tank, 2 Medium Tanks, 2 Infantry, an Artillery); +5,000 funds; +50% income, since Normandy is a production race and the Allies hold 36 properties to Germany's 19 | Ahead on day 20: the computer 9 of 12 (Skirmish: 0 of 8) |
+| 12 | Market Garden | Konrad Falk | None: Germany already wins every AI game (the Allied AI can't link the drops with XXX Corps, 17-scenarios-market-garden) | 0 of 4 (Skirmish) |
+| 13 | Bastogne | Konrad Falk | +3,000 funds; +25% income | Ahead on day 20: the computer 7 of 8 (Skirmish: 0 of 8) |
+| 14 | Iwo Jima | Kenji Arakawa | None: Japan already wins every AI game | 0 of 8 (Skirmish) |
+| 15 | Ten-Go | Isao Kuramochi | 13 more of the 32nd Army in front of Shuri (6 Infantry, 2 Assault Infantry, 2 Medium Tanks, 2 Artillery, a Mortar Team); +2,000 funds; +25% income; the Okinawa plan (§6b) | 5 of 20 |
 
 Seeds 1–20 (1–12 or 1–8 where marked), standard AI at Normal as the Allies: a 40-day limit for wins, and day 20 for who is ahead on the big maps (§5b).
 

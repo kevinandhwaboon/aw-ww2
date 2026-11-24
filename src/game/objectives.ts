@@ -14,6 +14,9 @@ export interface ObjectiveLine {
   readonly text: string;
 }
 
+/** Unit types that march, so an evacuation of only these says "foot units". */
+const FOOT: readonly string[] = ["infantry", "assaultInfantry", "mortar"];
+
 const SIDE_NAMES: Record<Side, string> = { allies: "Allies", axis: "Axis" };
 
 const marked = (count: number) =>
@@ -37,6 +40,11 @@ function describe(state: GameState, condition: VictoryCondition, index: number):
     }
     case "surviveDays":
       return `${SIDE_NAMES[condition.side]}: hold out until day ${condition.days}`;
+    case "evacuateUnits": {
+      const done = Math.min(condition.count, state.evacuated[index] ?? 0);
+      const who = condition.unitTypes?.every((t) => FOOT.includes(t)) === true ? "foot units" : "units";
+      return `${SIDE_NAMES[condition.side]}: evacuate ${condition.count} ${who} to the shaded area (${done}/${condition.count})`;
+    }
   }
 }
 
@@ -54,6 +62,11 @@ export function objectiveLines(state: GameState): ObjectiveLine[] {
 export function objectiveTiles(state: GameState): Point[] {
   const tiles = state.victoryConditions.flatMap((c) => ("properties" in c ? c.properties : []));
   return tiles.filter((p, i) => tiles.findIndex((q) => q.x === p.x && q.y === p.y) === i);
+}
+
+/** Every square some evacuation names, for shading on the map (21-scenarios-dunkirk §1). */
+export function evacuationTiles(state: GameState): Point[] {
+  return state.victoryConditions.flatMap((c) => (c.type === "evacuateUnits" ? c.zone : []));
 }
 
 /** "south", "south and west", "south, west and north". */

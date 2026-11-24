@@ -1008,10 +1008,11 @@ describe("AI vs AI on the built-in maps (09-ai §7)", () => {
   }
 
   for (const scenario of SCENARIOS.filter((s) => !LAND_MAPS.includes(s.id))) {
-    it(`${scenario.id}: AIs play 10 days with no AI bugs`, async () => {
+    it(`${scenario.id}: AIs play 10 days, or to the end of a shorter game, with no AI bugs`, async () => {
       const result = await playMatch(start(scenario.id), everyone(start(scenario.id)), 10);
       expect(result.bugs).toEqual([]);
-      expect(result.state.day).toBeGreaterThan(10);
+      // Dunkirk is often over within a week (21-scenarios-dunkirk §1).
+      if (result.state.result === null) expect(result.state.day).toBeGreaterThan(10);
     }, 60_000);
   }
 
