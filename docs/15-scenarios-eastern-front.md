@@ -1,8 +1,8 @@
 # Topic Doc 15: Eastern Front Scenarios
 
-**Status:** three Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union; Stalingrad (§2), the first city fight and the first Soviet boat; and Sevastopol (§3), the first railway and the Railway Gun. Balance untested.
-**Last updated:** 2026-11-19
-**Depends on:** 00-master-design.md §8 and §9, 01-units.md (availability rule; §2b Railway Gun), 02-terrain.md §4 (bunkers and obstacles) and §4c (Railway), 04-economy-production.md §8 (victory conditions), 08-art-pipeline.md §12 (Soviet art and insignia).
+**Status:** three Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union; Stalingrad (§2), the first city fight and the first Soviet boat; and Sevastopol (§3), the first railway and the Railway Gun. Balance untested. **Moscow** (§4), November 1941 to January 1942, is designed but won't be built: not different enough in play (2026-11-24).
+**Last updated:** 2026-11-24 (§4 Moscow)
+**Depends on:** 00-master-design.md §8 and §9, 01-units.md (availability rule; §2b Railway Gun), 02-terrain.md §4 (bunkers and obstacles) and §4c (Railway), 04-economy-production.md §8 (victory conditions), 08-art-pipeline.md §12 (Soviet art and insignia), 12-weather.md (snow), 22-campaign.md (§4–§6), 23-survival.md §5a (arrivals).
 
 ---
 
@@ -326,7 +326,258 @@ Summer, clear every day: June 1942 was hot and dry, and the bombing went on from
 
 `tools/maps/sevastopol.mjs` generates the scenario from real longitude/latitude points for the coast, the bay, the front, the rivers, the railway, towns and forts, as for Stalingrad. Rerun it after editing; `tools/maps/overview.mjs sevastopol` redraws the picture above. Tests in `tests/scenario.test.ts`, "Sevastopol", check the size and nations, who moves first, the HQs, that the railway runs unbroken from the north-east edge to the city, that the Gustav starts on its spur with a Halftrack beside it, that it reaches Maxim Gorky I but not the city from the start, that it can get within range of the city down the line, that the railway's river crossings are clean, that Severnaya Bay has no bridge, the forts, that no starting unit stands where it couldn't move, the weather, the build lists and both victory conditions.
 
-## 4. Known gaps
+## 4. Moscow (`moscow`)
+
+**Status:** designed (v0 draft), 2026-11-24, at the developer's request, to fill the empty 1941 slot on the map select. **Not going to be built** (developer decision, 2026-11-24): it doesn't play differently enough from the maps already built (see "Decision: not built" below). Kept as a record of the design, in case a later idea makes it distinct. It would have needed **no new rule**: it uses Snow (12-weather §3), Major Bridges (02-terrain §4a), scheduled arrivals (23-survival §5a) and the existing victory conditions (04-economy §8). Forces and numbers are first guesses.
+
+### Decision: not built (2026-11-24)
+
+After reading the design, the developer decided not to build it: **it isn't unique enough in how it plays.**
+
+- **What would have been new:** the battle turning round halfway (Germany attacks, then the Soviet reserves arrive and the Soviet Union attacks); Germany deciding when to stop attacking; the first battle map with scheduled reinforcements; and the defender holding the road hub.
+- **What the built maps already do:** Bastogne has winter snow keeping tanks on the roads, German tanks short of fuel and a road hub to fight over. Stalingrad has a Soviet win by taking a set of towns, winter and Major Bridges. Sevastopol and Dunkirk have a side winning by holding out to a set day.
+- **Risks:** Bastogne had uneven goals like these (take the town against hold to a day) and dropped them on 2026-11-14 as too lopsided; and the computer wouldn't feel the turn, since the standard AI doesn't decide when to stop attacking.
+- **What could make it distinct, if it's ever picked up:** fog of war on by default, so the reserves arrive unseen; a deep-cold rule that weakens the German side from about day 11 (question 1 below); or a German win only for holding forward ground (Klin or Solnechnogorsk) at the deadline.
+
+The 1941 slot stays empty for now.
+
+### Why this map
+
+- **It fills 1941** (00-master-design §8): every other map is from 1940 or from 1942 on.
+- **It's the first map where the battle turns round halfway.** Germany attacks for the first ten days, with the better army but worn out and short of fuel; then the cold deepens, fresh Soviet armies arrive from the east, and the Soviet Union attacks. Each side has to play both roles, and the German player has to decide when to stop attacking and dig in.
+- **It's the first Eastern Front map where the Soviet Union defends its capital**, and its HQ is the prize Germany came for.
+
+### The history it follows
+
+Operation Typhoon, the German drive on Moscow, began on 30 September 1941 and destroyed huge Soviet armies in the pockets at Vyazma and Bryansk. Then the autumn rains turned the roads to mud (the *rasputitsa*), and the advance stuck for most of October and early November while the Soviets dug new lines and brought up what they could.
+
+In mid-November the ground froze hard and the attack resumed. In the north, the 3rd and 4th Panzer Groups drove east from Volokolamsk and from the Volga reservoir: they took **Klin** on 23 November and Solnechnogorsk the next day, crossed the **Moscow–Volga Canal at Yakhroma** on 28 November and were thrown back the next day, and reached **Krasnaya Polyana**, about 30 km from the Kremlin, at the start of December. Rokossovsky's 16th Army gave ground a step at a time along the Volokolamsk highway. In the south, Guderian's 2nd Panzer Army couldn't take **Tula**, held by the 50th Army and a workers' regiment, and swung round its east side toward **Kashira** and the Oka bridges, where Belov's cavalry corps stopped it on 27 November. In the centre the 4th Army's last attack, at **Naro-Fominsk** on 1 December, was beaten back.
+
+By then the German divisions were at a third of their strength, without winter clothing, their tanks and guns freezing as the temperature fell to −35 °C on 4–5 December. On **5 December** the Kalinin Front attacked, and on **6 December** the Western Front, with three new armies (the 1st Shock, 10th and 20th) and divisions from Siberia and the Far East that the Germans hadn't known were there. **Klin** was retaken on 15 December, **Kalinin** on 16 December, **Volokolamsk** on 20 December and **Kaluga** on 30 December. The Germans were pushed back 100 to 250 km before the front settled in the spring, but their army held together on the Rzhev–Vyazma line. It was the first time the German army had lost a campaign.
+
+### Area and scale
+
+- **About 39 × 56 squares**, north up. From Kalinin and Kimry in the north to Tula and Stalinogorsk in the south, and from Volokolamsk, Mozhaysk and Kaluga in the west to Zagorsk, Kolomna and Mikhailov in the east. Roughly 35.4–39.1° E and 53.95–56.95° N.
+- **About 6 km a square**, near-even scale, as at Kursk. Moscow (in 1941 about 20 km across) is a block of about 3 × 3 squares. The German line on day 1 is about 17 squares from the Kremlin at Volokolamsk, 14 at Klin's approaches, 9 at Naro-Fominsk, and 29 at Tula.
+- **Each day in the game stands for two days of the battle**, so the map runs from 15 November 1941 (day 1) to 2 January 1942 (day 25). Dates are only the doc's and the briefing's; the game counts days as usual (see "Questions for the developer" for showing dates on screen).
+- Generated from real longitude and latitude, like the other Eastern Front maps.
+
+### Players
+
+- **Soviet Union** (Allies), moving first. The Kalinin and Western Fronts, and the right wing of the Southwestern Front round Tula, are one player.
+- **Germany** (Axis): Army Group Centre (the 9th Army, the 3rd and 4th Panzer Groups, the 4th Army and the 2nd Panzer Army).
+
+### The front, 15 November 1941
+
+Traced as a polygon of real points in the generator, as at Kursk and Stalingrad. Germany holds the west and the south-west:
+
+- **The north:** Kalinin, on the Volga, and the ground west of it. The Kalinin Front holds the north and east of the city and the north shore of the **Volga reservoir** (the "Moscow Sea").
+- **The north-west:** from the reservoir's south shore at Turginovo south past **Lotoshino** to **Volokolamsk**, the 3rd and 4th Panzer Groups' start line. The Soviet 30th Army holds the thin joint between the reservoir and the Klin road, the gap the panzers broke through.
+- **The west:** from Volokolamsk south past **Ruza** and Dorokhovo to the **Nara river** at Naro-Fominsk, which the Soviets hold.
+- **The south-west:** along the Nara and the Protva to the **Oka** at Tarusa and Aleksin, both German.
+- **Tula** is Soviet, with German units round it on three sides (west, south and south-east), as in November. The open country **east of Tula** (Venev, Stalinogorsk, Mikhailov) is no man's land: neutral towns, the gap Guderian drove through.
+
+### Places
+
+| | Soviet Union | Germany |
+|---|---|---|
+| HQ | **Moscow** (the Kremlin) | **Mozhaysk** |
+| Factories | Moscow (the car works, east of the Kremlin), Tula (the arms works), Podolsk, Kolomna, Zagorsk | Kalinin, Kaluga, Maloyaroslavets |
+| Airfields | Moscow Central (Khodynka), Vnukovo, Tula | Kalinin-Migalovo, Kaluga |
+| Cities | Moscow: Tushino, Khimki, Kuntsevo. North: Klin, Zavidovo, Konakovo, Kimry, Rogachevo, Dmitrov, Yakhroma, Solnechnogorsk, Kryukovo, Krasnaya Polyana, Istra. West: Zvenigorod, Kubinka, Naro-Fominsk. South: Serpukhov, Kashira. East: Noginsk | Turginovo, Lotoshino, **Volokolamsk**, Ruza, Dorokhovo, Vereya, Borovsk, Medyn, Tarutino, Tarusa, Aleksin, Kosaya Gora, Shchekino, Bogoroditsk |
+| Neutral | Venev, Stalinogorsk, Mikhailov | |
+
+- **Income:** the Soviet Union owns 29 properties, Germany 20, with 3 neutral. Germany's army is better; the Soviet Union's income is bigger, and grows with its reserves.
+- **Moscow is the Soviet HQ.** If Germany takes it, the game is over. It's ringed by Tushino, Khimki and Kuntsevo and has a factory and an airfield of its own, so it's never empty for long.
+- **Mozhaysk is the German HQ**, on the Minsk highway: the 4th Army's base and the road back to Vyazma. The Soviets retook it in January 1942, after this map ends, so taking it is a Soviet win beyond the history.
+- **Kalinin, Volokolamsk and Kaluga** are the Soviet objectives (§4 "Victory"): the German anchors at the north, centre and south of the line, all retaken in December.
+- Factories and HQs are our choice, not history, as on the other maps.
+
+### Terrain
+
+- **Forest** almost everywhere west of Moscow: the mixed woods of the Moscow region, with farmland (plains) round the towns and along the rivers. Forest stops wheels and slows tracks (02-terrain §3), so the fight follows the roads.
+- **Roads** run out from Moscow like spokes: the Leningrad highway (Khimki–Solnechnogorsk–Klin–Kalinin), the Volokolamsk highway (Istra–Volokolamsk), the Minsk highway (Kubinka–Mozhaysk), the Kiev and Warsaw roads (Naro-Fominsk, Maloyaroslavets–Kaluga), the Simferopol highway (Podolsk–Serpukhov–Tula), the Kashira road, and east to Kolomna, Noginsk and Zagorsk. Few roads cross between the spokes, so the attacker has to drive along them toward the hub, while the defender shifts troops between them through Moscow. Smaller roads are routed between towns along the cheapest path, as at Kursk.
+- **The Klin–Dmitrov ridge** north of Moscow: a line of **Ridge** squares (02-terrain §4b), the high ground east of the canal, which vehicles can cross slowly. No Hills: the region has no ground steep enough to stop a tank.
+- **Rivers:** the **Volga** past Kalinin to the reservoir; the **Lama** at Volokolamsk; the **Istra**, the **Ruza** and the **Moskva** west of the city; the **Nara** (Naro-Fominsk) and the **Protva**; the **Oka** across the south, from Kaluga past Aleksin, Tarusa, Serpukhov and Kashira to Kolomna; the **Upa** at Tula. Roads cross on bridges.
+- **The Moscow–Volga Canal**, from the reservoir south past Dmitrov and Yakhroma to Khimki: a line of River squares, the last barrier north of the city. Its bridges at **Yakhroma** and **Dmitrov** are **Major Bridges** (02-terrain §4a), as are the **Oka bridges at Serpukhov and Kashira**, Guderian's goal. Assault Infantry can blow them; Germany took the Yakhroma bridge intact in 1941. Other crossings are ordinary bridges.
+- **Water:** the **Volga reservoir** (about 2 × 8 squares east of Kalinin) and the **Istra reservoir**, whose dam the Soviets blew on 24 November to flood the approach, are Sea squares with no ports, as the Sarpa lakes are at Stalingrad.
+- **Moscow** is City squares round the HQ, with its factory and airfield.
+
+### Fortifications
+
+- **The Moscow defence zone:** about 10 Bunkers on the approaches (Krasnaya Polyana, Khimki, Kryukovo, Zvenigorod, Kubinka and the Podolsk road), and **anti-tank ditches** (Obstacles, 02-terrain §4) between them, dug by Moscow's civilians in October and November. Never on a road, river or town, so every highway stays open to fight along.
+- **Tula:** 4 Bunkers round the south and west of the city, where it held for six weeks.
+- **The Nara line:** 3 Bunkers on the Soviet bank at Naro-Fominsk.
+- **The Volokolamsk highway:** 2 Bunkers near Dubosekovo, east of Volokolamsk, where Panfilov's division fought.
+- **Germany has none.** It was attacking, and dug in only in December, which here is the player's job.
+
+### Starting forces (first guess)
+
+**Soviet Union** (6,000 funds, 48 units on the map, 26 more arriving):
+
+- **Kalinin Front**, north and east of Kalinin: 4 Infantry, an Artillery, a Light Tank (T-60).
+- **30th Army**, between the reservoir and Klin: 2 Infantry, a Light Tank. The weak joint.
+- **16th Army**, on the Volokolamsk highway: 3 Infantry (one in each Dubosekovo bunker and one in Istra), 2 Assault Infantry (the anti-tank rifles), a Mortar Team, an Artillery, a Rocket Artillery (Katyusha), 2 Medium Tanks and a Heavy Tank (Katukov's tank brigade of T-34s and a KV-1).
+- **5th Army**, on the Minsk highway at Kubinka and Zvenigorod: 3 Infantry, an Artillery, a Medium Tank.
+- **33rd and 43rd Armies**, on the Nara from Naro-Fominsk to Serpukhov: 4 Infantry (2 in the Nara bunkers), a Mortar Team, an Artillery.
+- **49th Army**, at Serpukhov and on the Oka: 2 Infantry, an Artillery.
+- **50th Army and the Tula Workers' Regiment**: 3 Infantry (2 in bunkers), an Assault Infantry, an Artillery, a Medium Tank, and a Flak Gun (Tula's AA guns fired at tanks too).
+- **Moscow:** an Infantry in the HQ, 2 Flak Guns and a Mobile AA (the city's air defence).
+- **Air force:** a Fighter at Moscow Central, a Fighter and a Bomber (Il-2) at Vnukovo.
+
+**Soviet reserves (arrivals, 23-survival §5a)**, each at the start of the Soviet turn, at full strength, in an entry zone of squares:
+
+| Day | Date | Arrives | Where | Units |
+|---|---|---|---|---|
+| 6 | 25 Nov | **1st Guards Cavalry Corps** (Belov), with a tank brigade | Kashira | 2 Infantry, a Light Tank, a Medium Tank |
+| 7 | 27 Nov | **1st Shock Army** | Dmitrov and Zagorsk railway | 4 Infantry, an Assault Infantry, an Artillery, a Rocket Artillery |
+| 8 | 29 Nov | **20th Army** | Khimki and Lobnya, north of Moscow | 3 Infantry, an Assault Infantry, an Artillery, a Medium Tank |
+| 10 | 3 Dec | **10th Army** | The east edge by Mikhailov | 4 Infantry, an Artillery, a Light Tank |
+| 10 | 3 Dec | **The air force's reserve** | Moscow Central and Vnukovo | 2 Fighters, a Bomber |
+
+An arrival with no free square waits for the next turn (23-survival §5a). The Siberian divisions aren't a separate wave: in 1941 they were spread through these armies.
+
+**Germany** (8,000 funds, 65 units, counting the Infantry riding in Halftracks). **Worn down:** every German tank, Tank Destroyer and Halftrack starts at **7 HP and half fuel**, and every other German land unit at **8 HP**, for divisions at a third of their strength at the end of a long supply line. Only the Halftracks and properties can resupply them (05-supply-transport §3).
+
+- **9th Army**, in Kalinin: 4 Infantry, an Assault Infantry, an Artillery.
+- **3rd Panzer Group**, Turginovo and Lotoshino, aimed at Klin: 3 Medium Tanks, 2 Light Tanks, a Recon, 2 Halftracks each carrying an Infantry, an Infantry, an Artillery.
+- **4th Panzer Group**, Volokolamsk to Ruza, aimed at Istra and Solnechnogorsk: 4 Medium Tanks, a Light Tank, a Tank Destroyer (StuG), 2 Halftracks each carrying an Infantry, 2 Infantry, an Assault Infantry, an Artillery, a Rocket Artillery (Nebelwerfer).
+- **4th Army**, Dorokhovo to Tarutino, facing the Nara: 5 Infantry, an Assault Infantry, a Mortar Team, 2 Artillery, a Tank Destroyer.
+- **2nd Panzer Army**, south of Tula at Kosaya Gora and Shchekino, aimed round Tula's east side at Kashira: 3 Medium Tanks, 2 Light Tanks, a Recon, 2 Halftracks each carrying an Infantry, 2 Infantry, an Artillery, a Mobile AA.
+- **On the Oka** at Aleksin and Tarusa: 2 Infantry.
+- **Luftwaffe:** a Fighter and a Bomber at Kalinin-Migalovo, a Fighter and a Bomber at Kaluga, a Transport Aircraft at Kaluga; a Flak Gun at Mozhaysk. Small, as in December 1941, when much of it had gone to the Mediterranean.
+
+Germany starts with more tanks (15 to 7, plus 2 Tank Destroyers) and more units; the Soviet Union ends up with more of everything once its reserves are in.
+
+### How it plays
+
+- **Two halves.** For the first ten days or so (to 5 December) Germany is the attacker: its panzers outnumber anything in front of them, but they're worn and half-fuelled, and every Halftrack spent refuelling tanks isn't carrying infantry. From about day 8 the Soviet reserves are in, the snow sets in, and the Soviet Union attacks.
+- **Germany's choice:** go all in for Moscow before the reserves arrive (an outright win), or take ground for depth (Klin, Solnechnogorsk, the Tula gap) and then turn the panzers into a reserve behind Kalinin, Volokolamsk and Kaluga, and hold one of them to day 25. Attacking too long leaves the army spent when the counter-offensive comes; stopping too soon gives the Soviets an easy approach.
+- **The Soviet choice:** give ground slowly and keep the army alive (Rokossovsky's way), or hold every town and lose units it needs in December. Its reserves arrive whatever happens; the question is what's left to fight beside them. Moscow's factory keeps building, but Infantry built there is slow to reach the front.
+- **The spokes:** both sides move fastest along the highways. In snow (12-weather §3) tanks off the road pay 2 on plains and 3 in forest, so the road towns (Klin, Istra, Solnechnogorsk, Naro-Fominsk, Kashira) decide the battle.
+- **The canal and the Oka** are the last barriers: if Germany crosses at Yakhroma or Kashira with tanks, Moscow is open from the north or south. Soviet Assault Infantry can blow those bridges; Germany's can rebuild them.
+
+### Fog of war
+
+Off by default, and the player chooses (19-fog-of-war §1). In 1941 the counter-offensive came as a surprise; with fog on, the reserves arrive out of German sight behind Moscow. Snow doesn't bring fog (12-weather §2).
+
+### Turn order
+
+The Soviet Union moves first, as the Allies do on every built-in map: its first turn is the last day of digging in before the attack resumed. Its armies start east of Germany's, so Soviet units face left and German units face right (08-art-pipeline §12).
+
+### Weather
+
+**Winter** season (snow on the ground, 12-weather §1, §4), following November and December 1941, two days of the battle to each day in the game:
+
+| Days | Dates | Weather | Why |
+|---|---|---|---|
+| 1–4 | 15–22 Nov | Clear | Hard frost: the ground froze and the panzers could move again |
+| 5 | 23 Nov | Snow | The first heavy snowfall, as Klin fell |
+| 6–7 | 25–28 Nov | Clear | Cold and clear: the fighting for the canal and Kashira |
+| 8–12 | 29 Nov – 8 Dec | Snow | Blizzards and deep cold, −35 °C on 4–5 December; the counter-offensive opens in deep snow |
+| 13–15 | 9–14 Dec | Clear | |
+| 16–18 | 15–20 Dec | Snow | |
+| 19–20 | 21–24 Dec | Clear | |
+| 21–25 | 25 Dec – 2 Jan | Snow | |
+
+In snow, tanks and wheels slow down off the roads and aircraft fly half as far (12-weather §3). Snow slows the Soviet counter-offensive as much as the German attack; the cold's harder grip on the unprepared German army is represented by its worn starting units, not by weather (see the questions below).
+
+### Build lists
+
+- **Soviet Union:** Infantry, Assault Infantry, Mortar Team, Recon, Halftrack, Light, Medium and Heavy Tank (T-60, T-34, KV-1), Artillery, Rocket Artillery (Katyusha), Mobile AA, Flak Gun; Fighter, Bomber (Il-2), Transport Aircraft. **No Tank Destroyer**: the Soviet art is the SU-152 of 1943. No ships.
+- **Germany:** every land unit **except Heavy Tank** (no Tiger until 1942); Fighter, Bomber, Transport Aircraft. No Dive Bomber (no Stuka art, 08-art-pipeline §17). No ships.
+
+### Victory
+
+- **Germany:** capture **Moscow**, the Soviet HQ (`hqCapture`). Or still be in the game when **day 25** starts (`surviveDays`): 2 January 1942, the army still standing.
+- **Soviet Union:** capture **Kalinin, Volokolamsk and Kaluga** (`captureProperties`), the three German anchors retaken in December. Or capture **Mozhaysk**, the German HQ (`hqCapture`).
+- Rout is off, as on the other theater maps. Resign is always available.
+- **Following history**, the Soviet Union wins on about day 23 (Kaluga, 30 December): a narrow win. A German player who holds any one of the three to day 25 wins.
+
+### Skirmish (two equal players)
+
+Either side can be played by a person or the computer. Fair here doesn't mean symmetric: Germany is stronger early and the Soviet Union later, and the deadline sits so that a German player who attacks well and then stops in time can hold one anchor, while one who overreaches loses all three. Tuned by AI-vs-AI play (§4 "How it's tuned").
+
+**The computer as Germany** needs nothing new: the standard AI attacks along the roads toward the nearest targets and Moscow. **As the Soviet Union** it also needs nothing new: the pull of the objectives (09-ai §4i) draws its land units toward Kalinin, Volokolamsk and Kaluga, the properties it wins by capturing. The risk is that it walks toward them from day 1 instead of defending; if self-play shows that, the fix is a map plan (below), not a rule.
+
+### Campaign (the player as the Soviet Union)
+
+Following 22-campaign §4–§6. The computer plays Germany, with the advantage all in its starting setup; the map, the victory conditions and the Soviet forces (reserves included) are unchanged.
+
+- **Where it goes in the chain:** between the Battle of Britain (August 1940) and Gazala (May 1942), as **"Moscow, November 1941"**. With Dunkirk built, the chain opens Dunkirk, the Battle of Britain, Moscow, Gazala. It's the player's first Soviet mission and first winter map.
+- **Commander:** **Jakob Wendt** for Germany (foot soldiers +15% attack and defence; Mortar Teams +1 move; air units cost 10% more). His infantry is what holds Kalinin, Volokolamsk and Kaluga in December, and Germany builds few aircraft here, so his drawback costs little. **Not Konrad Falk**: the panzers already start at half fuel, and his 20% less fuel and ammo would strand them, as it did at Gazala (22-campaign §5a).
+- **Advantage (first guess), in proportion to Stalingrad and Normandy:**
+  - **Extra units:** 2 Medium Tanks and a Halftrack carrying an Assault Infantry with the 4th Panzer Group (a stronger push on the Volokolamsk highway); a Tank Destroyer in Kalinin; 2 Infantry and an Artillery in Kaluga (so the counter-offensive meets a real garrison in the south). Extra units start worn like the rest (7 or 8 HP).
+  - **Extra properties:** **Venev and Stalinogorsk** start German (Guderian took both on 24–25 November).
+  - **+3,000 funds, +25% income.**
+- **Map AI (optional, `src/ai/maps/moscow.ts`, 22-campaign §6):** "Typhoon, then the winter line". Try the standard AI first, as Stalingrad and Kursk do; write the plan only if the Allied AI wins too often.
+  1. **Typhoon.** Until day 10, or once Germany has lost half its starting tanks (it knows: its losses are public, 04-economy §8a), the panzer groups drive on Moscow along the highways, using the objective plan's parts (22-campaign §6b) with Moscow as the target, and Halftracks follow the tanks lowest on fuel, as in Rommel's sweep (22-campaign §6d).
+  2. **The winter line.** From then on, infantry goes to and stays in Kalinin, Volokolamsk, Kaluga and Mozhaysk (two units each where it can), and tanks stay within 3 squares of them to counter-attack. Nothing else changes.
+- **Target:** the standard AI playing the Soviet Union wins about one game in four (22-campaign §5), or, if AI games don't finish by day 25, the computer is ahead on day 20 in about three games in four (22-campaign §5b). Tune the extra units first (22-campaign §5a: units move the result, money mostly doesn't).
+
+### How it's tuned
+
+1. **Skirmish first:** `npm run selfplay` on Moscow, seeds 1–20, the standard AI on both sides. The levers, in order: when the reserves arrive and how big they are; the German starting HP and fuel; the deadline (day 25). The target is Soviet wins about half the time, with German wins coming from both Moscow and the deadline in some games.
+2. **Then the campaign:** `npm run selfplay -- --campaign` with the advantage above, toward one Soviet AI win in four.
+3. Record both results in this section and in 22-campaign §5.
+
+### Art
+
+- **Nothing new is needed.** The winter season (08-art-pipeline §21) draws the map and battle scenes snowy; Stalingrad and Bastogne use it already.
+- **Older equipment is drawn as later models**, as on other maps: the T-34/76 of 1943 for the 1941 T-34, the T-70 for the T-60, the Yak-9 for the Yak-1 and MiG-3; the Panzer IV for the Panzer III, the Panzer II for the Panzer 38(t).
+- **Optional:** whitewashed Soviet tanks and riflemen in white snow smocks, as a winter variant of the Soviet sheet.
+- **The map select** features Soviet riflemen in white smocks with a whitewashed T-34 advancing through birch woods in falling snow, past a German tank stuck in a drift. No Kremlin or flags in the picture: its towers carry political stars.
+
+### How it's made
+
+`tools/maps/moscow.mjs` generates the scenario (weather and arrivals included) from real longitude and latitude points for the front line, towns, rivers, the canal, the reservoirs, the bunkers and ditches, as for Kursk and Stalingrad: roads routed along the cheapest path between towns plus the highways listed above, forest everywhere west of Moscow except round towns and on river meadows. Rerun it after editing; `tools/maps/overview.mjs moscow` draws the overview picture for this section.
+
+### Build order
+
+1. **Map:** the generator and scenario file, with the starting units' HP and fuel, the arrivals and the victory conditions. No engine change.
+2. **Scenario tests** (below), then `npm run check`.
+3. **Skirmish tuning:** `npm run selfplay` on Moscow and every other map, then tune as above.
+4. **Campaign:** the mission entry in `src/campaign/missions.ts`, placed after the Battle of Britain; tune it. The map AI only if needed.
+5. **Map select:** the world-map dot west of Moscow's position and the featured picture; the overview picture in this doc.
+
+### Tests to write
+
+Scenario tests ("Moscow (15-scenarios-eastern-front §4)"):
+
+- "The map is about 39 × 56, the Soviet Union against Germany, and the Soviet Union moves first"
+- "Moscow is the Soviet HQ and Mozhaysk the German HQ"
+- "The Soviet Union wins by capturing Kalinin, Volokolamsk and Kaluga"
+- "The Soviet Union wins by capturing Mozhaysk"
+- "Germany wins by capturing Moscow"
+- "Germany wins at the start of day 25"
+- "Rout is off"
+- "The Soviet reserves arrive on days 6, 7, 8 and 10 in their entry zones"
+- "Every German tank starts at 7 HP and half fuel"
+- "Each German spearhead's tanks can drive to Moscow by road"
+- "North of Moscow, vehicles can cross the canal only at Yakhroma and Dmitrov, and both are Major Bridges"
+- "The Oka bridges at Serpukhov and Kashira are Major Bridges"
+- "Tula is Soviet, and German units stand on three sides of it"
+- "No bunker or anti-tank ditch stands on a road, river or town"
+- "Venev, Stalinogorsk and Mikhailov start neutral"
+- "The Soviet Union owns 29 properties and Germany 20 at the start"
+- "Germany can't build a Heavy Tank, the Soviet Union can't build a Tank Destroyer, and nobody builds ships"
+- "The weather follows 15 November to 2 January: clear on days 1 to 4, snow on days 8 to 12"
+
+Campaign tests (22-campaign):
+
+- "The Moscow mission comes after the Battle of Britain and before Gazala"
+- "On the Moscow mission the computer plays Germany with Jakob Wendt"
+
+### Questions for the developer
+
+None of these is needed for v0; each would be a new rule, so none is assumed. The doc's answer for now is in brackets.
+
+1. **The deep cold.** In December 1941 the cold hurt the German army far more than the Soviet: no winter clothing, frozen weapons and engines. Should a **Deep Cold** weather hit one side harder (for example −10% attack for a side the scenario marks as unprepared, or double fuel use)? Weather today is the same for everyone (12-weather §1), so this would be new. [v0: no. The worn German starting units and the fresh reserves stand for it.]
+2. **Frozen rivers.** By mid-December the rivers and the canal froze hard enough to cross. Should a scenario be able to turn River squares into passable ice from a given day? Stalingrad has the same gap (the Volga froze). [v0: no. Squares don't change terrain mid-game.]
+3. **Dates on screen.** Should the turn bar show "17 November 1941" instead of "Day 2", from a scenario start date and days per turn? A presentation change only. [v0: no. The briefing gives the dates.]
+4. **Cavalry and ski troops.** Belov's cavalry and the Soviet ski battalions moved through deep snow where tanks couldn't. A unit that ignores snow would be new. [v0: no. Infantry and Light Tanks stand in.]
+
+## 5. Known gaps
 
 **Kursk**
 
@@ -355,6 +606,18 @@ Summer, clear every day: June 1942 was hot and dry, and the bombing went on from
 - **No Karl mortars**: the two 60 cm self-propelled mortars are left out; Germany's other heavy guns are Artillery and Rocket Artillery.
 - **The fleet isn't there**: the Soviet supply runs by cruiser, destroyer and submarine from Novorossiysk, and the coastal batteries' fire at sea, have no part in it.
 - **Fort positions are approximate**, within a square or two.
+
+**Moscow** (designed, not to be built)
+
+- **Balance is a first guess**, untested: the reserves' size and timing, the German starting HP and fuel, and the day-25 deadline all need self-play.
+- **No deep cold**: the weather treats both armies alike (question 1 in §4).
+- **The rivers don't freeze** (question 2 in §4), so the counter-offensive has to use the bridges, which the Soviets didn't need in late December.
+- **No cavalry or ski troops** (question 4 in §4): Belov's cavalry corps is Infantry and tanks.
+- **No Rzhev or Vyazma**: the map ends west of Mozhaysk, so the January fighting there, and the airborne drops near Vyazma, are off the map.
+- **The Siberian divisions aren't their own units**: they're spread through the reserve armies, as they were.
+- **The Luftwaffe is small** and the Soviet air force gets reserves on day 10; there's no rule for the heated hangars round Moscow that kept Soviet aircraft flying in the cold.
+- **Moscow's evacuation and the 7 November parade** aren't in the game.
+- **Coordinates are approximate**, within a square or two.
 
 **Future scenarios**
 

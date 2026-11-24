@@ -1,7 +1,7 @@
 # Topic Doc 14: Pacific Scenarios
 
-**Status:** five Pacific maps built (v0): Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go. Balance untested.
-**Last updated:** 2026-11-20 (§3 Midway always in fog)
+**Status:** five Pacific maps built (v0): Iwo Jima, The Slot, Midway, Guadalcanal and Ten-Go. Balance untested. Leyte Gulf (§7) designed but not to be built: too close to Ten-Go.
+**Last updated:** 2026-11-24 (§7 Leyte Gulf, not to be built)
 **Depends on:** 00-master-design.md §6 and §8, 01-units.md, 04-economy-production.md §8 (victory conditions), 05-supply-transport.md (landings), 08-art-pipeline.md (Japanese art).
 
 ---
@@ -384,3 +384,42 @@ Historically the battle was hopelessly one-sided, and a Japan player who can onl
 - **The computer as Japan rarely sails for Okinawa.** The Greedy AI has no pull toward a far-off target for ships (09-ai §4i is for land units), so Yamato mostly waits near the strait or fights the submarines. Playing Japan yourself, against the computer or hot-seat, is the real test.
 - Without a Cruiser, Yahagi is a Destroyer.
 - Possible later rules, each its own decision: a "unit reaches this square" victory condition, so beaching Yamato wins outright; a unique Yamato, tougher and longer-ranged than a regular Battleship (a scenario-only unit like the Radar Station, 01-units §2a, or a scenario modifier); low cloud weather that weakens air strikes (12-weather); a "sink these units" victory condition (also missing on Midway, §3); and the kamikaze unit, if it's ever added, for the attacks from Kyushu that day.
+
+## 7. Leyte Gulf (`leyte-gulf`)
+
+**Status:** designed (v0 sketch), 2026-11-24, as a discussion with the developer. **Not going to be built** (developer decision, 2026-11-24): it overlaps too much with **Ten-Go (§6), which already exists** (see "Decision: not built" below). Kept as a record of the design, in case a later idea makes it distinct. It would have needed one new rule, a "sink these units" victory condition. Forces and numbers are first guesses.
+
+### Decision: not built (2026-11-24)
+
+After discussing the pitch, the developer ruled it out: **Ten-Go already plays most of it.**
+
+- **The overlap with Ten-Go:** the core loop is the same. A Japanese battleship fleet with little air cover sails for days at a US beachhead, in fog, while US carrier aircraft hunt it and Japan picks a route to stay hidden. That is all of Ten-Go, and it is what Leyte's Center Force and Southern Force would do. The units and their roles are the same (Japan: Battleships and Destroyers; the US: Carriers, picket Submarines, a few surface ships at the beachhead). And it needs the same missing AI piece: the computer steering ships at a far-off target (§6, "Known gaps").
+- **What would have been new:** the decoy (Ozawa's nearly empty carriers, worth sinking but drawing US strength away from the beachhead); a two-strait pincer that the US must split its fleet to cover; and ship-against-ship fights at Surigao and off Samar instead of only aircraft against a fleet. But the new part would mostly be felt playing the US; playing Japan would feel like Ten-Go with more fleets.
+- **What could make it distinct, if it's ever picked up:** cut the long approach (Center Force starts near San Bernardino Strait and Southern Force at the mouth of Surigao Strait), so there's no multi-day hunt across open sea and it becomes a fleet-on-fleet map about splitting the fleet and blocking two chokepoints; or the "Off Samar" shape below, with a smoke-screen rule.
+
+### The history it follows
+
+On 20 October 1944 the US landed on Leyte. Japan's plan (Shō-1) sent nearly its whole fleet at the transports in Leyte Gulf from three directions. **Center Force** (Admiral Kurita: Yamato, Musashi, Nagato, Kongō, Haruna, cruisers and destroyers) crossed the **Sibuyan Sea** for San Bernardino Strait; on 24 October US carrier aircraft sank Musashi there and Kurita briefly turned back. **Southern Force** (Admiral Nishimura: the old battleships Yamashiro and Fusō, with Shima's cruisers behind) came up **Surigao Strait** that night into Admiral Oldendorf's old battleships, destroyers and PT boats waiting at the strait's exit, and was destroyed. **Northern Force** (Admiral Ozawa: four carriers with barely a hundred aircraft between them, and the hybrid battleships Ise and Hyūga) was bait, sent to draw Admiral Halsey's Third Fleet away; Halsey took all of it north, leaving San Bernardino unguarded. On the morning of 25 October Kurita's battleships came out **off Samar** and found only **Taffy 3**: six escort carriers, three destroyers and four destroyer escorts. The destroyers made torpedo runs against battleships, the escort carriers' aircraft attacked with whatever they had, and Kurita, unsure what he faced, turned back with the transports almost in reach. The same day, **off Cape Engaño**, Halsey's carriers sank all four of Ozawa's. It was the largest naval battle of the war, and the Japanese fleet never fought as a fleet again.
+
+### Shape A: the whole battle (the one pitched)
+
+- **Area:** about **32 × 36 squares of 20 nautical miles**, north up, always in fog. Mindoro and the Sibuyan Sea in the west; Luzon in the north, with Ozawa off Cape Engaño beyond it (distances squeezed, as on Midway); Samar and Leyte in the middle, with San Bernardino Strait between Luzon and Samar; Surigao Strait and the north tip of Mindanao in the south. Leyte Gulf and the transports off Tacloban sit in the middle of the east side.
+- **Japan:** Center Force, 5 Battleships and about 5 Destroyers (the cruisers, as Destroyers: the game has no Cruiser); Southern Force, 2 Battleships and 3 Destroyers; Ozawa, 4 Carriers with 0 or 1 aircraft each, Ise and Hyūga as 2 Battleships, and 2 Destroyers; a few land-based aircraft on Luzon (the strike that sank Princeton).
+- **US:** Third Fleet, about 5 Carriers with two aircraft each, 4 Battleships and Destroyers, east of Luzon and Samar; Oldendorf at Surigao, 3 old Battleships, Destroyers and Torpedo Boats (the PT boats); the three Taffies off Samar and Leyte, 3 Carriers with one aircraft each (the escort carriers) and Destroyers; the transport fleet off Tacloban (Landing Craft and Supply Ships); two Submarines in the west (Darter and Dace, which sank two of Kurita's cruisers on 23 October).
+- **Half income**, as on the other Pacific maps, so the starting fleets do the fighting. No land battle, or a small one on Leyte.
+- **Victory, the idea that made it more than Ten-Go:** each side has a list of enemy ships to sink.
+  - **Japan** wins by sinking, say, 4 of the 6 transports in Leyte Gulf.
+  - **The US** wins by sinking all four of Ozawa's carriers, or by holding out to a set day.
+  - So the US has an instant win waiting at the far north of the map, which is Halsey's temptation, while Japan's battleships need several days to reach the gulf. Two races at opposite ends of the map: the US player decides how much of Third Fleet to send north and what to leave on the straits; the Japan player times two attacks through two straits and keeps the bait alive long enough.
+- **New rule it needs:** a `sinkUnits` victory condition (sink these marked units), with the marked units shown on the map. The engine has no such condition today (it has HQ capture, rout, capture, hold and survive, 04-economy §8). Midway (§3) and Ten-Go (§6) already list it as missing.
+- **Possible smaller rule:** if the enemy can see what's aboard a Carrier, an empty decoy fools no one. The lure works through the victory condition anyway, so hiding enemy cargo in fog would be a nice-to-have, not a need.
+
+### Shape B: Off Samar only
+
+A small map of the morning of 25 October: Taffy 3 flees south from Kurita's battleships, with the transports behind it. A delaying fight, where the weak side trades its destroyers for time, which no built map has. But it needs a smoke-screen rule to be fun, it loses the decoy, and it is narrower than Shape A.
+
+### Skirmish and Campaign (as pitched)
+
+- **Skirmish:** balanced with three numbers: how many transports Japan must sink, the day limit, and how many aircraft Ozawa carries.
+- **Campaign** (the player as the US, 22-campaign): the computer gets more aircraft aboard Ozawa's carriers (so the bait can bite back), Center Force starting past the Sibuyan Sea, and Isao Kuramochi as commander (ships +20% when they start the fight; Submarines and Torpedo Boats +1 move). It would have joined the chain between Market Garden (September 1944) and Bastogne (December 1944).
+- **A map AI would be needed** (22-campaign §6), a "Shō plan": Center and Southern Forces drive on the gulf; Ozawa shows itself, then runs north. The standard AI doesn't sail at far-off targets (§6, "Known gaps"), so without this plan the Campaign version wouldn't be worth building.
