@@ -25,4 +25,12 @@ export const SURVIVAL_MAPS: readonly SurvivalMap[] = [
     historyLine: "Wake fell on 23 December 1941, day 16",
     fallen: "Wake has fallen",
   },
+  {
+    map: "crete",
+    defender: 0,
+    attacker: 1,
+    historyDays: 9,
+    historyLine: "Chania fell on 27 May 1941, day 9",
+    fallen: "Crete has fallen",
+  },
 ];

@@ -1,6 +1,6 @@
 # Topic Doc 24: Crete (Survival)
 
-**Status:** decided (v0), 2026-11-24, at the developer's request: the second Survival map (23-survival), after Wake Island. First drafted the same day as a battle map for the empty 1941 slot; the developer moved it to Survival because the real battle was a German win, a siege the defender lost. The developer answered the five open choices (§8). **Not built.** Needs **no new rule**: the waves are arrivals as on Wake, and the paratroops come in Transport Aircraft that arrive loaded and fly home once empty (23-survival §5a, §5c). It needs a new wave pattern set (§4) and a small change to the computer's plan (§6). Forces and numbers are first guesses.
+**Status:** decided and **built (v0)**, 2026-11-24, at the developer's request: the second Survival map (23-survival), after Wake Island. First drafted the same day as a battle map for the empty 1941 slot; the developer moved it to Survival because the real battle was a German win, a siege the defender lost. The developer answered the five open choices (§8). **No new rule**: the waves are arrivals as on Wake, and the paratroops come in Transport Aircraft that arrive loaded and fly home once empty (23-survival §5a, §5c). Built with a new wave pattern set (§4) and two fixes to how the computer lands troops (§6). Tuned by self-play (§7); balance for a person still to check by play.
 **Last updated:** 2026-11-24
 **Depends on:** 23-survival (the mode and its rules), 01-units (Transport Aircraft, availability rule), 02-terrain (§4a Major Bridge), 05-supply-transport §6 (airborne drops), 09-ai (§4b drops, §4k map plans). **Feeds:** 00-master-design §8 and §19, 23-survival §1 and §11.
 
@@ -18,6 +18,10 @@ Crete was on Survival's list of later maps (23-survival §11). It plays differen
 The 1941 slot in Skirmish and the Campaign stays empty (00-master-design §19).
 
 ## 2. Crete (`crete`)
+
+![Overview](maps/crete.png)
+
+Green properties are the UK's; the dark marks are the starting units (the two off the south coast are Destroyers).
 
 ### The history it follows
 
@@ -44,7 +48,7 @@ Germany lost about 4,000 dead and more than 200 aircraft, about 150 of them Ju 5
 | Centre | **Chania** (**HQ**, Creforce headquarters), **Souda Bay** (Port, and a **Factory**: the base depot, a liberty so the player can build land units), Georgioupolis (City), Sphakia (City, south coast) |
 | East | **Rethymno** (Airfield, and a City for the town), **Heraklion** (Airfield, and a Port for the harbour) |
 
-- 12 properties, all the UK's, at the usual 1,000 a day. Germany starts with none, and earns nothing from those it captures (23-survival §5d).
+- 12 properties, all the UK's, earning **half the usual**: 6,000 a day, about what Wake's 6 earn (a `multiply` 0.5 income modifier for the UK). Creforce was cut off and short of everything, and at the full 12,000 a careful player could outbuild every wave. Germany starts with none, and earns nothing from those it captures (23-survival §5d).
 - **The airfields** give the UK income, as any property does, and build nothing for it (it has no aircraft to build). An airfield Germany captures gives its aircraft somewhere to land, refuel and stay instead of flying home (23-survival §5c, §5d).
 - **If Germany takes Chania**, Crete has fallen.
 
@@ -56,11 +60,11 @@ Germany lost about 4,000 dead and more than 200 aircraft, about 150 of them Ju 5
 - **Prison Valley**, south-west of Galatas: Plains, with the Agia prison as a **Bunker**.
 - **The Tavronitis**, a dry riverbed just west of Maleme, is a River; its iron bridge on the coast road is a **Major Bridge** (02-terrain §4a).
 - **Roads:** the north coast road, Kastelli–Maleme–Chania–Souda–Georgioupolis–Rethymno–Heraklion; Chania to Alikianos through Prison Valley; Vrysses to Sphakia.
-- **Beaches** at Kastelli bay, from Maleme to Platanias (where the caiques were meant to land), at Georgioupolis, east of Heraklion, and at Sphakia.
+- **Beaches** at Kastelli bay, from Maleme to Platanias (where the caiques were meant to land), at Georgioupolis, east of Heraklion, and at Sphakia; and every other open square of the north coast, the coast road included where it runs along the shore. With a handful of beaches, convoys queued offshore for one and ran out of fuel (§7).
 
 ### Starting forces (19 May, the day before the drops)
 
-- **United Kingdom** (5,000 funds), moving first. The New Zealand, Australian and Greek troops are drawn with the UK's art, as the French are at Dunkirk (21-scenarios-dunkirk §1); the briefing names them.
+- **United Kingdom** (no funds), moving first. The New Zealand, Australian and Greek troops are drawn with the UK's art, as the French are at Dunkirk (21-scenarios-dunkirk §1); the briefing names them.
   - **Maleme** (5th New Zealand Brigade): 2 Infantry on Hill 107 and beside it, 1 Infantry on the airfield, a Mobile AA (Bofors), a Medium Tank (two Matildas), an Artillery.
   - **Galatas and Prison Valley** (New Zealand and Greek): 3 Infantry, a Light Tank (3rd Hussars).
   - **Chania and Souda Bay:** 2 Infantry, one on the HQ; a Flak Gun (the 3.7-inch guns at Souda); an Artillery.
@@ -90,17 +94,18 @@ The first ten waves follow history. "Arrives" is the start of Germany's turn on 
 
 | Wave | Arrives | Strikes | Name | Units | From |
 |---|---|---|---|---|---|
-| 1 | Day 1 | Day 2 (20 May) | The morning lift | 5 Transport Aircraft carrying 7 Infantry, an Assault Infantry (the glider pioneers) and a Mortar Team; 3 Bombers and a Fighter | North, west half |
-| 2 | Day 2 | Day 3 | The afternoon lift | 4 Transport Aircraft carrying 7 Infantry and a Mortar Team; 2 Bombers | North, east half |
-| 3 | Day 3 | Day 4 (22 May) | The first mountain troops | 2 Transport Aircraft carrying 3 Infantry and a Mortar Team | North-west |
-| 4 | Day 3 | Day 5 | The Maleme convoy | 2 Landing Craft carrying 2 Infantry, a Light Tank and an Artillery; a Torpedo Boat (the Italian Lupo) | North |
-| 5 | Day 4 | Day 5 | Mountain troops | 2 Transport Aircraft carrying 4 Infantry | North-west |
-| 6 | Day 4 | Day 5 | Hunting the fleet | 4 Bombers and a Fighter | North |
-| 7 | Day 5 | Day 6 | Mountain troops | 2 Transport Aircraft carrying 3 Infantry and a Mortar Team | North-west |
-| 8 | Day 6 | Day 7 (25 May) | Galatas | 3 Transport Aircraft carrying 4 Infantry, an Assault Infantry and a Mortar Team; 4 Bombers and 2 Fighters | North-west; north |
-| 9 | Day 7 | Day 8 | The second drop | 4 Transport Aircraft carrying 6 Infantry and 2 Assault Infantry | North |
-| 10 | Day 9 | Day 10 (28 May) | Sitia | 2 Landing Craft carrying 2 Infantry and 2 Light Tanks (the Italian landing, drawn German); a Torpedo Boat | East |
+| 1 | Day 1 | Day 2 (20 May) | The morning lift | 5 Transport Aircraft carrying 8 Infantry, an Assault Infantry (the glider pioneers) and a Mortar Team; 3 Bombers and a Fighter | North, off Maleme |
+| 2 | Day 2 | Day 3 | The afternoon lift | 4 Transport Aircraft carrying 7 Infantry and a Mortar Team; 2 Bombers | North, off Heraklion |
+| 3 | Day 3 | Day 4 (22 May) | The first mountain troops | 3 Transport Aircraft carrying 5 Infantry and a Mortar Team | North, off Maleme |
+| 4 | Day 3 | Day 5 | The Maleme convoy | 2 Landing Craft carrying 2 Infantry, a Light Tank and an Artillery | North, off Maleme |
+| 5 | Day 4 | Day 5 | Mountain troops | 3 Transport Aircraft carrying 5 Infantry and an Assault Infantry | North, off Maleme |
+| 6 | Day 4 | Day 5 | Hunting the fleet | 4 Bombers and a Fighter | North, off Rethymno |
+| 7 | Day 5 | Day 6 | Mountain troops | 3 Transport Aircraft carrying 5 Infantry and a Mortar Team | North, off Maleme |
+| 8 | Day 6 | Day 7 (25 May) | Galatas | 4 Transport Aircraft carrying 6 Infantry, an Assault Infantry and a Mortar Team; 4 Bombers and 2 Fighters | North, off Maleme |
+| 9 | Day 7 | Day 8 | The second drop | 5 Transport Aircraft carrying 8 Infantry and 2 Assault Infantry | North, off Rethymno |
+| 10 | Day 9 | Day 10 (28 May) | Sitia | 2 Landing Craft carrying 2 Infantry and 2 Light Tanks (the Italian landing, drawn German) | East |
 
+- **No escorts.** The Italian torpedo boats that escorted the caiques are left out: a ship that reaches a port Germany has captured finds a base and stays there for good (23-survival §5c), and an escort parked on Heraklion's port blocked every convoy behind it.
 - **Germany's heavy weapons come only by sea.** A Transport Aircraft carries foot soldiers only (01-units §5), so the Light Tanks and Artillery are in the convoys, which the UK's Destroyers can hunt.
 - **The relief:** on day 8 (26 May), **Layforce** lands at Souda Bay (2 Assault Infantry, the commandos landed from the fast minelayer Abdiel), and the carrier **Formidable** arrives on the south edge with 2 Fighters aboard (Fulmars). They are the UK's only aircraft, and are there only while the Carrier survives.
 - **History's mark:** "Chania fell on 27 May 1941, day 9". Holding the HQ to the start of day 10 is "**Held longer than history**".
@@ -108,18 +113,18 @@ The first ten waves follow history. "Arrives" is the start of Germany's turn on 
 
 ## 4. Endless waves (day 11 onwards)
 
-As on Wake (23-survival §4), from the same generator: a new wave every 2 days (days 11, 13, 15 …), the first worth about as much as wave 10, each later one **12% more**. They use a new pattern set, **`aegean`** (data in `src/engine/data/waves.ts`, beside `pacific`). It's data, not a rule:
+As on Wake (23-survival §4), from the same generator: a new wave every 2 days (days 11, 13, 15 …), the first worth **260,000**, each later one **12% more**. They use a new pattern set, **`aegean`** (data in `src/engine/data/waves.ts`, beside `pacific`). It's data, not a rule:
 
 | Pattern | What it spends the budget on | From |
 |---|---|---|
 | Parachute drop | Transport Aircraft full of Infantry, Assault Infantry and Mortar Teams (`leavesWhenEmpty`), with a Fighter escort | North or west |
 | Raid | Bombers, with Fighters | North, west or east |
-| Convoy | Landing Craft with foot soldiers, Light Tanks and Artillery (`leavesWhenEmpty`), with Torpedo Boats | North or east |
+| Convoy | Landing Craft with foot soldiers, Light Tanks, Artillery and Mobile AA (`leavesWhenEmpty`). No escorts (§3) | North or east |
 | Combined (from wave 15) | A drop with a raid, or a drop with a convoy | Two of the above |
 
 - **Edges:** north, west and east from the start. The south, the fleet's route from Alexandria, opens to Germany from wave 15.
 - **UK convoys:** every fourth endless wave (13, 17, 21 …), a UK convoy arrives on the south edge the same day: a Destroyer and a Landing Craft with 2 Infantry, as the navy ran men and supplies in from Alexandria.
-- **Unit cap:** Germany has at most 60 units on the map, as on Wake. The cap counts passengers, as it already does.
+- **Unit cap:** Germany has at most **90** units on the map (Wake: 60). The cap counts passengers, so paratroops still in the air count twice over with their transports; at 60, loaded transports filled it and the next waves waited off the map (§7).
 
 ## 5. Rules
 
@@ -133,7 +138,10 @@ As on Wake (23-survival §4), from the same generator: a new wave every 2 days (
 ## 6. The computer
 
 - **Germany** plays the survival map plan (23-survival §6): land units drive on Chania, raiders prefer Flak Guns, Mobile AA and aircraft, then ships.
-- **Drops need one addition.** Greedy's drops (09-ai §4b) only drop within one turn's walk of the goal, so every lift would fly to Chania. The scripted waves are meant to land where they did in 1941, so **each scripted wave can name a drop target** (Maleme, Prison Valley, Rethymno, Heraklion), a property its Transport Aircraft head for. A Transport drops beside it, on a square no seen UK anti-aircraft unit can fire on that turn when one is free, and the troops then drive on Chania. Endless waves aim at the UK property nearest the edge they came in on. This is in the computer's plan (`src/ai/maps/survival.ts`), not in the engine.
+- **No drop targets were needed.** The design proposed naming a target for each scripted lift. As built, Greedy's own drops (09-ai §4b) already do it: a paratrooper's goals are the UK properties it could capture, and its transport flies to the nearest. Coming in off Maleme, the morning lift drops round Maleme, Kastelli and Galatas; coming in off Heraklion, the afternoon lift drops there. The troops then drive on Chania with the survival plan.
+- **Two fixes to how the computer lands troops** (09-ai §4b), found in self-play here, and in force on every map:
+  - A Transport Aircraft flies only to a free square with a free square next to it to drop onto, looking further out when every square round its goal is taken. Before, lifts stopped over the sea beside a town the UK held, with nowhere to drop, and stayed there.
+  - A wave's Landing Craft always lands its troops. Before, a loaded craft sat on a beach for good once the nearest UK property was more than about 12 squares' walk away.
 - **The UK** can be played by the standard AI with the defender's plan (23-survival §6), for tuning only.
 
 ## 7. Tuning
@@ -141,6 +149,12 @@ As on Wake (23-survival §4), from the same generator: a new wave every 2 days (
 - **Target:** as on Wake (23-survival §8), the standard AI playing the UK falls within a few days of history (Chania on day 9). A careful human should hold longer.
 - Measured with `npm run selfplay -- --maps crete`.
 - **The levers,** in order: the number of Transport Aircraft in each lift and where they drop; the convoys; the UK's starting funds and units; the first endless wave's budget.
+- **Measurements** (2026-11-24, the standard AI as the UK with the defender plan, 30–40 days):
+  - First build (UK 5,000 funds and full income, mountain lifts of 2 transports, endless budget 120,000, cap 60), seeds 1–4: Chania fell in 1 game, on day 16; the others held to day 30. Transports hovered loaded off the coast and convoys never landed.
+  - With the two landing fixes, bigger mountain lifts, no UK funds and budget 150,000–220,000 (seeds 1–8): Chania fell in 1 to 4 games. Landing Craft queued for the few beaches and filled the unit cap.
+  - With more beaches, cap 90 and budget 260,000 (seeds 1–12): 8 of 12 fell, days 19–29.
+  - **Chosen**, adding the UK's half income (seeds 1–12): **all 12 fell, on days 17–27; 6 by day 20** (days 25, 20, 23, 25, 24, 27, 20, 21, 18, 20, 17, 19), at waves 13–15. Close to Wake's 11 of 18 by day 20.
+- **The computer is a weak guide for the UK here too**, as on Wake: it parks its own units on the Souda depot, so it can't build, and its funds pile up. A person who keeps the depot clear and buys anti-aircraft guns should hold well past history.
 
 ## 8. Decisions (the developer, 2026-11-24)
 
@@ -156,31 +170,28 @@ As on Wake (23-survival §4), from the same generator: a new wave every 2 days (
 
 | # | Engine | Presentation |
 |---|---|---|
-| C1 | The `aegean` pattern set (§4) | — |
-| C2 | The Crete map (`tools/maps/crete.mjs` from real longitude and latitude, its overview picture) and its scripted waves; it joins `SURVIVAL_SCENARIOS` and `src/survival/maps.ts` (history's mark) | The Survival screen lists it, with its terrain sketch and briefing |
-| C3 | — | Drop targets in Germany's survival plan (§6); self-play tuning (§7) |
+| C1 (**built 2026-11-24**) | The `aegean` pattern set (§4) | — |
+| C2 (**built 2026-11-24**) | The Crete map (`tools/maps/crete.mjs` from real longitude and latitude, `docs/maps/crete.png`) and its scripted waves; it joins `SURVIVAL_SCENARIOS` and `src/survival/maps.ts` (history's mark) | The Survival screen lists it, with its terrain sketch and briefing |
+| C3 (**built 2026-11-24**) | — | The two landing fixes (§6); self-play tuning (§7) |
 
 ### Tests to write
 
-Map tests ("Crete (24-survival-crete)"):
-- "The UK loses when Germany captures Chania, and Germany never loses"
-- "Germany starts with no units and builds nothing"
-- "The UK can't build aircraft"
-- "A Transport Aircraft arrives with its paratroops aboard"
-- "An empty Transport Aircraft flies home and isn't counted as a loss"
-- "Paratroops shot down in their Transport Aircraft are lost with it"
-- "The morning lift's Transport Aircraft reach Maleme the turn after they arrive"
-- "Germany's Light Tanks and Artillery arrive only by sea"
-- "Hill 107 is a Hills square next to Maleme airfield"
-- "Only the coast road links the airfields for tanks"
-- "The Tavronitis bridge is a Major Bridge"
-- "Formidable arrives on day 8 with two Fighters, and Layforce lands at Souda Bay"
-- "Germany's waves never enter from the south edge before wave 15"
-- "History's mark is Chania on day 9"
+Map tests (`tests/crete.test.ts`, "Crete (24-survival-crete)"), among them:
+- "the UK holds all twelve properties: Chania, three airfields, two ports, the depot and five towns; Germany none"
+- "the UK earns half the usual income, 6,000 a day, and Germany nothing"
+- "the UK can't build aircraft"
+- "the UK loses when Germany takes Chania or it has no units left, and Germany never loses"
+- "Hill 107 is a Hills square overlooking Maleme airfield, held by New Zealand infantry"
+- "a tank can drive from Kastelli to Heraklion along the north coast"
+- "paratroops arrive already aboard Transport Aircraft, which fly home once they've dropped them"
+- "Germany's tanks and guns come only by sea, since a Transport Aircraft carries foot soldiers"
+- "the ten waves of the invasion arrive on history's days"
+- "Layforce lands at Souda Bay and Formidable arrives with two Fighters on day 8"
+- "the Aegean waves bring no warships: the Royal Navy owned the sea"
 
-AI tests (09-ai):
-- "A scripted drop heads for its named target and drops beside it"
-- "A drop avoids squares a seen anti-aircraft unit can fire on when another is free"
+AI tests (`tests/survivalAi.test.ts`, 09-ai §4b):
+- "a Transport Aircraft over the sea beside a held town flies on to where it can drop its paratroops"
+- "a wave's Landing Craft lands its troops even when the nearest target is days away"
 
 ## 10. Art
 
@@ -195,4 +206,5 @@ AI tests (09-ai):
 - **Cruisers are Destroyers.** No gliders (01-units §7): the glider landings are drops like the rest.
 - **No Greek, New Zealand or Australian nation.** Their troops are drawn British.
 - **The Souda Bay factory is a liberty**, like Wake's Camp 2: Creforce couldn't raise new troops.
+- **No Italian torpedo-boat escorts** with the convoys (§3).
 - **Balance is a first guess**, untested.

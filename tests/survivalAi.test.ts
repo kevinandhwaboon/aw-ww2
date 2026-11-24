@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { survivalAi } from "../src/ai/maps";
 import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
-import { chooseCommand } from "../src/ai/greedy";
+import { chooseCommand, scoreUnitCommands } from "../src/ai/greedy";
 import type { AiPlayer } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
 import { parseAsciiMap } from "../src/engine/map";
@@ -273,5 +273,52 @@ describe("Japan's Carriers close in (23-survival §6)", () => {
     expect(report.state.players[0]?.unitsLost).toMatchObject({ fighter: 1 });
     const carrier = report.state.units.find((u) => u.type === "carrier");
     expect(carrier && steps(carrier.pos, HQ)).toBeLessThanOrEqual(CARRIER_STATION);
+  });
+});
+
+describe("the waves' transports put their troops ashore (09-ai §4b, 24-survival-crete §6)", () => {
+  /**
+   * Germany's turn on a small map with the UK's HQ and units, and Germany's transports, which came in
+   * a wave and so sail or fly home once empty (23-survival §5c).
+   */
+  const coast = (rows: readonly string[], owned: readonly { x: number; y: number }[], units: readonly UnitSetup[]): GameState => {
+    const state = createGame({
+      map: parseAsciiMap(rows),
+      players: [
+        { name: "UK", nation: "uk" },
+        { name: "Germany", nation: "germany", buildable: [] },
+      ],
+      propertyOwners: owned.map((pos) => ({ pos, owner: 0 })),
+      units,
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+    return { ...state, currentPlayer: 1, units: state.units.map((u) => (u.owner === 1 && u.cargo.length > 0 ? { ...u, leavesWhenEmpty: true } : u)) };
+  };
+  const paratroops = { type: "transportAircraft" as const, owner: 1, cargo: [{ type: "infantry" as const }, { type: "infantry" as const }] };
+
+  it("a Transport Aircraft over the sea beside a held town flies on to where it can drop its paratroops (09-ai §4b)", () => {
+    // The town is the UK's, and German paratroops already hold the squares either side of it, so
+    // there's nowhere next to it to drop; the transport goes on to where there is.
+    const state = coast(["SSSSSSSS", "SSSSSSSS", "S..C...Q", "SSSSSSSS"], [{ x: 3, y: 2 }, { x: 7, y: 2 }], [
+      { ...paratroops, pos: { x: 3, y: 1 } },
+      { type: "infantry", owner: 0, pos: { x: 3, y: 2 } },
+      { type: "infantry", owner: 1, pos: { x: 2, y: 2 } },
+      { type: "infantry", owner: 1, pos: { x: 4, y: 2 } },
+    ]);
+    const transport = state.units.find((u) => u.type === "transportAircraft");
+    if (!transport) throw new Error("no transport");
+    const best = [...scoreUnitCommands(state, transport, undefined, survivalPlan("Survival plan"))].sort((a, b) => b.score - a.score)[0];
+    expect(best?.command).toMatchObject({ type: "move", action: { type: "unload" } });
+  });
+
+  it("a wave's Landing Craft lands its troops even when the nearest target is days away (09-ai §4b)", () => {
+    const rows = ["S_.....................Q", "SSSSSSSSSSSSSSSSSSSSSSSS"];
+    const state = coast(rows, [{ x: 23, y: 0 }], [
+      { type: "landingCraft", owner: 1, pos: { x: 1, y: 0 }, cargo: [{ type: "infantry" }, { type: "lightTank" }] },
+      { type: "infantry", owner: 0, pos: { x: 23, y: 0 } },
+    ]);
+    const command = chooseCommand(state, undefined, survivalPlan("Survival plan"));
+    expect(command).toMatchObject({ type: "move", action: { type: "unload" } });
   });
 });

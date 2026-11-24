@@ -146,7 +146,83 @@ const PACIFIC: readonly WavePattern[] = [
   },
 ];
 
-export const WAVE_PATTERNS = { pacific: PACIFIC } as const satisfies Record<string, readonly WavePattern[]>;
+/**
+ * Germany's waves over Crete (24-survival-crete §4): mostly paratroops, arriving already aboard
+ * Transport Aircraft that fly home once they've dropped them; raids; and caique convoys bringing
+ * what aircraft can't carry. No warships: the Royal Navy owned the sea, and an escort that reached a
+ * captured port would stay there for good (23-survival §5c) and block it for the convoys.
+ */
+const AEGEAN: readonly WavePattern[] = [
+  {
+    id: "drop",
+    name: "Parachute drop",
+    weight: 4,
+    parts: [
+      {
+        edges: ["north", "west"],
+        units: [
+          { type: "transportAircraft", share: 0.55, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+          { type: "transportAircraft", share: 0.2, cargo: ["assaultInfantry", "mortar"], leavesWhenEmpty: true },
+          { type: "fighter", share: 0.25, sortieTurns: RAID_SORTIE },
+        ],
+      },
+    ],
+  },
+  {
+    id: "raid",
+    name: "Air raid",
+    weight: 2,
+    parts: [
+      {
+        edges: ["north", "west", "east"],
+        units: [
+          { type: "bomber", share: 0.7, sortieTurns: RAID_SORTIE },
+          { type: "fighter", share: 0.3, sortieTurns: RAID_SORTIE },
+        ],
+      },
+    ],
+  },
+  {
+    id: "convoy",
+    name: "Convoy",
+    weight: 2,
+    parts: [
+      {
+        edges: ["north", "east"],
+        units: [
+          { type: "landingCraft", share: 0.45, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+          { type: "landingCraft", share: 0.3, cargo: ["lightTank", "infantry"], leavesWhenEmpty: true },
+          { type: "landingCraft", share: 0.25, cargo: ["artillery", "mobileAA"], leavesWhenEmpty: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "combined",
+    name: "Combined assault",
+    weight: 3,
+    fromWave: 15,
+    parts: [
+      {
+        edges: ["north", "west"],
+        units: [
+          { type: "transportAircraft", share: 0.3, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+          { type: "transportAircraft", share: 0.1, cargo: ["assaultInfantry", "mortar"], leavesWhenEmpty: true },
+        ],
+      },
+      { edges: ["north", "west", "east", "south"], units: [{ type: "bomber", share: 0.3, sortieTurns: RAID_SORTIE }] },
+      {
+        edges: ["north", "east", "south"],
+        units: [
+          { type: "landingCraft", share: 0.2, cargo: ["lightTank", "infantry"], leavesWhenEmpty: true },
+          { type: "landingCraft", share: 0.1, cargo: ["infantry", "infantry"], leavesWhenEmpty: true },
+        ],
+      },
+    ],
+  },
+];
+
+export const WAVE_PATTERNS = { pacific: PACIFIC, aegean: AEGEAN } as const satisfies Record<string, readonly WavePattern[]>;
 
 export type WavePatternSetId = keyof typeof WAVE_PATTERNS;
 
