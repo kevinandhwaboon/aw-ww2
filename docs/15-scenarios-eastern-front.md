@@ -1,6 +1,6 @@
 # Topic Doc 15: Eastern Front Scenarios
 
-**Status:** three Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union; Stalingrad (§2), the first city fight and the first Soviet boat; and Sevastopol (§3), the first railway and the Railway Gun. Balance untested. **Moscow** (§4), November 1941 to January 1942, is designed, not built (2026-11-24).
+**Status:** three Eastern Front maps built (v0): Kursk (§1), the first theater map after Normandy and the first with the Soviet Union; Stalingrad (§2), the first city fight and the first Soviet boat; and Sevastopol (§3), the first railway and the Railway Gun. Balance untested. **Moscow** (§4), November 1941 to January 1942, is designed but won't be built: not different enough in play (2026-11-24).
 **Last updated:** 2026-11-24 (§4 Moscow)
 **Depends on:** 00-master-design.md §8 and §9, 01-units.md (availability rule; §2b Railway Gun), 02-terrain.md §4 (bunkers and obstacles) and §4c (Railway), 04-economy-production.md §8 (victory conditions), 08-art-pipeline.md §12 (Soviet art and insignia), 12-weather.md (snow), 22-campaign.md (§4–§6), 23-survival.md §5a (arrivals).
 
@@ -328,7 +328,18 @@ Summer, clear every day: June 1942 was hot and dry, and the bombing went on from
 
 ## 4. Moscow (`moscow`)
 
-**Status:** designed (v0 draft), 2026-11-24, at the developer's request, to fill the empty 1941 slot on the map select. **Not built.** Needs **no new rule**: it uses Snow (12-weather §3), Major Bridges (02-terrain §4a), scheduled arrivals (23-survival §5a) and the existing victory conditions (04-economy §8). Four possible new rules are listed as questions at the end (§4 "Questions for the developer"); none is assumed. Forces and numbers are first guesses.
+**Status:** designed (v0 draft), 2026-11-24, at the developer's request, to fill the empty 1941 slot on the map select. **Not going to be built** (developer decision, 2026-11-24): it doesn't play differently enough from the maps already built (see "Decision: not built" below). Kept as a record of the design, in case a later idea makes it distinct. It would have needed **no new rule**: it uses Snow (12-weather §3), Major Bridges (02-terrain §4a), scheduled arrivals (23-survival §5a) and the existing victory conditions (04-economy §8). Forces and numbers are first guesses.
+
+### Decision: not built (2026-11-24)
+
+After reading the design, the developer decided not to build it: **it isn't unique enough in how it plays.**
+
+- **What would have been new:** the battle turning round halfway (Germany attacks, then the Soviet reserves arrive and the Soviet Union attacks); Germany deciding when to stop attacking; the first battle map with scheduled reinforcements; and the defender holding the road hub.
+- **What the built maps already do:** Bastogne has winter snow keeping tanks on the roads, German tanks short of fuel and a road hub to fight over. Stalingrad has a Soviet win by taking a set of towns, winter and Major Bridges. Sevastopol and Dunkirk have a side winning by holding out to a set day.
+- **Risks:** Bastogne had uneven goals like these (take the town against hold to a day) and dropped them on 2026-11-14 as too lopsided; and the computer wouldn't feel the turn, since the standard AI doesn't decide when to stop attacking.
+- **What could make it distinct, if it's ever picked up:** fog of war on by default, so the reserves arrive unseen; a deep-cold rule that weakens the German side from about day 11 (question 1 below); or a German win only for holding forward ground (Klin or Solnechnogorsk) at the deadline.
+
+The 1941 slot stays empty for now.
 
 ### Why this map
 
@@ -596,7 +607,7 @@ None of these is needed for v0; each would be a new rule, so none is assumed. Th
 - **The fleet isn't there**: the Soviet supply runs by cruiser, destroyer and submarine from Novorossiysk, and the coastal batteries' fire at sea, have no part in it.
 - **Fort positions are approximate**, within a square or two.
 
-**Moscow** (designed, not built)
+**Moscow** (designed, not to be built)
 
 - **Balance is a first guess**, untested: the reserves' size and timing, the German starting HP and fuel, and the day-25 deadline all need self-play.
 - **No deep cold**: the weather treats both armies alike (question 1 in §4).

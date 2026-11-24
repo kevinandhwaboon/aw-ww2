@@ -37,8 +37,6 @@ One chain in date order, across every theater (decided 2026-11-20). Winning a mi
 
 Dunkirk (21-scenarios-dunkirk) goes first once it's built. A new map joins the chain at its date.
 
-Moscow (15-scenarios-eastern-front §4, November 1941) goes between the Battle of Britain and Gazala once it's built; its proposed advantage is in that section.
-
 - **Progress** is kept on the device (`localStorage`, `ww2-tactics.campaign`): the missions won, saved the moment a mission is won. It's separate from the autosave, so starting a Skirmish never loses campaign progress, and Continue on a campaign game still counts the win. A mission part-played is kept by the autosave (11-tech-setup §3j), and Continue on the title screen carries it on. The campaign screen says how many missions are won and that progress is saved on this device (since 2026-11-20, at the developer's request).
 - A mission counts as won when the game ends with the Allies among the winners.
 
