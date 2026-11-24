@@ -73,10 +73,32 @@ export abstract class LandingBrain extends BrainBase {
     const goals = this.goalsFor(first);
     if (goals.length === 0) return IDLE;
     if (isAirTransport(unit.type)) {
-      // Fly to a tile beside the goal, to drop the passenger right on it.
-      const beside = new Map<number, Point>();
-      for (const goal of goals) for (const n of this.neighbors(goal)) beside.set(this.index(n), n);
-      return this.advance(unit, [...beside.values()], `drop${unit.id}`);
+      // Fly to a tile beside the goal, to drop the passenger right on it, or beside it when the goal
+      // is held: only free tiles with a free square next to them the passenger could land on. Over
+      // the sea beside a held goal there's nowhere to drop, and the transport would wait there for
+      // good. When every square round the goals is taken, look a little further out, up to a turn's
+      // walk.
+      const free = (p: Point) => {
+        const occupant = unitAt(this.state, p);
+        return !occupant || occupant.id === unit.id;
+      };
+      const canLand = (p: Point) => free(p) && stats.moveCost(this.state, first, terrainAt(this.state.map, p)) !== null;
+      const reach = Math.max(1, this.w.dropWithinTurns * stats.movePoints(this.state, first));
+      for (let radius = 1; radius <= reach; radius++) {
+        const beside = new Map<number, Point>();
+        for (const goal of goals) {
+          for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+              if (Math.abs(dx) + Math.abs(dy) !== radius) continue;
+              const n = { x: goal.x + dx, y: goal.y + dy };
+              if (n.x < 0 || n.y < 0 || n.x >= this.state.map.width || n.y >= this.state.map.height) continue;
+              if (free(n) && this.neighbors(n).some(canLand)) beside.set(this.index(n), n);
+            }
+          }
+        }
+        if (beside.size > 0) return this.advance(unit, [...beside.values()], `drop${unit.id}:${radius}`);
+      }
+      return IDLE;
     }
     // Every beach or port the passenger could walk on from: nearer by sea and nearer its goal is better.
     const land = this.distances(first, goals, `goals${first.id}`);
@@ -496,7 +518,10 @@ export abstract class LandingBrain extends BrainBase {
 
   /**
    * Value of unloading this passenger onto this tile: more the nearer its goal, and nothing where it
-   * couldn't reach one. A Transport Aircraft drops only within a turn's walk of the goal.
+   * couldn't reach one. A Transport Aircraft drops only within a turn's walk of the goal. A wave's
+   * Landing Craft, which only came to put its troops ashore and sails home once empty (23-survival
+   * §5c), always rates unloading above waiting, however far the goal: otherwise, on a big map, it
+   * would sit on the beach for good once the nearest goal was more than a few days' walk away.
    */
   protected unloadScore(transport: Unit, passenger: Unit, to: Point): number {
     const goals = this.goalsFor(passenger);
@@ -504,7 +529,8 @@ export abstract class LandingBrain extends BrainBase {
     const steps = this.distances(passenger, goals, `goals${passenger.id}`)[this.index(to)] ?? Infinity;
     if (!Number.isFinite(steps)) return -Infinity;
     if (isAirTransport(transport.type) && steps > this.w.dropWithinTurns * stats.movePoints(this.state, passenger)) return -Infinity;
-    return this.w.unloadValue - this.w.unloadPerStep * steps;
+    const score = this.w.unloadValue - this.w.unloadPerStep * steps;
+    return transport.leavesWhenEmpty === true && isLandingCraft(transport.type) ? Math.max(this.w.unloadPerStep, score) : score;
   }
 
   protected score(unit: Unit, plan: Plan, command: MoveCommand): number {

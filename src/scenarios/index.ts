@@ -4,6 +4,7 @@
 import { parseScenario, type Scenario } from "../engine/scenario";
 import bastogne from "./bastogne.json";
 import battleOfBritain from "./battle-of-britain.json";
+import crete from "./crete.json";
 import dunkirk from "./dunkirk.json";
 import elAlamein from "./el-alamein.json";
 import gazala from "./gazala.json";
@@ -22,4 +23,4 @@ import wakeIsland from "./wake-island.json";
 export const SCENARIOS: readonly Scenario[] = [normandy, dunkirk, marketGarden, elAlamein, gazala, bastogne, battleOfBritain, stalingrad, sevastopol, kursk, iwoJima, theSlot, midway, guadalcanal, tenGo].map(parseScenario);
 
 /** The survival maps (23-survival §2): played only from the Survival screen, not in Skirmish. */
-export const SURVIVAL_SCENARIOS: readonly Scenario[] = [wakeIsland].map(parseScenario);
+export const SURVIVAL_SCENARIOS: readonly Scenario[] = [wakeIsland, crete].map(parseScenario);

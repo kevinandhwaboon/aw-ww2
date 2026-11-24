@@ -1,7 +1,7 @@
 # Topic Doc 23: Survival
 
 **Status:** v0 decided 2026-11-20, at the developer's request: the developer answered the six open choices (§10). Built 2026-11-20 and 21 in four milestones (§9): the engine rules, the wave generator, the Wake Island map with the Survival screens, and Japan's plan with a first tuning. Balance needs checking by play (§8).
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-24 (Crete built as the second map, 24-survival-crete)
 **Depends on:** 00-master-design.md (§8), 01-units.md, 04-economy-production.md (§8 victory conditions, §8a losses), 05-supply-transport.md, 09-ai.md (§4k map plans), 19-fog-of-war.md, 22-campaign.md (title screen, tuning by self-play). **Feeds:** 04-economy §8 (`rout` limited to one side), 09-ai (the waves' plan), 11-tech-setup (milestones, §9).
 
 ---
@@ -13,7 +13,7 @@ A third way to play, beside Campaign and Skirmish (22-campaign §1): **hold your
 - **One player, always the defender.** The computer brings the waves; the player builds, repairs and resupplies between them.
 - **Built on a real siege.** The first waves follow history day by day. Once history's attacks run out, the waves keep coming, generated and growing (§4).
 - **The same rules as every other game.** Waves are units arriving on the map. They then fight, capture, burn fuel and get resupplied under the normal rules. The new rules are how units arrive, how raiders go home, that the attacker can't be routed, and that the attacker gets nothing from what it captures (§5).
-- **The first map is Wake Island, December 1941** (§2). The mode is written so other sieges can follow (Corregidor, Crete, Sevastopol; §11).
+- **The first map is Wake Island, December 1941** (§2). The second, **Crete, May 1941**, is built (24-survival-crete). The mode is written so other sieges can follow (Corregidor, Sevastopol; §11).
 
 ## 2. Wake Island (`wake-island`)
 
@@ -198,7 +198,7 @@ The developer's choice (§10, Q3), so the waves stay exactly as scripted and can
 ## 7. Screens
 
 - **Title:** Campaign, Skirmish, **Survival**, and Continue when there's a game to carry on.
-- **Survival screen:** the survival maps (Wake Island for now), each with its best wave. Picking one shows the best run and history's mark ("Best: Reached wave 11, held 20 days · History: Wake fell on 23 December 1941, day 16"), the terrain sketch, the briefing, the US commander choice, Luck, Battle scenes and Fog of war (off by default), and Start. X goes back to the title.
+- **Survival screen:** the survival maps (Wake Island and Crete), each with its best wave. Picking one shows the best run and history's mark ("Best: Reached wave 11, held 20 days · History: Wake fell on 23 December 1941, day 16"), the terrain sketch, the briefing, the US commander choice, Luck, Battle scenes and Fog of war (off by default), and Start. X goes back to the title.
 - **In the game:** a wave counter and the next-wave forecast in the HUD ("Wave 4 · Next: day 7, a raid from the south"). When a wave arrives, a banner with its number and name ("Wave 3: The first landing"), then the camera pans to it. Arrived units are drawn and played like any other.
 - **Results:** "Wake has fallen", then "Reached wave 11, held 20 days · New best · Held longer than history: …" (or "History: …"), the table and the losses bill (Japan's losses are the kills). Buttons: **Survival** (back to the Survival screen, where Start plays again) and View Map.
 - **As built (S3):** survival maps are in their own list (`SURVIVAL_SCENARIOS` in `src/scenarios/index.ts`), not on the Skirmish map select; what the screens say about each map's history is data in `src/survival/maps.ts`. The best run per map is kept in `localStorage` under `ww2-tactics.survival` (`src/survival/record.ts`), written when the game ends. The autosave remembers a survival game, so Continue carries it on as one ("Survival: Wake Island · Day 9"). `?map=wake-island` starts it straight away, as a survival game. Japan plays the standard Greedy AI at Normal until its own plan (S4).
@@ -254,6 +254,6 @@ Proposed as milestones, each one playable:
 
 ## 11. Later
 
-- **More survival maps**, each a real siege: **Corregidor** (1942, five months, supplied by submarine), **Crete** (1941, airborne waves landing on the airfields you lose), **Sevastopol** (1941–42, the existing map, supplied by the Black Sea Fleet).
+- **More survival maps**, each a real siege: **Corregidor** (1942, five months, supplied by submarine), **Sevastopol** (1941–42, the existing map, supplied by the Black Sea Fleet).
 - A **Historical** setting: Task Force 14 recalled, as it was.
 - A record of the best runs by commander.
