@@ -13,7 +13,7 @@ A third way to play, beside Campaign and Skirmish (22-campaign §1): **hold your
 - **One player, always the defender.** The computer brings the waves; the player builds, repairs and resupplies between them.
 - **Built on a real siege.** The first waves follow history day by day. Once history's attacks run out, the waves keep coming, generated and growing (§4).
 - **The same rules as every other game.** Waves are units arriving on the map. They then fight, capture, burn fuel and get resupplied under the normal rules. The new rules are how units arrive, how raiders go home, that the attacker can't be routed, and that the attacker gets nothing from what it captures (§5).
-- **The first map is Wake Island, December 1941** (§2). The mode is written so other sieges can follow (Corregidor, Crete, Sevastopol; §11).
+- **The first map is Wake Island, December 1941** (§2). The second, **Crete, May 1941**, is designed, not built (24-survival-crete). The mode is written so other sieges can follow (Corregidor, Sevastopol; §11).
 
 ## 2. Wake Island (`wake-island`)
 
@@ -136,7 +136,7 @@ Everything else is the standard game. These are the new pieces, all in the engin
 - **The wave generator** (§4) adds the endless waves to the same list, a wave at a time, when the day before the wave starts, so the save always holds what is coming next.
 - Arrivals are a general rule, not a Survival one: any scenario can use them for reinforcements, which several maps lack (Kursk's Steppe Front, Stalingrad's Winter Storm: 15-scenarios-eastern-front §1, §2).
 - **Event:** `unitsArrived` (the wave's number and name, and the units), so the screen can show a banner and pan to them.
-- **Zones that need a property** (decided 2026-11-24 for Crete, 24-scenarios-crete §1, not built): an arrival can list several entry zones in order, each with an optional `needs` property. A zone is open only while the arriving player's side owns that property; units go to the first open zone with room, then the next; units with nowhere to go wait for that player's next turn, as for a full zone. A single `zone` with no condition works as before. The event names the property the units landed at.
+- **Zones that need a property** (decided 2026-11-24 for Crete, 24-survival-crete §5, not built): an arrival can list several entry zones in order, each with an optional `needs` property. A zone is open only while the arriving player's side owns that property; units go to the first open zone with room, then the next; units with nowhere to go wait for that player's next turn, as for a full zone. A single `zone` with no condition works as before. The event names the property the units landed at. With it, a wave pattern can be marked `needsHeldProperty`, so the generator offers it only while the attacker holds one of the properties its zones need.
 - **As built** (`src/engine/arrivals.ts`):
   - Arrivals come after the turn-start sequence (04-economy §2), so they don't burn fuel, earn or get repaired that turn. An arrival on the first player's day 1 is on the map from the start.
   - A unit stands only where its movement type can enter (aircraft anywhere, ships on sea), on an empty square. The unit cap counts passengers, as building does.
@@ -255,6 +255,6 @@ Proposed as milestones, each one playable:
 
 ## 11. Later
 
-- **More survival maps**, each a real siege: **Corregidor** (1942, five months, supplied by submarine), **Crete** (1941, airborne waves landing on the airfields you lose; since 2026-11-24 a battle map instead, 24-scenarios-crete, which a Survival version could share), **Sevastopol** (1941–42, the existing map, supplied by the Black Sea Fleet).
+- **More survival maps**, each a real siege: **Corregidor** (1942, five months, supplied by submarine), **Sevastopol** (1941–42, the existing map, supplied by the Black Sea Fleet).
 - A **Historical** setting: Task Force 14 recalled, as it was.
 - A record of the best runs by commander.
