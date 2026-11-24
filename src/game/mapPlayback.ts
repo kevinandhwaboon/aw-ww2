@@ -163,6 +163,14 @@ export class MapPlayback {
         const sprite = this.unitSprites.get(event.unitId);
         if (sprite) await this.tween(sprite, { alpha: 0 }, COMBAT_MS.float);
       }
+      // Home: the unit leaves the map, counted toward the evacuation (21-scenarios-dunkirk §1).
+      if (event.type === "unitEvacuated") {
+        const sprite = this.unitSprites.get(event.unitId);
+        await Promise.all([
+          sprite ? this.tween(sprite, { alpha: 0 }, COMBAT_MS.float) : Promise.resolve(),
+          this.floatLabel(event.pos, "EVACUATED", packColor(event.counted ? "labelGold" : "labelText")),
+        ]);
+      }
       if (event.type === "unitJoined") {
         const target = this.state.units.find((u) => u.id === event.targetId);
         if (target) await this.floatLabel(target.pos, "JOINED", packColor("labelText"));
@@ -210,6 +218,7 @@ export class MapPlayback {
       case "unitStranded":
       case "unitAdrift":
       case "unitLeft":
+      case "unitEvacuated":
       case "unitHomeward":
       case "unitLaunched":
       case "unitAmbushed":

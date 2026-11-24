@@ -102,6 +102,12 @@ export function stateProblems(state: GameState): string[] {
 
   check(Number.isInteger(state.day) && state.day >= 1, `it is day ${state.day}`);
   check(state.holdStreaks.length === state.victoryConditions.length, "the hold streaks don't match the victory conditions");
+  check(state.evacuated.length === state.victoryConditions.length, "the evacuation counts don't match the victory conditions");
+  for (const [i, n] of state.evacuated.entries()) {
+    const condition = state.victoryConditions[i];
+    check(Number.isInteger(n) && n >= 0, `evacuation count ${i} is ${n}`);
+    check(condition?.type === "evacuateUnits" || n === 0, `victory condition ${i} isn't an evacuation but has ${n} evacuated`);
+  }
   const current = state.players[state.currentPlayer];
   check(current !== undefined, `it is unknown player ${state.currentPlayer}'s turn`);
   if (state.result) {

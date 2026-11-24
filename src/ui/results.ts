@@ -13,6 +13,7 @@ const DEFEAT_TEXT: Record<DefeatReason, string> = {
   captureProperties: "Every objective was captured",
   holdProperties: "The objectives were held long enough",
   surviveDays: "They held out to the last day",
+  evacuateUnits: "Enough units were evacuated",
 };
 
 /** The end-of-game screen: who won, why, and how each player finished. */

@@ -31,6 +31,14 @@ export interface CampaignMission {
 /** Every mission, in the order they unlock: the order they were fought (22-campaign §2). The dates are the map select's (ui/theaters.ts). */
 export const MISSIONS: readonly CampaignMission[] = [
   {
+    map: "dunkirk",
+    // Falk, the panzer commander: Army Group A's armour on the Aa (21-scenarios-dunkirk §1).
+    commanders: { 1: "falk" },
+    // A first guess, untuned: more money for the Luftwaffe and the panzers. Extra units wait until the
+    // map's layout is settled (21-scenarios-dunkirk §2).
+    advantage: { funds: { 1: 5000 }, incomePercent: 25 },
+  },
+  {
     map: "battle-of-britain",
     commanders: { 1: "arakawa" },
     advantage: {

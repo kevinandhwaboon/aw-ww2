@@ -122,7 +122,7 @@ Built in milestone 12. Details settled while building it:
 
 A file is refused if an objective isn't a property, the side has no players, or `surviveDays` is earlier than day 2.
 
-### `evacuateUnits` (decided 2026-11-20, not built)
+### `evacuateUnits` (decided 2026-11-20, built 2026-11-24)
 
 Decided at the developer's request for Dunkirk (21-scenarios-dunkirk §1, which has the full rules and tests). The original game has nothing like it.
 
@@ -133,7 +133,9 @@ Decided at the developer's request for Dunkirk (21-scenarios-dunkirk §1, which 
 - A unit of the side that ends up on a zone square, by any means, is **removed and counted**. It isn't a loss (§8a).
 - `unitTypes` (optional) limits which types count; others are still removed but not counted. Left out, every land unit counts.
 - Any HP counts as one unit. A unit built on a zone square doesn't count. Allies add to the same count.
-- The count is kept per side in `GameState`. A file is refused if `count` is under 1, the zone is empty, or a listed unit type doesn't exist.
+- The count is kept in `GameState` for each evacuateUnits condition (by its place in the list, like hold streaks), so allies add to one count. A file is refused if `count` is under 1, the zone is empty, or a listed unit type doesn't exist.
+- **Only a move or an unload onto the zone evacuates** (as built): a unit built there, or one that started there, hasn't left. A unit that ends a move on a zone square leaves even if it was ordered to capture there.
+- **On screen:** the zone is shaded in the objective gold with a line round its edge; the HUD and results list "Allies: evacuate 10 foot units to the shaded area (n/10)"; each unit floats "EVACUATED" and fades as it leaves (in gold when it counts).
 
 ### `rout` limited to one side (decided and built 2026-11-20)
 

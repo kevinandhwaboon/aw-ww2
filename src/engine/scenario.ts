@@ -115,6 +115,18 @@ function parseVictory(raw: unknown, index: number): VictoryCondition {
       return { type: raw.type, side: side(raw, where), properties: properties(), days: count(raw, "days", where) };
     case "surviveDays":
       return { type: raw.type, side: side(raw, where), days: count(raw, "days", where) };
+    case "evacuateUnits": {
+      const types = raw.unitTypes === undefined ? undefined : list(raw, "unitTypes", where);
+      const bad = types?.find((t) => !isUnitType(t));
+      if (bad !== undefined) return fail(`${where}: unknown unit type ${JSON.stringify(bad)}`);
+      return {
+        type: raw.type,
+        side: side(raw, where),
+        count: count(raw, "count", where),
+        zone: list(raw, "zone", where).map((p) => point(p, where)),
+        ...(types ? { unitTypes: types as UnitTypeId[] } : {}),
+      };
+    }
     default:
       return fail(`${where}: unknown victory condition ${String(raw.type)}`);
   }

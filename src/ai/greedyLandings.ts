@@ -91,10 +91,39 @@ export abstract class LandingBrain extends BrainBase {
       landings.push(tile);
       offsets.push(walk * perStep);
     }
-    // Massed landings: still at the boarding tile, it waits for the rest of the wave (09-ai §4c).
+    // Massed landings: still at the boarding tile, it waits for the rest of the wave (09-ai §4c). An
+    // evacuation sails as soon as it's loaded: there's no landing to mass for.
     const atHome = this.canBoardAt(unit.type, unit.pos) && !landings.some((l) => samePoint(l, unit.pos));
-    if (atHome && this.waitsForWave(unit)) return HOLD;
+    if (atHome && !this.evacuates(first.type) && this.waitsForWave(unit)) return HOLD;
     return this.advance(unit, landings, `landing${unit.id}`, offsets);
+  }
+
+  /**
+   * Where our side's evacuations take units, and which unit types count (09-ai §4l, 21-scenarios-dunkirk
+   * §1). `types` is null when every land unit counts; the zone is empty when our side has none.
+   */
+  protected evacuation(): { readonly zone: readonly Point[]; readonly types: ReadonlySet<UnitTypeId> | null } {
+    if (this.evacuationCache) return this.evacuationCache;
+    const side = this.state.players[this.me]?.side;
+    const zone = new Map<number, Point>();
+    let types: Set<UnitTypeId> | null = new Set();
+    for (const c of this.state.victoryConditions) {
+      if (c.type !== "evacuateUnits" || c.side !== side) continue;
+      for (const p of c.zone) zone.set(this.index(p), p);
+      if (c.unitTypes === undefined) types = null;
+      else for (const t of c.unitTypes) types?.add(t);
+    }
+    this.evacuationCache = { zone: [...zone.values()], types };
+    return this.evacuationCache;
+  }
+
+  /**
+   * Whether a unit of this type counts toward one of our side's evacuations, so it heads for a boat.
+   * Types that don't count get no pull to the beach: they're the rearguard.
+   */
+  protected evacuates(type: UnitTypeId): boolean {
+    const { zone, types } = this.evacuation();
+    return zone.length > 0 && defOf(type).category === "land" && (types === null || types.has(type));
   }
 
   /** Whether this transport is still taking passengers on: it has room and stranded units are coming. */
@@ -174,6 +203,8 @@ export abstract class LandingBrain extends BrainBase {
   protected isStranded(unit: Unit): boolean {
     const def = defOf(unit.type);
     if (def.category !== "land" || def.transport || this.garrison().has(unit.id)) return false;
+    // A unit our side is taking home is stranded anywhere it can't walk home from (09-ai §4l).
+    if (this.evacuates(unit.type)) return !this.evacuation().zone.some((z) => this.connected(unit.type, unit.pos, z));
     const label = this.label(unit.type, unit.pos);
     const goals = this.goalLabels(unit.type);
     return label >= 0 && goals.size > 0 && !goals.has(label);
@@ -449,6 +480,7 @@ export abstract class LandingBrain extends BrainBase {
    * enemies and their properties.
    */
   protected goalsFor(passenger: Unit): Point[] {
+    if (this.evacuates(passenger.type)) return [...this.evacuation().zone];
     if (this.w.landOnObjectives) {
       const shore = this.shoreLabels(passenger.type);
       const objectives = this.objectivesToTake().filter((p) => shore.has(this.label(passenger.type, p)));
