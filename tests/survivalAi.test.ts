@@ -163,6 +163,56 @@ describe("an aircraft parked on the HQ (23-survival §6)", () => {
   });
 });
 
+describe("a unit on an HQ inland, out of a ship's reach (23-survival §6)", () => {
+  /** The US HQ in the middle of an island, two squares in from the sea all round; open sea to the east. */
+  const ISLAND = ["SSSSSSSSSSSSSSSSSSSSSSSS", "SS......SSSSSSSSSSSSSSSS", "SS..Q...SSSSSSSSSSSSSSSS", "SS......SSSSSSSSSSSSSSSS", "SSSSSSSSSSSSSSSSSSSSSSSS"];
+  const HQ = { x: 4, y: 2 };
+  const islandGame = (units: readonly UnitSetup[]): GameState =>
+    createGame({
+      map: parseAsciiMap(ISLAND),
+      players: [
+        { name: "US", nation: "us" },
+        { name: "Japan", nation: "japan", buildable: [] },
+      ],
+      propertyOwners: [{ pos: HQ, owner: 0 }],
+      units,
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+  const onHq: UnitSetup = { type: "infantry", owner: 0, pos: HQ };
+  const japanese = (state: GameState, type: string) => {
+    const unit = state.units.find((u) => u.owner === 1 && u.type === type);
+    if (!unit) throw new Error(`no ${type}`);
+    return unit;
+  };
+
+  it("a Battleship is sent to the sea where a unit on the HQ is in range of its guns, not to the HQ itself (23-survival §6)", () => {
+    const state = { ...islandGame([onHq, { type: "battleship", owner: 1, pos: { x: 23, y: 2 } }]), currentPlayer: 1 };
+    const goals = survivalPlan("test").goals?.(state, japanese(state, "battleship")) ?? [];
+    expect(goals.length).toBeGreaterThan(0);
+    expect(goals).toContainEqual({ x: 8, y: 2 });
+    for (const p of goals) {
+      expect(ISLAND[p.y]?.[p.x]).toBe("S");
+      expect(Math.abs(p.x - HQ.x) + Math.abs(p.y - HQ.y)).toBeGreaterThanOrEqual(2);
+      expect(Math.abs(p.x - HQ.x) + Math.abs(p.y - HQ.y)).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("a Destroyer that can't get next to a unit on the HQ is left to the usual AI (23-survival §6)", () => {
+    const state = { ...islandGame([onHq, { type: "destroyer", owner: 1, pos: { x: 23, y: 2 } }]), currentPlayer: 1 };
+    expect(survivalPlan("test").goals?.(state, japanese(state, "destroyer"))).toBeNull();
+  });
+
+  it("Japan's Battleship sails in from far out and shells a unit on the HQ (23-survival §6)", async () => {
+    const idle: AiPlayer = { name: "idle", chooseCommand: () => ({ type: "endTurn" }) };
+    const start = islandGame([onHq, { type: "battleship", owner: 1, pos: { x: 23, y: 2 } }]);
+    const battleship = japanese(start, "battleship");
+    const report = await selfPlay(start, [idle, survivalAi()], 4);
+    expect(report.problems).toEqual([]);
+    expect(report.commands.some((c) => c.type === "move" && c.unitId === battleship.id && c.action.type === "attack")).toBe(true);
+  });
+});
+
 describe("units heading home (23-survival §5c)", () => {
   it("the computer flies a raider heading home to the map's edge, and it leaves (23-survival §5c)", async () => {
     const rows = ["...............", "...............", "...............", "...............", "...............", "...............", "..............."];

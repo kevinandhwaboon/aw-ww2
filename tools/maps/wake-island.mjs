@@ -203,8 +203,11 @@ const waves = {
   firstWave: 10,
   firstDay: 17,
   everyDays: 2,
-  budget: 180000,
-  growth: 0.12,
+  // Each wave a fixed 20,000 more than the one before, so the waves grow steadily rather than faster
+  // and faster (23-survival §4). Wave 10 matches the second landing without its Landing Craft.
+  budget: 200000,
+  growth: 0,
+  step: 20000,
   edges: Object.values(EDGES),
   unitCap: 60,
   convoy: { player: US, fromWave: 13, every: 4, edge: "east", units: [{ type: "supplyShip" }, usCraft("infantry", "infantry")] },

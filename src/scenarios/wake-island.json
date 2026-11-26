@@ -1063,8 +1063,9 @@
     "firstWave": 10,
     "firstDay": 17,
     "everyDays": 2,
-    "budget": 180000,
-    "growth": 0.12,
+    "budget": 200000,
+    "growth": 0,
+    "step": 20000,
     "edges": [
       {
         "name": "south",

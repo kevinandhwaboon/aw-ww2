@@ -8,6 +8,7 @@ import type { GameState } from "../src/engine/state";
 import * as stats from "../src/engine/stats";
 import { SCENARIOS, SURVIVAL_SCENARIOS } from "../src/scenarios";
 import { SURVIVAL_MAPS } from "../src/survival/maps";
+import { waveBudget } from "../src/engine/waves";
 
 const P = (x: number, y: number): Point => ({ x, y });
 const endTurn: Command = { type: "endTurn" };
@@ -179,8 +180,13 @@ describe("Wake Island (23-survival §2)", () => {
     expect(types).toEqual(["carrier", "destroyer", "landingCraft", "supplyShip"]);
   });
 
+  it("the endless waves grow steadily: 200,000 at wave 10, then 20,000 more each wave (23-survival §4)", () => {
+    if (!waveGenerator) throw new Error("no waves");
+    expect([10, 11, 12, 15, 20, 30].map((wave) => waveBudget(waveGenerator, wave))).toEqual([200000, 220000, 240000, 300000, 400000, 600000]);
+  });
+
   it("the endless waves begin with wave 10 on day 17, known once the second landing arrives (23-survival §4)", () => {
-    expect(waveGenerator).toMatchObject({ player: JAPAN, firstWave: 10, firstDay: 17, everyDays: 2, growth: 0.12, unitCap: 60 });
+    expect(waveGenerator).toMatchObject({ player: JAPAN, firstWave: 10, firstDay: 17, everyDays: 2, unitCap: 60 });
     const beforeWave9 = play(start(), 14).state;
     expect(beforeWave9.arrivals.some((a) => a.wave === 10)).toBe(false);
     const { state } = play(start(), 15);

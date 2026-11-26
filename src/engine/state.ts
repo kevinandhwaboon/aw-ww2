@@ -247,6 +247,8 @@ export interface WaveGenerator {
   readonly budget: number;
   /** 0.12 = each wave 12% bigger than the one before. */
   readonly growth: number;
+  /** Funds added to each wave's budget over the one before, on top of `growth` (23-survival §4). Default 0. */
+  readonly step?: number;
   readonly edges: readonly WaveEdge[];
   /** Most units the waves' player may have; units over it wait. */
   readonly unitCap?: number;

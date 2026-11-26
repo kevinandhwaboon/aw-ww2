@@ -201,7 +201,7 @@ function parseWaves(raw: unknown): WaveGenerator {
     budget: number(raw, "budget", where),
     growth: number(raw, "growth", where),
     edges: list(raw, "edges", where).map(parseEdge),
-    ...optionalCounts(raw, ["unitCap"], where),
+    ...optionalCounts(raw, ["unitCap", "step"], where),
     ...(raw.convoy === undefined ? {} : { convoy: parseConvoy(raw.convoy) }),
   };
 }
