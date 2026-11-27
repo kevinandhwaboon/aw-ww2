@@ -635,6 +635,19 @@ describe("Greedy v3: coordination, fuel and difficulty (09-ai §4c)", () => {
     expect(unescorted && destination(state, unescorted)?.y).toBe(0);
   });
 
+  it("escorts: a Battleship isn't one, since it can't fire after moving; it goes for its own targets (09-ai §4c)", () => {
+    const state = makeGame(["S".repeat(30), "S".repeat(30), "_".repeat(29) + "Q"], [
+      { type: "landingCraft", owner: 0, pos: P(3, 0), cargo: [{ type: "infantry" }] },
+      { type: "battleship", owner: 0, pos: P(3, 1) },
+      { type: "torpedoBoat", owner: 1, pos: P(29, 0) },
+    ], { propertyOwners: [{ pos: P(29, 2), owner: 1 }] });
+    const battleship = find(state, "battleship", 0);
+    const best = scoreUnitCommands(state, battleship)[0]?.command;
+    const unescorted = scoreUnitCommands(state, battleship, { ...GREEDY_WEIGHTS, escortsPerCraft: 0 })[0]?.command;
+    expect(best && destination(state, best)).toEqual(unescorted && destination(state, unescorted));
+    expect(best && destination(state, best)?.x).toBeGreaterThan(3);
+  });
+
   it("a garrison of two stays on the HQ's island when the enemy could invade, and nobody stays when it can't", async () => {
     const map = ["Q..._SSSSS_..Q", "...._SSSSS_...", "...._SSSSS_..."];
     const troops = [P(1, 0), P(1, 1), P(3, 0), P(3, 1)].map((pos) => ({ type: "infantry" as const, owner: 0, pos }));

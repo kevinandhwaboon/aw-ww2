@@ -3,7 +3,9 @@
 
 import { describe, expect, it } from "vitest";
 import { survivalAi } from "../src/ai/maps";
-import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
+import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, makeWaySquares, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
+import { apply } from "../src/engine/apply";
+import type { Command } from "../src/engine/commands";
 import { chooseCommand, scoreUnitCommands } from "../src/ai/greedy";
 import type { AiPlayer } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
@@ -152,6 +154,40 @@ describe("an aircraft parked on the HQ (23-survival §6)", () => {
     expect(report.state.result).toMatchObject({ winningSide: "axis", reason: "hqCapture" });
   });
 
+  it("units that can't hit an aircraft parked on the HQ keep the squares next to it free, while another unit can hit it (23-survival §6)", () => {
+    const ring = [{ x: 13, y: 1 }, { x: 15, y: 1 }, { x: 14, y: 2 }];
+    const infantry = ring.map((pos) => ({ type: "infantry" as const, owner: 1, pos }));
+    const withAA = islandGame([parked, ...infantry, { type: "mobileAA", owner: 1, pos: { x: 9, y: 2 } }]);
+    const alone = islandGame([parked, ...infantry]);
+    const first = (state: GameState, type: string) => {
+      const unit = state.units.find((u) => u.owner === 1 && u.type === type);
+      if (!unit) throw new Error(`no ${type}`);
+      return unit;
+    };
+    expect(makeWaySquares(withAA, first(withAA, "infantry"))).toEqual(expect.arrayContaining([...ring, { x: 14, y: 0 }]));
+    expect(survivalPlan("test").keepOff?.(withAA, first(withAA, "infantry"))).toEqual(expect.arrayContaining(ring));
+    // The Mobile AA itself goes in; with nothing that can hit the aircraft, the infantry stays where it is.
+    expect(makeWaySquares(withAA, first(withAA, "mobileAA"))).toEqual([]);
+    expect(makeWaySquares(alone, first(alone, "infantry"))).toEqual([]);
+  });
+
+  it("Japan's infantry crowding round the HQ step aside so its Mobile AA can shoot down the aircraft parked there (23-survival §6)", () => {
+    const ring = [{ x: 13, y: 1 }, { x: 15, y: 1 }, { x: 14, y: 2 }];
+    let state = islandGame([parked, ...ring.map((pos) => ({ type: "infantry" as const, owner: 1, pos })), { type: "mobileAA", owner: 1, pos: { x: 10, y: 2 } }]);
+    const aa = state.units.find((u) => u.type === "mobileAA");
+    const fighter = state.units.find((u) => u.type === "fighter");
+    if (!aa || !fighter) throw new Error("missing units");
+    const commands: Command[] = [];
+    while (state.currentPlayer === 1 && !state.result && commands.length < 40) {
+      const command = chooseCommand(state, undefined, survivalPlan("test"));
+      const result = apply(state, command);
+      if (!result.ok) throw new Error(result.message);
+      commands.push(command);
+      state = result.state;
+    }
+    expect(commands.some((c) => c.type === "move" && c.unitId === aa.id && c.action.type === "attack" && c.action.target === fighter.id)).toBe(true);
+  });
+
   it("Japan shoots down an aircraft parked on the HQ with Mobile AA brought ashore (23-survival §6)", async () => {
     const parkedPlayer: AiPlayer = { name: "parked", chooseCommand: () => ({ type: "endTurn" }) };
     const start = { ...islandGame([parked, { type: "mobileAA", owner: 1, pos: { x: 9, y: 2 } }, { type: "infantry", owner: 1, pos: { x: 9, y: 1 } }]), currentPlayer: 0 };
@@ -160,6 +196,56 @@ describe("an aircraft parked on the HQ (23-survival §6)", () => {
     // The parked fighter is shot down; it was the US's last unit, so the US is out.
     expect(report.state.players[0]?.unitsLost).toMatchObject({ fighter: 1 });
     expect(report.state.result?.winningSide).toBe("axis");
+  });
+});
+
+describe("a unit on an HQ inland, out of a ship's reach (23-survival §6)", () => {
+  /** The US HQ in the middle of an island, two squares in from the sea all round; open sea to the east. */
+  const ISLAND = ["SSSSSSSSSSSSSSSSSSSSSSSS", "SS......SSSSSSSSSSSSSSSS", "SS..Q...SSSSSSSSSSSSSSSS", "SS......SSSSSSSSSSSSSSSS", "SSSSSSSSSSSSSSSSSSSSSSSS"];
+  const HQ = { x: 4, y: 2 };
+  const islandGame = (units: readonly UnitSetup[]): GameState =>
+    createGame({
+      map: parseAsciiMap(ISLAND),
+      players: [
+        { name: "US", nation: "us" },
+        { name: "Japan", nation: "japan", buildable: [] },
+      ],
+      propertyOwners: [{ pos: HQ, owner: 0 }],
+      units,
+      victory: [{ type: "hqCapture" }, { type: "rout", side: "allies" }],
+      seed: 1,
+    });
+  const onHq: UnitSetup = { type: "infantry", owner: 0, pos: HQ };
+  const japanese = (state: GameState, type: string) => {
+    const unit = state.units.find((u) => u.owner === 1 && u.type === type);
+    if (!unit) throw new Error(`no ${type}`);
+    return unit;
+  };
+
+  it("a Battleship is sent to the sea where a unit on the HQ is in range of its guns, not to the HQ itself (23-survival §6)", () => {
+    const state = { ...islandGame([onHq, { type: "battleship", owner: 1, pos: { x: 23, y: 2 } }]), currentPlayer: 1 };
+    const goals = survivalPlan("test").goals?.(state, japanese(state, "battleship")) ?? [];
+    expect(goals.length).toBeGreaterThan(0);
+    expect(goals).toContainEqual({ x: 8, y: 2 });
+    for (const p of goals) {
+      expect(ISLAND[p.y]?.[p.x]).toBe("S");
+      expect(Math.abs(p.x - HQ.x) + Math.abs(p.y - HQ.y)).toBeGreaterThanOrEqual(2);
+      expect(Math.abs(p.x - HQ.x) + Math.abs(p.y - HQ.y)).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("a Destroyer that can't get next to a unit on the HQ is left to the usual AI (23-survival §6)", () => {
+    const state = { ...islandGame([onHq, { type: "destroyer", owner: 1, pos: { x: 23, y: 2 } }]), currentPlayer: 1 };
+    expect(survivalPlan("test").goals?.(state, japanese(state, "destroyer"))).toBeNull();
+  });
+
+  it("Japan's Battleship sails in from far out and shells a unit on the HQ (23-survival §6)", async () => {
+    const idle: AiPlayer = { name: "idle", chooseCommand: () => ({ type: "endTurn" }) };
+    const start = islandGame([onHq, { type: "battleship", owner: 1, pos: { x: 23, y: 2 } }]);
+    const battleship = japanese(start, "battleship");
+    const report = await selfPlay(start, [idle, survivalAi()], 4);
+    expect(report.problems).toEqual([]);
+    expect(report.commands.some((c) => c.type === "move" && c.unitId === battleship.id && c.action.type === "attack")).toBe(true);
   });
 });
 

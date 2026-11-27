@@ -175,14 +175,18 @@ export abstract class LandingBrain extends BrainBase {
 
   /**
    * Escorts (09-ai §4c): for each loaded Landing Craft on its way, the nearest warships not heading
-   * home. Each sails for the craft's landing unless it has something to shoot nearer by.
+   * home. Each sails for the craft's landing unless it has something to shoot nearer by. Battleships
+   * aren't escorts: they can't fire after moving, nor at anything next to them, so they go for their
+   * own targets instead.
    */
   protected escorts(): ReadonlyMap<number, Unit> {
     if (this.escortCache) return this.escortCache;
     const assigned = new Map<number, Unit>();
     if (this.w.escortsPerCraft > 0) {
       const craft = this.state.units.filter((u) => u.owner === this.me && isLandingCraft(u.type) && u.cargo.length > 0 && !this.canBoardAt(u.type, u.pos));
-      const warships = this.state.units.filter((u) => u.owner === this.me && defOf(u.type).category === "naval" && defOf(u.type).range !== null);
+      const warships = this.state.units.filter(
+        (u) => u.owner === this.me && defOf(u.type).category === "naval" && defOf(u.type).range !== null && defOf(u.type).canMoveAndFire && u.homeward !== true,
+      );
       for (const c of craft) {
         const nearest = warships
           .filter((w) => !assigned.has(w.id) && this.connected(w.type, w.pos, c.pos))

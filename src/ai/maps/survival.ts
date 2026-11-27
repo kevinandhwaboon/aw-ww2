@@ -68,6 +68,69 @@ export function carrierStation(state: GameState, carrier: Unit): Point[] {
   return out;
 }
 
+/** Every square the unit could get to over the terrain from where it is, ignoring other units. */
+function reachableSquares(state: GameState, unit: Unit): Uint8Array {
+  const { width, height } = state.map;
+  const seen = new Uint8Array(width * height);
+  const stack: Point[] = [unit.pos];
+  seen[unit.pos.y * width + unit.pos.x] = 1;
+  for (let p = stack.pop(); p; p = stack.pop()) {
+    for (const q of [{ x: p.x + 1, y: p.y }, { x: p.x - 1, y: p.y }, { x: p.x, y: p.y + 1 }, { x: p.x, y: p.y - 1 }]) {
+      if (q.x < 0 || q.y < 0 || q.x >= width || q.y >= height || seen[q.y * width + q.x]) continue;
+      if (stats.moveCost(state, unit, terrainAt(state.map, q)) === null) continue;
+      seen[q.y * width + q.x] = 1;
+      stack.push(q);
+    }
+  }
+  return seen;
+}
+
+/**
+ * Where this unit heads to hit a unit on the HQ (23-survival §6). A direct-fire unit goes for the
+ * target itself, if it can get next to it. An indirect-fire unit (a Battleship, an Artillery) goes
+ * for the squares it can reach with the target in range, since it fires from a distance and not
+ * after moving. None, if it can't get to any of them: a ship facing an HQ inland of the beach.
+ */
+export function firingSquares(state: GameState, unit: Unit, target: Unit): Point[] {
+  const range = stats.attackRange(state, unit);
+  const indirect = !UNITS[unit.type].canMoveAndFire || (range !== null && range.min > 1);
+  const min = indirect && range ? range.min : 1;
+  const max = indirect && range ? range.max : 1;
+  const reach = reachableSquares(state, unit);
+  const squares: Point[] = [];
+  for (let dy = -max; dy <= max; dy++) {
+    for (let dx = -max; dx <= max; dx++) {
+      const p = { x: target.pos.x + dx, y: target.pos.y + dy };
+      const d = Math.abs(dx) + Math.abs(dy);
+      if (d < min || d > max || p.x < 0 || p.y < 0 || p.x >= state.map.width || p.y >= state.map.height) continue;
+      if (reach[p.y * state.map.width + p.x]) squares.push(p);
+    }
+  }
+  if (indirect) return squares;
+  return squares.length > 0 ? [target.pos] : [];
+}
+
+/**
+ * The squares next to a unit on the HQ that this unit should leave free (23-survival §6): it can't
+ * hit what's on the HQ, and another of our units can, on the map or aboard a Carrier or a Landing
+ * Craft. Without this our own infantry, waiting round the HQ to capture it, fill every square from
+ * which a Mobile AA or a Fighter could shoot down an aircraft parked there.
+ */
+export function makeWaySquares(state: GameState, unit: Unit): Point[] {
+  const blockers = hqBlockers(state).filter((b) => !canHit(unit, b));
+  if (blockers.length === 0) return [];
+  const ours = state.units.filter((u) => u.owner === unit.owner).flatMap((u) => [u, ...u.cargo]);
+  const squares: Point[] = [];
+  for (const blocker of blockers) {
+    if (!ours.some((u) => canHit(u, blocker))) continue;
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const p = { x: blocker.pos.x + dx, y: blocker.pos.y + dy };
+      if (p.x >= 0 && p.y >= 0 && p.x < state.map.width && p.y < state.map.height) squares.push(p);
+    }
+  }
+  return squares;
+}
+
 export function survivalPlan(name: string): MapPlan {
   /** Whether a movement type can walk from a square to an HQ: terrain only changes with bridges. */
   const cache = new Map<string, boolean>();
@@ -80,9 +143,11 @@ export function survivalPlan(name: string): MapPlan {
         const station = carrierStation(state, unit);
         return station.length > 0 ? station : null;
       }
-      // Something parked on the HQ that this unit can hit: go for it, whatever kind of unit it is.
+      // Something parked on the HQ that this unit can hit: go for it, whatever kind of unit it is, to
+      // where it can fire from. A ship that can't get within range of the HQ is left to the usual AI.
       const blocking = hqBlockers(state).filter((b) => canHit(unit, b) && b.owner !== unit.owner);
-      if (blocking.length > 0) return blocking.map((b) => b.pos);
+      const firing = blocking.flatMap((b) => firingSquares(state, unit, b));
+      if (firing.length > 0) return firing;
       const def = UNITS[unit.type];
       if (def.category !== "land" || def.transport) return null;
       if (!def.canCapture && def.primaryWeapon === null) return null;
@@ -99,7 +164,8 @@ export function survivalPlan(name: string): MapPlan {
     },
 
     keepOff(state, unit) {
-      return UNITS[unit.type].canCapture ? [] : enemyHqs(state).filter((p) => propertyAt(state, p) !== undefined);
+      const hqs = UNITS[unit.type].canCapture ? [] : enemyHqs(state).filter((p) => propertyAt(state, p) !== undefined);
+      return [...hqs, ...makeWaySquares(state, unit)];
     },
 
     attackBonus(state, attacker: Unit, target: Unit) {

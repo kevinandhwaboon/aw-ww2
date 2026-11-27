@@ -10,9 +10,13 @@ import { nextFloat, type RngState } from "./rng";
 import type { Arrival, ArrivingUnit, ConvoyPlan, GameState, PlayerId, WaveEdge, WaveGenerator } from "./state";
 import * as stats from "./stats";
 
-/** A generated wave's value in funds: the first one's budget, `growth` bigger each wave after. */
+/**
+ * A generated wave's value in funds: the first one's budget, then each wave `growth` bigger than the
+ * one before and `step` more (23-survival §4).
+ */
 export function waveBudget(generator: WaveGenerator, wave: number): number {
-  return Math.round(generator.budget * (1 + generator.growth) ** (wave - generator.firstWave));
+  const after = wave - generator.firstWave;
+  return Math.round(generator.budget * (1 + generator.growth) ** after + (generator.step ?? 0) * after);
 }
 
 /** The day a generated wave is due (23-survival §4, §10 Q1: on fixed days). */
@@ -38,6 +42,7 @@ export function generatorProblem(generator: WaveGenerator, map: GameMap, playerC
   if (!isWhole(everyDays, 1)) return `"everyDays" must be 1 or more`;
   if (!(budget > 0) || !Number.isFinite(budget)) return `"budget" must be more than 0`;
   if (!(growth >= 0) || !Number.isFinite(growth)) return `"growth" can't be negative`;
+  if (generator.step !== undefined && (!(generator.step >= 0) || !Number.isFinite(generator.step))) return `"step" can't be negative`;
   if (unitCap !== undefined && !isWhole(unitCap, 1)) return `"unitCap" must be 1 or more`;
   if (edges.length === 0) return "list at least one edge";
   for (const edge of edges) {

@@ -117,6 +117,11 @@ describe("Endless waves (23-survival §4)", () => {
     expect([1, 2, 3, 11].map((wave) => waveBudget(GENERATOR, wave))).toEqual([60000, 67200, 75264, Math.round(60000 * 1.12 ** 10)]);
   });
 
+  it("with a step, each endless wave's budget is that many funds more than the one before (23-survival §4)", () => {
+    const steady = { ...GENERATOR, budget: 200000, growth: 0, step: 20000 };
+    expect([1, 2, 3, 11].map((wave) => waveBudget(steady, wave))).toEqual([200000, 220000, 240000, 400000]);
+  });
+
   it("a wave's units, with their passengers, never cost more than its budget (23-survival §4)", () => {
     const state = game();
     for (const seed of SEEDS) {
