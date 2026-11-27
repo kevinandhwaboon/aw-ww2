@@ -73,7 +73,7 @@ export const MISSIONS: readonly CampaignMission[] = [
     // Not Falk, whose units carry less fuel: on Gazala the sweep is decided by fuel (18-scenarios-north-africa §2).
     commanders: { 2: "wendt", 3: "ferrante" },
     advantage: {
-      // More armour for the sweep round Bir Hakeim, and Halftracks to keep it fuelled and carry infantry to Tobruk.
+      // More armour for the sweep round Bir Hakeim, Halftracks to carry infantry to Tobruk, and Supply Trucks to keep it fuelled.
       units: [
         { type: "halftrack", owner: 2, pos: { x: 6, y: 29 }, cargo: [{ type: "infantry" }] },
         { type: "halftrack", owner: 2, pos: { x: 5, y: 29 }, cargo: [{ type: "infantry" }] },
@@ -87,6 +87,8 @@ export const MISSIONS: readonly CampaignMission[] = [
         { type: "halftrack", owner: 3, pos: { x: 8, y: 31 }, cargo: [{ type: "infantry" }] },
         { type: "halftrack", owner: 3, pos: { x: 8, y: 30 }, cargo: [{ type: "infantry" }] },
         { type: "mediumTank", owner: 3, pos: { x: 7, y: 30 } },
+        { type: "supplyTruck", owner: 2, pos: { x: 5, y: 31 } },
+        { type: "supplyTruck", owner: 2, pos: { x: 4, y: 31 } },
       ],
       funds: { 2: 3000, 3: 2000 },
       incomePercent: 25,

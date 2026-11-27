@@ -56,7 +56,7 @@ The Free French at El Alamein were two brigades (about 5,000 men) and a flying c
 - **Its own art since 2026-11-18** (08-art-pipeline §12, §18): map sprites with front and back views and battle-scene figures and models for every unit type below. Until then it borrowed Germany's (`ART_LOANS`).
 - **Color:** blue, Italy's azzurro (as built, 2026-11-15). Borrowing Germany's color too would have made Germany and Italy match, so by the usual rule both would have lost their color and Germany would no longer wear field grey. Germany's sheets already come in blue, so no new art was needed. Italy can get a color of its own with its own art.
 - **Flag (HUD and capture flag):** a plain green, white and red vertical tricolour. Never the Savoy crest of the wartime flag, and never the fasces (00-master-design §6).
-- **Unit types it fielded** (availability rule, 01-units §1): Infantry, Assault Infantry (the *guastatori* combat engineers), Mortar Team, Recon (AB 41 armoured car), Halftrack (standing in for its trucks), Light Tank (L6/40), Medium Tank (M13/40, M14/41), Tank Destroyer (Semovente 75/18, 47/32), Artillery (75/27, 100/17), Mobile AA (truck-mounted 20 mm), Flak Gun (90/53), Fighter (C.202) and Bomber (SM.79). No Heavy Tank, no Rocket Artillery, no carrier aircraft. It had a navy, but this map has no ships.
+- **Unit types it fielded** (availability rule, 01-units §1): Infantry, Assault Infantry (the *guastatori* combat engineers), Mortar Team, Recon (AB 41 armoured car), Halftrack (standing in for its troop lorries), Supply Truck (SPA Dovunque), Light Tank (L6/40), Medium Tank (M13/40, M14/41), Tank Destroyer (Semovente 75/18, 47/32), Artillery (75/27, 100/17), Mobile AA (truck-mounted 20 mm), Flak Gun (90/53), Fighter (C.202) and Bomber (SM.79). No Heavy Tank, no Rocket Artillery, no carrier aircraft. It had a navy, but this map has no ships.
 
 ### Places
 
@@ -107,7 +107,7 @@ All units are first guesses, scaled to the map as on the other maps.
   - **164th Light Division** in the northern line: an Infantry in each of the coast road's two Bunkers, an Infantry in the northernmost strongpoint, and a Mortar Team, beside the Italians.
   - **15th Panzer**, north behind the belts: two Medium Tanks and an Artillery.
   - **21st Panzer**, south behind the belts: two Medium Tanks.
-  - **90th Light Division** near Ghazal: two Infantry, an Assault Infantry and a Halftrack.
+  - **90th Light Division** near Ghazal: two Infantry, an Assault Infantry and a Supply Truck.
   - **Ramcke Brigade** in the centre of the line: an Infantry in the middle strongpoint and one behind it.
   - **Anti-tank screen:** two Tank Destroyers (the 88s and Marders) behind the second belt in the north.
   - **El Daba:** a Flak Gun, two Fighters and a Bomber.
@@ -117,14 +117,14 @@ All units are first guesses, scaled to the map as on the other maps.
   - **Ariete**, south behind the belts, paired with 21st Panzer: two Medium Tanks.
   - **Trieste**, in reserve near Rahman: an Infantry and a Light Tank.
   - **Folgore**, at the south end facing Himeimat: two Infantry and an Assault Infantry.
-- **Axis tanks start short of fuel:** Medium Tanks at 12 of 30, Light Tanks at 11 of 28. That's about two full moves, so shifting the armour from south to north costs most of a tank, as it did. Halftracks and owned properties refuel them as usual.
+- **Axis tanks start short of fuel:** Medium Tanks at 12 of 30, Light Tanks at 11 of 28. That's about two full moves, so shifting the armour from south to north costs most of a tank, as it did. Supply Trucks and owned properties refuel them as usual.
 
 ### Supply
 
 No new supply rule. The desert's long supply lines are shown through the map, under the existing rules (05-supply-transport §1, §3):
-- **Land units refuel only on owned properties** (or an ally's) **or next to a Halftrack.** There are few properties and they're far apart, so tanks that drive far from them need Halftracks bringing fuel behind them.
-- **The Axis starts short of fuel** (above), and has fewer properties and Halftracks than the Allies.
-- **The Allies are well supplied:** more properties, more Halftracks, full tanks.
+- **Land units refuel only on owned properties** (or an ally's) **or next to a Supply Truck** (a Halftrack until 2026-11-27). There are few properties and they're far apart, so tanks that drive far from them need Supply Trucks bringing fuel behind them.
+- **The Axis starts short of fuel** (above), and has fewer properties and Supply Trucks than the Allies.
+- **The Allies are well supplied:** more properties, more Supply Trucks, full tanks.
 - A capturable **Supply Dump** property (refuels but no income, no repair) was considered and left out: it isn't in the original game, and here the Axis shortage is shown well enough by starting fuel.
 
 ### Weather and season
@@ -296,13 +296,13 @@ All units are first guesses, scaled to the map as on the other maps.
   - **Knightsbridge** (201st Guards Brigade): two Infantry, an Artillery.
   - **1st Armoured Division**, near Knightsbridge: four Medium Tanks (Grants), a Light Tank, a Halftrack carrying Infantry.
   - **7th Armoured Division**, near Bir el Gubi: three Medium Tanks, a Light Tank, a Recon, an Artillery.
-  - **3rd Indian Motor Brigade**, south-east of Bir Hakeim: two Infantry, a Halftrack, an Artillery. Exposed, as it was.
+  - **3rd Indian Motor Brigade**, south-east of Bir Hakeim: two Infantry, a Supply Truck, an Artillery. Exposed, as it was.
   - **Tobruk** (2nd South African Division): three Infantry, an Artillery, a Flak Gun.
   - **Desert Air Force** at El Adem: two Fighters and a Bomber.
 - **Free France** (1,000 funds), at Bir Hakeim: three Infantry in Bunkers, an Assault Infantry, a Mortar Team, an Artillery (the French 75s) and a Flak Gun (the Bofors that fought off the Stukas).
 - **Germany** (3,000 funds), the assault force south-west of Bir Hakeim, out of sight:
   - **15th and 21st Panzer:** six Medium Tanks and a Light Tank.
-  - **90th Light:** two Halftracks carrying Infantry, a Recon, an Artillery.
+  - **90th Light:** two Halftracks carrying Infantry, a Recon, an Artillery, and (since 2026-11-27, when Halftracks stopped resupplying) a Supply Truck on the west edge of the assault force.
   - **Anti-tank:** two Tank Destroyers (the 88s).
   - **At Tmimi:** two Fighters and a Bomber (the Stukas, drawn with Germany's bomber art).
 - **Italy** (2,000 funds):
@@ -315,7 +315,7 @@ All units are first guesses, scaled to the map as on the other maps.
 
 No new rule, as on El Alamein: the map makes the Cauldron.
 - **Every Axis property is west of the minefield.** Armour that has swung round Bir Hakeim is about 20 squares from the nearest place to refuel.
-- **Two ways to keep it moving:** Halftracks bringing fuel the long way round the south, or **clearing a lane through the minefield** to shorten the route, which is what Rommel did at Got el Ualeb. Breaking the 150th Brigade box opens it.
+- **Two ways to keep it moving:** Supply Trucks bringing fuel the long way round the south, or **clearing a lane through the minefield** to shorten the route, which is what Rommel did at Got el Ualeb. Breaking the 150th Brigade box opens it.
 - **The British** have Tobruk, El Adem and the boxes behind them, and an ally's property repairs and refuels their units (04-economy §5), so a tank can refuel at Bir Hakeim.
 
 ### Weather and season
@@ -341,7 +341,7 @@ No new rule, as on El Alamein: the map makes the Cauldron.
 - The Greedy AI needs no new rule. Its route-finding treats a breakable minefield as passable once broken (09-ai), so it may attack the line rather than go round Bir Hakeim. Whether it sweeps round the south is to be checked in AI vs AI games; if it doesn't, a later AI change can weigh the open flank.
 - Under fog, the AI sees only what its side sees (09-ai rule 3).
 - AI vs AI must end within the day limit on every game (day 16 at the latest), with no AI bug (09-ai §7).
-- **As built, AI vs AI, the Allies always win** (seeds 1 to 4, all on day 16, with no engine or AI problem). The Axis armour does swing round and closes to about 20 squares from Tobruk, then runs out of fuel by day 7, as Rommel's did. Unlike Rommel, the computer doesn't clear a lane through the minefield or bring fuel round in Halftracks, so the stranded tanks are destroyed. Teaching it to supply an armoured thrust is later AI work.
+- **As built, AI vs AI, the Allies always win** (seeds 1 to 4, all on day 16, with no engine or AI problem). The Axis armour does swing round and closes to about 20 squares from Tobruk, then runs out of fuel by day 7, as Rommel's did. Unlike Rommel, the computer doesn't clear a lane through the minefield or bring fuel round in Halftracks (Supply Trucks since 2026-11-27), so the stranded tanks are destroyed. Teaching it to supply an armoured thrust is later AI work.
 
 ### Art
 

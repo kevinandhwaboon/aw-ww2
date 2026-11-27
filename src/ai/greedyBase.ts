@@ -39,6 +39,7 @@ export const isLandingCraft = (type: UnitTypeId) => defOf(type).specialActions.i
 export const isAirTransport = (type: UnitTypeId) => defOf(type).specialActions.includes("airDrop");
 export const isCarrier = (type: UnitTypeId) => defOf(type).specialActions.includes("launch");
 export const isSupplyShip = (type: UnitTypeId) => defOf(type).specialActions.includes("repairShips");
+export const isSupplyTruck = (type: UnitTypeId) => defOf(type).specialActions.includes("resupply") && defOf(type).category === "land";
 export const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 /** What a unit is trying to do this turn, which decides how its destination is scored. */

@@ -212,6 +212,13 @@ describe("the packs that ship with the game", () => {
     expect(sheets.map((s) => s.team).sort()).toEqual(["blue", "grey", "olive", "red"]);
   });
 
+  it("every nation with a Halftrack has a Supply Truck too, in each of its team colors (01-units §2)", () => {
+    const pack = parseArtPack(defaultPack);
+    const colors = (type: "halftrack" | "supplyTruck") =>
+      pack.unitSheets.filter((s) => s.rows.includes(type)).map((s) => `${s.nation} ${s.team}`).sort();
+    expect(colors("supplyTruck")).toEqual(colors("halftrack"));
+  });
+
   it("the default pack draws railway track that joins up, and a rail bridge where a line crosses a river (02-terrain §4c)", () => {
     const pack = parseArtPack(defaultPack);
     expect(pack.terrain?.connected.railway).toBeTypeOf("number");

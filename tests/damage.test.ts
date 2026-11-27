@@ -60,6 +60,11 @@ describe("damage chart (03-combat §5)", () => {
     for (const attacker of ARMED_UNIT_IDS) expect(baseDamage(attacker, "railwayGun"), attacker).toEqual(baseDamage(attacker, "artillery"));
   });
 
+  it("everything hits a Supply Truck as hard as it hits a Halftrack (03-combat §5c)", () => {
+    for (const attacker of ARMED_UNIT_IDS) expect(baseDamage(attacker, "supplyTruck"), attacker).toEqual(baseDamage(attacker, "halftrack"));
+    expect(baseDamage("mediumTank", "supplyTruck")).not.toBeNull();
+  });
+
   it("Fighter strafing is at most 15 against any ground unit (03-combat §5c)", () => {
     for (const target of UNIT_TYPE_IDS.filter((id) => UNITS[id].category === "land")) {
       expect(baseDamage("fighter", target)?.base ?? 0, target).toBeLessThanOrEqual(15);

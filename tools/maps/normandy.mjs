@@ -574,7 +574,7 @@ const meanX = (owner) => {
 const alliesOnLeft = meanX(ALLIES) < meanX(AXIS);
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const scenario = {

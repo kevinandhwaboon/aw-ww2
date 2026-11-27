@@ -8,10 +8,11 @@
 // by the thousand, with the red star in place of the white (`mark`).
 // UK (and Canada): Daimler armoured car, Universal Carrier, Crusader AA Mk II, Bofors 40mm,
 // 25-pounder, Land Mattress, each with the RAF roundel where it carries a marking.
+// Every nation: the Supply Truck, a three-axle army lorry with an open bed of supplies.
 
 import { C, mix, type TeamShades } from "../colors";
 import { barrel, beam, box, circle, decalX, decalY, decalZ, elevate, elevatePoint, extrudeX, extrudeY, loftZ, wheel, type Face, type V3 } from "./mesh";
-import { camoDecals, crossDecal, redStarDecal, roadWheel, roundelDecal, running, sherman, starDecal } from "./models";
+import { camoDecals, crossDecal, redStarDecal, roadWheel, roundelDecal, running, sherman, starDecal, type Marking } from "./models";
 
 /** A machine's parts, drawn in order with the crew between them, and the points the rig needs. */
 export interface Built<A extends string> {
@@ -669,4 +670,40 @@ export function bunker(t: TeamShades): Built<"muzzle"> {
     far.push(decalZ(h + 5.05, circle(x, y, 4.5, 7), mix(C("battleTreeDark"), C("battleOlive"), (k % 3) * 0.3)));
   }
   return { far, near: [], at: { muzzle: [50, 0, 18] } };
+}
+
+// ---- Supply Truck ----
+
+/**
+ * The Supply Truck (01-units §2): a three-axle army lorry (GMC CCKW, Opel Blitz, ZiS-5, Bedford)
+ * with a closed cab, a bonnet and an open bed of ammunition boxes and jerrycans. The nation's
+ * marking on the cab door, if it carried one. Unarmed.
+ */
+export function supplyTruck(t: TeamShades, mark: Marking | null): Built<"muzzle"> {
+  const far: Face[] = [];
+  // Wheels: two axles at the back, one at the front, and the chassis rails.
+  for (const x of [-24, -10, 26]) far.push(...tire(x, 10.5, 7, 7), ...tire(x, -10.5, 7, 7));
+  far.push(...box(-34, 22, -8, 8, 8, 12, steelDark()));
+  // Rear fenders, the bed's floor and its low side boards.
+  far.push(...box(-32, -2, -12, -9, 14, 15, t.lo), ...box(-32, -2, 9, 12, 14, 15, t.lo));
+  far.push(...box(-34, 10, -11, 11, 12, 15, t.lo));
+  far.push(...box(-34, 10, -11, -10, 15, 20, t.mid), ...box(-34, 10, 10, 11, 15, 20, t.mid), ...box(-34, -33, -10, 10, 15, 20, t.mid));
+  for (let x = -30; x < 10; x += 8) far.push(decalY(-11.05, [[x, 15], [x + 0.6, 15], [x + 0.6, 20], [x, 20]], t.lo));
+  // The load: wooden ammunition boxes down the near side, jerrycans along the far side.
+  for (const [k, x] of [-31, -21, -11, -1].entries()) {
+    far.push(...box(x, x + 8, 0, 9, 15, k % 2 ? 23 : 25, C("battleWood")));
+    far.push(decalY(-0.05, [[x + 1, 19], [x + 7, 19], [x + 7, 20], [x + 1, 20]], mix(C("battleWood"), ink(), 0.35)));
+  }
+  for (const x of [-31, -26, -21, -16, -11, -6, -1, 4]) far.push(...box(x, x + 4, -9, -1, 15, 24, olive()));
+  // The cab, its windshield and door with the marking.
+  far.push(...box(12, 26, -10, 10, 12, 30, t.mid));
+  far.push(decalX(26.05, [[-8, 23], [8, 23], [8, 28], [-8, 28]], glass(t)));
+  far.push(decalY(-10.05, [[15, 22], [22, 22], [22, 27], [15, 27]], glass(t)));
+  if (mark) far.push(...mark(-10.1, 18.5, 17.5, 2.8));
+  // The bonnet with its louvres, front fenders and grille.
+  far.push(...extrudeY(-8, 8, [[26, 12], [40, 12], [40, 21], [26, 24]], t.mid));
+  for (let x = 28; x < 37; x += 2) far.push(decalY(-8.05, [[x, 15], [x + 1, 15], [x + 1, 20], [x, 20]], t.lo));
+  far.push(...box(24, 40, -12, -8, 16, 17, t.lo), ...box(24, 40, 8, 12, 16, 17, t.lo));
+  for (let y = -6; y <= 5; y += 2) far.push(decalX(40.05, [[y, 13], [y + 1, 13], [y + 1, 20], [y, 20]], ink()));
+  return { far, near: [], at: { muzzle: [20, 0, 28] } };
 }

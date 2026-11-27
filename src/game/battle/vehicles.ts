@@ -16,9 +16,9 @@
 
 import { BATTLE_VIEW, drawMesh, polished, screenAngle, screenPoint, type Face, type V3 } from "./angled/mesh";
 import { tankCommander } from "./crew";
-import { TANK_MODELS, type Model, type TankKind } from "./angled/models";
+import { crossDecal, redStarDecal, roundelDecal, TANK_MODELS, usStar, type Marking, type Model, type TankKind } from "./angled/models";
 import {
-  bofors, bunker, calliope, crusaderAA, daimler, flakGun, howitzer, katyusha, landMattress, m3, nebelwerfer, quadAA, r75, sdkfz251, universalCarrier, willys,
+  bofors, bunker, calliope, crusaderAA, daimler, flakGun, howitzer, katyusha, landMattress, m3, nebelwerfer, quadAA, r75, sdkfz251, supplyTruck, universalCarrier, willys,
   type Built, type HowitzerStyle,
 } from "./angled/vehicleModels";
 import { C, mix, shade, type Painter } from "./paint";
@@ -295,6 +295,31 @@ export const halftrackRig: Rig = {
   },
   muzzle(pose, _shot, look): Muzzle {
     return { ...at(halftrackModel(look).at.muzzle, -MODEL_LIFT - halftrackBob(pose)), angle: 0 };
+  },
+};
+
+// ---- Supply Truck: an army lorry with an open bed of ammunition boxes and jerrycans, unarmed ----
+
+/** The marking on the truck's cab door: each nation's own, none for Japan or Italy (08-art-pipeline §12). */
+function truckMarking(look: Look): Marking | null {
+  switch (kitOf(look)) {
+    case "us": return usStar;
+    case "de": return crossDecal;
+    case "su": return redStarDecal;
+    case "uk": return roundelDecal;
+    default: return null;
+  }
+}
+const truckModel = (look: Look) => memo(`truck|${kitOf(look)}|${look.team.mid}`, () => supplyTruck(look.team, truckMarking(look)));
+
+export const supplyTruckRig: Rig = {
+  body: "machine",
+  hit: { x: 0, y: -16 },
+  draw(p, pose, look) {
+    mesh(p, truckModel(look).far, -MODEL_LIFT - halftrackBob(pose));
+  },
+  muzzle(pose, _shot, look): Muzzle {
+    return { ...at(truckModel(look).at.muzzle, -MODEL_LIFT - halftrackBob(pose)), angle: 0 };
   },
 };
 

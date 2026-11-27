@@ -1,7 +1,7 @@
 # Topic Doc 05: Supply and Transport
 
-**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09). The Supply Ship (section 3a) is decided and implemented (2026-11-16). Ships no longer sink when out of fuel, and Supply Ships carry a limited number of supplies (section 3b), decided and implemented 2026-11-16.
-**Last updated:** 2026-11-22
+**Status:** Land rules (phase 1) decided as v0 and implemented, following the original game. Air and naval rules (phase 2) are decided as v0 and implemented, sections 5 to 9 (milestones 9 to 11). Carriers (section 10) are decided and implemented (2026-11-09). The Supply Ship (section 3a) is decided and implemented (2026-11-16). Ships no longer sink when out of fuel, and Supply Ships carry a limited number of supplies (section 3b), decided and implemented 2026-11-16. The Supply Truck takes over resupply from the Halftrack, which only carries troops (sections 3, 3b, 4), decided and implemented 2026-11-27.
+**Last updated:** 2026-11-27
 **Depends on:** 00-master-design.md, 01-units.md, 02-terrain.md, 04-economy-production.md.
 
 ---
@@ -28,23 +28,25 @@ A resupply restores fuel and ammo to maximum. It's free and doesn't heal.
 | Source | When | Who |
 |---|---|---|
 | Owned property of the right category | Owner's turn start (with repair; 04-economy section 5) | The unit on the tile |
-| Halftrack, automatic | Owner's turn start, after property repair | All friendly land units orthogonally adjacent to the Halftrack: never ships or aircraft |
-| Halftrack, `Supply` action | After the Halftrack moves (or without moving) | All friendly land units orthogonally adjacent; ends the Halftrack's action |
-| Supply Ship, automatic and `Supply` action | As for the Halftrack, while it has supplies left; each time spends one (§3b) | All friendly ships and land units orthogonally adjacent, never aircraft. It also repairs ships (§3a) |
+| Supply Truck, automatic | Owner's turn start, after property repair, while it has supplies left; each time spends one (§3b) | All friendly land units orthogonally adjacent to the truck: never ships or aircraft |
+| Supply Truck, `Supply` action | After the truck moves (or without moving), while it has supplies left; spends one (§3b) | All friendly land units orthogonally adjacent; ends the truck's action |
+| Supply Ship, automatic and `Supply` action | As for the Supply Truck, while it has supplies left; each time spends one (§3b) | All friendly ships and land units orthogonally adjacent, never aircraft. It also repairs ships (§3a) |
 
 A carried passenger isn't resupplied by its transport.
 
-**Halftracks never resupply aircraft** (since 2026-11-14, at the developer's request): an aircraft has to fly back to an owned airfield, or a Carrier for carrier aircraft (§10), to refuel and rearm. **Nor ships** (since 2026-11-16, at the developer's request): a ship refuels and rearms only at an owned port or next to a friendly Supply Ship (§3a). A Halftrack resupplies land units only.
+**The Supply Truck** (since 2026-11-27, at the developer's request) took this job over from the Halftrack, which now only carries troops (§4, 01-units §8). Until then the Halftrack resupplied, as the original's APC did, with no limit; in the war front-line supply went forward in trucks, and half-tracks mostly carried infantry.
+
+**Supply Trucks never resupply aircraft** (the Halftrack's rule since 2026-11-14, at the developer's request): an aircraft has to fly back to an owned airfield, or a Carrier for carrier aircraft (§10), to refuel and rearm. **Nor ships** (since 2026-11-16, at the developer's request): a ship refuels and rearms only at an owned port or next to a friendly Supply Ship (§3a), as in the war, when ships took on fuel in port or from oilers at sea, never from trucks. A Supply Truck resupplies land units only.
 
 The `Supply` action is only available when at least one adjacent friendly unit is short of fuel or ammo. Automatic supply also reaches units of an allied player on the same side.
 
 ## 3a. Supply Ship (decided and built 2026-11-16)
 
-Added at the developer's request: ships could only refuel at a port, while land units have the Halftrack and carrier aircraft their Carrier. It follows the original game's later naval supply boat, minus the troops it carried (the Landing Craft does that here). Stats in 01-units §8.
+Added at the developer's request: ships could only refuel at a port, while land units had the Halftrack (the Supply Truck since 2026-11-27) and carrier aircraft their Carrier. It follows the original game's later naval supply boat, minus the troops it carried (the Landing Craft does that here). Stats in 01-units §8.
 
-- **Resupply:** like the Halftrack's (§3), but it also reaches ships, which a Halftrack can't. At the start of its owner's turn, after property repair, it refuels and rearms every friendly unit orthogonally next to it, an ally's included, except aircraft. That means ships, and land units on the shore or on a port. It has the same `Supply` action after moving, which ends its action. Free, but it uses up the Supply Ship's supplies (§3b).
+- **Resupply:** like the Supply Truck's (§3), but it also reaches ships, which a truck can't. At the start of its owner's turn, after property repair, it refuels and rearms every friendly unit orthogonally next to it, an ally's included, except aircraft. That means ships, and land units on the shore or on a port. It has the same `Supply` action after moving, which ends its action. Free, but it uses up the Supply Ship's supplies (§3b).
 - **Repair:** at the start of its owner's turn, each of **its own player's ships** orthogonally next to it is repaired **1 displayed HP**, for 10% of the ship's cost, with the same affordability and order rules as property repair (04-economy §5). This is the Carrier's repair of its aircraft (§10), for ships. It repairs only in that start-of-turn step, never with the `Supply` action.
-  - **Only ships**, never land units: the Halftrack and cities look after those.
+  - **Only ships**, never land units: Supply Trucks and cities look after those.
   - **Only its own player's**: an ally's ship is refuelled and rearmed but not repaired, since each player pays for their own repairs (04-economy §5).
   - **1 HP a day at most**, however many Supply Ships it lies next to. A ship in a port that services it gets the port's 2 HP instead, not both.
   - **Not itself.** Two Supply Ships side by side repair and refuel each other, but don't refill each other's supplies (§3b).
@@ -54,18 +56,19 @@ Added at the developer's request: ships could only refuel at a port, while land 
 - **Building:** at Ports, like other ships.
 - **Low fuel warning:** for a ship, the squares next to a friendly Supply Ship with supplies left count as home (§11).
 
-## 3b. Supply Ship supplies (decided and built 2026-11-16)
+## 3b. Supply Ship and Supply Truck supplies (decided and built 2026-11-16; the truck 2026-11-27)
 
-Added at the developer's request, so that two Supply Ships can't keep each other, and every ship around them, supplied forever. The Halftrack's resupply stays unlimited, as in the original.
+Added at the developer's request, so that two Supply Ships can't keep each other, and every ship around them, supplied forever. The Halftrack's resupply was unlimited, as in the original; the Supply Truck that replaced it on 2026-11-27 carries supplies like the Supply Ship, at the developer's request ("ammo" as its resupply), so a supply column far from home has to go back for more. Everything below applies to both, except where the truck is named.
 
 - **5 supplies** (`supplyLoads` in 01-units §8), kept in its ammo count since it has no weapon. They show in the tile info box as "Supplies 5/5", and the ammo can flashes on the map at a quarter or less (§11). It's a stat like any other: a commander's ammo modifier changes it too (Falk's Supply Ships carry 4).
 - **One supply per resupply:** each start-of-turn round that tops anyone up, and each `Supply` action, spends one supply, however many units it refills. A round where nobody next to it needs anything costs nothing. Ships burn fuel every day, so a fleet parked next to a Supply Ship uses one supply a turn.
 - **Out of supplies**, it refuels and rearms nobody and has no `Supply` action. It still repairs (§3a).
 - **Refilled only at a port** that services it (an owned or allied one, 04-economy §5), along with its fuel. Another Supply Ship refuels it but never refills its supplies, and nothing else does. Joining two Supply Ships adds their supplies, up to 5 (04-economy §6).
+- **A Supply Truck refills on a land property** that services it: its own or an ally's city, factory or HQ (04-economy §5), at the start of the turn with its fuel, like any land unit's ammo. Another Supply Truck (or a Supply Ship, from the sea) refuels it but never refills its supplies. Joining two adds their supplies, up to 5.
 
 ## 4. Transport (land, phase 1)
 
-**Halftrack:** capacity 1. Carries Infantry, Assault Infantry or Mortar Team.
+**Halftrack:** capacity 1. Carries Infantry, Assault Infantry or Mortar Team. Since 2026-11-27 that's all it does: it no longer resupplies (§3), and it moves 7 instead of 6.
 
 - **Load:** a foot unit moves onto its own player's Halftrack with free space. This ends the foot unit's action.
 - **Unload:** the Halftrack (moving first, or not) unloads its passenger onto an orthogonally adjacent tile the passenger could legally enter (terrain passable for its movement type, not occupied). This ends the Halftrack's action. The passenger **can't act** on the turn it's unloaded.
@@ -79,7 +82,7 @@ Added at the developer's request, so that two Supply Ships can't keep each other
 - **Movement:** type `air`, cost 1 on every tile including sea. Fuel is spent as for any unit.
 - **Stacking:** one unit per tile, of any category. An aircraft can't share a tile with a ground unit. It flies over enemy ground units and ships, but enemy aircraft block its path (02-terrain §5).
 - **Daily fuel:** `fuelPerDay` at the start of the owner's turn (Fighter, Dive and Torpedo Bomber 5, Bomber 8, Transport Aircraft 3; 01-units §8a), on top of 2 fuel per tile flown (§1). At 0 fuel the aircraft crashes, even with no enemy near. A crash isn't a kill. No burn on day 1 **(D1)**, and none for a unit on a property that services it (its own or, since 2026-11-15, an ally's: 04-economy §5), since that refuels it anyway.
-- **Service:** owned airfields repair and resupply air units (04-economy §5), and Carriers their aircraft (§10). Nothing else does: a Halftrack can't resupply an aircraft (§3), so it has to return to an airfield.
+- **Service:** owned airfields repair and resupply air units (04-economy §5), and Carriers their aircraft (§10). Nothing else does: a Supply Truck can't resupply an aircraft (§3), so it has to return to an airfield.
 - **Defense:** air units always get 0 terrain stars (02-terrain §1).
 
 ## 6. Transport Aircraft (phase 2)
@@ -95,8 +98,8 @@ Added at the developer's request, so that two Supply Ships can't keep each other
 - **Movement:** type `sea` covers Sea, Reef and Port. Landing Craft use `landingCraft`, which also allows Beach (02-terrain §3).
 - **Daily fuel:** `fuelPerDay` at the start of the owner's turn. No burn on day 1 **(D1)**, and none for a ship in an owned port.
 - **Out of fuel (since 2026-11-16, at the developer's request):** a ship whose tank runs dry is **stranded, not sunk**, unlike the original, where it sank. It stays where it is, "OUT OF FUEL" shows over it, and it can't move until it's refuelled at a port or by a Supply Ship (§3a), which can sail out to rescue it. Until then it can do everything else a ship there could: attack with the ammo it has, a Carrier launch and take on aircraft, a Supply Ship resupply and repair. A submerged submarine that runs dry surfaces at once (§9). Aircraft still crash (§5).
-- **Adrift (since 2026-11-22, at the developer's request):** a stranded ship wears down. At the start of each of its owner's turns after the day it ran dry, a ship still at 0 fuel loses **1 HP** ("ADRIFT -1 HP" shows over it), so a full-strength ship lasts 10 more days. It's checked after that morning's refuelling, so a ship a port or its own Supply Ship refuels that morning loses nothing. At 0 HP it **sinks** with anything aboard: like an aircraft crash, nobody scores a kill, and the losses count on its owner's results screen (04-economy §8a). Land units at 0 fuel never lose HP: they're stuck, but a Halftrack can reach them. Not on day 1, when nothing burns fuel either (D1). The amount is `ADRIFT_HP` in `src/engine/turn.ts`.
-- **Service:** owned ports repair and resupply naval units, and Supply Ships resupply and repair them at sea (§3a). Nothing else does: a Halftrack can't resupply a ship (§3, since 2026-11-16).
+- **Adrift (since 2026-11-22, at the developer's request):** a stranded ship wears down. At the start of each of its owner's turns after the day it ran dry, a ship still at 0 fuel loses **1 HP** ("ADRIFT -1 HP" shows over it), so a full-strength ship lasts 10 more days. It's checked after that morning's refuelling, so a ship a port or its own Supply Ship refuels that morning loses nothing. At 0 HP it **sinks** with anything aboard: like an aircraft crash, nobody scores a kill, and the losses count on its owner's results screen (04-economy §8a). Land units at 0 fuel never lose HP: they're stuck, but a Supply Truck can reach them. Not on day 1, when nothing burns fuel either (D1). The amount is `ADRIFT_HP` in `src/engine/turn.ts`.
+- **Service:** owned ports repair and resupply naval units, and Supply Ships resupply and repair them at sea (§3a). Nothing else does: a Supply Truck can't resupply a ship (§3; a Halftrack couldn't either, since 2026-11-16).
 - **Capture:** ships can't capture. Ports are captured by infantry like any property.
 
 ## 8. Landing Craft (phase 2)
@@ -110,6 +113,7 @@ Added at the developer's request, so that two Supply Ships can't keep each other
 ## 9. Submarines (phase 2)
 
 - **`Dive` and `Surface`** are end actions, so a submarine can move and then change state. It starts surfaced.
+- **Never the default (since 2026-11-27, at the developer's request):** when a submarine's action menu opens, WAIT is highlighted, not DIVE or SURFACE, so a quick double tap or Z Z just moves it. Diving or surfacing has to be picked on purpose.
 - **Submerged:** burns 10 fuel per day instead of 1 (5 until 2026-11-20, when the developer also halved the Submarine's tank to 45, 01-units §8a), and can only be attacked by Destroyers and Submarines (03-combat §5c). It can still attack, and stays submerged when it does.
 - **Out of fuel (since 2026-11-16):** a submerged submarine whose tank runs dry at the start of its owner's turn surfaces, in view of everyone, and a submarine with 0 fuel can't dive until it's refuelled. Otherwise a stranded submarine (§7) would sit hidden forever, where only Destroyers and Submarines could ever hit it.
 - **Hidden (since 2026-11-14, D5):** as in the original, a submerged submarine is hidden from the other side unless one of that side's units, of any kind (aircraft too), is on a tile next to it (not diagonally). Its own side always sees it, drawn with a marker: the sprite is tinted, a wave badge sits in its top-left corner, and the tile info says "submerged" (08-art-pipeline §5). Without fog of war this is the one exception; with it (19-fog-of-war), the same rules cover every unit the player can't see, and this one still applies.
@@ -136,7 +140,7 @@ Added at the developer's request, so that two Supply Ships can't keep each other
 Presentation only: no rule reads these. At the developer's request, a unit short of supplies shows a **flashing can** on the map, stacked up the left edge of its tile (above the capture C, if any):
 
 - **Gas can** (a jerrycan): **orange** while fuel is low, **red** once it's at 0 (since 2026-11-22, at the developer's request; it was red for both). Fuel is low when it's empty, a quarter of a full tank or less, or, for aircraft and ships, two days' burn or less (an aircraft is lost at 0, a ship stranded, §7). Since 2026-11-14, at the developer's request (the warning came too late to get home), aircraft and ships also warn **as soon as one more full turn's move away from home would leave too little fuel to get back**: the fuel for a full move out plus the route back from that far (by the cheapest route over terrain, ignoring units), plus the daily burn for each night on the way. Home is the nearest owned property that refuels it (airfield, port) or, for carrier aircraft, one of the player's Carriers with room, or, for ships, a square next to a friendly Supply Ship that has supplies left (§3a, §3b). A unit at home doesn't warn this way, and nor does one with no home it could reach anywhere on the map (Japan's port on Midway is cut off from the sea): for those only the simpler rules apply. So a Fighter that has flown a full 9 squares out from its airfield doesn't show the can yet, but after a second full day out it does: it has just enough to fly home, and no more (01-units §8a range rule).
-- **Ammo can** (an olive can with brass rounds): the plain can while ammo is low, the same can **crossed out with a red X** once it's at 0 (since 2026-11-22, at the developer's request). Ammo is low when a unit with a main weapon has used it up, or has a quarter or less left (rounded up). A unit that only ever holds 1 shot (the Torpedo Bomber) warns only once it's spent. A Supply Ship's supplies count as its ammo (§3b): it warns at 2 or fewer of its 5.
+- **Ammo can** (an olive can with brass rounds): the plain can while ammo is low, the same can **crossed out with a red X** once it's at 0 (since 2026-11-22, at the developer's request). Ammo is low when a unit with a main weapon has used it up, or has a quarter or less left (rounded up). A unit that only ever holds 1 shot (the Torpedo Bomber) warns only once it's spent. A Supply Ship's or Supply Truck's supplies count as its ammo (§3b): it warns at 2 or fewer of its 5.
 
 Both cans blink together, and the same numbers turn the fuel and ammo lines in the tile info box orange when low and red when empty, where they blink too. The rule is one function, `supplyWarnings` in `src/game/tileInfo.ts`.
 

@@ -352,7 +352,7 @@ add("artillery", UK, near("Bir el Gubi", 2, -2));
 // The 3rd Indian Motor Brigade in the open south-east of Bir Hakeim.
 add("infantry", UK, freeNear(bh.x + 4, bh.y + 3));
 add("infantry", UK, freeNear(bh.x + 5, bh.y + 3));
-add("halftrack", UK, freeNear(bh.x + 4, bh.y + 4));
+add("supplyTruck", UK, freeNear(bh.x + 4, bh.y + 4));
 add("artillery", UK, freeNear(bh.x + 5, bh.y + 4));
 // The 2nd South African Division in Tobruk.
 add("infantry", UK, near("Tobruk", 0, 1));
@@ -397,6 +397,10 @@ assaultAdd("lightTank", ITALY);
 assaultAdd("infantry", ITALY);
 assaultAdd("infantry", ITALY);
 assaultAdd("artillery", ITALY);
+// A supply column to keep the sweep fuelled (added 2026-11-27, when Halftracks stopped resupplying),
+// on the west edge of the force, clear of the squares the campaign's extra units use (22-campaign §4).
+add("supplyTruck", GERMANY, freeNear(ASSAULT.x - 3, ASSAULT.y));
+assault.push(units[units.length - 1]);
 // The Luftwaffe at Tmimi.
 add("fighter", GERMANY, placed.get("Tmimi airfield"));
 add("fighter", GERMANY, air("Tmimi airfield", 1, 0));
@@ -454,7 +458,7 @@ function reach(start, blockBunkers) {
   if (!round.has(key(placed.get("Tobruk")))) throw new Error("No way round the south of Bir Hakeim to Tobruk");
 }
 // 3. The assault force starts out of sight of every Allied unit and property.
-const VISION = { infantry: 2, assaultInfantry: 2, mortar: 2, recon: 5, halftrack: 1, lightTank: 3, mediumTank: 2, tankDestroyer: 2, artillery: 1, mobileAA: 2, flakGun: 2, fighter: 2, bomber: 2 };
+const VISION = { infantry: 2, assaultInfantry: 2, mortar: 2, recon: 5, halftrack: 1, supplyTruck: 1, lightTank: 3, mediumTank: 2, tankDestroyer: 2, artillery: 1, mobileAA: 2, flakGun: 2, fighter: 2, bomber: 2 };
 for (const a of assault) {
   for (const u of units.filter((v) => v.owner === UK || v.owner === FRANCE)) {
     const hillBonus = at(u.pos.x, u.pos.y) === "H" && ["infantry", "assaultInfantry", "mortar"].includes(u.type) ? 3 : 0;
@@ -481,7 +485,7 @@ for (const [name, , , , owner] of PLACES) {
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "mobileAA", "flakGun",
 ];
 const scenario = {

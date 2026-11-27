@@ -369,7 +369,7 @@ const waves = {
 // The UK: every land unit it has art for except the Heavy Tank, and the light ships. No aircraft: the
 // RAF had left, and the Luftwaffe owns the sky (24-survival-crete §8, Q1).
 const buildable = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA", "flakGun", "destroyer", "torpedoBoat",
 ];
 

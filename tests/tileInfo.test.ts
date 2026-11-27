@@ -111,6 +111,11 @@ describe("tile info box (00-master-design §12)", () => {
     expect(withSupplies(0)?.empty).toBe(true);
   });
 
+  it("shows a Supply Truck's supplies the same way (05-supply-transport §3b, §11)", () => {
+    const state = makeGame(["."], [{ type: "supplyTruck", owner: 0, pos: P(0, 0), ammo: 2 }]);
+    expect(tileInfo(state, P(0, 0)).unit?.ammo).toEqual({ label: "Supplies", left: 2, max: 5, low: true, empty: false });
+  });
+
   it("flags ammo as low once it is used up (05-supply-transport §2)", () => {
     const state = makeGame(["."], [{ type: "mediumTank", owner: 0, pos: P(0, 0) }]);
     const empty = { ...state, units: state.units.map((u) => ({ ...u, ammo: 0 })) };

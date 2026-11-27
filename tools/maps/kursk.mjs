@@ -430,7 +430,7 @@ outside("mediumTank", SOVIET, "Stary Oskol");
 outside("mediumTank", SOVIET, "Stary Oskol");
 outside("mediumTank", SOVIET, "Stary Oskol");
 outside("lightTank", SOVIET, "Stary Oskol");
-outside("halftrack", SOVIET, "Stary Oskol");
+outside("supplyTruck", SOVIET, "Stary Oskol");
 // Kursk, the west face and the air armies.
 inTown("infantry", SOVIET, "Kursk");
 outside("flakGun", SOVIET, "Kursk");
@@ -449,7 +449,7 @@ outside("rocketArtillery", GERMANY, "Kromy");
 outside("infantry", GERMANY, "Zmiyovka");
 outside("infantry", GERMANY, "Kromy");
 outside("assaultInfantry", GERMANY, "Zmiyovka");
-outside("halftrack", GERMANY, "Kromy");
+outside("supplyTruck", GERMANY, "Kromy");
 inTown("infantry", GERMANY, "Orel");
 inTown("fighter", GERMANY, "Orel West airfield");
 // The west face: thin holding forces.
@@ -471,7 +471,7 @@ outside("infantry", GERMANY, "Tomarovka");
 outside("infantry", GERMANY, "Belgorod");
 outside("assaultInfantry", GERMANY, "Tomarovka");
 outside("assaultInfantry", GERMANY, "Belgorod");
-outside("halftrack", GERMANY, "Borisovka");
+outside("supplyTruck", GERMANY, "Borisovka");
 outside("recon", GERMANY, "Grayvoron");
 outside("mobileAA", GERMANY, "Borisovka");
 inTown("bomber", GERMANY, "Mikoyanovka airfield");
@@ -479,7 +479,7 @@ inTown("bomber", GERMANY, "Mikoyanovka airfield");
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "heavyTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "heavyTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const AIR = ["fighter", "bomber", "transportAircraft"];

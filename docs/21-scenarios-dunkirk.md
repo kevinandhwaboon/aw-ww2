@@ -74,13 +74,13 @@ The Luftwaffe bombed the beaches and the ships whenever the weather allowed. On 
   - West, Mardyck to Bergues (French XVI Corps): 4 Infantry, 1 Artillery; 1 Infantry in the Bergues bunker.
   - On the Bergues–Furnes canal (BEF I and II Corps): 8 Infantry, 1 Assault Infantry (Royal Engineers), 2 Mortar Teams, 2 Artillery, 1 Light Tank.
   - On the beaches, waiting to embark: 4 Infantry at Malo, Bray-Dunes and La Panne. A Mobile AA (Bofors) at Bray-Dunes and a Flak Gun (3.7-inch) at Dunkirk.
-- **Outside, falling back:** 1 Infantry in Cassel; 3 Infantry, a Halftrack (Bren carriers) and a Light Tank on the Poperinge road; a Recon (12th Lancers) racing for the Nieuport gap.
+- **Outside, falling back:** 1 Infantry in Cassel; 3 Infantry, a Supply Truck (a Halftrack, the Bren carriers, until 2026-11-27) and a Light Tank on the Poperinge road; a Recon (12th Lancers) racing for the Nieuport gap.
 - **Royal Navy:** 5 Destroyers (2 at Dover, 1 in the Downs off Deal, 2 off Dunkirk); **6 Landing Craft** (2 at Dover, 2 at Ramsgate, 1 on the beach at Malo and 1 at La Panne, empty); 1 Torpedo Boat (MTB) at Dover.
 - **RAF, 11 Group:** 3 Fighters (Manston, Hawkinge, and one beside Manston), 1 Bomber (Blenheims) at Manston.
 
 **Germany** (15,000 funds, 45 units: 32 on land, 11 aircraft, 2 boats).
 
-- **West, Army Group A on the Aa:** at Calais, 1 Infantry and 1 Artillery (the guns on Route Z); at Gravelines, 2 Medium Tanks, 1 Light Tank, 2 Infantry; at Watten and Saint-Omer, 2 Medium and 2 Light Tanks, 2 Halftracks, 3 Infantry, 1 Artillery.
+- **West, Army Group A on the Aa:** at Calais, 1 Infantry and 1 Artillery (the guns on Route Z); at Gravelines, 2 Medium Tanks, 1 Light Tank, 2 Infantry; at Watten and Saint-Omer, 2 Medium and 2 Light Tanks, 2 Supply Trucks, 3 Infantry, 1 Artillery.
 - **South, before Cassel and Hazebrouck:** 3 Infantry, 1 Assault Infantry, 1 Artillery, 1 Medium Tank.
 - **East, Army Group B from Belgium:** at Ypres, 3 Infantry, 1 Assault Infantry, 1 Mortar Team, 1 Artillery; at Dixmude, 2 Infantry and 1 Recon, heading for Nieuport.
 - **Luftwaffe:** 5 Fighters and 6 Bombers on and around Saint-Omer. The Bombers stand for the Ju 87 and He 111 together, since Germany has no Stuka art yet (08-art-pipeline §17).
@@ -119,7 +119,7 @@ Rain gives fog of war for the day and makes every unit see 1 square less (12-wea
 ### Build lists
 
 - **United Kingdom:** Destroyer, Landing Craft (the personnel ships and little ships), Torpedo Boat; Fighter, Bomber. No land units: it has no factory, and none is offered. No Battleship, Carrier, Submarine or Supply Ship.
-- **Germany:** Infantry, Assault Infantry (the pioneers), Mortar Team, Recon, Halftrack, Light and Medium Tank, Artillery, Mobile AA, Flak Gun; Fighter, Bomber; Torpedo Boat (at Calais). No Heavy Tank, Tank Destroyer or Rocket Artillery (none in 1940), and no Dive Bomber (no Stuka art).
+- **Germany:** Infantry, Assault Infantry (the pioneers), Mortar Team, Recon, Halftrack, Supply Truck, Light and Medium Tank, Artillery, Mobile AA, Flak Gun; Fighter, Bomber; Torpedo Boat (at Calais). No Heavy Tank, Tank Destroyer or Rocket Artillery (none in 1940), and no Dive Bomber (no Stuka art).
 
 ### Victory
 

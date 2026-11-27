@@ -41,20 +41,20 @@
       "name": "UK",
       "nation": "uk",
       "funds": 5000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"],
       "facing": "left"
     },
     {
       "name": "Germany",
       "nation": "germany",
       "funds": 2000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"]
     },
     {
       "name": "Italy",
       "nation": "italy",
       "funds": 2000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber"]
     }
   ],
   "propertyOwners": [
@@ -141,7 +141,7 @@
     { "type": "infantry", "owner": 1, "pos": { "x": 6, "y": 2 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 7, "y": 2 } },
     { "type": "assaultInfantry", "owner": 1, "pos": { "x": 9, "y": 3 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 6, "y": 3 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 6, "y": 3 } },
     { "type": "flakGun", "owner": 1, "pos": { "x": 1, "y": 3 } },
     { "type": "fighter", "owner": 1, "pos": { "x": 2, "y": 4 } },
     { "type": "fighter", "owner": 1, "pos": { "x": 2, "y": 5 } },

@@ -176,14 +176,14 @@ describe("Railway Gun shells and rearming (01-units §2b, 05-supply-transport §
     expect(unitOf(run(state, fire(state, P(11, 0))), "railwayGun").ammo).toBe(2);
   });
 
-  it("a Halftrack next to it rearms it at the start of its owner's turn", () => {
-    const state = game([line, "............"], [gun(P(0, 0), { ammo: 0 }), { type: "halftrack", owner: 0, pos: P(0, 1) }, { type: "infantry", owner: 1, pos: P(11, 1) }]);
+  it("a Supply Truck next to it rearms it at the start of its owner's turn", () => {
+    const state = game([line, "............"], [gun(P(0, 0), { ammo: 0 }), { type: "supplyTruck", owner: 0, pos: P(0, 1) }, { type: "infantry", owner: 1, pos: P(11, 1) }]);
     const next = run(state, endTurn, endTurn);
     expect(unitOf(next, "railwayGun").ammo).toBe(3);
   });
 
-  it("without a Halftrack next to it, it stays empty", () => {
-    const state = game([line, "............"], [gun(P(0, 0), { ammo: 0 }), { type: "halftrack", owner: 0, pos: P(3, 1) }, { type: "infantry", owner: 1, pos: P(11, 1) }]);
+  it("without a Supply Truck next to it, it stays empty", () => {
+    const state = game([line, "............"], [gun(P(0, 0), { ammo: 0 }), { type: "supplyTruck", owner: 0, pos: P(3, 1) }, { type: "infantry", owner: 1, pos: P(11, 1) }]);
     expect(unitOf(run(state, endTurn, endTurn), "railwayGun").ammo).toBe(0);
   });
 });

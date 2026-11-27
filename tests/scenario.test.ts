@@ -99,6 +99,12 @@ describe("built-in scenarios (00-master-design §8)", () => {
       scenario.setup.players.forEach((_, owner) => expect((scenario.setup.units ?? []).some((u) => u.owner === owner), `player ${owner}`).toBe(true));
     });
 
+    it("no starting unit stands on terrain it couldn't drive onto, so wheeled Supply Trucks keep off bocage and the like (02-terrain §2)", () => {
+      for (const u of scenario.setup.units ?? []) {
+        expect(TERRAIN[terrainAt(scenario.setup.map, u.pos)].moveCost[UNITS[u.type].movementType], `${u.type} at ${u.pos.x},${u.pos.y}`).not.toBeNull();
+      }
+    });
+
     it("infantry and tanks can reach the enemy HQ, on land or carried across the sea by Landing Craft", () => {
       const { map } = scenario.setup;
       const [allies, axis] = sides(scenario);
@@ -305,12 +311,12 @@ describe("built-in scenarios (00-master-design §8)", () => {
       expect(clean.length).toBeGreaterThanOrEqual(3);
     });
 
-    it("there is one Railway Gun, German, on its own spur off the main line, with a Halftrack beside it and a Flak Gun guarding it", () => {
+    it("there is one Railway Gun, German, on its own spur off the main line, with a Supply Truck beside it (the ammunition train) and a Flak Gun guarding it", () => {
       expect(units.filter((u) => u.type === "railwayGun").map((u) => u.owner)).toEqual([1]);
       expect(terrainAt(map, gustav.pos)).toBe("railway");
       const railNeighbors = (p: Point) => [P(p.x, p.y - 1), P(p.x + 1, p.y), P(p.x, p.y + 1), P(p.x - 1, p.y)].filter((q) => q.x >= 0 && q.y >= 0 && q.x < map.width && q.y < map.height && terrainAt(map, q) === "railway");
       expect(railNeighbors(gustav.pos)).toHaveLength(1); // the end of a dead-end spur
-      expect(units.some((u) => u.type === "halftrack" && u.owner === 1 && near(u.pos, gustav.pos))).toBe(true);
+      expect(units.some((u) => u.type === "supplyTruck" && u.owner === 1 && near(u.pos, gustav.pos))).toBe(true);
       expect(units.some((u) => u.type === "flakGun" && u.owner === 1 && distance(u.pos, gustav.pos) <= 2)).toBe(true);
     });
 

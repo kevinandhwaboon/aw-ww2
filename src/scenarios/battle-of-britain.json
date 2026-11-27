@@ -30,7 +30,7 @@
       "name": "United Kingdom",
       "nation": "uk",
       "funds": 10000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "destroyer", "torpedoBoat"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "destroyer", "torpedoBoat"]
     },
     {
       "name": "Germany",

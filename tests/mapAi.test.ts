@@ -283,13 +283,21 @@ describe("Gazala's map AI: Rommel's sweep (22-campaign §6d)", () => {
     expect(gazalaPlan().goals?.(state, { ...tank, pos: { x: LINE_EAST + 2, y: 25 } })).toEqual([{ x: 29, y: 9 }]);
   });
 
-  it("an empty Halftrack goes to the tanks in the sweep that are lowest on fuel", () => {
+  it("a Supply Truck goes to the tanks in the sweep that are lowest on fuel", () => {
     const state = game();
     const tanks = state.units.filter((u) => u.owner === 2 && u.type === "mediumTank" && u.pos.y >= 18);
     const thirsty = tanks[0];
     const halftrack = state.units.find((u) => u.owner === 2 && u.type === "halftrack");
     if (!thirsty || !halftrack) throw new Error("setup");
+    const truck = { ...halftrack, type: "supplyTruck" as const, cargo: [], ammo: 5 };
     const low: GameState = { ...state, units: state.units.map((u) => (u.id === thirsty.id ? { ...u, fuel: 3 } : u)) };
-    expect(gazalaPlan().goals?.(low, { ...halftrack, cargo: [] })).toEqual([thirsty.pos]);
+    expect(gazalaPlan().goals?.(low, truck)).toEqual([thirsty.pos]);
+  });
+
+  it("a Supply Truck out of supplies is left to the standard plan, which sends it to refill (09-ai §4j)", () => {
+    const state = game();
+    const halftrack = state.units.find((u) => u.owner === 2 && u.type === "halftrack");
+    if (!halftrack) throw new Error("setup");
+    expect(gazalaPlan().goals?.(state, { ...halftrack, type: "supplyTruck", cargo: [], ammo: 0 })).toBeNull();
   });
 });

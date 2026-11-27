@@ -93,6 +93,7 @@ const MAX_FIGURES: Record<FigureKind, number> = {
   mortar: 3,
   recon: 5,
   halftrack: 5,
+  supplyTruck: 5,
   lightTank: 5,
   mediumTank: 5,
   heavyTank: 5,
@@ -198,6 +199,7 @@ export function fireKind(shooter: UnitTypeId, weapon: "primary" | "secondary", t
     // Unarmed units never fire; MG is a safe look if data ever changes.
     case "recon":
     case "halftrack":
+    case "supplyTruck":
     case "transportAircraft":
     case "landingCraft":
     case "supplyShip":

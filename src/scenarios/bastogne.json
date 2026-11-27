@@ -39,13 +39,13 @@
       "name": "US",
       "nation": "us",
       "funds": 4000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
     },
     {
       "name": "Germany",
       "nation": "germany",
       "funds": 10000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank"],
       "facing": "left"
     }
   ],
@@ -81,7 +81,7 @@
     { "type": "infantry", "owner": 0, "pos": { "x": 20, "y": 15 } },
     { "type": "mediumTank", "owner": 0, "pos": { "x": 16, "y": 26 } },
     { "type": "mediumTank", "owner": 0, "pos": { "x": 17, "y": 26 } },
-    { "type": "halftrack", "owner": 0, "pos": { "x": 18, "y": 26 } },
+    { "type": "supplyTruck", "owner": 0, "pos": { "x": 18, "y": 26 } },
     { "type": "heavyTank", "owner": 1, "pos": { "x": 33, "y": 3 }, "fuel": 12 },
     { "type": "heavyTank", "owner": 1, "pos": { "x": 27, "y": 10 }, "fuel": 12 },
     { "type": "mediumTank", "owner": 1, "pos": { "x": 35, "y": 3 }, "fuel": 17 },
@@ -89,7 +89,7 @@
     { "type": "mediumTank", "owner": 1, "pos": { "x": 28, "y": 10 }, "fuel": 17 },
     { "type": "mediumTank", "owner": 1, "pos": { "x": 30, "y": 13 }, "fuel": 17 },
     { "type": "recon", "owner": 1, "pos": { "x": 32, "y": 8 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 30, "y": 8 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 30, "y": 8 } },
     { "type": "artillery", "owner": 1, "pos": { "x": 31, "y": 8 } },
     { "type": "artillery", "owner": 1, "pos": { "x": 31, "y": 13 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 27, "y": 11 } },

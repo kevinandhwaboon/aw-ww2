@@ -422,7 +422,8 @@ function tyre(s, cx, cy, ry, frame, rx = 2.3) {
 /**
  * A truck: front wheels, hood with its grille and the cab with a windshield coming toward you; going
  * away, the bed and its tailgate at the front with the twin rear wheels below, the cab beyond.
- * o.load: "rails" (Katyusha), "quadMg" (four Maxims), "cannon" (Type 98 20mm), "tilt" (canvas cover).
+ * o.load: "rails" (Katyusha), "quadMg" (four Maxims), "cannon" (Type 98 20mm), "tilt" (canvas cover),
+ * "supplies" (the Supply Truck's ammunition boxes and jerrycans).
  */
 function truck(o) {
   return (view, frame) => {
@@ -478,6 +479,14 @@ function load(s, kind, down, d) {
     s.rect(11, y + d, 20, y + 6 + d, "metal", 2, true).shadow();
     s.rect(15, y - 4 + d, 16, y + 2 + d, "metal", 1);
     s.rect(12, y + 1 + d, 13, y + 4 + d, "team", 1);
+  } else if (kind === "supplies") {
+    // The Supply Truck's open bed: ammunition boxes down one side, jerrycans down the other.
+    const [y0, y1] = down ? [2, 11] : [13, 25];
+    s.rect(8, y0 + d, 23, y1 + d, "darkwood", 1);
+    for (let y = y0 + 1; y + 2 <= y1 - 1; y += 3) {
+      s.rect(9, y + d, 14, y + 2 + d, "wood", 1, true);
+      s.rect(17, y + d, 22, y + 2 + d, "metal", 2, true);
+    }
   } else if (kind === "tilt") {
     const [y0, y1] = down ? [2, 12] : [12, 25];
     s.rect(7, y0 + d, 24, y1 + d, "canvas", 1, true);
@@ -1139,3 +1148,6 @@ export function specViews(kind, spec) {
   const fn = kind === "plane" ? planeView : kind === "ship" ? shipView : carrierView;
   return draw((view, frame) => fn(view, frame, spec));
 }
+
+/** The Supply Truck's front and rear views: an open bed of ammunition boxes and jerrycans. */
+export const supplyTruckViews = (marking) => draw(truck({ load: "supplies", marking }));

@@ -77,13 +77,13 @@
       "name": "Soviet Union",
       "nation": "ussr",
       "funds": 6000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "landingCraft"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "landingCraft"]
     },
     {
       "name": "Germany",
       "nation": "germany",
       "funds": 4000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"],
       "facing": "left"
     }
   ],
@@ -219,7 +219,7 @@
     { "type": "infantry", "owner": 1, "pos": { "x": 42, "y": 53 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 42, "y": 60 } },
     { "type": "artillery", "owner": 1, "pos": { "x": 43, "y": 53 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 44, "y": 53 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 44, "y": 53 } },
     { "type": "mediumTank", "owner": 1, "pos": { "x": 42, "y": 54 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 27, "y": 39 } },
     { "type": "fighter", "owner": 1, "pos": { "x": 44, "y": 37 } },

@@ -433,7 +433,7 @@ for (const plane of units.filter((u) => u.type === "transportAircraft")) {
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const scenario = {

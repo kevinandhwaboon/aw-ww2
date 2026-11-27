@@ -268,7 +268,7 @@ describe("build (04-economy §4)", () => {
     expect(options[0]).toEqual({ type: "infantry", cost: 1000, affordable: true });
     expect(options.find((o) => o.type === "mediumTank")).toEqual({ type: "mediumTank", cost: 8000, affordable: false });
     expect(options.map((o) => o.cost)).toEqual([...options.map((o) => o.cost)].sort((a, b) => a - b));
-    expect(options).toHaveLength(13);
+    expect(options).toHaveLength(14);
   });
 
   it("a Radar Station is never built, even by a player with no build list: only a scenario places one", () => {

@@ -37,6 +37,7 @@ import {
   isCarrier,
   isLandingCraft,
   isSupplyShip,
+  isSupplyTruck,
   samePoint,
 } from "./greedyBase";
 import { ProductionBrain } from "./greedyProduction";
@@ -257,19 +258,17 @@ class Brain extends ProductionBrain {
       if (rides.length > 0) return { kind: "advance", goals: rides, dist: this.distances(unit, rides, `rides${unit.id}`), embark: true };
     }
 
-    // A Halftrack posted to a unit that can't get to a property to rearm stays beside it (09-ai §4j),
+    // A Supply Truck posted to a unit that can't get to a property to rearm stays beside it (09-ai §4j),
     // off the track where it can, so it doesn't stand in a Railway Gun's way.
-    const charge = def.specialActions.includes("resupply") && def.category === "land" ? this.supplyPosts().get(unit.id) : undefined;
+    const charge = isSupplyTruck(unit.type) ? this.supplyPosts().get(unit.id) : undefined;
     if (charge) {
       if (distance(unit.pos, charge.pos) === 1) return HOLD;
-      const free = this.neighbors(charge.pos).filter((p) => {
-        const occupant = unitAt(this.state, p);
-        return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
-      });
+      const free = this.freeBeside(unit, charge);
       const offTrack = free.filter((p) => terrainAt(this.state.map, p) !== "railway");
       const goals = offTrack.length > 0 ? offTrack : free;
       if (goals.length > 0) return this.advance(unit, goals, `post${unit.id}`);
     }
+    if (isSupplyTruck(unit.type)) return this.planSupplyTruck(unit);
 
     const carries = def.transport?.carries ?? [];
     if (def.transport) {
@@ -331,15 +330,12 @@ class Brain extends ProductionBrain {
     const needs = (u: Unit) => {
       const def = defOf(u.type);
       if (def.category === "air") return false;
-      // Land units only when they're nearly dry: they mostly have Halftracks and cities.
+      // Land units only when they're nearly dry: they mostly have Supply Trucks and cities.
       if (def.category === "land") return u.fuel <= stats.maxFuel(this.state, u) / 4 || (def.primaryWeapon !== null && u.ammo === 0);
       const short = u.fuel <= stats.maxFuel(this.state, u) * this.w.supplyFuelShare || u.ammo < stats.maxAmmo(this.state, u);
       return short || displayHp(u.hp) < 10;
     };
-    const reachable = (u: Unit) => this.neighbors(u.pos).filter((p) => {
-      const occupant = unitAt(this.state, p);
-      return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
-    });
+    const reachable = (u: Unit) => this.freeBeside(unit, u);
     const dry = mine.filter((u) => defOf(u.type).category === "naval" && u.fuel === 0).flatMap(reachable);
     const rescue = this.advance(unit, dry, `rescue${unit.id}`);
     // Only if it can get there: otherwise it helps whoever else it can reach.
@@ -348,6 +344,34 @@ class Brain extends ProductionBrain {
     if (wanting.length > 0) return this.advance(unit, wanting, `supply${unit.id}`);
     const fleet = mine.filter((u) => defOf(u.type).category === "naval" && defOf(u.type).range !== null).flatMap(reachable);
     return fleet.length > 0 ? this.advance(unit, fleet, `fleet${unit.id}`) : IDLE;
+  }
+
+  /**
+   * A Supply Truck (09-ai §4j) drives to the nearest of our land units it can reach that is short:
+   * fuel at or below the share a Supply Ship goes by, or a main weapon short of ammo. With nobody in
+   * need it keeps company with our armed land units, so it's at hand when they are. Out of supplies,
+   * it goes back to one of our land properties to refill them (05-supply-transport §3b).
+   */
+  private planSupplyTruck(unit: Unit): Plan {
+    if (unit.ammo <= 0) {
+      const home = this.repairTiles(unit);
+      return home.length > 0 ? { kind: "retreat", dist: this.distances(unit, home, "repair") } : IDLE;
+    }
+    const land = this.state.units.filter((u) => u.owner === this.me && u.id !== unit.id && defOf(u.type).category === "land" && !isSupplyTruck(u.type));
+    const needs = (u: Unit) =>
+      u.fuel <= stats.maxFuel(this.state, u) * this.w.supplyFuelShare || (defOf(u.type).primaryWeapon !== null && u.ammo < stats.maxAmmo(this.state, u));
+    const wanting = land.filter(needs).flatMap((u) => this.freeBeside(unit, u));
+    if (wanting.length > 0) return this.advance(unit, wanting, `supply${unit.id}`);
+    const army = land.filter((u) => defOf(u.type).range !== null).flatMap((u) => this.freeBeside(unit, u));
+    return army.length > 0 ? this.advance(unit, army, `army${unit.id}`) : IDLE;
+  }
+
+  /** The squares next to `other` that this unit could stand on: empty (or its own) and passable for it. */
+  private freeBeside(unit: Unit, other: Unit): Point[] {
+    return this.neighbors(other.pos).filter((p) => {
+      const occupant = unitAt(this.state, p);
+      return (!occupant || occupant.id === unit.id) && stats.moveCost(this.state, unit, terrainAt(this.state.map, p)) !== null;
+    });
   }
 
   /**

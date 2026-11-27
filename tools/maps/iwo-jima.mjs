@@ -156,7 +156,7 @@ const units = [
   us("landingCraft", 23, 19, { cargo: [{ type: "infantry" }, { type: "infantry" }] }),
   us("landingCraft", 20, 22, { cargo: [{ type: "mediumTank" }, { type: "mediumTank" }] }),
   us("landingCraft", 22, 21, { cargo: [{ type: "infantry" }, { type: "assaultInfantry" }] }),
-  us("landingCraft", 24, 20, { cargo: [{ type: "artillery" }, { type: "halftrack" }] }),
+  us("landingCraft", 24, 20, { cargo: [{ type: "artillery" }, { type: "supplyTruck" }] }),
   // Mount Suribachi's garrison.
   jp("infantry", 5, 19), jp("mortar", 4, 20), jp("artillery", 6, 19), jp("infantry", 6, 20),
   // The beach line: every pillbox behind the sand is manned, with guns and mortars behind it whose
@@ -196,7 +196,7 @@ const scenario = {
       nation: "us",
       funds: 6000,
       buildable: [
-        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer",
+        "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer",
         "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "diveBomber", "torpedoBomber",
         "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat", "carrier",
       ],

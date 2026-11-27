@@ -256,7 +256,7 @@ describe("transport, supply and join", () => {
   });
 
   it("offers Supply next to a friendly unit that needs it", async () => {
-    const game = setup(["===="], [{ type: "halftrack", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(2, 0), ammo: 1 }]);
+    const game = setup(["===="], [{ type: "supplyTruck", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(2, 0), ammo: 1 }]);
     await onto(game, P(0, 0), P(1, 0));
     expect(game.labels()).toEqual(["supply", "wait", "cancel"]);
   });
@@ -354,6 +354,23 @@ describe("submarines (05-supply-transport §9)", () => {
     game.controller.onConfirm(P(1, 0));
     await game.settle();
     expect(game.labels()).toEqual(["surface", "wait", "cancel"]);
+  });
+
+  it("Dive and Surface are never highlighted when the menu opens: Wait is, so a double tap just moves (05-supply-transport §9)", async () => {
+    const game = setup(["SS."], [{ type: "submarine", owner: 0, pos: P(0, 0) }]);
+    game.controller.onConfirm(P(0, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()?.[game.seen.menuSelected]).toBe("wait");
+    game.controller.onMenuChoice("dive");
+    await game.settle();
+
+    await endTurn(game, P(2, 0));
+    await endTurn(game, P(2, 0));
+    game.controller.onConfirm(P(1, 0));
+    game.controller.onConfirm(P(1, 0));
+    await game.settle();
+    expect(game.labels()?.[game.seen.menuSelected]).toBe("wait");
   });
 
   it("other ships get neither", async () => {

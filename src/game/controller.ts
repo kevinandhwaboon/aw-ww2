@@ -519,7 +519,8 @@ export class InputController {
     const at = path[path.length - 1] ?? unit.pos;
     const boarding = this.boardingItems(unit, at);
     const items = boarding.length > 0 ? [...boarding, CANCEL] : [...this.actionItems(unit, at, targets.length + forts.length > 0), WAIT, CANCEL];
-    this.deps.view.openMenu(at, items);
+    // Dive and Surface are never highlighted, so a quick double tap just moves a submarine (05-supply-transport §9).
+    this.deps.view.openMenu(at, items, items.findIndex((item) => item !== DIVE && item !== SURFACE));
   }
 
   /** LOAD and/or JOIN, if `tile` holds a friendly unit this one can board or merge with. */

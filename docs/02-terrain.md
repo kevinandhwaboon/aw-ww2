@@ -19,7 +19,7 @@
 |---|---|---|
 | `foot` | Infantry | Infantry |
 | `heavyFoot` | Mech | Assault Infantry, Mortar Team |
-| `wheels` | Tires | Recon, Rocket Artillery |
+| `wheels` | Tires | Recon, Supply Truck, Rocket Artillery |
 | `tracks` | Treads | Halftrack, all tanks, Tank Destroyer, Artillery, Mobile AA, Flak Gun |
 | `air` | Air | All air units (phase 2) |
 | `sea` | Ship | Battleship, Destroyer, Submarine, Torpedo Boat, Carrier, Supply Ship (phase 2) |

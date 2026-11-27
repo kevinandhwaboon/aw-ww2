@@ -52,6 +52,7 @@ const MATCHUPS: readonly Matchup[] = [
   { a: "mediumTank", d: "mediumTank", at: "hills", counter: "primary" },
   { a: "heavyTank", d: "tankDestroyer", counter: "primary" },
   { a: "mediumTank", d: "halftrack", weapon: "secondary" },
+  { a: "lightTank", d: "supplyTruck", dt: "road" },
   { a: "artillery", d: "mediumTank", dt: "city" },
   { a: "rocketArtillery", d: "infantry", dt: "factory" },
   { a: "mobileAA", d: "fighter", counter: "primary" },

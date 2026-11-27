@@ -400,7 +400,7 @@ place("mediumTank", GERMANY, behindLines(0.8, 3), LOW_MEDIUM);
 place("infantry", GERMANY, near("Ghazal"));
 place("infantry", GERMANY, near("Ghazal"));
 place("assaultInfantry", GERMANY, near("Sidi Abd el Rahman"));
-place("halftrack", GERMANY, near("Ghazal"));
+place("supplyTruck", GERMANY, near("Ghazal"));
 // El Daba: the airfield's flak and the Luftwaffe.
 place("flakGun", GERMANY, near("El Daba airfield"));
 add("fighter", GERMANY, placed.get("El Daba airfield"));
@@ -452,7 +452,7 @@ place("assaultInfantry", ITALY, behindLines(0.93, 2));
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "mobileAA", "flakGun",
 ];
 const scenario = {

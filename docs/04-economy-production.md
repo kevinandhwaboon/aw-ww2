@@ -27,12 +27,12 @@ This includes the first player's first turn, so they collect income on day 1, as
 
 1. **Daily fuel use** for that player's air and naval units; aircraft that run out crash, ships that run out are stranded (05-supply-transport §5, §7). None on day 1, or for units on a property that services them.
 2. **Income:** add income for every property the player owns.
-3. **Repair and resupply** on owned properties (section 5), then Halftrack and Supply Ship automatic resupply (05-supply-transport §3, §3a, §3b).
+3. **Repair and resupply** on owned properties (section 5), then Supply Truck and Supply Ship automatic resupply (05-supply-transport §3, §3a, §3b).
 4. All of the player's units become ready to act.
 
 Each event in this sequence is emitted as an engine event so the UI can show it (funds ticking up, "+2" heals).
 
-**How step 3 is shown** (decided 2026-11-19, at the developer's request): after the Day banner, the cursor visits each unit repaired or resupplied, **one unit at a time**, in the order the engine serviced them (property repairs first, row by row, then Halftrack and Supply Ship resupply). A unit refuelled and rearmed gets a supply crate popping up over it, and its low fuel and ammo cans go away. A repaired unit's HP badge counts up one point at a time with a green "+2" rising off it, while the funds in the HUD count down by the repair cost. A unit both repaired and resupplied is one visit. Then the cursor goes back to the HQ. Only units the viewer can see are visited (19-fog-of-war §7).
+**How step 3 is shown** (decided 2026-11-19, at the developer's request): after the Day banner, the cursor visits each unit repaired or resupplied, **one unit at a time**, in the order the engine serviced them (property repairs first, row by row, then Supply Truck and Supply Ship resupply). A unit refuelled and rearmed gets a supply crate popping up over it, and its low fuel and ammo cans go away. A repaired unit's HP badge counts up one point at a time with a green "+2" rising off it, while the funds in the HUD count down by the repair cost. A unit both repaired and resupplied is one visit. Then the cursor goes back to the HQ. Only units the viewer can see are visited (19-fog-of-war §7).
 
 ## 3. Capture
 
