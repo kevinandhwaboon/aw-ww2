@@ -404,7 +404,7 @@ export function startSession({ gameRoot, uiRoot, game: initial, resumed, onChang
    * small that squares are hard to read: past that the view scrolls (00-master-design §12).
    */
   // With the game pad the screen is a box above the pad, drawn in the phone's own pixels.
-  const unmountPad = pad ? mountPad(uiRoot, padInput(scene)) : null;
+  const unmountPad = pad ? mountPad(uiRoot, padInput(scene, battle)) : null;
   const fitWindow = () =>
     pad
       ? handheldViewSize(gameRoot.getBoundingClientRect(), { width, height }, window.devicePixelRatio)
@@ -468,10 +468,11 @@ function turnStartTile(state: GameState, player: number): Point {
 }
 
 /**
- * Where an on-screen pad button goes: to the menu that has the focus, as the key it stands for,
- * otherwise straight to the map. A button left focused on a screen that's now hidden doesn't count.
+ * Where an on-screen pad button goes: to a playing battle scene, which Z and X skip as on the
+ * keyboard; else to the menu that has the focus, as the key it stands for; otherwise straight to the
+ * map. A button left focused on a screen that's now hidden doesn't count.
  */
-function padInput(scene: MapScene): PadInput {
+function padInput(scene: MapScene, battle: BattleScene): PadInput {
   const focusedMenu = (): HTMLElement | null => {
     const focused = document.activeElement;
     if (!(focused instanceof HTMLElement) || focused === document.body) return null;
@@ -483,6 +484,7 @@ function padInput(scene: MapScene): PadInput {
     target.dispatchEvent(new KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true }));
   return {
     press(key, repeat) {
+      if (battle.pressKey(key)) return;
       const menu = focusedMenu();
       if (menu) send(menu, "keydown", key, repeat);
       else scene.pressKey(key, repeat);

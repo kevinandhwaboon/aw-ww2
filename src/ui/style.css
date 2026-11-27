@@ -1395,3 +1395,16 @@ body.pad-layout {
   color: var(--panel-bg);
   opacity: 0.6;
 }
+
+/* A screen's title with its Back button, for tapping or clicking instead of pressing X. */
+.screen-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.screen-back {
+  flex: none;
+  padding: 2px 10px;
+  font-size: 12px;
+}

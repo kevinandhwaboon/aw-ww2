@@ -9,7 +9,7 @@ import { commanderName } from "../game/artPack";
 import { bestRun, describeRun, TOP_RUNS, type SurvivalRecords } from "../survival/record";
 import { commandersFor } from "../urlOptions";
 import { commanderPicker } from "./commanders";
-import { el } from "./dom";
+import { el, screenTitle } from "./dom";
 import type { GameOptions } from "./gameOptions";
 import { menuKeys } from "./menuKeys";
 import { drawSketch, featureColor, featureName } from "./sketchCanvas";
@@ -99,7 +99,10 @@ export function showSurvival(
   const body = el("div", "map-select-body");
   body.append(left, brief);
   panel.append(
-    el("div", "panel-title", "Survival"),
+    screenTitle("Survival", () => {
+      close();
+      onBack();
+    }),
     el("div", "screen-hint", "↑ ↓ map · Z choose · X back"),
     el("div", "title-sub", "Hold your HQ against waves that grow until it falls"),
     body,
