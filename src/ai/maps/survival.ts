@@ -110,6 +110,27 @@ export function firingSquares(state: GameState, unit: Unit, target: Unit): Point
   return squares.length > 0 ? [target.pos] : [];
 }
 
+/**
+ * The squares next to a unit on the HQ that this unit should leave free (23-survival §6): it can't
+ * hit what's on the HQ, and another of our units can, on the map or aboard a Carrier or a Landing
+ * Craft. Without this our own infantry, waiting round the HQ to capture it, fill every square from
+ * which a Mobile AA or a Fighter could shoot down an aircraft parked there.
+ */
+export function makeWaySquares(state: GameState, unit: Unit): Point[] {
+  const blockers = hqBlockers(state).filter((b) => !canHit(unit, b));
+  if (blockers.length === 0) return [];
+  const ours = state.units.filter((u) => u.owner === unit.owner).flatMap((u) => [u, ...u.cargo]);
+  const squares: Point[] = [];
+  for (const blocker of blockers) {
+    if (!ours.some((u) => canHit(u, blocker))) continue;
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const p = { x: blocker.pos.x + dx, y: blocker.pos.y + dy };
+      if (p.x >= 0 && p.y >= 0 && p.x < state.map.width && p.y < state.map.height) squares.push(p);
+    }
+  }
+  return squares;
+}
+
 export function survivalPlan(name: string): MapPlan {
   /** Whether a movement type can walk from a square to an HQ: terrain only changes with bridges. */
   const cache = new Map<string, boolean>();
@@ -143,7 +164,8 @@ export function survivalPlan(name: string): MapPlan {
     },
 
     keepOff(state, unit) {
-      return UNITS[unit.type].canCapture ? [] : enemyHqs(state).filter((p) => propertyAt(state, p) !== undefined);
+      const hqs = UNITS[unit.type].canCapture ? [] : enemyHqs(state).filter((p) => propertyAt(state, p) !== undefined);
+      return [...hqs, ...makeWaySquares(state, unit)];
     },
 
     attackBonus(state, attacker: Unit, target: Unit) {

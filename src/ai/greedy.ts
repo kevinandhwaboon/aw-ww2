@@ -73,12 +73,15 @@ class Brain extends ProductionBrain {
   // ---- Who acts next -------------------------------------------------------------------------
 
   /**
-   * Order of play (09-ai §4): units that can attack first, then capturers, then everything else,
-   * with transports last so passengers can board before they leave. Most valuable first in each group.
+   * Order of play (09-ai §4): a unit standing on a square the map plan wants kept clear goes first,
+   * so the square is free for the units it's kept clear for; then units that can attack, then
+   * capturers, then everything else, with transports last so passengers can board before they
+   * leave. Most valuable first in each group.
    */
   nextUnit(): Unit | undefined {
     const ready = this.state.units.filter((u) => u.owner === this.me && !u.hasActed);
-    const ranked = ready.map((unit) => ({ unit, group: this.group(unit), value: this.cost(unit) }));
+    const inTheWay = (unit: Unit) => (this.mapPlan?.keepOff?.(this.state, unit) ?? []).some((p) => samePoint(p, unit.pos));
+    const ranked = ready.map((unit) => ({ unit, group: inTheWay(unit) ? -1 : this.group(unit), value: this.cost(unit) }));
     ranked.sort((a, b) => a.group - b.group || b.value - a.value || a.unit.id - b.unit.id);
     return ranked[0]?.unit;
   }

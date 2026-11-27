@@ -3,7 +3,9 @@
 
 import { describe, expect, it } from "vitest";
 import { survivalAi } from "../src/ai/maps";
-import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
+import { AIR_DEFENCE_BONUS, CARRIER_STATION, carrierStation, enemyHqs, HQ_BLOCKER_BONUS, HQ_DEFENCE_BONUS, hqBlockers, makeWaySquares, survivalDefencePlan, survivalPlan } from "../src/ai/maps/survival";
+import { apply } from "../src/engine/apply";
+import type { Command } from "../src/engine/commands";
 import { chooseCommand, scoreUnitCommands } from "../src/ai/greedy";
 import type { AiPlayer } from "../src/ai/player";
 import { selfPlay } from "../src/ai/selfplay";
@@ -150,6 +152,40 @@ describe("an aircraft parked on the HQ (23-survival §6)", () => {
     const report = await selfPlay({ ...islandGame(units), currentPlayer: 0 }, [parkedPlayer, survivalAi()], 15);
     expect(report.problems).toEqual([]);
     expect(report.state.result).toMatchObject({ winningSide: "axis", reason: "hqCapture" });
+  });
+
+  it("units that can't hit an aircraft parked on the HQ keep the squares next to it free, while another unit can hit it (23-survival §6)", () => {
+    const ring = [{ x: 13, y: 1 }, { x: 15, y: 1 }, { x: 14, y: 2 }];
+    const infantry = ring.map((pos) => ({ type: "infantry" as const, owner: 1, pos }));
+    const withAA = islandGame([parked, ...infantry, { type: "mobileAA", owner: 1, pos: { x: 9, y: 2 } }]);
+    const alone = islandGame([parked, ...infantry]);
+    const first = (state: GameState, type: string) => {
+      const unit = state.units.find((u) => u.owner === 1 && u.type === type);
+      if (!unit) throw new Error(`no ${type}`);
+      return unit;
+    };
+    expect(makeWaySquares(withAA, first(withAA, "infantry"))).toEqual(expect.arrayContaining([...ring, { x: 14, y: 0 }]));
+    expect(survivalPlan("test").keepOff?.(withAA, first(withAA, "infantry"))).toEqual(expect.arrayContaining(ring));
+    // The Mobile AA itself goes in; with nothing that can hit the aircraft, the infantry stays where it is.
+    expect(makeWaySquares(withAA, first(withAA, "mobileAA"))).toEqual([]);
+    expect(makeWaySquares(alone, first(alone, "infantry"))).toEqual([]);
+  });
+
+  it("Japan's infantry crowding round the HQ step aside so its Mobile AA can shoot down the aircraft parked there (23-survival §6)", () => {
+    const ring = [{ x: 13, y: 1 }, { x: 15, y: 1 }, { x: 14, y: 2 }];
+    let state = islandGame([parked, ...ring.map((pos) => ({ type: "infantry" as const, owner: 1, pos })), { type: "mobileAA", owner: 1, pos: { x: 10, y: 2 } }]);
+    const aa = state.units.find((u) => u.type === "mobileAA");
+    const fighter = state.units.find((u) => u.type === "fighter");
+    if (!aa || !fighter) throw new Error("missing units");
+    const commands: Command[] = [];
+    while (state.currentPlayer === 1 && !state.result && commands.length < 40) {
+      const command = chooseCommand(state, undefined, survivalPlan("test"));
+      const result = apply(state, command);
+      if (!result.ok) throw new Error(result.message);
+      commands.push(command);
+      state = result.state;
+    }
+    expect(commands.some((c) => c.type === "move" && c.unitId === aa.id && c.action.type === "attack" && c.action.target === fighter.id)).toBe(true);
   });
 
   it("Japan shoots down an aircraft parked on the HQ with Mobile AA brought ashore (23-survival §6)", async () => {
