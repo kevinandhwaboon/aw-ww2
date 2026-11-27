@@ -68,14 +68,23 @@ export class BattleScene extends Phaser.Scene implements BattlePlayer {
     this.image = this.add.image(0, 0, TEXTURE_KEY).setVisible(false);
     const keys = new AbortController();
     window.addEventListener("keydown", (event) => {
-      if (!SKIP_KEYS.has(event.key) || !this.playing) return;
+      if (!this.pressKey(event.key)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      this.skip();
     }, { capture: true, signal: keys.signal });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => keys.abort());
     this.input.on("pointerdown", () => this.skip());
     this.markReady();
+  }
+
+  /**
+   * A key press from the keyboard or the on-screen pad: while a scene plays, Z, X, Enter, Space and
+   * Escape skip it. Returns whether the scene took the key, so the map behind it doesn't also get it.
+   */
+  pressKey(key: string): boolean {
+    if (!this.playing || !SKIP_KEYS.has(key)) return false;
+    this.skip();
+    return true;
   }
 
   play(plan: BattlePlan): Promise<void> {

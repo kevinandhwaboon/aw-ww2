@@ -11,7 +11,7 @@ import type { Scenario } from "../engine/scenario";
 import { commanderName, unitName } from "../game/artPack";
 import { commandersFor } from "../urlOptions";
 import { commanderPicker, type CommanderPicker } from "./commanders";
-import { el } from "./dom";
+import { el, screenTitle } from "./dom";
 import type { GameOptions } from "./gameOptions";
 import { menuKeys } from "./menuKeys";
 import { BATTLE_PLACES, project, THEATERS, type BattlePlace } from "./theaters";
@@ -97,7 +97,12 @@ export function showCampaign(
   const brief = el("div", "map-brief campaign-brief");
   const body = el("div", "map-select-body");
   body.append(left, brief);
-  panel.append(el("div", "panel-title", "Campaign"), el("div", "screen-hint", "↑ ↓ mission · Z choose · X back"), body);
+  panel.append(
+    screenTitle("Campaign", () => {
+      close();
+      onBack();
+    }),
+    el("div", "screen-hint", "↑ ↓ mission · Z choose · X back"), body);
   node.append(panel);
 
   const missions = entries.map((e) => e.mission);

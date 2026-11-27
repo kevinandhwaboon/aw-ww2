@@ -5,7 +5,7 @@ import type { Scenario } from "../engine/scenario";
 import { commandersFor } from "../urlOptions";
 import { commanderPicker, type CommanderPicker } from "./commanders";
 import { defaultComputerPlayers } from "./computerPlayers";
-import { el } from "./dom";
+import { el, screenTitle } from "./dom";
 import type { GameOptions } from "./gameOptions";
 import { menuKeys } from "./menuKeys";
 import { playFeatureShot } from "./featureShot";
@@ -188,7 +188,7 @@ export function showMapSelect(
 
   const body = el("div", "map-select-body");
   body.append(left, brief);
-  panel.append(el("div", "panel-title", "Choose a battle"), el("div", "screen-hint", "← → theater · ↑ ↓ battle · Z choose · X back"), tabs, body);
+  panel.append(screenTitle("Choose a battle", () => back()), el("div", "screen-hint", "← → theater · ↑ ↓ battle · Z choose · X back"), tabs, body);
   node.append(panel);
 
   let theater: TheaterId = theaters[0] ?? "westernEurope";
@@ -211,6 +211,10 @@ export function showMapSelect(
     showPlayerSelect(root, scenarios, scenario, defaults, onStart, title);
   };
   next.addEventListener("click", confirm);
+  const back = () => {
+    close();
+    showTitleScreen(root, scenarios, defaults, onStart, title);
+  };
 
   const inTheater = () => placed.filter((p) => p.place.theater === theater);
 
@@ -309,10 +313,7 @@ export function showMapSelect(
       if (!event.repeat) confirm();
     } else if (["x", "X", "Escape", "Backspace"].includes(key)) {
       event.preventDefault();
-      if (!event.repeat) {
-        close();
-        showTitleScreen(root, scenarios, defaults, onStart, title);
-      }
+      if (!event.repeat) back();
     }
   };
 
@@ -373,9 +374,13 @@ export function showPlayerSelect(
     close();
     onStart(scenario, options());
   });
+  const back = () => {
+    close();
+    showMapSelect(root, scenarios, options(), onStart, title, scenario);
+  };
 
   panel.append(
-    el("div", "panel-title", scenario.name),
+    screenTitle(scenario.name, back),
     el("div", "screen-hint", "↑ ↓ move · ← → change commander · Z choose · X back to maps"),
     players,
     easy.row,
@@ -400,9 +405,6 @@ export function showPlayerSelect(
       battleScenes.input,
       start,
     ],
-    () => {
-      close();
-      showMapSelect(root, scenarios, options(), onStart, title, scenario);
-    },
+    back,
   );
 }
