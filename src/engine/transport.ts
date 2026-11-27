@@ -94,8 +94,8 @@ export function applyUnload(state: GameState, transport: Unit, passenger: Unit, 
 }
 
 /**
- * Whether this unit hands out a limited number of resupplies, kept in its ammo count (the Supply
- * Ship, 05-supply-transport §3b). The Halftrack's are unlimited.
+ * Whether this unit hands out a limited number of resupplies, kept in its ammo count: Supply Trucks
+ * and Supply Ships (05-supply-transport §3b).
  */
 export function usesSupplyLoads(unit: Unit): boolean {
   return unitDef(unit.type).supplyLoads !== null;
@@ -103,8 +103,8 @@ export function usesSupplyLoads(unit: Unit): boolean {
 
 /**
  * Short of fuel or ammo, and something this supply unit can refill (05-supply-transport §3, §3a, §5):
- * a Halftrack refills land units only, a Supply Ship land units and ships. Aircraft never: they have
- * to fly home to an airfield or Carrier. Another Supply Ship's loads only refill at a port (§3b), so
+ * a Supply Truck refills land units only, a Supply Ship land units and ships. Aircraft never: they have
+ * to fly home to an airfield or Carrier. Another supply unit's loads only refill at a property (§3b), so
  * for one of those only its fuel counts.
  */
 function needsSupply(state: GameState, supplier: Unit, unit: Unit): boolean {
@@ -114,9 +114,9 @@ function needsSupply(state: GameState, supplier: Unit, unit: Unit): boolean {
 }
 
 /**
- * Friendly units next to this supply unit that are short of fuel or ammo: land units for a Halftrack,
+ * Friendly units next to this supply unit that are short of fuel or ammo: land units for a Supply Truck,
  * land units and ships for a Supply Ship, never aircraft (05-supply-transport §3, §3a). None from a
- * Supply Ship with no loads left (§3b).
+ * supply unit with no loads left (§3b).
  */
 export function supplyTargets(state: GameState, supplier: Unit): Unit[] {
   if (!unitDef(supplier.type).specialActions.includes("resupply")) return [];

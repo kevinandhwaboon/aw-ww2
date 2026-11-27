@@ -468,7 +468,7 @@ const scenario = {
       name: "United Kingdom",
       nation: "uk",
       funds: 10000,
-      buildable: ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", ...AIR, "destroyer", "torpedoBoat"],
+      buildable: ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", ...AIR, "destroyer", "torpedoBoat"],
     },
     {
       name: "Germany",

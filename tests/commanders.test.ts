@@ -194,7 +194,7 @@ describe("Hugh Ashdown (06-commanders §3)", () => {
 describe("Luc Tremblay (06-commanders §3)", () => {
   it("his Halftracks move 1 further", () => {
     const state = game(["..."], [{ type: "halftrack", owner: 0, pos: P(0, 0) }], { allies: "tremblay" });
-    expect(stats.movePoints(state, unit(state, 0))).toBe(7);
+    expect(stats.movePoints(state, unit(state, 0))).toBe(8);
   });
 
   it("his units are Veterans at 2 kills and Elite at 5, others at 3 and 9 (03-combat §6)", () => {

@@ -173,14 +173,14 @@ describe("passengers and combat (05-supply-transport §4, 03-combat §6)", () =>
   });
 });
 
-describe("Halftrack supply (05-supply-transport §3)", () => {
-  // The Halftrack starts out of reach and drives up: adjacent units are refilled automatically
+describe("Supply Truck supply (05-supply-transport §3)", () => {
+  // The Supply Truck starts out of reach and drives up: adjacent units are refilled automatically
   // at the start of its owner's turn, including day 1.
   const game = (extra: Partial<UnitSetup> = { ammo: 1, fuel: 5 }) =>
-    makeGame(["====", "===="], [u("halftrack", 0, 0), u("mediumTank", 0, 2, 0, extra), u("mediumTank", 1, 1, 1, { ammo: 1 })]);
+    makeGame(["====", "===="], [u("supplyTruck", 0, 0), u("mediumTank", 0, 2, 0, extra), u("mediumTank", 1, 1, 1, { ammo: 1 })]);
   const driveUp = (unitId = 0) => supply(unitId, [P(1, 0)]);
 
-  it("the Supply action refills adjacent friendly units, ending the Halftrack's action", () => {
+  it("the Supply action refills adjacent friendly units, ending the Supply Truck's action", () => {
     const { state, events } = must(game(), driveUp());
     expect(byId(state, 1)).toMatchObject({ ammo: 9, fuel: 30 });
     expect(byId(state, 0)).toMatchObject({ pos: P(1, 0), hasActed: true });
@@ -199,14 +199,14 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
   });
 
   it("happens automatically at the start of the owner's turn", () => {
-    const state = makeGame(["==="], [u("halftrack", 1, 1), u("mediumTank", 1, 2, 0, { ammo: 1, fuel: 5 })]);
+    const state = makeGame(["==="], [u("supplyTruck", 1, 1), u("mediumTank", 1, 2, 0, { ammo: 1, fuel: 5 })]);
     const { state: after, events } = must(state, endTurn);
     expect(byId(after, 1)).toMatchObject({ ammo: 9, fuel: 30 });
     expect(events).toContainEqual({ type: "unitResupplied", unitId: 1 });
   });
 
   it("automatic supply runs after property repair, and costs nothing", () => {
-    const state = makeGame(["=C="], [u("halftrack", 1, 0), u("mediumTank", 1, 1, 0, { ammo: 1, hp: 50 })], {
+    const state = makeGame(["=C="], [u("supplyTruck", 1, 0), u("mediumTank", 1, 1, 0, { ammo: 1, hp: 50 })], {
       players: [{ name: "A", nation: "us" }, { name: "B", nation: "germany", funds: 0 }],
       settings: { incomePerProperty: 0 },
     });
@@ -215,7 +215,7 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
   });
 
   it("never refills aircraft, which have to fly home to an airfield (05-supply-transport §3, §5)", () => {
-    const state = makeGame(["==="], [u("halftrack", 0, 1), u("fighter", 0, 0, 0, { ammo: 1, fuel: 30 })]);
+    const state = makeGame(["==="], [u("supplyTruck", 0, 1), u("fighter", 0, 0, 0, { ammo: 1, fuel: 30 })]);
     expect(supplyTargets(state, state.units[0] as Unit)).toEqual([]);
     expect(apply(state, supply(0))).toMatchObject({ ok: false, code: "cannotSupply" });
     const { state: after, events } = must(state, endTurn);
@@ -224,8 +224,41 @@ describe("Halftrack supply (05-supply-transport §3)", () => {
   });
 
   it("doesn't reach diagonal units", () => {
-    const state = makeGame(["==", "=="], [u("halftrack", 0, 0), u("mediumTank", 0, 1, 1, { ammo: 1 })]);
+    const state = makeGame(["==", "=="], [u("supplyTruck", 0, 0), u("mediumTank", 0, 1, 1, { ammo: 1 })]);
     expect(supplyTargets(state, state.units[0] as Unit)).toEqual([]);
+  });
+
+  it("each resupply spends one of its 5 supplies, and with none left it refills nobody (05-supply-transport §3b)", () => {
+    const { state } = must(game(), driveUp());
+    expect(byId(state, 0)?.ammo).toBe(4);
+    const empty = makeGame(["==="], [u("supplyTruck", 1, 1, 0, { ammo: 0 }), u("mediumTank", 1, 2, 0, { ammo: 1, fuel: 5 })]);
+    expect(supplyTargets(empty, empty.units[0] as Unit)).toEqual([]);
+    expect(byId(must(empty, endTurn).state, 1)).toMatchObject({ ammo: 1, fuel: 5 });
+  });
+
+  it("a round where nobody next to it needs anything costs no supply (05-supply-transport §3b)", () => {
+    const state = makeGame(["==="], [u("supplyTruck", 1, 1), u("mediumTank", 1, 2)]);
+    expect(byId(must(state, endTurn).state, 0)?.ammo).toBe(5);
+  });
+
+  it("refills its supplies on its own city, like any land unit's ammo (05-supply-transport §3b)", () => {
+    const state = makeGame(["=C="], [u("supplyTruck", 1, 1, 0, { ammo: 1 })], { propertyOwners: [{ pos: P(1, 0), owner: 1 }] });
+    expect(byId(must(state, endTurn).state, 0)?.ammo).toBe(5);
+  });
+
+  it("never refuels or rearms a ship: only a port or a Supply Ship can (05-supply-transport §3)", () => {
+    const state = makeGame(["=S"], [u("supplyTruck", 0, 0), u("destroyer", 0, 1, 0, { fuel: 10, ammo: 1 })]);
+    expect(supplyTargets(state, state.units[0] as Unit)).toEqual([]);
+  });
+});
+
+describe("Halftrack (05-supply-transport §3, §4)", () => {
+  it("only carries troops: it never refuels or rearms anyone (since 2026-11-27)", () => {
+    const mine = makeGame(["==="], [u("halftrack", 0, 1), u("mediumTank", 0, 2, 0, { ammo: 1, fuel: 5 })]);
+    expect(supplyTargets(mine, mine.units[0] as Unit)).toEqual([]);
+    expect(apply(mine, supply(0))).toMatchObject({ ok: false, code: "cannotSupply" });
+    const next = makeGame(["==="], [u("halftrack", 1, 1), u("mediumTank", 1, 2, 0, { ammo: 1, fuel: 5 })]);
+    expect(byId(must(next, endTurn).state, 1)).toMatchObject({ ammo: 1, fuel: 5 });
   });
 });
 

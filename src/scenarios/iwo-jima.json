@@ -41,6 +41,7 @@
         "mortar",
         "recon",
         "halftrack",
+        "supplyTruck",
         "lightTank",
         "mediumTank",
         "tankDestroyer",
@@ -170,7 +171,7 @@
       "pos": { "x": 24, "y": 20 },
       "cargo": [
         { "type": "artillery" },
-        { "type": "halftrack" }
+        { "type": "supplyTruck" }
       ]
     },
     { "type": "infantry", "owner": 1, "pos": { "x": 5, "y": 19 } },

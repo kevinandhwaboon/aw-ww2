@@ -9,7 +9,7 @@ import { UNITS, type UnitTypeId } from "../src/engine/data/units";
 import { legalCommands } from "../src/engine/legal";
 import type { Point } from "../src/engine/map";
 import { parseScenario } from "../src/engine/scenario";
-import { createGame } from "../src/engine/setup";
+import { createGame, type UnitSetup } from "../src/engine/setup";
 import { propertyAt, type GameState, type Unit } from "../src/engine/state";
 import { SCENARIOS } from "../src/scenarios";
 import twinBridges from "./fixtures/maps/twin-bridges.json";
@@ -1133,7 +1133,7 @@ describe("Greedy AI: Major Bridges (09-ai §4e, 02-terrain §4a)", () => {
   });
 });
 
-describe("Halftracks rearm units that can't get to a property (09-ai §4j)", () => {
+describe("Supply Trucks rearm units that can't get to a property (09-ai §4j)", () => {
   // Our Railway Gun at the left end of a line of track, a town far off it can't reach, our infantry
   // over by the town, and an enemy beyond. Player 0 is to move.
   const map = [
@@ -1142,10 +1142,10 @@ describe("Halftracks rearm units that can't get to a property (09-ai §4j)", () 
     "............",
     "..........C.",
   ];
-  const setup = (halftracks: Point[], gunAmmo = 1) =>
+  const setup = (trucks: Point[], gunAmmo = 1, truckAmmo = 5) =>
     makeGame(map, [
       { type: "railwayGun", owner: 0, pos: P(0, 0), ammo: gunAmmo },
-      ...halftracks.map((pos) => ({ type: "halftrack" as const, owner: 0, pos })),
+      ...trucks.map((pos) => ({ type: "supplyTruck" as const, owner: 0, pos, ammo: truckAmmo })),
       { type: "infantry", owner: 0, pos: P(10, 2) },
       { type: "infantry", owner: 1, pos: P(11, 0) },
     ], { propertyOwners: [{ pos: P(10, 3), owner: 0 }], settings: { luck: false } });
@@ -1156,40 +1156,55 @@ describe("Halftracks rearm units that can't get to a property (09-ai §4j)", () 
   };
   const dist = (a: Point | null, b: Point) => (a ? Math.abs(a.x - b.x) + Math.abs(a.y - b.y) : Infinity);
 
-  it("a Halftrack beside the Railway Gun stays beside it instead of driving off to the infantry", () => {
+  it("a Supply Truck beside the Railway Gun stays beside it instead of driving off to the infantry", () => {
     const state = setup([P(0, 1)]);
-    expect(best(state, find(state, "halftrack", 0))).toEqual(P(0, 1));
+    expect(best(state, find(state, "supplyTruck", 0))).toEqual(P(0, 1));
   });
 
-  it("a Halftrack away from the gun drives back toward it", () => {
+  it("a Supply Truck away from the gun drives back toward it", () => {
     const state = setup([P(7, 2)]);
-    expect(dist(best(state, find(state, "halftrack", 0)), P(0, 0))).toBeLessThan(dist(P(7, 2), P(0, 0)));
+    expect(dist(best(state, find(state, "supplyTruck", 0)), P(0, 0))).toBeLessThan(dist(P(7, 2), P(0, 0)));
   });
 
   it("it waits beside the gun off the track, so it doesn't block the line", () => {
     const state = setup([P(2, 1)]);
-    expect(best(state, find(state, "halftrack", 0))).toEqual(P(0, 1));
+    expect(best(state, find(state, "supplyTruck", 0))).toEqual(P(0, 1));
   });
 
   it("it stays even when the gun is full, ready for the next shot", () => {
     const state = setup([P(0, 1)], 3);
-    expect(best(state, find(state, "halftrack", 0))).toEqual(P(0, 1));
+    expect(best(state, find(state, "supplyTruck", 0))).toEqual(P(0, 1));
   });
 
-  it("an ordinary tank far from any town doesn't get a Halftrack posted to it: that's only for units that can't stand on a property", () => {
-    const state = makeGame(["............", "............"], [
-      { type: "mediumTank", owner: 0, pos: P(0, 0), ammo: 1 },
-      { type: "halftrack", owner: 0, pos: P(0, 1) },
-      { type: "infantry", owner: 0, pos: P(10, 1) },
-      { type: "infantry", owner: 1, pos: P(11, 0) },
+  it("a Supply Truck with no supplies left isn't posted: it drives back to our town to refill (05-supply-transport §3b)", () => {
+    const state = setup([P(0, 1)], 1, 0);
+    expect(dist(best(state, find(state, "supplyTruck", 0)), P(10, 3))).toBeLessThan(dist(P(0, 1), P(10, 3)));
+  });
+});
+
+describe("Supply Trucks in the field (09-ai §4j)", () => {
+  const best = (state: GameState, unit: Unit) => {
+    const command = scoreUnitCommands(state, unit)[0]?.command;
+    if (!command) throw new Error("no command");
+    return destination(state, command);
+  };
+  const dist = (a: Point | null, b: Point) => (a ? Math.abs(a.x - b.x) + Math.abs(a.y - b.y) : Infinity);
+  const field = (tank: Partial<UnitSetup>) =>
+    makeGame(["============", "============"], [
+      { type: "supplyTruck", owner: 0, pos: P(0, 1) },
+      { type: "mediumTank", owner: 0, pos: P(9, 0), ...tank },
+      { type: "infantry", owner: 0, pos: P(2, 0) },
+      { type: "infantry", owner: 1, pos: P(11, 1) },
     ], { settings: { luck: false } });
-    expect(dist(best(state, find(state, "halftrack", 0)), P(10, 1))).toBeLessThan(dist(P(0, 1), P(10, 1)));
+
+  it("drives to our land unit that's short of ammo or fuel", () => {
+    const state = field({ ammo: 1 });
+    expect(dist(best(state, find(state, "supplyTruck", 0)), P(9, 0))).toBeLessThan(dist(P(0, 1), P(9, 0)));
   });
 
-  it("only the nearest Halftrack is posted: another still goes to the foot units", () => {
-    const state = setup([P(0, 1), P(5, 2)]);
-    const second = state.units.find((u) => u.type === "halftrack" && u.pos.x === 5);
-    if (!second) throw new Error("no second Halftrack");
-    expect(dist(best(state, second), P(10, 2))).toBeLessThan(dist(P(5, 2), P(10, 2)));
+  it("with nobody short it stays with our army rather than driving at the enemy", () => {
+    const state = field({});
+    const to = best(state, find(state, "supplyTruck", 0));
+    expect(to && to.x).toBeLessThan(9);
   });
 });

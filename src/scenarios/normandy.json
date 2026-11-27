@@ -87,13 +87,13 @@
       "name": "Allies",
       "nation": "us",
       "funds": 10000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft", "battleship", "destroyer", "submarine", "landingCraft", "torpedoBoat"]
     },
     {
       "name": "Axis",
       "nation": "germany",
       "funds": 8000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank", "fighter", "bomber", "transportAircraft", "destroyer", "submarine", "torpedoBoat"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank", "fighter", "bomber", "transportAircraft", "destroyer", "submarine", "torpedoBoat"],
       "facing": "left"
     }
   ],

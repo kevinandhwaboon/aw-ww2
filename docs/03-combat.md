@@ -80,7 +80,7 @@ Values are `base` damage percentages. **Attacker = row, defender = column.**
 
 Values come from the original game where a unit maps cleanly (Infantry, Assault Infantry ≈ Mech, Recon, Halftrack ≈ APC, Medium Tank ≈ Tank, Heavy Tank ≈ Md Tank, Artillery, Rocket Artillery, Mobile AA ≈ Anti-Air, Flak Gun ≈ Missiles, Bomber, Battleship, Submarine) and from intuition for new ones (Mortar Team, Light Tank, Tank Destroyer, Destroyer, Torpedo Boat, Fighter strafing, fortifications).
 
-Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no attack rows. The Carrier's return-fire AA is in §5d, not the main chart, since it never attacks.
+Unarmed units (Halftrack, Supply Truck, Transport Aircraft, Landing Craft, Carrier, Supply Ship) have no attack rows. The Carrier's return-fire AA is in §5d, not the main chart, since it never attacks.
 
 **Abbreviations:** Inf = Infantry, AInf = Assault Infantry, Mor = Mortar Team, Rec = Recon, HT = Halftrack, LT = Light Tank, MT = Medium Tank, HvT = Heavy Tank, TD = Tank Destroyer, Art = Artillery, Rkt = Rocket Artillery, AA = Mobile AA, Flak = Flak Gun, Radar = Radar Station, RGun = Railway Gun, Ftr = Fighter, Bmr = Bomber, Trn = Transport Aircraft, Dive = Dive Bomber, TBmr = Torpedo Bomber, BB = Battleship, DD = Destroyer, Sub = Submarine, LC = Landing Craft, TB = Torpedo Boat, CV = Carrier, Sup = Supply Ship, Fort = fortification/obstacle.
 
@@ -142,6 +142,7 @@ Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier) have no at
 
 - **Railway Gun** (added 2026-11-19, 01-units §2b): one 80 cm shell a turn. 130 against every land unit, so a full-strength shot destroys almost anything on open ground and leaves a unit on Hills (4 stars) on 2–3 HP; 110 against fortifications, so one shot breaks a full bunker and its garrison with it (§4). Against ships 70–100, and nothing against aircraft. It defends like Artillery (its column copies Artillery's).
 - **Supply Ship** (added 2026-11-16) takes exactly the Landing Craft's damage from everything: an unarmored hull, easy to sink. It's unarmed, so it has no row.
+- **Supply Truck** (added 2026-11-27, 01-units §2) takes exactly the Halftrack's damage from everything, the job it took over: it has no column of its own (`TAKES_DAMAGE_AS` in `src/engine/data/damage.ts`). It's unarmed, so it has no row.
 - **Tank Destroyer** beats tanks when it strikes first (vs. Heavy Tank 65 vs. Heavy Tank's 90 return fire) but has no weapon vs. infantry, so Assault Infantry (60) and artillery are its counters.
 - **Heavy Tank** wins most fights but is slow and expensive; its answers are Tank Destroyers, Bombers, Battleships and massed indirect fire.
 - **Fighter** strafing is deliberately weak (≤15) and uses the same ammo as its air-to-air guns.

@@ -1524,6 +1524,336 @@
         "bomber",
         "transportAircraft"
       ]
+    },
+    {
+      "nation": "us",
+      "team": "olive",
+      "path": "../../units/us-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "red",
+      "path": "../../units/us-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "us",
+      "team": "blue",
+      "path": "../../units/us-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "grey",
+      "path": "../../units/de-truck-32-grey.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "olive",
+      "path": "../../units/de-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "red",
+      "path": "../../units/de-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "germany",
+      "team": "blue",
+      "path": "../../units/de-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "khaki",
+      "path": "../../units/jp-truck-32-khaki.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "olive",
+      "path": "../../units/jp-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "red",
+      "path": "../../units/jp-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "japan",
+      "team": "blue",
+      "path": "../../units/jp-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "green4bo",
+      "path": "../../units/su-truck-32-green4bo.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "olive",
+      "path": "../../units/su-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "red",
+      "path": "../../units/su-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "ussr",
+      "team": "blue",
+      "path": "../../units/su-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "brown",
+      "path": "../../units/uk-truck-32-brown.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "olive",
+      "path": "../../units/uk-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "red",
+      "path": "../../units/uk-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "uk",
+      "team": "blue",
+      "path": "../../units/uk-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "blue",
+      "path": "../../units/it-truck-32-blue.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "olive",
+      "path": "../../units/it-truck-32-olive.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
+    },
+    {
+      "nation": "italy",
+      "team": "red",
+      "path": "../../units/it-truck-32-red.png",
+      "frameSize": 32,
+      "facings": [
+        "side",
+        "down",
+        "up"
+      ],
+      "frames": 2,
+      "rows": [
+        "supplyTruck"
+      ]
     }
   ],
   "terrain": {

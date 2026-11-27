@@ -194,7 +194,7 @@ Germany's starting army stands in for the Romanians on the flanks too (see "Roma
   - **The land bridge**: three Infantry in bunkers, two Medium Tanks, an Artillery.
   - **Round Gumrak and Pitomnik**: a Flak Gun.
   - **The Don front, north-west** (Romanian 3rd Army): five Infantry (one in a bunker), an Artillery, a Light Tank; behind it near Perelazovsky the reserve (48th Panzer Corps), a Medium and a Light Tank.
-  - **The south** (Romanian 4th Army and 4th Panzer Army): four Infantry, an Artillery; behind them near Plodovitoe a Halftrack and a Medium Tank (29th Motorized Division).
+  - **The south** (Romanian 4th Army and 4th Panzer Army): four Infantry, an Artillery; behind them near Plodovitoe a Supply Truck and a Medium Tank (29th Motorized Division).
   - **Kalach**: one Infantry guarding the bridge.
   - A Fighter at Pitomnik, Bombers at Gumrak and Oblivskaya, and a Transport Aircraft beside Oblivskaya.
 - The Soviets have more tanks, more units and the first move; Germany has the better units in the city, more income at first, and its tanks are close to the city, not to the flanks.
@@ -299,8 +299,8 @@ Factories and HQs are our choice, not history, as on the other maps. **Bakhchisa
 
 ### Starting forces
 
-- **Soviet Union** (Coastal Army and the fleet's naval infantry): rifle units dug into the forts and field works, more Infantry, Assault Infantry and Mortar Teams behind them, Artillery for the coastal batteries (one inside Maxim Gorky I), a few T-26 light tanks, a Flak Gun in the city, a Halftrack, and a Fighter at Khersones and an Il-2 (Bomber) at Kulikovo Pole. Naval infantry hold the Korabelnaya dockyard (Infantry and Artillery) and the Inkerman galleries (Assault Infantry), the way round the head of the bay (added 2026-11-19, below).
-- **Germany** (11th Army, with the Romanian Mountain Corps fielded as German units, as at Stalingrad): **the Railway Gun on its spur with a Halftrack beside it** (the ammunition train) and a Flak Gun guarding it; in the north (LIV Corps) Infantry, pioneers (Assault Infantry), StuGs (Tank Destroyer), Artillery and Nebelwerfers; a thinner centre; XXX Corps in the south-east; and the VIII Air Corps (Bombers and Fighters) round Kacha.
+- **Soviet Union** (Coastal Army and the fleet's naval infantry): rifle units dug into the forts and field works, more Infantry, Assault Infantry and Mortar Teams behind them, Artillery for the coastal batteries (one inside Maxim Gorky I), a few T-26 light tanks, a Flak Gun in the city, a Supply Truck, and a Fighter at Khersones and an Il-2 (Bomber) at Kulikovo Pole. Naval infantry hold the Korabelnaya dockyard (Infantry and Artillery) and the Inkerman galleries (Assault Infantry), the way round the head of the bay (added 2026-11-19, below).
+- **Germany** (11th Army, with the Romanian Mountain Corps fielded as German units, as at Stalingrad): **the Railway Gun on its spur with a Supply Truck beside it** (the ammunition train; a Halftrack until 2026-11-27) and a Flak Gun guarding it; in the north (LIV Corps) Infantry, pioneers (Assault Infantry), StuGs (Tank Destroyer), Artillery and Nebelwerfers; a thinner centre; XXX Corps in the south-east; and the VIII Air Corps (Bombers and Fighters) round Kacha.
 - Germany has more of everything except fortifications.
 
 ### Turn order
@@ -324,7 +324,7 @@ Summer, clear every day: June 1942 was hot and dry, and the bombing went on from
 
 ### How it's made
 
-`tools/maps/sevastopol.mjs` generates the scenario from real longitude/latitude points for the coast, the bay, the front, the rivers, the railway, towns and forts, as for Stalingrad. Rerun it after editing; `tools/maps/overview.mjs sevastopol` redraws the picture above. Tests in `tests/scenario.test.ts`, "Sevastopol", check the size and nations, who moves first, the HQs, that the railway runs unbroken from the north-east edge to the city, that the Gustav starts on its spur with a Halftrack beside it, that it reaches Maxim Gorky I but not the city from the start, that it can get within range of the city down the line, that the railway's river crossings are clean, that Severnaya Bay has no bridge, the forts, that no starting unit stands where it couldn't move, the weather, the build lists and both victory conditions.
+`tools/maps/sevastopol.mjs` generates the scenario from real longitude/latitude points for the coast, the bay, the front, the rivers, the railway, towns and forts, as for Stalingrad. Rerun it after editing; `tools/maps/overview.mjs sevastopol` redraws the picture above. Tests in `tests/scenario.test.ts`, "Sevastopol", check the size and nations, who moves first, the HQs, that the railway runs unbroken from the north-east edge to the city, that the Gustav starts on its spur with a Supply Truck beside it, that it reaches Maxim Gorky I but not the city from the start, that it can get within range of the city down the line, that the railway's river crossings are clean, that Severnaya Bay has no bridge, the forts, that no starting unit stands where it couldn't move, the weather, the build lists and both victory conditions.
 
 ## 4. Moscow (`moscow`)
 
@@ -451,7 +451,7 @@ Germany starts with more tanks (15 to 7, plus 2 Tank Destroyers) and more units;
 
 ### How it plays
 
-- **Two halves.** For the first ten days or so (to 5 December) Germany is the attacker: its panzers outnumber anything in front of them, but they're worn and half-fuelled, and every Halftrack spent refuelling tanks isn't carrying infantry. From about day 8 the Soviet reserves are in, the snow sets in, and the Soviet Union attacks.
+- **Two halves.** For the first ten days or so (to 5 December) Germany is the attacker: its panzers outnumber anything in front of them, but they're worn and half-fuelled, and every Halftrack spent refuelling tanks isn't carrying infantry (written before 2026-11-27, when Supply Trucks took over refuelling: 05-supply-transport §3). From about day 8 the Soviet reserves are in, the snow sets in, and the Soviet Union attacks.
 - **Germany's choice:** go all in for Moscow before the reserves arrive (an outright win), or take ground for depth (Klin, Solnechnogorsk, the Tula gap) and then turn the panzers into a reserve behind Kalinin, Volokolamsk and Kaluga, and hold one of them to day 25. Attacking too long leaves the army spent when the counter-offensive comes; stopping too soon gives the Soviets an easy approach.
 - **The Soviet choice:** give ground slowly and keep the army alive (Rokossovsky's way), or hold every town and lose units it needs in December. Its reserves arrive whatever happens; the question is what's left to fight beside them. Moscow's factory keeps building, but Infantry built there is slow to reach the front.
 - **The spokes:** both sides move fastest along the highways. In snow (12-weather §3) tanks off the road pay 2 on plains and 3 in forest, so the road towns (Klin, Istra, Solnechnogorsk, Naro-Fominsk, Kashira) decide the battle.
@@ -484,7 +484,7 @@ In snow, tanks and wheels slow down off the roads and aircraft fly half as far (
 
 ### Build lists
 
-- **Soviet Union:** Infantry, Assault Infantry, Mortar Team, Recon, Halftrack, Light, Medium and Heavy Tank (T-60, T-34, KV-1), Artillery, Rocket Artillery (Katyusha), Mobile AA, Flak Gun; Fighter, Bomber (Il-2), Transport Aircraft. **No Tank Destroyer**: the Soviet art is the SU-152 of 1943. No ships.
+- **Soviet Union:** Infantry, Assault Infantry, Mortar Team, Recon, Halftrack, Supply Truck, Light, Medium and Heavy Tank (T-60, T-34, KV-1), Artillery, Rocket Artillery (Katyusha), Mobile AA, Flak Gun; Fighter, Bomber (Il-2), Transport Aircraft. **No Tank Destroyer**: the Soviet art is the SU-152 of 1943. No ships.
 - **Germany:** every land unit **except Heavy Tank** (no Tiger until 1942); Fighter, Bomber, Transport Aircraft. No Dive Bomber (no Stuka art, 08-art-pipeline §17). No ships.
 
 ### Victory
@@ -600,7 +600,7 @@ None of these is needed for v0; each would be a new rule, so none is assumed. Th
 
 **Sevastopol**
 
-- Balance is a first guess, and the Railway Gun is new: a Halftrack parked beside it rearms it every turn, so it can fire every turn for as long as the Halftrack lives.
+- Balance is a first guess, and the Railway Gun is new: a Supply Truck parked beside it rearms it every turn (a Halftrack until 2026-11-27), so it can fire every turn for as long as the truck lives and has supplies, 5 shots before it has to drive back to a town to refill.
 - **Balance, 2026-11-19:** once the computer kept its Railway Gun rearmed (09-ai §4j), Germany won 6 of 8 AI-vs-AI games (seeds 1 to 8, to day 20), as early as day 10. Garrisoning the dockyard and Inkerman, with funds unchanged, brought it to 4 to 4, Germany's wins on days 11 to 17. More Soviet funds alone (4,000 to 8,000) made the result noisier, not fairer.
 - **No assault boats**: Germany can't cross Severnaya Bay, as it did on 29 June.
 - **No Karl mortars**: the two 60 cm self-propelled mortars are left out; Germany's other heavy guns are Artillery and Rocket Artillery.

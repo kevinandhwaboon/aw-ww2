@@ -256,7 +256,7 @@ describe("transport, supply and join", () => {
   });
 
   it("offers Supply next to a friendly unit that needs it", async () => {
-    const game = setup(["===="], [{ type: "halftrack", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(2, 0), ammo: 1 }]);
+    const game = setup(["===="], [{ type: "supplyTruck", owner: 0, pos: P(0, 0) }, { type: "mediumTank", owner: 0, pos: P(2, 0), ammo: 1 }]);
     await onto(game, P(0, 0), P(1, 0));
     expect(game.labels()).toEqual(["supply", "wait", "cancel"]);
   });

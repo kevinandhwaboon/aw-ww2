@@ -3,7 +3,7 @@
 //   "55"  = primary weapon (uses ammo)
 //   "55*" = secondary weapon (machine gun etc., unlimited)
 //   "—"   = cannot attack
-// Unarmed units (Halftrack, Transport Aircraft, Landing Craft, Carrier, Supply Ship) have no rows.
+// Unarmed units (Halftrack, Supply Truck, Transport Aircraft, Landing Craft, Carrier, Supply Ship) have no rows.
 
 import type { UnitTypeId } from "./units";
 
@@ -123,10 +123,21 @@ function buildChart(): Readonly<Partial<Record<UnitTypeId, ChartRow>>> {
     const row = {} as Record<DamageTarget, DamageEntry>;
     parseRow(row, VS_LAND_COLUMNS, VS_LAND[attacker], attacker);
     parseRow(row, VS_OTHER_COLUMNS, VS_OTHER[attacker], attacker);
-    chart[attacker] = row;
+    const parsed: Partial<Record<DamageTarget, DamageEntry>> = row;
+    for (const [target, as] of Object.entries(TAKES_DAMAGE_AS) as [UnitTypeId, DamageTarget][]) {
+      const entry = parsed[as];
+      if (entry) parsed[target] = entry;
+    }
+    chart[attacker] = parsed;
   }
   return chart;
 }
+
+/**
+ * Targets with no column of their own: each takes exactly the damage of the unit named
+ * (03-combat §5a). The Supply Truck takes the Halftrack's.
+ */
+const TAKES_DAMAGE_AS: Partial<Record<UnitTypeId, DamageTarget>> = { supplyTruck: "halftrack" };
 
 export const DAMAGE_CHART = buildChart();
 

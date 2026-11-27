@@ -14,7 +14,7 @@
 4. **Availability rule:** a nation has art for a unit type only if it historically fielded an equivalent, and a scenario only offers a nation the unit types it has art for. Example: the US has no Heavy Tank in Normandy; the UK has one (Churchill); Germany has one (Tiger). Japan has art for every unit type except the Heavy Tank: it fielded none. The Soviet Union has art for every land unit, Heavy Tank included (KV-1), and for the Fighter, Bomber and Transport Aircraft; no ships yet, and no Dive or Torpedo Bomber, since it had no carriers (since 2026-11-14). The UK has art for every unit type (since 2026-11-15), Rocket Artillery included (the Land Mattress, used from late 1944, still offered per scenario); Canada uses the UK's. The Supply Ship (since 2026-11-16) has art for the US, the UK and Japan; Germany and Italy have none yet.
 5. **Generic military names only.** No names from the original game (no "Mech", "Md Tank", "Neotank", "Lander", "B-Copter", etc.).
 
-## 2. Land units (12 in phase 1 MVP, plus Flak Gun in phase 2)
+## 2. Land units (12 in phase 1 MVP, plus Flak Gun and Supply Truck in phase 2)
 
 | Unit | Role | Movement type (tentative) | Key traits | Allied / Axis art examples |
 |---|---|---|---|---|
@@ -22,7 +22,8 @@
 | Assault Infantry | Anti-armor and engineering infantry | Heavy foot (slower) | Can capture. Strong vs. armor and vs. fortifications/obstacles (see section 6). Costs more than Infantry | Bazooka team, assault engineers / Panzerschreck team, Pioniere |
 | Mortar Team | Short-range indirect fire | Heavy foot (slower than Infantry) | Indirect, range exactly 2. Low ammo (~3). Cannot capture. Fits in all infantry transports, including Transport Aircraft | US/UK mortar team / Granatwerfer team |
 | Recon | Fast scout, kills infantry | Wheels | High movement and vision. Weak vs. armor | Willys jeep, Daimler / Zündapp KS 750 with sidecar, Sd.Kfz. 234 |
-| Halftrack | Infantry transport and resupply | Tracks | Carries 1 foot unit. Resupplies fuel/ammo to adjacent land units only: not ships (since 2026-11-16) or aircraft. Unarmed | M3 / Sd.Kfz. 251 |
+| Halftrack | Infantry transport | Tracks | Carries 1 foot unit. Moves 7. Unarmed. No longer resupplies anyone (since 2026-11-27): the Supply Truck does | M3 / Sd.Kfz. 251 |
+| Supply Truck (added 2026-11-27) | Resupply | Wheels | Refuels and rearms adjacent land units only, never ships or aircraft. 5 supplies, one spent per resupply, refilled on an owned city, factory or HQ (05-supply-transport §3, §3b). Carries nobody. Unarmed | GMC CCKW, Bedford OY, ZiS-5 / Opel Blitz, Isuzu Type 94, SPA Dovunque |
 | Light Tank | Cheap, fast armor | Tracks | Good vs. infantry and light vehicles | M5 Stuart / Panzer II |
 | Medium Tank | Main battle unit | Tracks | Balanced attack and defense | Sherman / Panzer IV |
 | Heavy Tank | Expensive breakthrough armor | Tracks | Strong armor, slow, fuel-hungry. Availability limited by nation | Churchill (UK) / Tiger |
@@ -32,7 +33,7 @@
 | Mobile AA | Air defense | Tracks | Strong vs. aircraft and infantry, weak vs. tanks | M16 quad .50 / Flakvierling |
 | Flak Gun (phase 2) | Long-range air defense | Tracks (towed; slow) | Indirect, attacks air units only, long range. Cannot move and fire. Arrives with air units in phase 2 | 90mm AA / 88mm Flak |
 | Radar Station (phase 2, scenario only) | Early warning | None (can't move) | Sees enemy aircraft 10 squares away, everything else only next to it (19-fog-of-war §2a). Unarmed. Never built: only a scenario places one (§2a below) | Chain Home (UK) / — |
-| Railway Gun (phase 2, scenario only) | Siege gun | Rail (Railway squares only) | Indirect, range 3–20, one huge shot a turn, 3 shells. Moves 1 square, on track only. Rearmed by a Halftrack next to it. Never built: only a scenario places one (§2b below) | — / Schwerer Gustav (80 cm Krupp gun) |
+| Railway Gun (phase 2, scenario only) | Siege gun | Rail (Railway squares only) | Indirect, range 3–20, one huge shot a turn, 3 shells. Moves 1 square, on track only. Rearmed by a Supply Truck next to it. Never built: only a scenario places one (§2b below) | — / Schwerer Gustav (80 cm Krupp gun) |
 
 ### 2a. Radar Station (added 2026-11-19)
 
@@ -45,7 +46,7 @@ Added at the developer's request for Sevastopol (15-scenarios-eastern-front §3)
 - **Moves only on track.** Its movement type is `rail` (02-terrain §4c): it can enter Railway squares and nothing else, so the map decides where it can go. **1 movement point**, so at most one square of track a turn. The real gun couldn't move at all once assembled; one square a turn lets it creep up the line behind an advance.
 - **Huge range: 3–20.** Indirect fire, like Artillery: it can't move and fire in the same turn and is never countered, and it can't hit anything within 2 squares, so it needs other units to guard it. The real gun reached about 47 km; at Sevastopol's scale (about 1.5 km a square) 20 squares covers the northern forts from its firing spur near Bakhchisaray, but not the city, so it has to creep forward to reach the city.
 - **One huge shot a turn, no splash.** It can fire every turn. Its damage chart row (03-combat §5) is the biggest in the game: 130 against every land unit, so a full-strength shot destroys almost anything on open ground, and 110 against fortifications, so one shot breaks a full bunker and kills its garrison (03-combat §4). Splash damage was considered and left out at the developer's request: the real shells were made to go through concrete, not to blast an area.
-- **3 shells.** Then it has to be rearmed, like any unit, by a **Halftrack** next to it (05-supply-transport §3): automatically at the start of its owner's turn, or with the Halftrack's Supply action. A Halftrack parked beside it keeps it firing every turn, so the way to silence it is to destroy or drive off that Halftrack, or the gun itself. It can't stand on a property, so a property never rearms it.
+- **3 shells.** Then it has to be rearmed, like any unit, by a **Supply Truck** next to it (05-supply-transport §3; a Halftrack until 2026-11-27): automatically at the start of its owner's turn, or with the truck's Supply action. A Supply Truck parked beside it keeps it firing every turn until the truck's own 5 supplies run out and it drives off to a town to refill (§3b), so the way to silence it is to destroy or drive off that truck, or the gun itself. It can't stand on a property, so a property never rearms it.
 - **Fuel 50**, one per square moved, refilled with its ammo. It has no secondary weapon and no AA, and can't hit aircraft.
 - **Defends like Artillery**: its damage chart column copies Artillery's (Bombers do 105, Infantry 15). It's big and unarmored.
 - **Can't be carried** by any transport, and can't capture.
@@ -84,10 +85,10 @@ Dive and Torpedo Bombers: added 2026-11-09 so Carriers carry their own lighter a
 | Submarine | Anti-ship | Can dive (see 05-supply-transport §9). Attacks ships only | Allied subs / U-boat |
 | Landing Craft | Amphibious transport | Carries 2 land units of any type. Must stand on a Beach or Port tile to unload. Unarmed | LCT, LST / Sea Lion barge (Prahm, 1940) |
 | Torpedo Boat | Cheap anti-ship raider | Fast, fragile | PT boat, MTB / E-boat (S-boot) |
-| Supply Ship | Fleet supply at sea | Refuels and rearms every friendly unit next to it except aircraft, like a Halftrack, and repairs its own player's ships next to it 1 HP a day (05-supply-transport §3a). 5 supplies, one spent per resupply, refilled at a port (§3b). Unarmed | Cimarron-class oiler, Dale-class RFA oiler / Kazahaya (Japan); Germany none yet |
+| Supply Ship | Fleet supply at sea | Refuels and rearms every friendly unit next to it except aircraft, like a Supply Truck, and repairs its own player's ships next to it 1 HP a day (05-supply-transport §3a). 5 supplies, one spent per resupply, refilled at a port (§3b). Unarmed | Cimarron-class oiler, Dale-class RFA oiler / Kazahaya (Japan); Germany none yet |
 | Carrier | Mobile airfield | Carries 2 Fighters, Dive Bombers or Torpedo Bombers, which launch and strike the same turn, and repairs them 1 HP a day (05-supply-transport §10). Built empty: its aircraft are built at airfields and flown aboard. Its threat range is its aircraft's. Its only gun is light AA that fires back at aircraft that attack it (03-combat §5d), so it still needs escorts | Essex class, Illustrious / Shōkaku (Japan); Germany none (the Graf Zeppelin was never finished) |
 
-Supply Ship: added 2026-11-16 at the developer's request, to fill the gap in the naval roster: land units have the Halftrack and carrier aircraft their Carrier, but ships could only refuel at a port. It follows the original game's later naval supply boat, which repaired and resupplied the ships next to it; unlike that boat it carries no troops, since the Landing Craft already does. Only the US, UK and Japan get art (fleet oilers); Germany's supply ships (the Dithmarschen class, the U-boat tankers) may follow.
+Supply Ship: added 2026-11-16 at the developer's request, to fill the gap in the naval roster: land units had the Halftrack (the Supply Truck since 2026-11-27) and carrier aircraft their Carrier, but ships could only refuel at a port. It follows the original game's later naval supply boat, which repaired and resupplied the ships next to it; unlike that boat it carries no troops, since the Landing Craft already does. Only the US, UK and Japan get art (fleet oilers); Germany's supply ships (the Dithmarschen class, the U-boat tankers) may follow.
 
 Carrier: added 2026-11-09 for the Pacific, built the same day. Only the US, UK and Japan get Carrier art: an Essex class for the US, HMS Illustrious for the UK (since 2026-11-15; it was the Essex), the Shōkaku for Japan (08-art-pipeline §17, §18).
 
@@ -150,7 +151,8 @@ These are starting points for the first playable build, based on the original ga
 | Assault Infantry | 3,000 | 2 | Heavy foot | 2 | 50 | Bazooka (3) | MG | 1 |
 | Mortar Team | 3,000 | 2 | Heavy foot | 2 | 50 | Mortar (3) | — | 2 |
 | Recon | 4,000 | 8 | Wheels | 5 | 50 | — | MG | 1 |
-| Halftrack | 5,000 | 6 | Tracks | 1 | 45 | — | — | — |
+| Halftrack | 5,000 | 7 (6 until 2026-11-27) | Tracks | 1 | 45 | — | — | — |
+| Supply Truck (phase 2, added 2026-11-27) | 4,000 | 6 | Wheels | 1 | 50 | — (5 supplies, 05-supply-transport §3b) | — | — |
 | Light Tank | 6,000 | 7 | Tracks | 3 | 28 | Gun (9) | MG | 1 |
 | Medium Tank | 8,000 | 6 | Tracks | 2 | 30 | Gun (9) | MG | 1 |
 | Tank Destroyer | 9,000 | 5 | Tracks | 2 | 33 | AT gun (6) | — | 1 |
@@ -202,6 +204,7 @@ Daily burns are unchanged: 2 for Destroyers and Torpedo Boats, 1 for the rest (5
 | Infantry, Assault Infantry, Mortar Team | 50 | — | On foot: no fuel to run out of |
 | Recon | 50 | — | Jeep and M8 armored car, 450–560 km |
 | Halftrack | 45 | — | M3 and Sd.Kfz. 251, about 300 km |
+| Supply Truck | 50 | — | GMC CCKW about 480 km, Opel Blitz about 410 km: capped at 50 |
 | Mobile AA | 43 | — | Halftrack-mounted (M16, Flakvierling), about 280 km |
 | Artillery, Flak Gun | 40 | — | Towed by trucks or prime movers, 250–480 km |
 | Rocket Artillery | 38 | — | Truck- or tank-mounted launchers, about 230 km |
@@ -233,7 +236,8 @@ Daily burns are unchanged: 2 for Destroyers and Torpedo Boats, 1 for the rest (5
 - **Tank Destroyer** costs a bit more than a Medium Tank and beats it, but has no machine gun and weaker defense, so cheap Infantry or Mortars can wear it down.
 - **Mortar Team** costs the same as Assault Infantry: half the price of Artillery, with shorter range, little ammo and foot movement, but it can go where vehicles can't and ride in transports.
 - **Recon** keeps the original's high movement and vision; it's the scouting unit for fog of war (19-fog-of-war).
-- **Halftrack** stays unarmed for now; it is a transport and supply unit, not a fighter.
+- **Halftrack** stays unarmed for now; it is a troop transport, not a fighter.
+- **Halftrack and Supply Truck (2026-11-27, at the developer's request).** The Halftrack did the original's APC job: carry one foot unit and resupply its neighbors. In the war, front-line fuel and ammunition went forward in ordinary trucks (the Red Ball Express's GMCs, the Opel Blitz, Lend-Lease Studebakers), while half-tracks mostly carried infantry alongside the tanks. So the jobs are split: the **Halftrack** only carries troops, with one more square of movement (7, the Light Tank's) for keeping up with the armor; the **Supply Truck** only resupplies. Like the Supply Ship it carries **5 supplies** in its ammo count and refills them on its own (or an ally's) city, factory or HQ, so a column far from home has to drive back. It's cheaper than the Halftrack (4,000), unarmored and on wheels, so it's slow off the roads and in forest and hills. It never resupplies ships: trucks never refuelled ships in the war, which took on fuel in port or from oilers at sea.
 
 ## 9. Unit stat schema (for data files)
 
@@ -245,7 +249,7 @@ Every unit type in the data files defines:
 - `vision`, and `airVision` (how far it sees enemy aircraft; only the Radar Station has one, 19-fog-of-war §2a)
 - `maxFuel`, `fuelPerDay` (air and naval), `fuelPerMove` (fuel per movement point; 2 for aircraft, else 1)
 - `primaryWeapon` + `maxAmmo` (may be none)
-- `supplyLoads`: resupplies a supply unit can hand out before refilling at a port, kept in its ammo count (the Supply Ship's 5; none = unlimited, the Halftrack; 05-supply-transport §3b)
+- `supplyLoads`: resupplies a supply unit can hand out before refilling at a property, kept in its ammo count (the Supply Ship's and Supply Truck's 5; 05-supply-transport §3b)
 - `secondaryWeapon` (unlimited ammo; may be none)
 - `attackRange` (min–max; direct = 1–1)
 - `canMoveAndFire` (false for all indirect units)

@@ -71,7 +71,7 @@ Measured with `npm run selfplay -- --campaign` (09-ai §7), which plays the camp
 |---|---|---|---|---|
 | 1 | Dunkirk | Konrad Falk | +5,000 funds; +25% income. A first guess; extra units may come once the map's layout settles | 3 of 8 (Skirmish: 12 of 20) |
 | 2 | Battle of Britain | Kenji Arakawa | Sea Lion's first wave ashore inland of Hythe (4 Infantry, an Assault Infantry, 2 Medium Tanks, an Artillery, a Flak Gun); a fourth barge at Ostend loaded with an Infantry and a Medium Tank; Maidstone's factory and four Kent towns start German; +4,000 funds; +25% income; the Sea Lion plan (§6c) | 5 of 20 |
-| 3 | Gazala | Jakob Wendt (Germany), Aldo Ferrante (Italy) | More for the sweep round Bir Hakeim: 4 Medium Tanks and 5 Halftracks carrying Infantry for Germany, a Medium Tank and 2 Halftracks carrying Infantry for Italy; +3,000 and +2,000 funds; +25% income; Rommel's sweep (§6d). Not Falk, whose units carry 20% less fuel: here fuel decides the battle | 4 of 20 |
+| 3 | Gazala | Jakob Wendt (Germany), Aldo Ferrante (Italy) | More for the sweep round Bir Hakeim: 4 Medium Tanks, 5 Halftracks carrying Infantry and 2 Supply Trucks for Germany, a Medium Tank and 2 Halftracks carrying Infantry for Italy; +3,000 and +2,000 funds; +25% income; Rommel's sweep (§6d). Not Falk, whose units carry 20% less fuel: here fuel decides the battle | 4 of 20 |
 | 4 | Midway | Kenji Arakawa | The invasion force's oiler (a Supply Ship) and a fourth Landing Craft with an Infantry; the Midway plan (§6a) | 4 of 20 |
 | 5 | Sevastopol | Jakob Wendt | +4,500 funds; +45% income | 4 of 20 |
 | 6 | Guadalcanal | Isao Kuramochi | Two Infantry and an Artillery already ashore at Koli Point, east of Henderson Field | 6 of 20 |
@@ -138,7 +138,7 @@ Measured (seeds 1–20): sailing earlier (3 warships, day 7) made it worse, 14 A
 The sweep round the south end of the line, kept supplied (18-scenarios-north-africa §2).
 
 - **The assault force** (the Axis units south of row 18 and west of the minefield) first heads for a point past the south end of the minefield, south-east of Bir Hakeim (`SWEEP_POINT`), instead of into the line. Once east of the line it drives on Tobruk (§6b).
-- **Empty Halftracks** follow the tanks in the sweep that are lowest on fuel (below half a tank), the nearest first: the engine refills every unit next to a Halftrack at the start of the turn (05-supply-transport §3), so the armour doesn't run dry.
+- **Supply Trucks** (empty Halftracks until 2026-11-27) follow the tanks in the sweep that are lowest on fuel (below half a tank), the nearest first: the engine refills every land unit next to a Supply Truck at the start of the turn (05-supply-transport §3), so the armour doesn't run dry. One out of supplies goes back to a property to refill (09-ai §4j).
 - **Loaded Halftracks** carry their Infantry round with the armour and on to Tobruk, since tanks can't capture.
 - The infantry facing the north of the line plays Greedy as before.
 

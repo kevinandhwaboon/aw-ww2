@@ -59,13 +59,13 @@
       "name": "UK",
       "nation": "uk",
       "funds": 6000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
     },
     {
       "name": "Germany",
       "nation": "germany",
       "funds": 3000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank", "fighter"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "heavyTank", "fighter"],
       "facing": "left"
     }
   ],

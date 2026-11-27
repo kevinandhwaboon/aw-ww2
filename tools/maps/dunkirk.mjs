@@ -500,7 +500,7 @@ by("mobileAA", UK, "Bray-Dunes");
 by("flakGun", UK, "Dunkirk");
 // Outside, falling back: Cassel's garrison, the Poperinge road, and the 12th Lancers racing for Nieuport.
 on("infantry", UK, "Cassel");
-for (const type of ["infantry", "infantry", "infantry", "halftrack", "lightTank"]) by(type, UK, "Poperinge");
+for (const type of ["infantry", "infantry", "infantry", "supplyTruck", "lightTank"]) by(type, UK, "Poperinge");
 by("recon", UK, "Furnes");
 
 // The Royal Navy: destroyers at Dover, in the Downs off Deal and off Dunkirk; Landing Craft (the
@@ -527,8 +527,8 @@ by("bomber", UK, "Canterbury", LAND, "england");
 by("infantry", GERMANY, "Calais");
 by("artillery", GERMANY, "Calais");
 for (const type of ["mediumTank", "mediumTank", "lightTank", "infantry", "infantry"]) by(type, GERMANY, "Gravelines");
-for (const type of ["mediumTank", "lightTank", "halftrack", "infantry", "infantry"]) by(type, GERMANY, "Watten");
-for (const type of ["mediumTank", "lightTank", "halftrack", "infantry", "artillery"]) by(type, GERMANY, "Saint-Omer");
+for (const type of ["mediumTank", "lightTank", "supplyTruck", "infantry", "infantry"]) by(type, GERMANY, "Watten");
+for (const type of ["mediumTank", "lightTank", "supplyTruck", "infantry", "artillery"]) by(type, GERMANY, "Saint-Omer");
 // South, before Cassel and Hazebrouck.
 for (const type of ["infantry", "infantry", "infantry", "assaultInfantry", "artillery", "mediumTank"]) by(type, GERMANY, "Hazebrouck");
 // East, Army Group B from Belgium.
@@ -603,7 +603,7 @@ const scenario = {
       name: "Germany",
       nation: "germany",
       funds: 15000,
-      buildable: ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "artillery", "mobileAA", "flakGun", ...AIR, "torpedoBoat"],
+      buildable: ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "artillery", "mobileAA", "flakGun", ...AIR, "torpedoBoat"],
     },
   ],
   propertyOwners: owners,

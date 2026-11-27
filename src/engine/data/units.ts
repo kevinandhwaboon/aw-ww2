@@ -6,7 +6,7 @@ import type { MovementType } from "./terrain";
 
 export const UNIT_TYPE_IDS = [
   // Land (phase 1 MVP)
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck",
   "lightTank", "mediumTank", "heavyTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA",
   // Land (phase 2)
@@ -87,7 +87,7 @@ export const CARRIER_AIRCRAFT = ["fighter", "diveBomber", "torpedoBomber"] as co
 
 /** Everything a Landing Craft can carry: any land unit (01-units §5). */
 export const LAND_UNITS = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck",
   "lightTank", "mediumTank", "heavyTank", "tankDestroyer",
   "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ] as const satisfies readonly UnitTypeId[];
@@ -137,10 +137,16 @@ export const UNITS = {
     ...BASE, name: "Recon", category: "land", cost: 4000, movePoints: 8, movementType: "wheels",
     vision: 5, maxFuel: 50, secondaryWeapon: { name: "MG" },
   },
+  // Troop transport only since 2026-11-27: the Supply Truck took over resupply (05-supply-transport §3).
   halftrack: {
-    ...BASE, name: "Halftrack", category: "land", cost: 5000, movePoints: 6, movementType: "tracks",
+    ...BASE, name: "Halftrack", category: "land", cost: 5000, movePoints: 7, movementType: "tracks",
     vision: 1, maxFuel: 45, range: null, transport: { capacity: 1, carries: FOOT_UNITS },
-    specialActions: ["resupply"],
+  },
+  // Refuels and rearms land units next to it (05-supply-transport §3). Unarmed. Each resupply spends
+  // one of its loads, refilled on an owned land property (§3b).
+  supplyTruck: {
+    ...BASE, phase: 2, name: "Supply Truck", category: "land", cost: 4000, movePoints: 6, movementType: "wheels",
+    vision: 1, maxFuel: 50, range: null, supplyLoads: 5, specialActions: ["resupply"],
   },
   lightTank: {
     ...BASE, name: "Light Tank", category: "land", cost: 6000, movePoints: 7, movementType: "tracks",
@@ -249,7 +255,7 @@ export const UNITS = {
     vision: 2, maxFuel: 85, fuelPerDay: 1, range: null, returnFireAA: { name: "AA guns" },
     transport: { capacity: 2, carries: CARRIER_AIRCRAFT }, specialActions: ["launch"],
   },
-  // Fleet supply at sea (05-supply-transport §3a): refuels and rearms neighbors like a Halftrack,
+  // Fleet supply at sea (05-supply-transport §3a): refuels and rearms neighbors like a Supply Truck,
   // and repairs its own player's ships next to it 1 HP a day. Unarmed. Each resupply spends one of
   // its loads, refilled only at a port (§3b).
   supplyShip: {

@@ -468,7 +468,7 @@ outside("artillery", SOVIET, "Korabelnaya");
 inTown("infantry", SOVIET, "Balaklava");
 inTown("infantry", SOVIET, "Lyubimovka");
 outside("flakGun", SOVIET, "Sevastopol");
-outside("halftrack", SOVIET, "Korabelnaya");
+outside("supplyTruck", SOVIET, "Korabelnaya");
 // What was left of the air force on the Khersones peninsula.
 inTown("fighter", SOVIET, "Khersones airfield");
 inTown("bomber", SOVIET, "Kulikovo Pole airfield");
@@ -478,7 +478,7 @@ const gustav = spur[spur.length - 1];
 add("railwayGun", GERMANY, gustav);
 const beside = N4.map(([dx, dy]) => ({ x: gustav.x + dx, y: gustav.y + dy })).find((p) => groundOk(at(p.x, p.y)) && !used.has(`${p.x},${p.y}`) && !taken.has(`${p.x},${p.y}`));
 if (!beside) throw new Error("No room for the Gustav's Halftrack");
-add("halftrack", GERMANY, beside);
+add("supplyTruck", GERMANY, beside);
 placed.set("the Gustav", gustav);
 outside("flakGun", GERMANY, "the Gustav");
 // LIV Corps in the north, across the Belbek toward the forts and the bay.
@@ -516,7 +516,7 @@ outside("fighter", GERMANY, "Kacha airfield");
 // ---------------------------------------------------------------- write
 
 const LAND_UNITS = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const owners = PLACES.map(([name, , , , owner]) => ({ pos: placed.get(name), owner }));

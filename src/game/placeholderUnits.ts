@@ -8,7 +8,7 @@ import { drawPixelText, GLYPH_HEIGHT, textWidth } from "./pixelFont";
 import { TILE_SIZE } from "./placeholderTiles";
 
 export const UNIT_CODES: Record<UnitTypeId, string> = {
-  infantry: "IN", assaultInfantry: "AI", mortar: "MO", recon: "RC", halftrack: "HT",
+  infantry: "IN", assaultInfantry: "AI", mortar: "MO", recon: "RC", halftrack: "HT", supplyTruck: "ST",
   lightTank: "LT", mediumTank: "MT", heavyTank: "HV", tankDestroyer: "TD",
   artillery: "AR", rocketArtillery: "RK", mobileAA: "AA", flakGun: "FK", radarStation: "RD", railwayGun: "RG",
   fighter: "FT", bomber: "BM", transportAircraft: "TA", diveBomber: "DB", torpedoBomber: "TR",

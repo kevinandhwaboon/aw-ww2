@@ -283,7 +283,7 @@ inTown("infantry", US, "Clervaux");
 inTown("infantry", US, "Wiltz");
 outside("mediumTank", US, "Arlon");
 outside("mediumTank", US, "Arlon");
-outside("halftrack", US, "Arlon");
+outside("supplyTruck", US, "Arlon");
 
 // Germany: the main attack massed behind the Our. Tanks start short of fuel (13-scenarios-ardennes §1).
 const LOW_FUEL = { heavyTank: 12, mediumTank: 17 }; // of 20 and 30
@@ -295,7 +295,7 @@ tank("mediumTank", "Arzfeld");
 tank("mediumTank", "Dasburg");
 tank("mediumTank", "Neuerburg");
 outside("recon", GERMANY, "Waxweiler");
-outside("halftrack", GERMANY, "Arzfeld");
+outside("supplyTruck", GERMANY, "Arzfeld");
 outside("artillery", GERMANY, "Arzfeld");
 outside("artillery", GERMANY, "Neuerburg");
 inTown("infantry", GERMANY, "Dasburg");
@@ -309,7 +309,7 @@ outside("assaultInfantry", GERMANY, "Neuerburg");
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const scenario = {

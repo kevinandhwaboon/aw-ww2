@@ -53,7 +53,7 @@
       "name": "Germany",
       "nation": "germany",
       "funds": 15000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "torpedoBoat"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "artillery", "mobileAA", "flakGun", "fighter", "bomber", "torpedoBoat"]
     }
   ],
   "propertyOwners": [
@@ -116,7 +116,7 @@
     { "type": "infantry", "owner": 0, "pos": { "x": 27, "y": 26 } },
     { "type": "infantry", "owner": 0, "pos": { "x": 26, "y": 27 } },
     { "type": "infantry", "owner": 0, "pos": { "x": 28, "y": 27 } },
-    { "type": "halftrack", "owner": 0, "pos": { "x": 27, "y": 28 } },
+    { "type": "supplyTruck", "owner": 0, "pos": { "x": 27, "y": 28 } },
     { "type": "lightTank", "owner": 0, "pos": { "x": 27, "y": 25 } },
     { "type": "recon", "owner": 0, "pos": { "x": 27, "y": 17 } },
     { "type": "destroyer", "owner": 0, "pos": { "x": 7, "y": 11 } },
@@ -144,12 +144,12 @@
     { "type": "infantry", "owner": 1, "pos": { "x": 9, "y": 22 } },
     { "type": "mediumTank", "owner": 1, "pos": { "x": 12, "y": 27 } },
     { "type": "lightTank", "owner": 1, "pos": { "x": 11, "y": 28 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 12, "y": 29 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 12, "y": 29 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 27 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 10, "y": 28 } },
     { "type": "mediumTank", "owner": 1, "pos": { "x": 12, "y": 31 } },
     { "type": "lightTank", "owner": 1, "pos": { "x": 13, "y": 32 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 12, "y": 30 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 12, "y": 30 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 11, "y": 31 } },
     { "type": "artillery", "owner": 1, "pos": { "x": 15, "y": 31 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 22, "y": 32 } },

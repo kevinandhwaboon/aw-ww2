@@ -43,6 +43,7 @@
         "mortar",
         "recon",
         "halftrack",
+        "supplyTruck",
         "lightTank",
         "mediumTank",
         "tankDestroyer",

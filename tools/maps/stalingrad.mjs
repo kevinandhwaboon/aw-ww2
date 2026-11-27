@@ -615,7 +615,7 @@ outside("infantry", GERMANY, "Tinguta");
 outside("infantry", GERMANY, "Plodovitoe");
 outside("infantry", GERMANY, "Abganerovo");
 outside("artillery", GERMANY, "Plodovitoe");
-outside("halftrack", GERMANY, "Plodovitoe");
+outside("supplyTruck", GERMANY, "Plodovitoe");
 outside("mediumTank", GERMANY, "Plodovitoe");
 // Kalach: a weak guard on the bridge.
 inTown("infantry", GERMANY, "Kalach");
@@ -628,7 +628,7 @@ outside("transportAircraft", GERMANY, "Oblivskaya airfield");
 // ---------------------------------------------------------------- write
 
 const LAND = [
-  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "heavyTank",
+  "infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "heavyTank",
   "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun",
 ];
 const AIR = ["fighter", "bomber", "transportAircraft"];

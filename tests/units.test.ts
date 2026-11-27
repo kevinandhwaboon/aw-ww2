@@ -4,9 +4,9 @@ import { UNITS, UNIT_TYPE_IDS } from "../src/engine/data/units";
 const phase1 = UNIT_TYPE_IDS.filter((id) => UNITS[id].phase === 1);
 
 describe("unit roster (01-units)", () => {
-  it("has 15 land, 5 air and 7 naval unit types, the Radar Station and Railway Gun among the land units (01-units §2–4)", () => {
+  it("has 16 land, 5 air and 7 naval unit types, the Radar Station, Railway Gun and Supply Truck among the land units (01-units §2–4)", () => {
     const count = (category: string) => UNIT_TYPE_IDS.filter((id) => UNITS[id].category === category).length;
-    expect(count("land")).toBe(15);
+    expect(count("land")).toBe(16);
     expect(count("air")).toBe(5);
     expect(count("naval")).toBe(7);
   });
@@ -15,6 +15,13 @@ describe("unit roster (01-units)", () => {
     expect(phase1).toHaveLength(12);
     for (const id of phase1) expect(UNITS[id].category).toBe("land");
     expect(UNITS.flakGun.phase).toBe(2);
+  });
+
+  it("the Halftrack is a troop transport that moves 7, and the Supply Truck carries 5 supplies and nobody (01-units §2, since 2026-11-27)", () => {
+    expect(UNITS.halftrack).toMatchObject({ movePoints: 7, specialActions: [] });
+    expect(UNITS.halftrack.transport.capacity).toBe(1);
+    expect(UNITS.supplyTruck).toMatchObject({ category: "land", movementType: "wheels", supplyLoads: 5, transport: null, primaryWeapon: null });
+    expect(UNITS.supplyTruck.specialActions).toContain("resupply");
   });
 
   it("the Radar Station can't move, is unarmed, sees enemy aircraft 10 squares away and is never built (01-units §2a)", () => {

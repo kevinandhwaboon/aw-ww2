@@ -89,14 +89,14 @@
       "name": "Soviet Union",
       "nation": "ussr",
       "funds": 8000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"],
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"],
       "facing": "left"
     },
     {
       "name": "Germany",
       "nation": "germany",
       "funds": 12000,
-      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
+      "buildable": ["infantry", "assaultInfantry", "mortar", "recon", "halftrack", "supplyTruck", "lightTank", "mediumTank", "heavyTank", "tankDestroyer", "artillery", "rocketArtillery", "mobileAA", "flakGun", "fighter", "bomber", "transportAircraft"]
     }
   ],
   "propertyOwners": [
@@ -175,7 +175,7 @@
     { "type": "mediumTank", "owner": 0, "pos": { "x": 64, "y": 50 } },
     { "type": "mediumTank", "owner": 0, "pos": { "x": 63, "y": 51 } },
     { "type": "lightTank", "owner": 0, "pos": { "x": 63, "y": 52 } },
-    { "type": "halftrack", "owner": 0, "pos": { "x": 64, "y": 52 } },
+    { "type": "supplyTruck", "owner": 0, "pos": { "x": 64, "y": 52 } },
     { "type": "infantry", "owner": 0, "pos": { "x": 34, "y": 40 } },
     { "type": "flakGun", "owner": 0, "pos": { "x": 33, "y": 39 } },
     { "type": "infantry", "owner": 0, "pos": { "x": 4, "y": 44 } },
@@ -191,7 +191,7 @@
     { "type": "infantry", "owner": 1, "pos": { "x": 38, "y": 13 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 24, "y": 11 } },
     { "type": "assaultInfantry", "owner": 1, "pos": { "x": 37, "y": 14 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 22, "y": 12 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 22, "y": 12 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 30, "y": 4 } },
     { "type": "fighter", "owner": 1, "pos": { "x": 28, "y": 6 } },
     { "type": "infantry", "owner": 1, "pos": { "x": 1, "y": 28 } },
@@ -210,7 +210,7 @@
     { "type": "infantry", "owner": 1, "pos": { "x": 40, "y": 73 } },
     { "type": "assaultInfantry", "owner": 1, "pos": { "x": 28, "y": 70 } },
     { "type": "assaultInfantry", "owner": 1, "pos": { "x": 41, "y": 73 } },
-    { "type": "halftrack", "owner": 1, "pos": { "x": 31, "y": 73 } },
+    { "type": "supplyTruck", "owner": 1, "pos": { "x": 31, "y": 73 } },
     { "type": "recon", "owner": 1, "pos": { "x": 22, "y": 74 } },
     { "type": "mobileAA", "owner": 1, "pos": { "x": 29, "y": 74 } },
     { "type": "bomber", "owner": 1, "pos": { "x": 36, "y": 75 } }

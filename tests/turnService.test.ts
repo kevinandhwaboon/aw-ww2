@@ -66,9 +66,9 @@ describe("turn-start repair and resupply play one unit at a time (04-economy §2
     expect(service.steps[0]).toMatchObject({ repairedHp: 2, resupplied: true });
   });
 
-  it("units next to a Halftrack are resupplied after the property repairs (05-supply-transport §3)", () => {
+  it("units next to a Supply Truck are resupplied after the property repairs (05-supply-transport §3)", () => {
     const { service } = startOfTurn("C..", [
-      { type: "halftrack", pos: P(1, 0) },
+      { type: "supplyTruck", pos: P(1, 0) },
       { type: "lightTank", pos: P(2, 0), fuel: 3 },
       { type: "mediumTank", pos: P(0, 0), hp: 50 },
     ]);
